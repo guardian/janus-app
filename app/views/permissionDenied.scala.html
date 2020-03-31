@@ -1,0 +1,13 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+
+@(user: UserIdentity, janusData: JanusData)(implicit assetsFinder: AssetsFinder)
+
+@main("Home", Some(user), janusData) {
+    <div class="container">
+
+        <h1 class="header orange-text">Invalid permissions</h1>
+
+        <p>You do not have the permission to perform this action.</p>
+    </div>
+}

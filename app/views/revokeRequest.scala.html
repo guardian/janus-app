@@ -1,0 +1,52 @@
+@import com.gu.janus.model.{AwsAccount, JanusData}
+@import com.gu.googleauth.UserIdentity
+
+@(account: AwsAccount, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, flash: Flash, assetsFinder: AssetsFinder)
+
+@import helper._
+
+@main("Revoke access", Some(user), janusData) {
+    <div class="container">
+        <h1 class="header orange-text">Revoke access to @account.name</h1>
+
+        <div class="row">
+            <div class="col s12">
+                <div class="card red lighten-4">
+                    <div class="card-content">
+                        <span class="card-title">
+                            <i class="material-icons small left">warning</i>
+                            All existing sessions will be revoked
+                        </span>
+                        <p>
+                            Users will be able to go to Janus to create new sessions as normal, but all existing
+                            console logins and credentials will be revoked for the @account.name account.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col s12">
+                <form action="" method="post">
+                    @CSRF.formField
+
+                    @flash.get("confirmation-error").map { err =>
+                        <div class="card-panel red lighten-4">
+                            @err
+                            You must confirm this action by correctly typing the name of the AWS account below.
+                        </div>
+                    }
+                    <div class="input-field col s12">
+                        <input type="text" id="revocation-confirmation" placeholder="AWS account name" name="confirm" value="" />
+                        <label for="revocation-confirmation">Type the name of the AWS Account to confirm this action</label>
+                    </div>
+                    <div class="input-field col s12">
+                        <button class="btn-large red waves-effect waves-light" type="submit" name="action">
+                            Revoke all existing sessions for this account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}

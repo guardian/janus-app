@@ -1,0 +1,45 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+
+@(user: UserIdentity, janusData: JanusData)(implicit assetsFinder: AssetsFinder)
+
+@main("Help", Some(user), janusData) {
+    <div class="container">
+        <h1 class="header orange-text">Help</h1>
+
+        <p>
+            Janus is a tool to federate AWS login. It uses your Guardian Google account to determine your identity
+            and then looks up the AWS permissions you have defined in Janus' source code.
+        </p>
+        <p>
+            The <a href="/">home page</a> shows what level of access you have for each AWS account. If you have no
+            permissions you will need to get yourself added to Janus. Details for doing so are available in
+            <a href="https://github.com/guardian/janus">Janus' README</a>.
+        </p>
+        <h2>Actions</h2>
+        <p>
+            For each permission you have available, you can choose between two actions.
+        </p>
+        <h3>Console</h3>
+        <p>
+            The console button will log you into AWS' web console in a session that has the selected permissions.
+        </p>
+        <p>
+            <em>Developer</em> permissions include most of Amazon's services but exclude the ability to create an IAM
+            user with an access key/password. There is also an <em>Account admin</em> permission that grants full
+            admin access to the account. These users are able to create IAM users that can manage the account without
+            Janus.
+        </p>
+        <h3>Credentials</h3>
+        <p>
+            Clicking credentials grants you the same access as the same permission via the console, but instead of
+            logging you in to the AWS console you will be given temporary credentials. These can be used in your
+            application or to make API requests using the AWS CLI.
+        </p>
+
+        <hr />
+        <p>
+            More information is available in <a href="https://github.com/guardian/janus">Janus' GitHub repository</a>.
+        </p>
+    </div>
+}

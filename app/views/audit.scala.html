@@ -1,0 +1,117 @@
+@import com.gu.janus.model.{AuditLog, JConsole, JanusData}
+@import com.gu.googleauth.UserIdentity
+@import org.joda.time.DateTime
+
+@(auditLogs: Seq[scala.Either[String, AuditLog]], key: Either[String, String], startDate: DateTime, prevNextWeeks: (Option[DateTime], Option[DateTime]), user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, assetsFinder: AssetsFinder)
+
+@import logic.Date.{formatDateTime, formatDate, formatDuration, rawDate}
+@import helper._
+
+@main("Audit trail", Some(user), janusData) {
+    <div class="container audit">
+        <div class="row">
+            <h1>Audit trail</h1>
+
+            <p>
+                For <b>@key.fold(s => s, s => s)</b>, week commencing Monday @formatDate(startDate).
+            </p>
+
+            @if(startDate.isBefore(new org.joda.time.DateTime(2016, 7, 6, 0, 0)) && startDate.isAfter(new org.joda.time.DateTime(2016, 3, 9, 0, 0))) {
+                <p class="card-panel yellow lighten-4">
+                    <i class="material-icons">info</i>
+                    Between 9th March 2016 and 6th July 2016 all Credentials access will show up as Console, due to a bug in the audit collection code.
+                </p>
+            }
+
+            <table class="striped responsive-table">
+                <thead>
+                    <tr>
+                        <th>
+                            @if(key.isLeft){
+                                Account
+                            } else {
+                                User
+                            }
+                        </th>
+                        <th>Access</th>
+                        <th>Type</th>
+                        <th>Time (UTC)</th>
+                        <th>Duration</th>
+                        <th>External
+                            <i class="material-icons tooltipped" data-position="bottom" data-delay="10"
+                               data-tooltip="External is access obtained without explicit access granted, i.e. via support or admin">error</i>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for(log <- auditLogs) {
+                    <tr>
+                    @log match {
+                        case Right(auditLog) => {
+                            <td>
+                                @if(key.isLeft){
+                                    <a href="/audit/account/@auditLog.account">@auditLog.account</a>
+                                } else{
+                                    <a href="/audit/user/@auditLog.username">@auditLog.username</a>
+                                }
+                            </td>
+                            <td>@auditLog.accessLevel</td>
+                            <td>
+                                @if(auditLog.accessType == JConsole){
+                                    Console <i class="material-icons">cloud</i>
+                                } else {
+                                    Credentials <i class="material-icons">vpn_key</i>
+                                }
+                            </td>
+                            <td>@formatDateTime(auditLog.dateTime)</td>
+                            <td>@formatDuration(auditLog.duration)</td>
+                            <td>
+                                @if(auditLog.external){
+                                    <i class="material-icons">done</i>
+                                } else {
+                                    -
+                                }
+                            </td>
+                        }
+                        case Left(errorMessage) => {
+                            <td colspan="6" class="red lighten-5"><i class="material-icons">report_problem</i> There was an error retrieving this log entry, check the application logs (@errorMessage)</td>
+                        }
+                    }
+                    </tr>
+                }
+                @if(auditLogs.isEmpty) {
+                    <tr>
+                        <td colspan="6" class="">No records found for the week commencing @formatDate(startDate)</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="row">
+            <div class="col m4">
+                @prevNextWeeks._1.map { prevWeek =>
+                    <a href="?date=@rawDate(prevWeek)" class="btn-large">Previous week</a>
+                }.getOrElse {
+                    <a href="#" class="btn-large disabled">No data</a>
+                }
+            </div>
+            <div class="col m4 s12">
+                <form action="" method="post">
+                    @CSRF.formField
+                    <div class="file-field input-field">
+                        <div class="file-path-wrapper">
+                            <input type="date" name="audit-date" class="datepicker audit-log" placeholder="Jump to date">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col m4 right-align">
+                @prevNextWeeks._2.map { nextWeek =>
+                    <a href="?date=@rawDate(nextWeek)" class="btn-large">Next week</a>
+                }.getOrElse {
+                    <a href="#" class="btn-large disabled">No data</a>
+                }
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,17 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+@import org.joda.time.DateTime
+
+@(activeSupportUsers: Option[(DateTime, (Option[String], Option[String]))],
+    nextSupportUsers: Option[(DateTime, (Option[String], Option[String]))],
+  futureSupportDates: List[(DateTime, String)], user: UserIdentity, janusData: JanusData
+
+    )(implicit req: RequestHeader, assetsFinder: AssetsFinder)
+
+@main("Support", Some(user), janusData) {
+    <div class="container">
+        <h1 class="header orange-text">Support</h1>
+
+        @fragments.supportUsers(user.username, activeSupportUsers, nextSupportUsers, futureSupportDates)
+    </div>
+}

@@ -1,0 +1,72 @@
+@import com.gu.janus.model.AwsAccountAccess
+@import logic.Customisation.displayColour
+@import models.DisplayMode
+
+@(accountAccesses: List[AwsAccountAccess], allowFavs: Boolean, displayMode: DisplayMode = Normal)
+
+<div class="row">
+    @for((accountAccess, i) <- accountAccesses.zipWithIndex) {
+        @if((i % 2) == 0 && i > 0) {
+</div>
+<div class="row">
+        }
+
+        <div class="col s12 m6">
+            <div class="card card--aws-account @displayColour(displayMode) lighten-5" data-account-key="@accountAccess.awsAccount.authConfigKey">
+                <div class="card-content card-content--aws-account-header @displayColour(displayMode) darken-4 white-text">
+                    @if(allowFavs) {
+                        <button name="account" value="@accountAccess.awsAccount.authConfigKey" class="right card-content--aws-account-header__button--favourite">
+                            @if(accountAccess.isFavourite) {
+                                <i class="small material-icons">star</i>
+                            } else {
+                                <i class="small material-icons">star_border</i>
+                            }
+                        </button>
+                    }
+                    <span class="card-title card-content--aws-account-header__title">@accountAccess.awsAccount.name</span>
+                </div>
+                <div class="aws-account-body">
+                @for(permission <- accountAccess.permissions) {
+                    <div class="card-content card-content--permission-heading">
+                        <p>
+                            @permission.description
+                            @if(permission.shortTerm) {
+                                <i class="material-icons tooltipped" data-position="bottom" data-delay="50" data-tooltip="This permission only grants short-term access">error</i>
+                            }
+                        </p>
+                    </div>
+                    <div class="card-action card-action--permission">
+                        <div class="card-action-group__row row">
+                            <div class="card-action-group col m6 s12">
+                                <a href="/console?permissionId=@permission.id"
+                                    class="waves-effect waves-light btn federation__link federation__link--cta federation__link--@if(permission.shortTerm) {short} else {standard} card-action-link--spaced">
+                                    <i class="material-icons">cloud</i>
+                                </a>
+                                <a href="/consoleUrl?permissionId=@permission.id"
+                                    class="right waves-effect waves-light btn-flat federation__link janus-btn--flat card-action-link--tight federation__link--@if(permission.shortTerm) {short} else {standard}">
+                                    <i class="material-icons black-text">link</i>
+                                </a>
+                            </div>
+                            <div class="card-action-group card-action-group--divider col m6 s12">
+                                <a href="/credentials?permissionId=@permission.id"
+                                    class="waves-effect waves-light btn federation__link federation__link--cta federation__link--credentials federation__link--@if(permission.shortTerm) {short} else {standard}">
+                                    <i class="material-icons">vpn_key</i>
+                                </a>
+                                @if(!permission.shortTerm) {
+                                    <div class="multi-select__container right">
+                                        <input class="multi-select__checkbox" type="checkbox" name="@permission.id" id="@permission.id" data-permission-id="@permission.id">
+                                        <label for="@permission.id" class="multi-select__label"></label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                </div>
+                <div class="card-action card-action--audit-log">
+                    <a class="grey-text darken-2" href="/audit/account/@accountAccess.awsAccount.authConfigKey">View audit trail <i class="material-icons">assignment</i></a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

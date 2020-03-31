@@ -1,0 +1,35 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                           controllers.Janus.index
+GET     /admin                      controllers.Janus.admin
+GET     /support                    controllers.Janus.support
+GET     /console                    controllers.Janus.consoleLogin(permissionId: String)
+GET     /consoleUrl                 controllers.Janus.consoleUrl(permissionId: String)
+GET     /credentials                controllers.Janus.credentials(permissionId: String)
+GET     /multi-credentials          controllers.Janus.multiCredentials(permissionIds: String)
+POST    /favourite                  controllers.Janus.favourite()
+
+GET     /audit/user/:username       controllers.Audit.byUser(username: String)
+POST    /audit/user/:username       controllers.Audit.changeUserDate(username: String)
+GET     /audit/account/:account     controllers.Audit.byAccount(account: String)
+POST    /audit/account/:account     controllers.Audit.changeAccountDate(account: String)
+
+GET     /revoke                     controllers.RevokePermissions.revoke
+GET     /revoke-request             controllers.RevokePermissions.revokeRequest(accountId: String)
+POST    /revoke-request             controllers.RevokePermissions.revokeAccount(accountId: String)
+GET     /revoke-confirmation        controllers.RevokePermissions.revokeConfirmation(accountId: Option[String])
+
+GET     /login                      controllers.AuthController.login
+GET     /loginError                 controllers.AuthController.loginError
+GET     /oauthCallback              controllers.AuthController.oauthCallback
+GET     /logout                     controllers.AuthController.logout
+
+GET     /healthcheck                controllers.Utility.healthcheck
+GET     /help                       controllers.Utility.help
+GET     /accounts                   controllers.Utility.accounts
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.versioned(file)

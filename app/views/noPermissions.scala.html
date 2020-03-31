@@ -1,0 +1,17 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+
+@(user: UserIdentity, janusData: JanusData)(implicit assetsFinder: AssetsFinder)
+
+@main("Home", Some(user), janusData) {
+    <div class="container">
+
+        <h1 class="header orange-text">No permissions</h1>
+
+        <p>You are logged in as <b>@user.email</b>. <a href="/logout">Not you? Logout here.</a></p>
+        <p>
+            You do not have any permissions. If this doesn't seem right, you can check your permissions in
+            <a href="https://github.com/guardian/janus">this application's GitHub repository</a>.
+        </p>
+    </div>
+}

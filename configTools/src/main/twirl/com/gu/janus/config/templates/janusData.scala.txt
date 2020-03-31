@@ -1,0 +1,72 @@
+@import com.gu.janus.model.{JanusData, Permission}
+
+@(janusData: JanusData, allPermissions: Set[Permission])
+
+janus {
+    accounts = [
+        @for(account <- janusData.accounts){
+            { name = "@account.name", key = "@account.authConfigKey" },
+        }
+    ]
+
+    support {
+        supportAccess = [
+            @for(permission <- janusData.support.supportAccess){
+                @permissionReference(permission),
+            }
+        ]
+
+        rota = [
+            @for((startTime, (user1, user2)) <- janusData.support.rota){
+                {
+                    startTime = "@startTime"
+                    supporting = [ "@user1", "@user2" ]
+                },
+            }
+        ]
+
+        period = @janusData.support.supportPeriod.getSeconds
+    }
+
+    access {
+        defaultPermissions = [
+            @for(permission <- janusData.access.defaultPermissions){
+                @permissionReference(permission),
+            }
+        ]
+
+        acl {
+            @for((user, permissions) <- janusData.access.userAccess){
+                "@user" = [
+                    @for(permission <- permissions){
+                        @permissionReference(permission),
+                    }
+                ]
+            }
+        }
+    }
+
+    admin {
+        acl {
+            @for((user, permissions) <- janusData.admin.userAccess){
+                "@user" = [
+                    @for(permission <- permissions){
+                        @permissionReference(permission),
+                    }
+                ]
+            }
+        }
+    }
+
+    permissions = [
+        @for(permission <- allPermissions){
+            {
+                account = "@permission.account.authConfigKey"
+                label = "@permission.label"
+                description = "@permission.description"
+                shortTerm = @if(permission.shortTerm) {true} else {false}
+                policy = """@permission.policy"""
+            },
+        }
+    ]
+}

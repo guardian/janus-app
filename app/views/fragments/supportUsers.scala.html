@@ -1,0 +1,121 @@
+@(loggedInUsername: String, activeSupportUsers: Option[(org.joda.time.DateTime, (Option[String], Option[String]))],
+    nextSupportUsers: Option[(org.joda.time.DateTime, (Option[String], Option[String]))],
+  futureSupportDates: List[(org.joda.time.DateTime, String)]
+)(implicit assetsFinder: AssetsFinder)
+
+<div class="row">
+    <div class="col m6 s12">
+        <div class="card horizontal">
+            <div class="card-image hide-on-small-only">
+                <img src="@assetsFinder.path("images/support.jpg")">
+            </div>
+            <div class="card-stacked">
+                @activeSupportUsers match {
+                    case Some((startTime, (user1, user2))) => {
+                        <div class="card-content">
+                        @user1.map { username =>
+                            <p>
+                                @if(username == loggedInUsername) {
+                                    <b>@username</b>
+                                } else {
+                                    @username
+                                }
+                            </p>
+                        }.getOrElse {
+                            <p class="red-text text-darken-4">No support user in this slot</p>
+                        }
+                        @user2.map { username =>
+                            <p>
+                                @if(username == loggedInUsername) {
+                                    <b>@username</b>
+                                } else {
+                                    @username
+                                }
+                            </p>
+                        }.getOrElse {
+                            <p class="red-text text-darken-4">No support user in this slot</p>
+                        }
+                        </div>
+                        <div class="card-action">
+                            <h4>@logic.Date.formatDate(startTime)</h4>
+                        </div>
+                    }
+                    case None => {
+                        <p>There are currently no 24/7 support users.</p>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col m6 s12">
+        <ul class="collapsible" data-collapsible="accordion">
+            <li>
+                @nextSupportUsers match {
+                    case Some((startTime, (user1, user2))) => {
+                        <div class="collapsible-header active">
+                            <i class="material-icons">date_range</i>
+                            @logic.Date.formatDate(startTime)
+                        </div>
+                        <div class="collapsible-body">
+                            @user1.map { username =>
+                                @if(username == loggedInUsername) {
+                                    <b>@username</b>
+                                } else {
+                                    @username
+                                }
+                            }.getOrElse {
+                                <span class="red-text text-darken-4">No support user in this slot</span>
+                            }
+                            &amp;
+                            @user2.map { username =>
+                                @if(username == loggedInUsername) {
+                                    <b>@username</b>
+                                } else {
+                                    @username
+                                }
+                            }.getOrElse {
+                                <span class="red-text text-darken-4">No support user in this slot</span>
+                            }
+                        </div>
+                    }
+                    case None => {
+                        <div class="collapsible-header">
+                            <i class="material-icons">date_range</i> Next support period
+                        </div>
+                        <div class="collapsible-body">
+                            There currently no 24/7 support users in the next support period.
+                        </div>
+                    }
+                }
+            </li>
+            <li>
+                <div class="collapsible-header">
+                    <i class="material-icons">person</i> Your future support dates
+                    <span class="badge">@futureSupportDates.size</span>
+                </div>
+                    @futureSupportDates match {
+                        case Nil => {
+                            <div class="collapsible-body">
+                                You currently have no future support dates.
+                            </div>
+                        }
+                        case dates => {
+                            <div class="collapsible-body collapsible-body--small-padding">
+                                <table class="bordered upcoming-support__table">
+                                    <tbody>
+                                        @dates.map { case (from, otherUser) =>
+                                            <tr>
+                                                <td>@logic.Date.formatDate(from)</td>
+                                                <td>@otherUser</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        }
+                    }
+            </li>
+        </ul>
+    </div>
+</div>

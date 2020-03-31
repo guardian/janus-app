@@ -1,0 +1,44 @@
+@import awscala.sts.TemporaryCredentials
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+
+@(url: String, accountName: String, credentials: TemporaryCredentials, user: UserIdentity, janusData: JanusData)(implicit assetsFinder: AssetsFinder)
+
+@import logic.Date
+
+@main("Console URL", Some(user), janusData) {
+    <div class="container credentials">
+
+        <div class="row">
+            <h1 class="header orange-text">Your login URL</h1>
+            <p>
+                Your login will expire in @Date.formatInterval(credentials.expiration), at
+                <span class="local-date" data-date="@Date.isoDateString(credentials.expiration)">@Date.formatTime(credentials.expiration)</span>.
+            </p>
+            <p>
+                <a href="@url">Click here to log in to the AWS console</a> for the <b>@accountName</b> account, or copy
+                the link from below. This link will be valid for 15 minutes.
+            </p>
+
+            <p class="copy-textarea">
+                <a class="copy-text--button copy-text--button__small grey lighten-1" href="#"><i class="material-icons">content_copy</i> copy</a>
+                <i class="material-icons copy-text--confirm">done</i>
+                <i class="material-icons copy-text--warn">report_problem</i>
+                <textarea class="textarea--code" readonly>@url</textarea>
+            </p>
+        </div>
+
+        <div class="row">
+            <div class="col s12 m7">
+                <div class="card">
+                    <div class="card-image">
+                        <img src="@assetsFinder.path("images/secret-safe.jpg")" alt="keep it secret, keep it safe" />
+                    </div>
+                    <div class="card-content">
+                        <p>This URL grants access on your behalf. Treat it as you would your password.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

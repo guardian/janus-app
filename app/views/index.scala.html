@@ -1,0 +1,42 @@
+@import com.gu.googleauth.UserIdentity
+@import helper._
+@import aws.Federation.{maxLongTime, maxShortTime, defaultLongTime, defaultShortTime}
+@import logic.Date.formatDuration
+@import com.gu.janus.model.{AwsAccountAccess, JanusData}
+@import models.DisplayMode
+
+@(accountAccesses: List[AwsAccountAccess], user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, assetsFinder: AssetsFinder)
+
+@main("Your permissions", Some(user), janusData, displayMode) {
+    <div class="container">
+        <h1 class="header orange-text hide">Your permissions</h1>
+
+        <div class="row">
+            <div class="logout-button">
+            <a href="https://signin.aws.amazon.com/oauth?Action=logout"
+               target="_blank"
+               class="waves-effect waves-light btn">
+                <i class="material-icons">exit_to_app</i>
+                logout
+            </a>
+            </div>
+        </div>
+
+        <div class="index-main__container">
+            @form(routes.Janus.favourite()) {
+                @CSRF.formField
+                @fragments.awsAccounts(accountAccesses, allowFavs = true, displayMode)
+            }
+        </div>
+        <div class="row">
+            <div class="col">
+                <p>
+                    If these permissions don't seem right, you can check them in
+                    <a href="https://github.com/guardian/janus">this application's GitHub repository</a>.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    @fragments.multiSelectHero()
+}

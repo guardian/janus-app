@@ -1,0 +1,12 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+
+@(error: String, user: Option[UserIdentity], janusData: JanusData)(implicit assetsFinder: AssetsFinder)
+
+@main("Home", user, janusData) {
+    <div class="container">
+        <h1 class="header orange-text">Error</h1>
+
+        <p>@error</p>
+    </div>
+}

@@ -1,0 +1,28 @@
+@import com.gu.janus.model.{AwsAccountAccess, JanusData}
+@import com.gu.googleauth.UserIdentity
+
+@(accountAccesses: List[AwsAccountAccess], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, assetsFinder: AssetsFinder)
+
+@main("Admin", Some(user), janusData) {
+    <div class="container">
+        <div class="row">
+            <div class="col s12">
+                <h1 class="header orange-text">Admin</h1>
+                <div class="card-panel">
+                    <span>
+                        As an administrator you have full access to all AWS accounts.
+                        Please use this with care and try to let the team know what
+                        you are doing to their account.
+                        <br />
+                        Janus access is logged and visible to all users.
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        @fragments.awsAccounts(accountAccesses, allowFavs = false)
+    </div>
+
+    @fragments.multiSelectHero()
+
+}

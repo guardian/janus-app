@@ -1,0 +1,81 @@
+@import com.gu.janus.model.{AwsAccount, AccountOwners, JanusData}
+@import com.gu.googleauth.UserIdentity
+
+@(accountOwners: List[(AwsAccount, AccountOwners)], user: UserIdentity, janusData: JanusData)(implicit assetsFinder: AssetsFinder)
+
+@main("Accounts", Some(user), janusData) {
+    <div class="container" xmlns="http://www.w3.org/1999/html">
+        <h1 class="header orange-text">Accounts</h1>
+        <ul class="collapsible collapsible-accordion">
+        @for((account, owners) <- accountOwners) {
+            <li class="owners__container">
+                <div class="owners__header collapsible-header">
+                    @account.name
+                    <div class="right hide-on-small-only">
+                        <div class="chip">
+                            admins: @owners.admins.size
+                        </div>
+
+                        <div class="chip">
+                            devs: @owners.devs.size
+                        </div>
+
+                        <div class="chip">
+                            other: @owners.others.size
+                        </div>
+                    </div>
+                    <div class="right hide-on-med-and-up">
+                        <div class="chip">
+                            accounts: @{owners.admins.size + owners.devs.size + owners.others.size}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="account-summary__container collapsible-body">
+                    <div class="row">
+                        <div class="col s12">
+                            <a class="account-summary__button--audit btn grey" href="/audit/account/@account.authConfigKey">
+                                Audit trail <i class="material-icons">assignment</i>
+                            </a>
+                            @if(owners.isEmpty) {
+                                <p>There are no Janus-managed users for this account.</p>
+                            } else {
+                                    @if(owners.admins.nonEmpty) {
+                                        <div class="col m4">
+                                            <p class="owners__list--heading">Admins</p>
+                                            <ul class="owners__list">
+                                            @for(admin <- owners.admins) {
+                                                <li>@admin</li>
+                                            }
+                                            </ul>
+                                        </div>
+                                    }
+                                    @if(owners.devs.nonEmpty) {
+                                        <div class="col m4">
+                                            <p class="owners__list--heading">Devs</p>
+                                            <ul class="owners__list">
+                                            @for(dev <- owners.devs) {
+                                                <li>@dev</li>
+                                            }
+                                            </ul>
+                                        </div>
+                                    }
+                                    @if(owners.others.nonEmpty) {
+                                        <div class="col m4">
+                                            <p class="owners__list--heading">Others</p>
+                                            <ul class="owners__list">
+                                            @for(other <- owners.others) {
+                                                <li>@other</li>
+                                            }
+                                            </ul>
+                                        </div>
+                                    }
+                            }
+                        </div>
+                    </div>
+                </div>
+            </li>
+        }
+        </ul>
+    </div>
+}

@@ -1,0 +1,37 @@
+<configuration>
+
+    <contextName>janus</contextName>
+
+    <appender name="LOGFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/janus-test.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/janus.log.%d{yyyy-MM-dd}.gz</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>%date{yyyy-MM-dd HH:mm:ss ZZZZ} [%thread] %-5level %logger{36} - %msg%n%xException{3}</pattern>
+        </encoder>
+    </appender>
+
+
+    <logger name="play" level="INFO" />
+    <logger name="application" level="DEBUG" />
+
+    <!-- disable pan-domain auth's spam -->
+    <logger name="com.google.api.client.http.HttpTransport" level="OFF" />
+
+    <!-- from Play's defaults -->
+    <logger name="com.avaje.ebean.config.PropertyMapLoader" level="WARN" />
+    <logger name="com.avaje.ebeaninternal.server.core.XmlConfigLoader" level="WARN" />
+    <logger name="com.avaje.ebeaninternal.server.lib.BackgroundThread" level="WARN" />
+    <logger name="com.gargoylesoftware.htmlunit.javascript" level="WARN" />
+    <logger name="org.apache.http.wire" level="WARN" />
+    <logger name="com.amazonaws" level="WARN" />
+
+    <root level="INFO">
+        <appender-ref ref="LOGFILE"/>
+    </root>
+
+</configuration>

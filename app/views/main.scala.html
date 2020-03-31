@@ -1,0 +1,90 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+@import logic.UserAccess.{hasAccess, isSupportUser, username}
+@import org.joda.time.DateTime
+@import logic.Customisation.displayColour
+
+@(title: String, userOpt: Option[UserIdentity], janusData: JanusData, displayMode: DisplayMode = Normal)(content: Html)(implicit assetsFinder: AssetsFinder)
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no"/>
+        <title>@title - Janus</title>
+
+        <link href="@assetsFinder.path("materialize/css/materialize.min.css")" type="text/css" rel="stylesheet" media="screen,projection"/>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <link href="@assetsFinder.path("stylesheets/main.css")" type="text/css" rel="stylesheet" media="screen,projection"/>
+
+        <link rel="icon" href="@assetsFinder.path("images/favicon.ico")"/>
+    </head>
+    <body>
+        <header>
+            <nav class="@displayColour(displayMode) darken-4" role="navigation">
+                <div class="nav-wrapper container">
+                    <a id="logo-container" href="/" class="brand-logo">
+                        <img src="@assetsFinder.path("images/janus.png")" alt="Janus">
+                        Janus
+                    </a>
+
+                    @userOpt.map { user =>
+                        <ul class="right hide-on-med-and-down">
+                            <li><a href="/accounts">Accounts</a></li>
+                            <li><a href="/support">Support</a></li>
+                            @if(hasAccess(username(user), janusData.admin)) { <li><a href="/admin">Admin</a></li> }
+                            <li><a href="/revoke">Revoke</a></li>
+                            <li><a href="/help">Help</a></li>
+                            <li><a href="/logout">@user.firstName @user.lastName</a></li>
+                        </ul>
+
+                        <ul id="nav-mobile" class="side-nav">
+                            <li><a href="/">Home</a></li>
+                            <li><a href="/accounts">Accounts</a></li>
+                            @if(isSupportUser(username(user), DateTime.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
+                            @if(hasAccess(username(user), janusData.admin)) { <li><a href="/admin">Admin</a></li> }
+                            <li><a href="/revoke">Revoke</a></li>
+                            <li><a href="/help">Help</a></li>
+                            <li><a href="/logout">@user.firstName @user.lastName <i class="material-icons right">power_settings_new</i></a></li>
+                        </ul>
+                    }
+
+                    <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+                </div>
+            </nav>
+        </header>
+
+        <main class="@{
+            if(displayMode == Spooky) "spooky"
+            else if(displayMode == Festive) "festive"
+            else ""
+        }">
+            @content
+        </main>
+
+        <footer class="page-footer grey darken-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col l9 s12">
+                        <h5 class="white-text">The Guardian</h5>
+                        <p class="grey-text text-lighten-4">Janus is a part of the Guardian's infrastructure management toolset.</p>
+                    </div>
+                    <div class="col l3 s12">
+                        <h5 class="white-text">Useful links</h5>
+                        <ul>
+                            <li><a class="white-text" href="/help">Help</a></li>
+                            <li><a class="white-text" href="https://github.com/guardian/janus">Janus on GitHub</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        <script src="@assetsFinder.path("javascripts/jquery-2.1.4.min.js")"></script>
+        <script src="@assetsFinder.path("materialize/js/materialize.min.js")"></script>
+        <script src="@assetsFinder.path("javascripts/janus.js")"></script>
+        @if(displayMode == Festive) {
+            <script src="@assetsFinder.path("javascripts/snow.js")"></script>
+        }
+    </body>
+</html>

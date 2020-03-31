@@ -1,0 +1,52 @@
+@import com.gu.janus.model.{AwsAccount, JanusData}
+@import com.gu.googleauth.UserIdentity
+
+@(accountOpt: Option[AwsAccount], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, assetsFinder: AssetsFinder)
+
+@main("Access revoked", Some(user), janusData) {
+    <div class="container">
+        <h1 class="header orange-text">Access revoked</h1>
+
+        <div class="row">
+            <div class="col s12 m6">
+                <div class="card cyan lighten-5">
+                    <div class="card-content">
+                        <span class="card-title">
+                            <i class="material-icons small right">security</i>
+                            Sessions revoked
+                        </span>
+                        <p>
+                            @accountOpt.fold {
+                                All existing sessions have been revoked.
+                            } { account =>
+                                All existing sessions for the @account.name account have been revoked.
+                            }
+                        </p>
+                        <p>
+                            All credentials (including any compromised sessions) have been disabled.
+                        </p>
+                    </div>
+                    <div class="card-action">
+                        <a href="http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_revoke-sessions.html">AWS documentation</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col s12 m6">
+                <div class="card cyan lighten-5">
+                    <div class="card-content">
+                        <span class="card-title">
+                            <i class="material-icons small right">verified_user</i>
+                            Log back in using Janus
+                        </span>
+                        <p>
+                            Authorized users can return to Janus to log back into the console, or obtain fresh credentials.
+                        </p>
+                    </div>
+                    <div class="card-action">
+                        <a href="/">Back to Janus</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
