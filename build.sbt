@@ -20,7 +20,7 @@ val commonDependencies = Seq(
   "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 )
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.8",
+  scalaVersion := "2.12.11",
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-target:jvm-1.8", "-Xfatal-warnings"),
   testOptions in Test ++= Seq(Tests.Argument(TestFrameworks.ScalaTest, "-o"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports"))
 )
