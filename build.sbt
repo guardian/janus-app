@@ -6,6 +6,12 @@ import sbt.Keys._
 import sbt.{addCompilerPlugin, _}
 
 
+ThisBuild / organization := "com.gu"
+ThisBuild / licenses := Seq("Apache V2" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
+ThisBuild / scmInfo := Some(ScmInfo(url("https://github.com/guardian/guardian-janus"), "scm:git@github.com:guardian/guardian-janus"))
+ThisBuild / homepage := scmInfo.value.map(_.browseUrl)
+ThisBuild / developers := List(Developer(id = "guardian", name = "Guardian", email = null, url = url("https://github.com/guardian")))
+
 val awsSdkVersion = "1.11.663"
 val awscalaVersion = "0.8.1"
 val circeVersion = "0.12.3"
@@ -91,5 +97,8 @@ lazy val configTools = (project in file("configTools"))
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
       "io.circe" %% "circe-config" % "0.7.0"
-    )
+    ),
+    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+    publishTo := sonatypePublishTo.value,
+    releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease")
   )
