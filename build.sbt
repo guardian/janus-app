@@ -90,7 +90,6 @@ lazy val configTools = (project in file("configTools"))
   .settings(
     addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8"),
     commonSettings,
-    version := "0.1.0-SNAPSHOT",
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.0",
       "io.circe" %% "circe-core" % circeVersion,
