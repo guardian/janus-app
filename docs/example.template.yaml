@@ -1,0 +1,270 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Janus - AWS login federation
+
+# This template is provided as an example and is not intended for production use.
+# The following line invalidates this template and will need to be removed for cloudformation to work.
+
+# TODO: add line that invalidates this template
+
+
+Parameters:
+  Subnets:
+    Description: The subnets where Janus will run
+    Type: List<AWS::EC2::Subnet::Id>
+  VpcId:
+    Description: The VPC in which Janus will run
+    Type: AWS::EC2::VPC::Id
+  KeyName:
+    Description: An ssh keypair to put on the instance
+    Type: AWS::EC2::KeyPair::KeyName
+  Stage:
+    Description: Environment name
+    Type: String
+    AllowedValues:
+      - PROD
+  AMI:
+    Description: Base AMI for Janus instances
+    Type: AWS::EC2::Image::Id
+  DistBucketName:
+    Description: Name of the S3 bucket where the artifacts are located
+    Type: String
+  TLSCert:
+    Description: ARN of a TLS certificate to install on the load balancer
+    Type: String
+  AccessRestrictionCidr:
+    Description: A CIDR from which access to the application is allowed
+    AllowedPattern: ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}$
+    ConstraintDescription: Parameter should be a CIDR block e.g. "1.2.3.4/32"
+    Type: String
+  SSHAccessCidr:
+    Description: A CIDR from which SSH access to the instance is allowed
+    AllowedPattern: ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/[0-9]{1,2}$
+    ConstraintDescription: Parameter should be a CIDR block e.g. "1.2.3.4/32"
+    Type: String
+
+
+Resources:
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Janus load balancer
+      VpcId:
+        Ref: VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: !Ref AccessRestrictionCidr
+
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: janus instance
+      VpcId:
+        Ref: VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 9000
+          ToPort: 9000
+          SourceSecurityGroupId:
+            Ref: LoadBalancerSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHAccessCidr
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: instance-policy
+          PolicyDocument:
+            Statement:
+              # grant access to the distribution bucket in S3
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: arn:aws:s3:::${DistBucketName}/*
+              - Effect: Allow
+                Action:
+                  - cloudwatch:*
+                  - logs:*
+                Resource: '*'
+
+              # explicitly grant Janus assume role for its federation
+              - Effect: Allow
+                Action:
+                  - sts:AssumeRole
+                Resource: '*'
+
+              # minimal policy for EC2 Run Command integration
+              - Effect: Allow
+                Action:
+                  - ec2messages:AcknowledgeMessage
+                  - ec2messages:DeleteMessage
+                  - ec2messages:FailMessage
+                  - ec2messages:GetEndpoint
+                  - ec2messages:GetMessages
+                  - ec2messages:SendReply
+                  - ssm:UpdateInstanceInformation
+                  - ssm:ListInstanceAssociations
+                  - ssm:DescribeInstanceProperties
+                  - ssm:DescribeDocumentParameters
+                  - ssmmessages:CreateControlChannel
+                  - ssmmessages:CreateDataChannel
+                  - ssmmessages:OpenControlChannel
+                  - ssmmessages:OpenDataChannel
+                Resource: "*"
+
+              # allow instance to read from and append to the audit trail database table
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:Query
+                  - dynamodb:PutItem
+                  - dynamodb:DescribeTable
+                Resource:
+                  Fn::Join:
+                    - ":"
+                    - - arn:aws:dynamodb
+                      - Ref: AWS::Region
+                      - Ref: AWS::AccountId
+                      - table/AuditTrail
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:BatchGetItem
+                  - dynamodb:Query
+                  - dynamodb:PutItem
+                  - dynamodb:DescribeTable
+                Resource:
+                  Fn::Join:
+                    - ":"
+                    - - arn:aws:dynamodb
+                      - Ref: AWS::Region
+                      - Ref: AWS::AccountId
+                      - table/AuditTrail/index/AuditTrailByUser
+
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - Ref: InstanceRole
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Listeners:
+        - LoadBalancerPort: 443
+          InstancePort: 9000
+          Protocol: HTTPS
+          SSLCertificateId:
+            Ref: TLSCert
+      CrossZone: true
+      HealthCheck:
+        Target: HTTP:9000/healthcheck
+        HealthyThreshold: 2
+        UnhealthyThreshold: 10
+        Interval: 30
+        Timeout: 10
+      Subnets:
+        Ref: Subnets
+      SecurityGroups:
+        - Ref: LoadBalancerSecurityGroup
+      # TODO: consider adding AccessLoggingPolicy
+
+  # TODO: add launch config to copy the artifact and run the application
+  LaunchConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      KeyName:
+        Ref: KeyName
+      ImageId:
+        Ref: AMI
+      SecurityGroups:
+        - Ref: InstanceSecurityGroup
+      InstanceType: t2.micro
+      IamInstanceProfile:
+        Ref: InstanceProfile
+      AssociatePublicIpAddress: true
+      UserData:
+        'Fn::Base64': |
+          #!/bin/bash -ev
+          echo PROD > /etc/stage
+
+  AutoscalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AvailabilityZones:
+        Fn::GetAZs: ""
+      VPCZoneIdentifier:
+        Ref: Subnets
+      LaunchConfigurationName:
+        Ref: LaunchConfig
+      MinSize: 1
+      MaxSize: 2
+      HealthCheckType: ELB
+      HealthCheckGracePeriod: 120
+      LoadBalancerNames:
+        - Ref: LoadBalancer
+
+  # if you update this then you should also update the test bits in AuditTrailDBTest to aid with local development and testing
+  AuditTrailTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    Properties:
+      TableName: AuditTrail
+      AttributeDefinitions:
+        - AttributeName: j_account
+          AttributeType: S
+        - AttributeName: j_username
+          AttributeType: S
+        - AttributeName: j_timestamp
+          AttributeType: N
+      KeySchema:
+        - AttributeName: j_account
+          KeyType: HASH
+        - AttributeName: j_timestamp
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 15
+        WriteCapacityUnits: 15
+      GlobalSecondaryIndexes:
+        - IndexName: AuditTrailByUser
+          Projection:
+            ProjectionType: ALL
+          KeySchema:
+            - AttributeName: j_username
+              KeyType: HASH
+            - AttributeName: j_timestamp
+              KeyType: RANGE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 15
+            WriteCapacityUnits: 15
+
+Outputs:
+  LoadBalancerUrl:
+    Value:
+      !GetAtt LoadBalancer.DNSName
+  JanusInstanceRole:
+    Value:
+      !GetAtt InstanceRole.Arn
