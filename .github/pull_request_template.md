@@ -9,13 +9,12 @@ Please note that it may not be possible for us to accept all pull requests. Janu
 ## What is the purpose of this change?
 
 
-
-### Images
-
-<!-- Remember to redact any secret or private information! -->
-<!-- Screenshots may be helpful to demonstrate the changes -->
-
 ## What is the value of this change and how do we measure success?
+
+
+## Images
+<!-- Usually only applicable to UI changes, what did it look like before and what will it look like after? -->
+<!-- Remember to redact any secret or private information! -->
 
 
 ## Any additional notes?
