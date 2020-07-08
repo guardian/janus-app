@@ -28,15 +28,6 @@ assignees: ''
 <!-- Screenshots will help explain your problem -->
 
 
-## OS and Browser details
-
-<!-- please complete the following information -->
-
-- Device:
-- OS:
-- Browser:
-- Version:
-
 ## Additional context
 
 <!-- Please add any other context about the problem here -->
