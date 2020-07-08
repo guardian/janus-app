@@ -17,12 +17,7 @@ therefore we may be hesitant to significantly expand or alter the remit of this 
 
 ## What problem would this feature solve?
 
-<!-- Please describe the problem this feature would solve -->
-
-
-## Desired solution
-
-<!-- If you have a specific solution in mind, please describe the solution you would like -->
+<!-- Please describe the problem this feature would solve and the requirements you have -->
 
 
 ## Alternative options or solutions
@@ -32,4 +27,10 @@ therefore we may be hesitant to significantly expand or alter the remit of this 
 
 ## Additional context
 
-<!-- Please add any other context or screenshots about the feature request here -->
+<!--
+Please add any other context or screenshots about the feature request here. This could include
+ the source of the inspiration for the feature (such as a different service) or examples of how
+ the feature might work.
+-->
+
+
