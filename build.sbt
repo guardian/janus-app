@@ -8,7 +8,7 @@ import sbt.{addCompilerPlugin, _}
 
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq("Apache V2" -> url("http://www.apache.org/licenses/LICENSE-2.0.html"))
-ThisBuild / scmInfo := Some(ScmInfo(url("https://github.com/guardian/guardian-janus"), "scm:git@github.com:guardian/guardian-janus"))
+ThisBuild / scmInfo := Some(ScmInfo(url("https://github.com/guardian/janus-app"), "scm:git@github.com:guardian/janus-app"))
 ThisBuild / homepage := scmInfo.value.map(_.browseUrl)
 ThisBuild / developers := List(Developer(id = "guardian", name = "Guardian", email = null, url = url("https://github.com/guardian")))
 
@@ -97,6 +97,8 @@ lazy val configTools = (project in file("configTools"))
       "io.circe" %% "circe-parser" % circeVersion,
       "io.circe" %% "circe-config" % "0.7.0"
     ),
+    name := "janus-config-tools",
+    description := "Library for reading and writing Janus configuration files",
     releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     publishTo := sonatypePublishTo.value,
     releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease")
