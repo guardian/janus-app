@@ -4,6 +4,7 @@ import play.sbt.PlayImport.PlayKeys._
 import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 import sbt.Keys._
 import sbt.{addCompilerPlugin, _}
+import ReleaseTransformations._
 
 
 ThisBuild / organization := "com.gu"
@@ -101,5 +102,22 @@ lazy val configTools = (project in file("configTools"))
     description := "Library for reading and writing Janus configuration files",
     releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     publishTo := sonatypePublishTo.value,
+    releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runClean,
+      runTest,
+      setReleaseVersion,
+      commitReleaseVersion,
+      tagRelease,
+      publishArtifacts,
+      setNextVersion,
+      commitNextVersion,
+      /**
+        * Branch protection on the remote repository does not allow pushChanges to succeed therefore the
+        * step below is disabled. All other release steps are the same as the default release process.
+        */
+//      pushChanges
+    ),
     releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease")
   )
