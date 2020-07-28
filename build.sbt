@@ -113,6 +113,10 @@ lazy val configTools = (project in file("configTools"))
       publishArtifacts,
       setNextVersion,
       commitNextVersion,
+      /**
+        * Branch protection on the remote repository does not allow pushChanges to succeed therefore the
+        * step below is disabled. All other release steps are the same as the default release process.
+        */
 //      pushChanges
     ),
     releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease")
