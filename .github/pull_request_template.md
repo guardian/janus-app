@@ -1,9 +1,6 @@
 <!-- 
-
 Hello and thank you for contributing! 
-
 Please note that it may not be possible for us to accept all pull requests. Janus has been developed to meet the security and workflow requirements of Guardian Digital, therefore we may be hesitant to significantly expand or alter the remit of this application.
-
 -->
 
 ## What is the purpose of this change?
