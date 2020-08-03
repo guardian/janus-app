@@ -18,11 +18,9 @@ object Policies {
         // Disallow creating IAM user access keys
         Action("iam:CreateAccessKey"),
         Action("iam:UpdateAccessKey"),
-        Action("iam:DeleteAccessKey"),
         // Disallow IAM user password management
         Action("iam:CreateLoginProfile"),
         Action("iam:UpdateLoginProfile"),
-        Action("iam:DeleteLoginProfile"),
         Action("iam:ChangePassword"),
         // Disallow IAM user MFA management
         Action("iam:CreateVirtualMFADevice"),
