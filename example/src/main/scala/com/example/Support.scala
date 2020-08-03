@@ -36,7 +36,7 @@ object Support {
 
   // the following accounts are covered by 24/7 support
   private val supportAccounts = Set(Production)
-  private val supportAccess: Set[Permission] = supportAccounts.flatMap(_.all)
+  private val supportAccess: Set[Permission] = supportAccounts.flatMap(_.dev)
 
   val acl: SupportACL = SupportACL.create(rota.toMap map convertRota, supportAccess, supportPeriod)
 

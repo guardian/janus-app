@@ -5,19 +5,8 @@ import com.gu.janus.model.{AwsAccount, Permission}
 
 
 object Policies {
-
-  val revokeAccess = Policy(Seq(
-    Statement(Effect.Allow, Seq(
-      Action("iam:PutRolePolicy"),
-      Action("iam:getRole")
-    ), Seq(Resource("*")))
-  ))
-  def revokeAccessPermission(awsAccount: AwsAccount) =
-    Permission(awsAccount, "revoke-access", "Revoke Janus access", revokeAccess, shortTerm = true)
-
-
   /**
-    * Access to most AWS functionality. Excludes being able to create an IAM user to bypass Janus.
+    * Access to most AWS functionality. Excludes being able to create credentials to bypass Janus.
     */
   val developer = Policy(Seq(
     Statement(Effect.Allow, Seq(Action("*")), Seq(Resource("*"))),
@@ -106,18 +95,6 @@ object Policies {
     Permission(awsAccount, "billing", "Billing", billing)
 
   /**
-    * Allows interaction with AWS support tickets
-    */
-  val support = Policy(Seq(
-    Statement(Effect.Allow, Seq(
-      Action("support:*")
-    ), Seq(Resource("*")))
-  ))
-
-  def supportPermission(awsAccount: AwsAccount) =
-    Permission(awsAccount, "support", "Support", support)
-
-  /**
     * Access to GuardDuty and Read only access to Trusted Advisor.
     */
   val securityReview = Policy(Seq(
@@ -132,13 +109,11 @@ object Policies {
   implicit class AccountExtensions(val account: AwsAccount) extends AnyVal {
     def dev = Set(developerPermission(account))
     def accountAdmin = Set(accountAdminPermission(account))
-    def all = dev ++ accountAdmin
 
     // not included in all as these are subsets of dev
     def s3 = Set(s3ManagerPermission(account))
     def s3Read = Set(s3ReaderPermission(account))
     def billing = Set(billingPermission(account))
-    def support = Set(supportPermission(account))
     def securityReview = Set(securityReviewPermission(account))
   }
 }
