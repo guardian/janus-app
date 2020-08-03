@@ -8,15 +8,13 @@ object Access {
 
   import Accounts._
 
-  // Note: default permissions are granted to every developer that is named below
-  private val defaultPermissions = Production.support ++ Staging.support
+  // It is possible to combine permissions using Scala
+  private val securityAccess = Security.accountAdmin ++ Security.dev ++ allAccounts.flatMap(_.securityReview)
 
-  private val securityAccess = Security.all ++ allAccounts.flatMap(_.securityReview)
-
-  private val users: List[(String, Set[Permission])] = List(
+  val users: List[(String, Set[Permission])] = List(
     "sherlock.holmes" -> (Root.dev ++ securityAccess),
     "john.watson" -> (Production.dev ++ Staging.dev ++ Root.billing),
-    "irene.adler" -> (Production.dev ++ Staging.dev),
+    "irene.adler" -> (Production.dev ++ Staging.dev ++ DataLake.dev),
   )
 
   // Default permissions are granted to every developer that is named below
