@@ -11,10 +11,10 @@ import scala.Console.{GREEN, RED, RESET, YELLOW}
 object Main {
 
   val janusData = JanusData(
-    accounts = com.example.Accounts.allAccounts,
-    access = com.example.Access.acl,
-    admin = com.example.Admin.acl,
-    support = com.example.Support.acl
+    accounts = Accounts.allAccounts,
+    access = Access.acl,
+    admin = Admin.acl,
+    support = Support.acl
   )
 
   val outputFile = "exampleData.conf"

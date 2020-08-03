@@ -45,7 +45,7 @@ object Support {
     */
   private def convertRota(rotaEntry: ((Int, Int, Int), (String, String))): (DateTime, (String, String)) = {
     rotaEntry match { case ((year, month, day), users) =>
-      // rota changes over at 11am in the UK office
+      // this rota changes over at 11am London time
       new DateTime(year, month, day, 11, 0, DateTimeZone.forID("Europe/London")) -> users
     }
   }

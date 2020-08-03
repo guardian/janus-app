@@ -19,6 +19,9 @@ object Access {
     "irene.adler" -> (Production.dev ++ Staging.dev),
   )
 
+  // Default permissions are granted to every developer that is named below
+  private val defaultPermissions = Production.billing ++ Staging.billing
+
   val acl = ACL(users.toMap, defaultPermissions)
 
 }
