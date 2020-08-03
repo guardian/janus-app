@@ -9,9 +9,9 @@ object Support {
   import Accounts._
 
   // helper for adding half a rota
-  private val tbd = ""
+  val tbd = ""
 
-  val supportPeriod = Period.weeks(1)
+  private val supportPeriod = Period.weeks(1)
 
   /**
     * Support rota entries.
@@ -27,7 +27,7 @@ object Support {
     * Feel free to leave old rotas here for a while to preserve an easily
     * visible log of who had support access during past weeks.
     */
-  private val rota: List[((Int, Int, Int), (String, String))] = List(
+  val rota: List[((Int, Int, Int), (String, String))] = List(
     (1970, 1, 6)   -> ("sherlock.holmes", "john.watson"),
     (1970, 1, 13)  -> ("irene.adler", "sherlock.holmes"),
     (1970, 1, 20)  -> ("john.watson", "irene.adler"),

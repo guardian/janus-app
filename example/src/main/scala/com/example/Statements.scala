@@ -10,14 +10,14 @@ object Statements {
     Policy(statements.flatten.distinct)
   }
 
-  private def enforceCorrectPath(path: String): Boolean = {
+  def enforceCorrectPath(path: String): Boolean = {
     if (path == "/") true
     else {
       path.headOption.contains('/') && !path.lastOption.contains('/')
     }
   }
 
-  private def hierarchyPath(path: String) = s"${path.stripSuffix("/")}/*"
+  def hierarchyPath(path: String) = s"${path.stripSuffix("/")}/*"
 
   /**
     * Grants read-only access to a given path in an s3 bucket.
