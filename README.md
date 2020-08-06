@@ -131,10 +131,10 @@ and output this information as a "Janus Data" file that the Janus
 application can read.
 
 Using a separate Git repository keeps your private Access lists out of
-publicly available repositories while preserving. The Git log provides
-an immutable log of Access changes, the Scala library provides a
-typesafe way to write flexible and powerful configurations, and
-Scala's ecosystem makes it to (for example) run tests over your
+publicly available repositories. The Git log provides an immutable log
+of Access changes, the janus-config-tools library provides a typesafe
+way to write flexible and powerful configurations, and Scala's
+ecosystem makes it easy to (for example) run tests over your
 configuration.
 
 This repository includes an example project, full documentation of
