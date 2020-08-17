@@ -1,11 +1,9 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Janus - AWS login federation
 
-# This template is provided as an example and is not intended for production use.
-# The following line invalidates this template and will need to be removed for cloudformation to work.
-
+# !! This template is provided as an example and is not intended for production use !!
+# The following line invalidates this template and will need to be removed for CloudFormation to work.
 # TODO: add line that invalidates this template
-
 
 Parameters:
   Subnets:
@@ -15,7 +13,7 @@ Parameters:
     Description: The VPC in which Janus will run
     Type: AWS::EC2::VPC::Id
   KeyName:
-    Description: An ssh keypair to put on the instance
+    Description: Name of the SSH keypair to put on the instance
     Type: AWS::EC2::KeyPair::KeyName
   Stage:
     Description: Environment name
@@ -190,9 +188,7 @@ Resources:
         Ref: Subnets
       SecurityGroups:
         - Ref: LoadBalancerSecurityGroup
-      # TODO: consider adding AccessLoggingPolicy
 
-  # TODO: add launch config to copy the artifact and run the application
   LaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
@@ -202,10 +198,11 @@ Resources:
         Ref: AMI
       SecurityGroups:
         - Ref: InstanceSecurityGroup
-      InstanceType: t2.micro
+      InstanceType: t3.micro
       IamInstanceProfile:
         Ref: InstanceProfile
       AssociatePublicIpAddress: true
+      # TODO: add launch config to copy the artifact and run the application
       UserData:
         'Fn::Base64': |
           #!/bin/bash -ev
@@ -227,7 +224,7 @@ Resources:
       LoadBalancerNames:
         - Ref: LoadBalancer
 
-  # if you update this then you should also update the test bits in AuditTrailDBTest to aid with local development and testing
+  # if you update this then you should also update AuditTrailDBTest to aid with local development and testing
   AuditTrailTable:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
