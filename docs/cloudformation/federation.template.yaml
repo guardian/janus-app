@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Janus integration for login federation
+
+Parameters:
+  JanusInstanceRoleArn:
+    Description: ARN of Janus' IAM role
+    Type: String
+    AllowedPattern: "arn:aws:iam::[0-9]{12}:.+"
+    ConstraintDescription: Should be an AWS IAM role
+  JanusDevUserArn:
+    Description: User for developer testing
+    Type: String
+    AllowedPattern: "^$|arn:aws:iam::[0-9]{12}:.+"
+    ConstraintDescription: Optional ARN of an AWS IAM user
+
+Resources:
+  # Janus uses `assumeRole` to do login federation and needs a role in each target account
+  # https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_request.html#stsapi_comparison
+  FederationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /federation/
+      MaxSessionDuration: 36000
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS:
+            - !Ref JanusInstanceRoleArn
+            - !If [ HasDevUser, !Ref JanusDevUserArn, !Ref 'AWS::NoValue' ]
+          Action:
+          - sts:AssumeRole
+      Policies:
+      - PolicyName: login-federation
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Action: '*'
+            Resource: '*'
+      # this policy will be updated by Janus to create revocations
+      # (Note: the policy name needs to match the string in Federation.scala's disableFederation function)
+      - PolicyName: janus-role-revocation-policy
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Deny
+            Action: "*"
+            Resource: "*"
+            Condition:
+              DateLessThan:
+                aws:TokenIssueTime: 1970-01-01T00:00:00.000Z
+
+Outputs:
+  FederationRoleARN:
+    Value: !GetAtt FederationRole.Arn
+    Description: ARN of the role Janus will use to log users into this account
