@@ -2,8 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Janus - AWS login federation
 
 # !! This template is provided as an example and is not intended for production use !!
-# The following line invalidates this template and will need to be removed for CloudFormation to work.
-# TODO: add line that invalidates this template
+--!! This line invalidates the template and will need to be removed before CloudFormation !!--
 
 Parameters:
   Subnets:
@@ -99,7 +98,7 @@ Resources:
               # grant access to the distribution bucket in S3
               - Effect: Allow
                 Action: s3:GetObject
-                Resource: arn:aws:s3:::${DistBucketName}/*
+                Resource: !Sub arn:aws:s3:::${DistBucketName}/*
               - Effect: Allow
                 Action:
                   - cloudwatch:*
@@ -202,11 +201,12 @@ Resources:
       IamInstanceProfile:
         Ref: InstanceProfile
       AssociatePublicIpAddress: true
-      # TODO: add launch config to copy the artifact and run the application
+      # TODO: customise the UserData to copy the artifact and run the application
       UserData:
-        'Fn::Base64': |
+        'Fn::Base64': !Sub |
           #!/bin/bash -ev
-          echo PROD > /etc/stage
+          echo ${Stage} > /etc/stage
+
 
   AutoscalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
@@ -229,7 +229,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     Properties:
-      TableName: AuditTrail
+      TableName: !Sub AuditTrail-${Stage}
       AttributeDefinitions:
         - AttributeName: j_account
           AttributeType: S
