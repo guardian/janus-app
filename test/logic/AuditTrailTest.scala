@@ -65,7 +65,7 @@ class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with Eit
         Attribute("j_external", AttributeValue(n = Some("1"), l = Nil))
       )
 
-      "extracts an audit log from valid attritbutes" in {
+      "extracts an audit log from valid attributes" in {
         AuditTrail.auditLogFromAttrs(attrs).value should have(
           "account" as "account",
           "username" as "username",
