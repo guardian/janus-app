@@ -28,7 +28,6 @@ GET     /oauthCallback              controllers.AuthController.oauthCallback
 GET     /logout                     controllers.AuthController.logout
 
 GET     /healthcheck                controllers.Utility.healthcheck
-GET     /help                       controllers.Utility.help
 GET     /accounts                   controllers.Utility.accounts
 
 # Map static resources from the /public folder to the /assets URL path

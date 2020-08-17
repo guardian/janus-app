@@ -57,6 +57,13 @@ object Validation {
   def error(errors: List[String]): ValidationResult = ValidationResult(errors, Nil)
   def warning(warnings: List[String]): ValidationResult = ValidationResult(Nil, warnings)
 
+  def isClean(validationResult: ValidationResult): Boolean = {
+    validationResult.errors.isEmpty && validationResult.warnings.isEmpty
+  }
+  def noErrors(validationResult: ValidationResult): Boolean = {
+    validationResult.errors.isEmpty
+  }
+
   implicit val validationResultMonoid: Monoid[ValidationResult] = new Monoid[ValidationResult] {
     def empty: ValidationResult = valid
     def combine(vr1: ValidationResult, vr2: ValidationResult): ValidationResult = {

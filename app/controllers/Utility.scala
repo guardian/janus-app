@@ -13,10 +13,6 @@ class Utility(janusData: JanusData, controllerComponents: ControllerComponents, 
     Ok("ok")
   }
 
-  def help = authAction { implicit request =>
-    Ok(views.html.help(request.user, janusData))
-  }
-
   def accounts = authAction { implicit request =>
     val sortedAccounts = janusData.accounts.toList.sortBy(_.name.toLowerCase)
     val owners = sortedAccounts.map(account => account -> Owners.accountOwners(account, janusData.access))

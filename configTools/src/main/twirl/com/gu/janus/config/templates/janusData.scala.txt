@@ -3,6 +3,10 @@
 @(janusData: JanusData, allPermissions: Set[Permission])
 
 janus {
+    @janusData.permissionsRepo.map { repoUrl =>
+        permissionsRepo = "@repoUrl"
+    }
+
     accounts = [
         @for(account <- janusData.accounts){
             { name = "@account.name", key = "@account.authConfigKey" },

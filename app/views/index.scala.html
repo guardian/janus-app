@@ -32,7 +32,14 @@
             <div class="col">
                 <p>
                     If these permissions don't seem right, you can check them in
-                    <a href="https://github.com/guardian/janus">this application's GitHub repository</a>.
+                    @janusData.permissionsRepo match {
+                        case None => {
+                            Janus' configuration.
+                        }
+                        case Some(repoUrl) => {
+                            <a href="@repoUrl">Janus' configuration</a>.
+                        }
+                    }
                 </p>
             </div>
         </div>

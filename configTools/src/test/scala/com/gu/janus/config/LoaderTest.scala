@@ -9,12 +9,35 @@ import org.scalatest.{EitherValues, FreeSpec, Matchers, OptionValues}
 
 class LoaderTest extends FreeSpec with Matchers with EitherValues with OptionValues {
   val testConfig = ConfigFactory.load("example.conf")
+  val testConfigWithoutPermissionsRepo = ConfigFactory.load("example-without-permissions-repo.conf")
 
   "fromConfig" - {
     "parses the full example" in {
       val result = Loader.fromConfig(testConfig)
-      result.right.value
+      val janusData = result.right.value
       // TODO: check the data here as well
+      janusData.permissionsRepo shouldEqual Some("https://example.com/")
+    }
+
+    "parses an example without a permissions repo" in {
+      val result = Loader.fromConfig(testConfigWithoutPermissionsRepo)
+      val janusData = result.right.value
+      // TODO: check the data here as well
+      janusData.permissionsRepo shouldEqual None
+    }
+  }
+
+  "loadPermissionsRepo" - {
+    "loads the example file's repo" in {
+      val result = Loader.loadPermissionsRepo(testConfig)
+      val repoUrl = result.right.value.value
+      repoUrl shouldEqual "https://example.com/"
+    }
+
+    "loads example with no permissions repository" in {
+      val result = Loader.loadPermissionsRepo(testConfigWithoutPermissionsRepo)
+      val permissionsRepo = result.right.value
+      permissionsRepo shouldEqual None
     }
   }
 
