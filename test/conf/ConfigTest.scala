@@ -16,7 +16,8 @@ class ConfigTest extends FreeSpec with Matchers {
       accounts = Set.empty,
       ACL(Map.empty),
       ACL(Map.empty),
-      SupportACL.create(Map.empty, Set.empty, Period.weeks(1))
+      SupportACL.create(Map.empty, Set.empty, Period.weeks(1)),
+      Some("https://example.com/")
     )
 
     "When config has no 'federation' key..." - {

@@ -8,7 +8,8 @@ case class JanusData(
   accounts: Set[AwsAccount],
   access: ACL,
   admin: ACL,
-  support: SupportACL
+  support: SupportACL,
+  permissionsRepo: Option[String],
 )
 
 case class ACL(

@@ -9,6 +9,7 @@ import io.circe.generic.auto._
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone, Period}
 
+import scala.util.Try
 import scala.util.control.NonFatal
 
 
@@ -19,12 +20,26 @@ import scala.util.control.NonFatal
 object Loader {
   def fromConfig(config: Config): Either[String, JanusData] = {
     for {
+      permissionsRepo <- loadPermissionsRepo(config)
       accounts <- loadAccounts(config)
       permissions <- loadPermissions(config, accounts)
       access <- loadAccess(config, permissions)
       admin <- loadAdmin(config, permissions)
       support <- loadSupport(config, permissions)
-    } yield JanusData(accounts, access, admin, support)
+    } yield JanusData(accounts, access, admin, support, permissionsRepo)
+  }
+
+  private[config] def loadPermissionsRepo(config: Config): Either[String, Option[String]] = {
+    val path = "janus.permissionsRepo"
+    for {
+      permissionsRepo <-
+        if (config.hasPath(path)) {
+          Try(Option(config.getString(path))).toEither
+            .left.map(_.getMessage)
+        } else {
+          Right(None)
+        }
+    } yield permissionsRepo
   }
 
   private[config] def loadAccounts(config: Config): Either[String, Set[AwsAccount]] = {

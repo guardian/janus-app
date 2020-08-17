@@ -12,7 +12,7 @@ class WriterTest extends FreeSpec with Matchers {
   "allPermissions" - {
     "returns nothing for an empty JanusData" in {
       val janusData = JanusData(
-        Set.empty, ACL(Map.empty, Set.empty), ACL(Map.empty, Set.empty), SupportACL.create(Map.empty, Set.empty, Period.seconds(100))
+        Set.empty, ACL(Map.empty, Set.empty), ACL(Map.empty, Set.empty), SupportACL.create(Map.empty, Set.empty, Period.seconds(100)), None
       )
       Writer.allPermissions(janusData) shouldBe empty
     }
@@ -22,7 +22,9 @@ class WriterTest extends FreeSpec with Matchers {
       val janusData = JanusData(
         Set.empty,
         access = ACL(Map.empty, Set(permission)),
-        ACL(Map.empty, Set.empty), SupportACL.create(Map.empty, Set.empty, Period.seconds(100))
+        ACL(Map.empty, Set.empty),
+        SupportACL.create(Map.empty, Set.empty, Period.seconds(100)),
+        None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission)
     }
@@ -32,7 +34,9 @@ class WriterTest extends FreeSpec with Matchers {
       val janusData = JanusData(
         Set.empty,
         access = ACL(Map("user1" -> Set(permission)), Set.empty),
-        ACL(Map.empty, Set.empty), SupportACL.create(Map.empty, Set.empty, Period.seconds(100))
+        ACL(Map.empty, Set.empty),
+        SupportACL.create(Map.empty, Set.empty, Period.seconds(100)),
+        None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission)
     }
@@ -46,7 +50,9 @@ class WriterTest extends FreeSpec with Matchers {
           "user1" -> Set(permission1),
           "user2" -> Set(permission2)
         ), Set.empty),
-        ACL(Map.empty, Set.empty), SupportACL.create(Map.empty, Set.empty, Period.seconds(100))
+        ACL(Map.empty, Set.empty),
+        SupportACL.create(Map.empty, Set.empty, Period.seconds(100)),
+        None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission1, permission2)
     }
@@ -60,7 +66,8 @@ class WriterTest extends FreeSpec with Matchers {
           "admin1" -> Set(permission1),
           "admin2" -> Set(permission2)
         ), Set.empty),
-        SupportACL.create(Map.empty, Set.empty, Period.seconds(100))
+        SupportACL.create(Map.empty, Set.empty, Period.seconds(100)),
+        None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission1, permission2)
     }
@@ -68,8 +75,11 @@ class WriterTest extends FreeSpec with Matchers {
     "includes support permissions" in {
       val permission = Permission(account1, "perm", "Test permission", "", false)
       val janusData = JanusData(
-        Set.empty, ACL(Map.empty, Set.empty), ACL(Map.empty, Set.empty),
-        support = SupportACL.create(Map.empty, Set(permission), Period.seconds(100))
+        Set.empty,
+        ACL(Map.empty, Set.empty),
+        ACL(Map.empty, Set.empty),
+        support = SupportACL.create(Map.empty, Set(permission), Period.seconds(100)),
+        None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission)
     }
@@ -90,7 +100,8 @@ class WriterTest extends FreeSpec with Matchers {
           "admin1" -> Set(permission3),
           "admin2" -> Set(permission4)
         ), Set.empty),
-        SupportACL.create(Map.empty, Set(permission5), Period.seconds(100))
+        SupportACL.create(Map.empty, Set(permission5), Period.seconds(100)),
+        None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission1, permission2, permission3, permission4, permission5)
     }
@@ -99,16 +110,32 @@ class WriterTest extends FreeSpec with Matchers {
   "toConfig" - {
     "includes the support period" in {
       val janusData = JanusData(
-        Set.empty, ACL(Map.empty, Set.empty), ACL(Map.empty, Set.empty), SupportACL.create(Map.empty, Set.empty, Period.seconds(123456789))
+        Set.empty, ACL(Map.empty, Set.empty), ACL(Map.empty, Set.empty), SupportACL.create(Map.empty, Set.empty, Period.seconds(123456789)), None
       )
       Writer.toConfig(janusData) should include ("period = 123456789")
     }
 
     "includes the support period even if it was specified using a non-second period" in {
       val janusData = JanusData(
-        Set.empty, ACL(Map.empty, Set.empty), ACL(Map.empty, Set.empty), SupportACL.create(Map.empty, Set.empty, Period.weeks(1))
+        Set.empty, ACL(Map.empty, Set.empty), ACL(Map.empty, Set.empty), SupportACL.create(Map.empty, Set.empty, Period.weeks(1)), None
       )
       Writer.toConfig(janusData) should include ("period = 604800")
+    }
+
+    "includes the permissionsRepo" in {
+      val janusData = JanusData(
+        Set.empty, ACL(Map.empty, Set.empty), ACL(Map.empty, Set.empty), SupportACL.create(Map.empty, Set.empty, Period.weeks(1)),
+        Some("https://example.com/")
+      )
+      Writer.toConfig(janusData) should include ("""permissionsRepo = "https://example.com/"""")
+    }
+
+    "excludes permissionsRepo entry if it is empty" in {
+      val janusData = JanusData(
+        Set.empty, ACL(Map.empty, Set.empty), ACL(Map.empty, Set.empty), SupportACL.create(Map.empty, Set.empty, Period.weeks(1)),
+        None
+      )
+      Writer.toConfig(janusData) should not include "permissionsRepo"
     }
   }
 }
