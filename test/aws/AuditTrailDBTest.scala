@@ -39,7 +39,7 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
    * NB: Only use these for local testing
    * use the provided CloudFormation template to create table in AWS environments.
    *
-   * If you update this then be sure to also update the cloudformation template's definition.
+   * If you update this then be sure to also update the CloudFormation template's definition.
    */
   private[aws] def createTable()(implicit dynamoDB: DynamoDB) = {
     val auditTable = Table(
