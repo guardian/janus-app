@@ -61,25 +61,41 @@ The configuration section (below) shows what is required.
 
 ### In AWS
 
-This repository provides an example CloudFormation template. The
-template will create all the AWS resources necessary for running Janus
-in an AWS account.
+This repository provides an [example CloudFormation template](docs/cloudformation/example.template.yaml).
+The template will create all the AWS resources necessary for running
+Janus in an AWS account, excluding the TLS certificate and the S3
+bucket that will contain the Janus artifact.
 
 **Note:** A DNS entry will be required so that the Google OAuth flow
 can be used for the application. A hosts entry on your machine will
 suffice for testing.
 
-**TODO:** Provide sample CloudFormation file and instructions on its
-use.
-
 0. Upload a Janus artifact to S3
-0. Setup configuration as described below
+0. Modify the [example template](docs/cloudformation/example.template.yaml)
+to provide valid UserData for the launch configuration and remove the
+line that invalidates the template
 0. Use AWS Certificate Manager to create an HTTPS certificate for the domain
-0. Create CloudFormation stack using the supplied template
+0. Setup configuration as described below
+0. Create a CloudFormation stack using your modified template
 0. Point your DNS at Janus' Load Balancer
-0. Use the supplied federation template to integrate Janus with AWS accounts
+0. Use the [federation template](docs/cloudformation/federation.template.yaml) template to integrate Janus with AWS accounts
+
 
 ### Locally
+
+#### Janus AWS Profile
+
+Janus requires an AWS profile called `janus` to exist in your local AWS
+credentials file. Local dev is in a separate profile name so it is not
+overwritten when you obtain credentials using Janus. The credentials do
+not need to be real, you can get the application to run by adding the
+following to your AWS credentials file:
+
+```
+[janus]
+aws_access_key_id = FAKE000KEYID
+aws_secret_access_key = FAKE000SECRETKEY
+```
 
 #### Install Java
 
