@@ -4,6 +4,26 @@ Description: Janus - AWS login federation
 # !! This template is provided as an example and is not intended for production use !!
 --!! This line invalidates the template and will need to be removed before CloudFormation !!--
 
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: S3 Configuration
+        Parameters:
+          - DistBucketName
+      - Label:
+          default: Security
+        Parameters:
+          - AccessRestrictionCidr
+          - SSHAccessCidr
+          - KeyName
+      - Label:
+          default: Networking
+        Parameters:
+          - VpcId
+          - Subnets
+          - TLSCert
+
 Parameters:
   Subnets:
     Description: The subnets where Janus will run
@@ -144,7 +164,7 @@ Resources:
                     - - arn:aws:dynamodb
                       - Ref: AWS::Region
                       - Ref: AWS::AccountId
-                      - table/AuditTrail
+                      - !Sub table/AuditTrail-${Stage}
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
