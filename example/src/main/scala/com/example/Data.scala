@@ -8,6 +8,7 @@ object Data {
     accounts = Accounts.allAccounts,
     access = Access.acl,
     admin = Admin.acl,
-    support = Support.acl
+    support = Support.acl,
+    permissionsRepo = None,
   )
 }
