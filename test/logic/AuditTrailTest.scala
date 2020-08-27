@@ -3,11 +3,14 @@ package logic
 
 import awscala.dynamodbv2.{Attribute, AttributeValue}
 import com.gu.janus.model.{AuditLog, JConsole, JCredentials}
+import com.gu.janus.testutils.{HaveMatchers, RightValues}
 import org.joda.time.{DateTime, DateTimeZone, Duration}
-import org.scalatest.{EitherValues, FreeSpec, Matchers, OptionValues}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{EitherValues, OptionValues}
 
 
-class AuditTrailTest extends FreeSpec with Matchers with EitherValues with OptionValues {
+class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with EitherValues with OptionValues with HaveMatchers {
   "auditLogAttrs" - {
     val al = AuditLog("account", "username", new DateTime(2015, 11, 4, 15, 22), new Duration(3600 * 1000), "accessLevel", JCredentials, external = true)
 
@@ -63,19 +66,19 @@ class AuditTrailTest extends FreeSpec with Matchers with EitherValues with Optio
       )
 
       "extracts an audit log from valid attritbutes" in {
-        AuditTrail.auditLogFromAttrs(attrs).right.value should have(
-          'account ("account"),
-          'username ("username"),
-          'dateTime (new DateTime(2015, 11, 4, 15, 22, DateTimeZone.UTC)),
-          'duration (new Duration(3600000)),
-          'accessLevel ("dev"),
-          'accessType (JConsole),
-          'external (true)
+        AuditTrail.auditLogFromAttrs(attrs).value should have(
+          "account" as "account",
+          "username" as "username",
+          "dateTime" as new DateTime(2015, 11, 4, 15, 22, DateTimeZone.UTC),
+          "duration" as new Duration(3600000),
+          "accessLevel" as "dev",
+          "accessType" as JConsole,
+          "external" as true
         )
       }
 
       "extracts a correct (ms) duration from the DB's seconds field" in {
-        AuditTrail.auditLogFromAttrs(attrs).right.value.duration shouldEqual new Duration(3600 * 1000)
+        AuditTrail.auditLogFromAttrs(attrs).value.duration shouldEqual new Duration(3600 * 1000)
       }
     }
 

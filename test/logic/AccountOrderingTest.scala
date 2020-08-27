@@ -1,12 +1,14 @@
 package logic
 
 import fixtures.Fixtures._
-import org.scalatest.{FreeSpec, Matchers, OptionValues}
+import org.scalatest.OptionValues
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 import scala.util.Random.shuffle
 
 
-class AccountOrderingTest extends FreeSpec with Matchers with OptionValues {
+class AccountOrderingTest extends AnyFreeSpec with Matchers with OptionValues {
   import AccountOrdering._
 
   "userAccountAccess" - {

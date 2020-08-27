@@ -3,10 +3,11 @@ package aws
 import awscala.dynamodbv2._
 import com.gu.janus.model.{AuditLog, JConsole}
 import org.joda.time.{DateTime, DateTimeZone, Duration}
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class AuditTrailDBTest extends FreeSpec with Matchers {
+class AuditTrailDBTest extends AnyFreeSpec with Matchers {
 
   "test db stuff - use this to test DynamoDB stuff locally during development" - {
     implicit val dynamoDB = DynamoDB.local()

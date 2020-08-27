@@ -2,11 +2,12 @@ package logic
 
 import java.util.Base64
 
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.mvc.Cookie
 
 
-class FavouritesTest extends FreeSpec with Matchers {
+class FavouritesTest extends AnyFreeSpec with Matchers {
   import Favourites._
 
   "fromCookie" - {

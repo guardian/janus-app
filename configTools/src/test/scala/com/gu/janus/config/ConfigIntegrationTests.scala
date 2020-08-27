@@ -1,18 +1,20 @@
 package com.gu.janus.config
 
 import com.typesafe.config.ConfigFactory
-import org.scalatest.{EitherValues, FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 import java.io.{File, PrintWriter}
 
 import com.gu.janus.JanusConfig
+import com.gu.janus.testutils.RightValues
 
 
-class ConfigIntegrationTests extends FreeSpec with Matchers with EitherValues {
+class ConfigIntegrationTests extends AnyFreeSpec with Matchers with RightValues {
   "round trips" - {
     "the example janus data can be read, written and re-read" in {
       val testConfig = ConfigFactory.load("example.conf")
       val result = Loader.fromConfig(testConfig)
-      val janusData = result.right.value
+      val janusData = result.value
       val content = Writer.toConfig(janusData)
       val file = File.createTempFile("janus-config-integration-round-trip-test", ".conf")
       file.deleteOnExit()
@@ -37,7 +39,7 @@ class ConfigIntegrationTests extends FreeSpec with Matchers with EitherValues {
     "the example janus data that omits a permissions repo can be read, written and re-read" in {
       val testConfig = ConfigFactory.load("example-without-permissions-repo.conf")
       val result = Loader.fromConfig(testConfig)
-      val janusData = result.right.value
+      val janusData = result.value
       val content = Writer.toConfig(janusData)
       val file = File.createTempFile("janus-config-integration-round-trip-test-no-perm-repo", ".conf")
       file.deleteOnExit()
@@ -64,7 +66,7 @@ class ConfigIntegrationTests extends FreeSpec with Matchers with EitherValues {
     "print the generated config file to the console for manual inspection" ignore {
       val testConfig = ConfigFactory.load("example.conf")
       val result = Loader.fromConfig(testConfig)
-      val janusData = result.right.value
+      val janusData = result.value
       println(Writer.toConfig(janusData))
     }
   }

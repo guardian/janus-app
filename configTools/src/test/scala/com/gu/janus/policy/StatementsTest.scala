@@ -1,10 +1,11 @@
 package com.gu.janus.policy
 
 import Statements._
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class StatementsTest extends FreeSpec with Matchers {
+class StatementsTest extends AnyFreeSpec with Matchers {
   "policy helper" - {
     val statements = Seq(
       s3FullAccess("my-bucket", "/"),

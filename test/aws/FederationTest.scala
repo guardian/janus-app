@@ -3,11 +3,12 @@ package aws
 import awscala.Policy
 import com.gu.janus.model.{AwsAccount, Permission}
 import org.joda.time.{DateTime, DateTimeZone}
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 import testutils.JodaTimeUtils
 
 
-class FederationTest extends FreeSpec with Matchers with JodaTimeUtils {
+class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
   import Federation._
 
   "duration" - {

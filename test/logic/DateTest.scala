@@ -1,10 +1,12 @@
 package logic
 
 import org.joda.time._
-import org.scalatest.{OptionValues, Matchers, FreeSpec}
+import org.scalatest.OptionValues
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class DateTest extends FreeSpec with Matchers with OptionValues {
+class DateTest extends AnyFreeSpec with Matchers with OptionValues {
   "formatPeriod" - {
     "prints a nice message for a complex period" in {
       Date.formatPeriod(new Period(8, 10, 14, 0)) shouldEqual "8 hours, 10 minutes, 14 seconds"
@@ -75,12 +77,12 @@ class DateTest extends FreeSpec with Matchers with OptionValues {
 
       "excludes previous week" in {
         val (before, _) = Date.prevNextAuditWeeks(date)
-        before should be ('empty)
+        before shouldBe empty
       }
 
       "still includes the next week" in {
         val (_, after) = Date.prevNextAuditWeeks(date)
-        after should be ('defined)
+        after should not be empty
       }
     }
 
@@ -88,12 +90,12 @@ class DateTest extends FreeSpec with Matchers with OptionValues {
       val date = DateTime.now(DateTimeZone.UTC)
       "excludes the next week" in {
         val (_, after) = Date.prevNextAuditWeeks(date)
-        after should be ('empty)
+        after shouldBe empty
       }
 
       "still includes previous week" in {
         val (before, _) = Date.prevNextAuditWeeks(date)
-        before should be ('defined)
+        before should not be empty
       }
     }
   }

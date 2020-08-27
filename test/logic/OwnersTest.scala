@@ -2,10 +2,11 @@ package logic
 
 import com.gu.janus.model.{ACL, AccountOwners}
 import fixtures.Fixtures._
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class OwnersTest extends FreeSpec with Matchers {
+class OwnersTest extends AnyFreeSpec with Matchers {
   import Owners._
 
   val acl = ACL(Map(

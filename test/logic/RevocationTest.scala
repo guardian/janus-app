@@ -1,12 +1,13 @@
 package logic
 
 import com.gu.janus.model.AwsAccount
-import org.scalacheck.Prop.{BooleanOperators, forAll}
-import org.scalatest.prop.Checkers
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalacheck.Prop.{propBoolean, forAll}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.scalacheck.Checkers
 
 
-class RevocationTest extends FreeSpec with Matchers with Checkers {
+class RevocationTest extends AnyFreeSpec with Matchers with Checkers {
   import Revocation._
 
   "checkConfirmation" - {

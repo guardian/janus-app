@@ -10,6 +10,7 @@ import models._
 import play.api.Configuration
 import play.api.http.HttpConfiguration
 
+import scala.annotation.nowarn
 import scala.util.Try
 
 
@@ -49,12 +50,16 @@ object Config {
     val clientSecret = requiredString(config, "auth.google.clientSecret")
     val domain = requiredString(config, "auth.domain")
     val redirectUrl = s"${requiredString(config, "host")}/oauthCallback"
+
+    @nowarn
+    val legacyAntiForgeryChecker = AntiForgeryChecker.borrowSettingsFromPlay(httpConfiguration)
+
     GoogleAuthConfig(
       clientId = clientId,
       clientSecret = clientSecret,
       redirectUrl = redirectUrl,
-      domain = domain,
-      antiForgeryChecker = AntiForgeryChecker.borrowSettingsFromPlay(httpConfiguration)
+      domains = List(domain),
+      antiForgeryChecker = legacyAntiForgeryChecker,
     )
   }
 
@@ -62,6 +67,7 @@ object Config {
     val twoFAUser = requiredString(config, "auth.google.2faUser")
     val serviceAccountCertPath = requiredString(config, "auth.google.serviceAccountCertPath")
 
+    @nowarn
     val credentials: GoogleCredential = {
       val jsonCertStream =
         Try(new FileInputStream(serviceAccountCertPath))

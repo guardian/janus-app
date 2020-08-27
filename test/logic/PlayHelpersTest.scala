@@ -1,9 +1,10 @@
 package logic
 
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class PlayHelpersTest extends FreeSpec with Matchers {
+class PlayHelpersTest extends AnyFreeSpec with Matchers {
   import PlayHelpers._
 
   "splitQuerystringParam" - {

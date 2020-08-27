@@ -63,27 +63,27 @@ object AuditTrail extends Logging {
   def auditLogFromAttrs(attrs: Seq[Attribute]): Either[(String, Seq[Attribute]), AuditLog] = {
     for {
       account <- attrs.find("j_account" == _.name).flatMap(_.value.s)
-        .toRight("Could not extract account" -> attrs).right
+        .toRight("Could not extract account" -> attrs)
       username <- attrs.find("j_username" == _.name).flatMap(_.value.s)
-        .toRight("Could not extract username" -> attrs).right
+        .toRight("Could not extract username" -> attrs)
       dateTime <- attrs.find("j_timestamp" == _.name).flatMap(_.value.n)
         .map(ts => new DateTime(ts.toLong, DateTimeZone.UTC))
-        .toRight("Could not extract dateTime" -> attrs).right
+        .toRight("Could not extract dateTime" -> attrs)
       duration <- attrs.find("j_duration" == _.name).flatMap(_.value.n)
         .map(d => new Duration(d.toLong * 1000))
-        .toRight("Could not extract duration" -> attrs).right
+        .toRight("Could not extract duration" -> attrs)
       accessLevel <- attrs.find("j_accessLevel" == _.name).flatMap(_.value.s)
-        .toRight("Could not extract accessLevel" -> attrs).right
+        .toRight("Could not extract accessLevel" -> attrs)
       accessType <- attrs.find("j_accessType" == _.name).flatMap(_.value.s)
         .flatMap(JanusAccessType.fromString)
-        .toRight("Could not extract accessType" -> attrs).right
+        .toRight("Could not extract accessType" -> attrs)
       external <- attrs.find("j_external" == _.name).flatMap(attr => attr.value.n)
         .flatMap {
           case "0" => Some(false)
           case "1" => Some(true)
           case _ => None
         }
-        .toRight("Could not extract external" -> attrs).right
+        .toRight("Could not extract external" -> attrs)
     } yield AuditLog(account, username, dateTime, duration, accessLevel, accessType, external)
   }
 }
