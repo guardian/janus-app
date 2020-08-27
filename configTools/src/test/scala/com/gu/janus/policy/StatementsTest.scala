@@ -1,24 +1,21 @@
-package com.example
+package com.gu.janus.policy
 
-import com.example.Statements._
-import org.scalatest.freespec.AnyFreeSpec
-import org.scalatest.matchers.should.Matchers
+import Statements._
+import org.scalatest.{FreeSpec, Matchers}
 
 
-class StatementsTest extends AnyFreeSpec with Matchers {
-
+class StatementsTest extends FreeSpec with Matchers {
   "policy helper" - {
     val statements = Seq(
       s3FullAccess("my-bucket", "/"),
       s3ReadAccess("your-bucket", "/"),
-      s3ReadAccess("your-bucket", "/")
+      s3ReadAccess("your-bucket", "/"),
     )
 
     "deduplicates statements" in {
       val p = policy(statements :_*)
       p.statements.distinct shouldBe p.statements
     }
-
   }
 
   "enforceCorrectPath" - {

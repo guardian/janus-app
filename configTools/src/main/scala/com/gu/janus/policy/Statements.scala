@@ -1,4 +1,5 @@
-package com.example
+package com.gu.janus.policy
+
 
 import awscala._
 import com.amazonaws.auth.policy.Statement.Effect
@@ -10,14 +11,14 @@ object Statements {
     Policy(statements.flatten.distinct)
   }
 
-  def enforceCorrectPath(path: String): Boolean = {
+  private[policy] def enforceCorrectPath(path: String): Boolean = {
     if (path == "/") true
     else {
       path.headOption.contains('/') && !path.lastOption.contains('/')
     }
   }
 
-  def hierarchyPath(path: String) = s"${path.stripSuffix("/")}/*"
+  private[policy] def hierarchyPath(path: String) = s"${path.stripSuffix("/")}/*"
 
   /**
     * Grants read-only access to a given path in an s3 bucket.
@@ -61,6 +62,25 @@ object Statements {
     * Typically bundled as part of other S3 permissions.
     */
   def s3ConsoleEssentials(bucketName: String): Seq[Statement] = {
+    Seq(
+      Statement(Effect.Allow,
+        Seq(
+          Action("s3:ListAllMyBuckets"),
+          Action("s3:GetBucketLocation")
+        ),
+        Seq(Resource("arn:aws:s3:::*"))
+      ),
+      Statement(Effect.Allow,
+        Seq(Action("s3:ListBucket")),
+        Seq(Resource(s"arn:aws:s3:::$bucketName"))
+      )
+    )
+  }
+
+  /**
+    * Policy statements that allow basic access to s3 bucket (console view and object list)
+    */
+  def s3BucketBasicAccessStatements(bucketName: String): Seq[Statement] = {
     Seq(
       Statement(Effect.Allow,
         Seq(
