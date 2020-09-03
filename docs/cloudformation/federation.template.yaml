@@ -1,6 +1,9 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: Janus integration for login federation
 
+# !! This template is provided as an example and is not intended for production use !!
+--!! This line invalidates the template and will need to be removed before CloudFormation !!--
+
 Parameters:
   JanusInstanceRoleArn:
     Description: ARN of Janus' IAM role
