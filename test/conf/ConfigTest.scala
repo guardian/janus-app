@@ -5,13 +5,13 @@ import com.typesafe.config.{ConfigException, ConfigFactory}
 import fixtures.Fixtures._
 import models.{ConfigError, ConfigSuccess, ConfigWarn, FederationConfigError}
 import org.joda.time.Period
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.Configuration
 
-class ConfigTest extends FreeSpec with Matchers {
 
+class ConfigTest extends AnyFreeSpec with Matchers {
   "validateAccountConfig" - {
-
     val testJanusData = JanusData(
       accounts = Set.empty,
       ACL(Map.empty),

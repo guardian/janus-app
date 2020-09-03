@@ -2,10 +2,11 @@ package com.gu.janus.config
 
 import com.gu.janus.model._
 import org.joda.time.Period
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class WriterTest extends FreeSpec with Matchers {
+class WriterTest extends AnyFreeSpec with Matchers {
   val account1 = AwsAccount("Test 1", "test1")
   val account2 = AwsAccount("Test 2", "test2")
 

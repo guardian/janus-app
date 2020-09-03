@@ -3,11 +3,12 @@ package logic
 import fixtures.Fixtures._
 import awscala.sts.TemporaryCredentials
 import org.joda.time.DateTime
-import org.scalatest.{FreeSpec, Matchers}
 import ViewHelpers.shellCredentials
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class ViewHelpersTest extends FreeSpec with Matchers {
+class ViewHelpersTest extends AnyFreeSpec with Matchers {
 
   "shellCredentials" - {
     "for a single account" - {

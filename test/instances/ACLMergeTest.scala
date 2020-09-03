@@ -3,10 +3,11 @@ package instances
 import cats.syntax.semigroup._
 import cats.instances.set._
 import cats.instances.map._
-import org.scalatest.{FreeSpec, Matchers}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 
 
-class ACLMergeTest extends FreeSpec with Matchers {
+class ACLMergeTest extends AnyFreeSpec with Matchers {
   "Monoid instance for ACL entries" - {
     "should correctly combine overlapping entries" in {
       val a = Map(

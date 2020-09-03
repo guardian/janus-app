@@ -13,21 +13,22 @@ ThisBuild / scmInfo := Some(ScmInfo(url("https://github.com/guardian/janus-app")
 ThisBuild / homepage := scmInfo.value.map(_.browseUrl)
 ThisBuild / developers := List(Developer(id = "guardian", name = "Guardian", email = null, url = url("https://github.com/guardian")))
 
-val awsSdkVersion = "1.11.663"
-val awscalaVersion = "0.8.1"
-val circeVersion = "0.12.3"
+val awsSdkVersion = "1.11.848"
+val awscalaVersion = "0.8.4"
+val circeVersion = "0.13.0"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.0.0",
-  "joda-time" % "joda-time" % "2.10.5",
+  "joda-time" % "joda-time" % "2.10.6",
   "org.joda" % "joda-convert" % "2.2.1",
   "com.github.seratch" %% "awscala-iam" % awscalaVersion,
   "com.github.seratch" %% "awscala-sts" % awscalaVersion,
   "com.github.seratch" %% "awscala-dynamodb" % awscalaVersion,
-  "org.scalatest" %% "scalatest" % "3.0.5" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
+  "org.scalatest" %% "scalatest" % "3.2.2" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.14.1" % Test,
+  "org.scalatestplus" %% "scalacheck-1-14" % "3.2.2.0" % Test,
 )
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.11",
+  scalaVersion := "2.13.3",
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-target:jvm-1.8", "-Xfatal-warnings"),
   testOptions in Test ++= Seq(Tests.Argument(TestFrameworks.ScalaTest, "-o"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports"))
 )
@@ -57,7 +58,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu" %% "play-googleauth" % "0.7.4",
+      "com.gu.play-googleauth" %% "play-v27" % "1.0.7",
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion
@@ -89,14 +90,14 @@ lazy val root = (project in file("."))
 lazy val configTools = (project in file("configTools"))
   .enablePlugins(SbtTwirl)
   .settings(
-    addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.8"),
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full),
     commonSettings,
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.0",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
-      "io.circe" %% "circe-config" % "0.7.0"
+      "io.circe" %% "circe-config" % "0.8.0"
     ),
     name := "janus-config-tools",
     description := "Library for reading and writing Janus configuration files",

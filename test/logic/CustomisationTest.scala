@@ -1,11 +1,13 @@
 package logic
 
 import org.joda.time.{DateTimeZone, Duration}
-import org.scalatest.{OptionValues, Matchers, FreeSpec}
+import org.scalatest.OptionValues
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
 import play.api.test.FakeRequest
 
 
-class CustomisationTest extends FreeSpec with Matchers with OptionValues {
+class CustomisationTest extends AnyFreeSpec with Matchers with OptionValues {
   import Customisation._
 
   "durationParams" - {

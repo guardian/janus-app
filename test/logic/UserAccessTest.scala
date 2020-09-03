@@ -5,11 +5,13 @@ import com.gu.googleauth.UserIdentity
 import fixtures.Fixtures._
 import com.gu.janus.model.{ACL, SupportACL}
 import org.joda.time.{DateTimeZone, Period}
-import org.scalatest.{FreeSpec, Inspectors, Matchers, OptionValues}
+import org.scalatest.freespec.AnyFreeSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.{Inspectors, OptionValues}
 import testutils.JodaTimeUtils
 
 
-class UserAccessTest extends FreeSpec with Matchers with OptionValues with Inspectors with JodaTimeUtils {
+class UserAccessTest extends AnyFreeSpec with Matchers with OptionValues with Inspectors with JodaTimeUtils {
   import UserAccess._
 
   "userAccess" - {
@@ -20,7 +22,8 @@ class UserAccessTest extends FreeSpec with Matchers with OptionValues with Inspe
     }
 
     "returns the user's permissions if they exist" in {
-      userAccess("test.user", testAccess).value should contain allOf (fooDev, barDev)
+      val permissions = userAccess("test.user", testAccess).value
+      permissions should (contain (fooDev) and contain (barDev))
     }
 
     "include default permissions in all users' available permissions" in {
