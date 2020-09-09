@@ -78,7 +78,7 @@ line that invalidates the template
 0. Setup configuration as described below
 0. Create a CloudFormation stack using your modified template
 0. Point your DNS at Janus' Load Balancer
-0. Use the [federation template](docs/cloudformation/federation.template.yaml) template to integrate Janus with AWS accounts
+0. Use the [federation template](docs/cloudformation/federation-example.template.yaml) to integrate Janus with AWS accounts
 
 
 ### Locally
