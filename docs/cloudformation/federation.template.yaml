@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Janus integration for login federation
 
 # !! This template is provided as an example and is not intended for production use !!
---!! This line invalidates the template and will need to be removed before CloudFormation !!--
+--!! This line invalidates the template and will need to be removed before creating a stack !!--
 
 Parameters:
   JanusInstanceRoleArn:
@@ -10,11 +10,6 @@ Parameters:
     Type: String
     AllowedPattern: "arn:aws:iam::[0-9]{12}:.+"
     ConstraintDescription: Should be an AWS IAM role
-  JanusDevUserArn:
-    Description: User for developer testing
-    Type: String
-    AllowedPattern: "^$|arn:aws:iam::[0-9]{12}:.+"
-    ConstraintDescription: Optional ARN of an AWS IAM user
 
 Resources:
   # Janus uses `assumeRole` to do login federation and needs a role in each target account
@@ -30,7 +25,6 @@ Resources:
           Principal:
             AWS:
             - !Ref JanusInstanceRoleArn
-            - !If [ HasDevUser, !Ref JanusDevUserArn, !Ref 'AWS::NoValue' ]
           Action:
           - sts:AssumeRole
       Policies:
