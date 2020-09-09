@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Janus - AWS login federation
 
 # !! This template is provided as an example and is not intended for production use !!
---!! This line invalidates the template and will need to be removed before CloudFormation !!--
+--!! This line invalidates the template and will need to be removed before creating a stack !!--
 
 Metadata:
   AWS::CloudFormation::Interface:
@@ -16,7 +16,6 @@ Metadata:
         Parameters:
           - AccessRestrictionCidr
           - SSHAccessCidr
-          - KeyName
       - Label:
           default: Networking
         Parameters:
@@ -31,14 +30,12 @@ Parameters:
   VpcId:
     Description: The VPC in which Janus will run
     Type: AWS::EC2::VPC::Id
-  KeyName:
-    Description: Name of the SSH keypair to put on the instance
-    Type: AWS::EC2::KeyPair::KeyName
   Stage:
     Description: Environment name
     Type: String
     AllowedValues:
       - PROD
+      - CODE
   AMI:
     Description: Base AMI for Janus instances
     Type: AWS::EC2::Image::Id
@@ -158,13 +155,7 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:PutItem
                   - dynamodb:DescribeTable
-                Resource:
-                  Fn::Join:
-                    - ":"
-                    - - arn:aws:dynamodb
-                      - Ref: AWS::Region
-                      - Ref: AWS::AccountId
-                      - !Sub table/AuditTrail-${Stage}
+                Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/JanusAuditTrail-${Stage}
               - Effect: Allow
                 Action:
                   - dynamodb:GetItem
@@ -172,13 +163,7 @@ Resources:
                   - dynamodb:Query
                   - dynamodb:PutItem
                   - dynamodb:DescribeTable
-                Resource:
-                  Fn::Join:
-                    - ":"
-                    - - arn:aws:dynamodb
-                      - Ref: AWS::Region
-                      - Ref: AWS::AccountId
-                      - table/AuditTrail/index/AuditTrailByUser
+                Resource: !Sub arn:aws:dynamodb:${AWS::Region}:${AWS::AccountId}:table/JanusAuditTrail-${Stage}/index/AuditTrailByUser
 
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
@@ -211,8 +196,6 @@ Resources:
   LaunchConfig:
     Type: AWS::AutoScaling::LaunchConfiguration
     Properties:
-      KeyName:
-        Ref: KeyName
       ImageId:
         Ref: AMI
       SecurityGroups:
@@ -231,8 +214,6 @@ Resources:
   AutoscalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AvailabilityZones:
-        Fn::GetAZs: ""
       VPCZoneIdentifier:
         Ref: Subnets
       LaunchConfigurationName:
@@ -249,7 +230,7 @@ Resources:
     Type: AWS::DynamoDB::Table
     DeletionPolicy: Retain
     Properties:
-      TableName: !Sub AuditTrail-${Stage}
+      TableName: !Sub JanusAuditTrail-${Stage}
       AttributeDefinitions:
         - AttributeName: j_account
           AttributeType: S
