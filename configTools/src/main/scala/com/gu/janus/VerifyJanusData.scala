@@ -12,9 +12,9 @@ object VerifyJanusData {
   def main(args: Array[String]): Unit = {
     args.headOption.fold {
       Console.err.println(
-        s"""${RED}Error: Missing argument <output file>
+        s"""${RED}Error: Missing argument <input file>
            |
-           |Usage: example <output file>$RESET""".stripMargin)
+           |Usage: run <input file>$RESET""".stripMargin)
       System.exit(1)
     } { fileName =>
       try {
@@ -35,7 +35,7 @@ object VerifyJanusData {
           System.exit(1)
         case NonFatal(e) =>
           Console.err.println(
-            s"""${RED}Error loading JanusData: ${e.getMessage}>$RESET""".stripMargin)
+            s"""${RED}Error loading JanusData: ${e.getMessage}$RESET""".stripMargin)
           System.exit(1)
       }
     }
