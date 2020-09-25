@@ -236,9 +236,13 @@ metadata in [the build.sbt file](build.sbt).
 
 Updates can be published using `sbt`.
 
-    sbt release
+    sbt "project configTools" release
 
 **NOTE:** It isn't possible for the sbt release plugin to push updates
 to master because this app's Git repository is locked-down. After
 performing the release you should raise a PR to share the updated
-version number. The commits for this change will exist locally.
+version number. The commits for this change will exist locally;
+checkout a new branch, then push both the branch and relevant tags:
+
+    git checkout -b <BRANCH NAME>
+    git push origin <BRANCH NAME> --follow-tags
