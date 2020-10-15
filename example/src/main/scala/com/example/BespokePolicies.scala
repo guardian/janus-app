@@ -3,8 +3,8 @@ package com.example
 import awscala.{Action, Resource, Statement}
 import com.amazonaws.auth.policy.Statement.Effect
 import com.example.Accounts.{Production, Root, Security}
-import com.example.Statements.{policy, s3ReadAccess}
 import com.gu.janus.model.Permission
+import com.gu.janus.policy.Statements.{policy, s3ReadAccess}
 
 
 /**
