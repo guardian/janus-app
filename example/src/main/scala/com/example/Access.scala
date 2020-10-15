@@ -1,6 +1,7 @@
 package com.example
 
-import Policies.AccountExtensions
+import com.example.BespokePolicies._
+import com.example.Policies.AccountExtensions
 import com.gu.janus.model._
 
 
@@ -15,6 +16,7 @@ object Access {
     "sherlock.holmes" -> (Root.dev ++ securityAccess),
     "john.watson" -> (Production.dev ++ Staging.dev ++ Root.billing),
     "irene.adler" -> (Production.dev ++ Staging.dev ++ DataLake.dev),
+    "mycroft.holmes" -> (productionAccessLogs ++ securityCloudtrailLogs ++ serviceControlPolicyAccess)
   )
 
   // Default permissions are granted to every developer that is named below
