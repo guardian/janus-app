@@ -23,10 +23,14 @@ object BespokePolicies {
     policy(s3ReadAccess("example-access-logs", "/"))
   ))
 
-  // Service control policies (SCPs) can use to manage permissions in your organization.
-  // Attaching an SCP to an organization, organization unit (OU) or account will define
-  // a guardrail (sets limits) on the actions that can be performed within the account.
-  val serviceControlPolicy = Set(
+/**
+  * Service Control Polices (SCPs) are part of AWS Organisations, read about the features here:
+  * https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html
+  *
+  * You can only manage policies within the account that administers your AWS Organisation
+  * This policy will give a user the required permissions to manage SCPs.
+  */
+  val serviceControlPolicyManagement = Set(
     Permission(Root, "service-control-policy", "Service Control Policy management",
       policy(
         Seq(
