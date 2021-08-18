@@ -73,6 +73,8 @@ lazy val root = (project in file("."))
     riffRaffUploadArtifactBucket := Option("riffraff-artifact"),
     riffRaffUploadManifestBucket := Option("riffraff-builds"),
     riffRaffArtifactResources += (file("cloudformation/janus.template.yaml"), s"${name.value}-cfn/cfn.yaml"),
+    // not necessary for the app itself as the same config file is already packaged, used for audit purposes
+    riffRaffArtifactResources += (file("conf/janusData.conf"), s"audit/janusData.conf"),
 
     // packaging / running package
     pipelineStages in Assets := Seq(digest),
