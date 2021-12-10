@@ -30,7 +30,7 @@ val commonDependencies = Seq(
 lazy val commonSettings = Seq(
   scalaVersion := "2.13.3",
   scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-target:jvm-1.8", "-Xfatal-warnings"),
-  testOptions in Test ++= Seq(Tests.Argument(TestFrameworks.ScalaTest, "-o"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports"))
+  Test / testOptions ++= Seq(Tests.Argument(TestFrameworks.ScalaTest, "-o"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports"))
 )
 
 
@@ -41,7 +41,7 @@ lazy val root = (project in file("."))
     commonSettings,
     name := """janus""",
     version := "1.0-SNAPSHOT", // must match URL in cloudformation userdata
-    javaOptions in Universal ++= Seq(
+    Universal / javaOptions ++= Seq(
       "-Dconfig.file=/etc/gu/janus.conf", // for PROD, overridden by local sbt file
       "-Dpidfile.path=/dev/null",
       "-J-XX:MaxRAMFraction=2",
@@ -66,25 +66,25 @@ lazy val root = (project in file("."))
 
     // local development
     playDefaultPort := 9100,
-    fork in Test := false,
+    Test / fork := false,
 
     // deployment
-    riffRaffPackageType := (packageBin in Debian).value,
+    riffRaffPackageType := (Debian / packageBin).value,
     riffRaffUploadArtifactBucket := Option("riffraff-artifact"),
     riffRaffUploadManifestBucket := Option("riffraff-builds"),
     riffRaffArtifactResources += (file("cloudformation/janus.template.yaml"), s"${name.value}-cfn/cfn.yaml"),
 
     // packaging / running package
-    pipelineStages in Assets := Seq(digest),
-    sources in (Compile,doc) := Seq.empty,
-    publishArtifact in (Compile, packageDoc) := false,
+    Assets / pipelineStages := Seq(digest),
+    Compile / doc / sources := Seq.empty,
+    Compile / packageDoc / publishArtifact := false,
 
-    topLevelDirectory in Debian := Some(normalizedName.value),
-    serverLoading in Debian := Some(Systemd),
+    Debian / topLevelDirectory  := Some(normalizedName.value),
+    Debian / serverLoading  := Some(Systemd),
     debianPackageDependencies := Seq("java8-runtime-headless"),
-    maintainer in Debian := "Developer Experience <dig.dev.tooling@theguardian.com>",
-    packageSummary in Debian := "Janus webapp",
-    packageDescription in Debian := "Janus: Google-based federated AWS login",
+    Debian/ maintainer := "Developer Experience <dig.dev.tooling@theguardian.com>",
+    Debian / packageSummary := "Janus webapp",
+    Debian / packageDescription := "Janus: Google-based federated AWS login",
   )
 
 lazy val configTools = (project in file("configTools"))
