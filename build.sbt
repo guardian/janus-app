@@ -64,6 +64,8 @@ lazy val root = (project in file("."))
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion
     ),
 
+    dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
+
     // local development
     playDefaultPort := 9100,
     Test / fork := false,
