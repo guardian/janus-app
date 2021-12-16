@@ -12,8 +12,8 @@ class AuthController(janusData: JanusData, controllerComponents: ControllerCompo
                     (implicit val wsClient: WSClient, ec: ExecutionContext, assetsFinder: AssetsFinder)
   extends AbstractController(controllerComponents) with LoginSupport {
 
-  override val failureRedirectTarget: Call = routes.AuthController.loginError()
-  override val defaultRedirectTarget: Call = routes.Janus.index()
+  override val failureRedirectTarget: Call = routes.AuthController.loginError
+  override val defaultRedirectTarget: Call = routes.Janus.index
 
   def login = Action.async { implicit request =>
     startGoogleLogin()
@@ -25,7 +25,7 @@ class AuthController(janusData: JanusData, controllerComponents: ControllerCompo
   }
 
   def logout = Action { implicit request =>
-    Redirect(routes.Janus.index()).withNewSession
+    Redirect(routes.Janus.index).withNewSession
   }
 
   def oauthCallback = Action.async { implicit request =>
