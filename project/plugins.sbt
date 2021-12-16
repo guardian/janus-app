@@ -5,7 +5,7 @@ addSbtPlugin("com.gu" % "sbt-riffraff-artifact" % "1.1.9")
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.6")
 
 // The Play plugin
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.11")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.7.5")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.4")
 

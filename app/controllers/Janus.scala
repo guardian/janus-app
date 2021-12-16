@@ -113,7 +113,7 @@ class Janus(janusData: JanusData, controllerComponents: ControllerComponents, au
       favourites = Favourites.fromCookie(request.cookies.get("favourites"))
       newFavourites = Favourites.toggleFavourite(account, favourites)
     } yield {
-      Redirect(routes.Janus.index)
+      Redirect(routes.Janus.index())
         .withCookies(Favourites.toCookie(newFavourites))
     }) getOrElse Ok(views.html.error("Invalid favourite submission", Some(request.user), janusData))
   }
