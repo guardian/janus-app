@@ -13,6 +13,7 @@ import play.api.http.HttpConfiguration
 import scala.annotation.nowarn
 import scala.util.Try
 
+
 object Config {
   def roleArn(awsAccountAuthConfigKey: String, config: Configuration): String =
     requiredString(config, s"federation.$awsAccountAuthConfigKey.aws.roleArn")
@@ -79,7 +80,6 @@ object Config {
       credentials.getServiceAccountPrivateKey,
       twoFAUser
     )
-
     new GoogleGroupChecker(serviceAccount)
   }
 

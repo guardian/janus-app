@@ -45,7 +45,7 @@ class AppComponents(context: ApplicationLoader.Context)
     case ConfigSuccess =>
   }
 
-  val authAction = new AuthAction[AnyContent](googleAuthConfig, routes.AuthController.login, controllerComponents.parsers.default)(executionContext)
+  val authAction = new AuthAction[AnyContent](googleAuthConfig, routes.AuthController.login(), controllerComponents.parsers.default)(executionContext)
 
   override def router: Router = new Routes(
     httpErrorHandler,
