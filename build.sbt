@@ -33,6 +33,29 @@ lazy val commonSettings = Seq(
   Test / testOptions ++= Seq(Tests.Argument(TestFrameworks.ScalaTest, "-o"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports"))
 )
 
+/*
+Workaround for CVE-2020-36518 in Jackson
+@see https://github.com/orgs/playframework/discussions/11222
+ */
+val jacksonVersion         = "2.13.2"
+val jacksonDatabindVersion = "2.13.3"
+
+val jacksonOverrides = Seq(
+  "com.fasterxml.jackson.core"     % "jackson-core",
+  "com.fasterxml.jackson.core"     % "jackson-annotations",
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8",
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310"
+).map(_ % jacksonVersion)
+
+val jacksonDatabindOverrides = Seq(
+  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion
+)
+
+val akkaSerializationJacksonOverrides = Seq(
+  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor",
+  "com.fasterxml.jackson.module"     % "jackson-module-parameter-names",
+  "com.fasterxml.jackson.module"     %% "jackson-module-scala",
+).map(_ % jacksonVersion)
 
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin)
@@ -61,8 +84,11 @@ lazy val root = (project in file("."))
       "com.gu.play-googleauth" %% "play-v27" % "1.0.7",
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
-      "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion
-    ),
+      "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion,
+      "net.logstash.logback" % "logstash-logback-encoder" % "7.1.1"
+    ) ++ jacksonDatabindOverrides
+      ++ jacksonOverrides
+      ++ akkaSerializationJacksonOverrides,
 
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
 
