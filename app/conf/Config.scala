@@ -1,11 +1,9 @@
 package conf
 
 import java.io.FileInputStream
-
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
+import com.google.auth.oauth2.ServiceAccountCredentials
 import com.gu.googleauth.{AntiForgeryChecker, GoogleAuthConfig, GoogleGroupChecker, GoogleServiceAccount}
 import com.gu.janus.model._
-import com.typesafe.config.ConfigException
 import models._
 import play.api.Configuration
 import play.api.http.HttpConfiguration
@@ -66,21 +64,14 @@ object Config {
     val twoFAUser = requiredString(config, "auth.google.2faUser")
     val serviceAccountCertPath = requiredString(config, "auth.google.serviceAccountCertPath")
 
-    @nowarn
-    val credentials: GoogleCredential = {
+    val credentials: ServiceAccountCredentials = {
       val jsonCertStream =
         Try(new FileInputStream(serviceAccountCertPath))
           .getOrElse(throw new RuntimeException(s"Could not load service account JSON from $serviceAccountCertPath"))
-      GoogleCredential.fromStream(jsonCertStream)
+      ServiceAccountCredentials.fromStream(jsonCertStream)
     }
 
-    val serviceAccount = GoogleServiceAccount(
-      credentials.getServiceAccountId,
-      credentials.getServiceAccountPrivateKey,
-      twoFAUser
-    )
-
-    new GoogleGroupChecker(serviceAccount)
+    new GoogleGroupChecker(twoFAUser, credentials)
   }
 
   def twoFAGroup(config: Configuration): String = {
