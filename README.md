@@ -172,12 +172,13 @@ the missing values and includes the `application.config`.
 Instructions on configuring the Google Authentication for Janus are
 available in the
 [guardian/play-googleauth](https://github.com/guardian/play-googleauth)
-library.
+library. Please note that application secret rotation is not yet supported.
 
 The configuration properties that come from the above steps should be
 included in the application's configuration file, and the service
 account certificate file will need to be available to the Janus
 application.
+
 
 ## Non-Guardian use
 
