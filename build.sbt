@@ -14,7 +14,7 @@ ThisBuild / homepage := scmInfo.value.map(_.browseUrl)
 ThisBuild / developers := List(Developer(id = "guardian", name = "Guardian", email = null, url = url("https://github.com/guardian")))
 
 val awsSdkVersion = "1.11.1034"
-val awscalaVersion = "0.8.4"
+val awscalaVersion = "0.8.5"
 val circeVersion = "0.13.0"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.0.0",
