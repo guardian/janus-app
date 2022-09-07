@@ -9,7 +9,7 @@ addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.16")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.4")
 
-libraryDependencies += "org.vafer" % "jdeb" % "1.3" artifacts Artifact("jdeb", "jar", "jar")
+libraryDependencies += "org.vafer" % "jdeb" % "1.10" artifacts Artifact("jdeb", "jar", "jar")
 
 // These are for releasing to Sonatype
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.2-1")
