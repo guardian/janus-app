@@ -1,6 +1,6 @@
 resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releases/"
 
-addSbtPlugin("com.gu" % "sbt-riffraff-artifact" % "1.1.9")
+addSbtPlugin("com.gu" % "sbt-riffraff-artifact" % "1.1.18")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.6")
 
