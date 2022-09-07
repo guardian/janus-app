@@ -1,8 +1,6 @@
 package instances
 
 import cats.syntax.semigroup._
-import cats.instances.set._
-import cats.instances.map._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
