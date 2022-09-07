@@ -24,7 +24,7 @@ val commonDependencies = Seq(
   "com.github.seratch" %% "awscala-sts" % awscalaVersion,
   "com.github.seratch" %% "awscala-dynamodb" % awscalaVersion,
   "org.scalatest" %% "scalatest" % "3.2.2" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.14.1" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.14.3" % Test,
   "org.scalatestplus" %% "scalacheck-1-14" % "3.2.2.0" % Test,
 )
 lazy val commonSettings = Seq(
