@@ -17,14 +17,14 @@ val awsSdkVersion = "1.12.297"
 val awscalaVersion = "0.8.4"
 val circeVersion = "0.13.0"
 val commonDependencies = Seq(
-  "org.typelevel" %% "cats-core" % "2.0.0",
+  "org.typelevel" %% "cats-core" % "2.8.0",
   "joda-time" % "joda-time" % "2.11.1",
   "org.joda" % "joda-convert" % "2.2.1",
   "com.github.seratch" %% "awscala-iam" % awscalaVersion,
   "com.github.seratch" %% "awscala-sts" % awscalaVersion,
   "com.github.seratch" %% "awscala-dynamodb" % awscalaVersion,
   "org.scalatest" %% "scalatest" % "3.2.13" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.14.3" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.16.0" % Test,
   "org.scalatestplus" %% "scalacheck-1-14" % "3.2.2.0" % Test,
 )
 lazy val commonSettings = Seq(

@@ -3,7 +3,7 @@ package controllers
 import aws.{AuditTrailDB, Federation}
 import awscala.dynamodbv2.DynamoDB
 import awscala.sts.{STS, TemporaryCredentials}
-import cats.implicits._
+import cats.syntax.all._
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model._
 import conf.Config
