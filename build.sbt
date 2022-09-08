@@ -13,8 +13,8 @@ ThisBuild / scmInfo := Some(ScmInfo(url("https://github.com/guardian/janus-app")
 ThisBuild / homepage := scmInfo.value.map(_.browseUrl)
 ThisBuild / developers := List(Developer(id = "guardian", name = "Guardian", email = null, url = url("https://github.com/guardian")))
 
-val awsSdkVersion = "1.12.297"
-val awscalaVersion = "0.9.2"
+val awsSdkVersion = "1.12.298"
+val awscalaVersion = "0.8.5"
 val circeVersion = "0.13.0"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.8.0",
