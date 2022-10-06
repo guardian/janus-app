@@ -6,7 +6,7 @@ addSbtPlugin("com.gu" % "sbt-riffraff-artifact" % "1.1.18")
 addSbtPlugin("com.github.sbt" % "sbt-native-packager" % "1.9.9")  // scala-steward:off
 
 // The Play plugin
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.16")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.17")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.4")
 
