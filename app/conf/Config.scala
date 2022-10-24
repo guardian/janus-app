@@ -1,8 +1,9 @@
 package conf
 
-import java.io.FileInputStream
+import java.io.{File, FileInputStream}
 import com.google.auth.oauth2.ServiceAccountCredentials
 import com.gu.googleauth.{AntiForgeryChecker, GoogleAuthConfig, GoogleGroupChecker, GoogleServiceAccount}
+import com.gu.janus.JanusConfig
 import com.gu.janus.model._
 import models._
 import play.api.Configuration
@@ -40,6 +41,11 @@ object Config {
 
   def host(config: Configuration): String = {
     requiredString(config, "host")
+  }
+  def janusData(config: Configuration): JanusData = {
+    config.getOptional[String]("data.fileLocation")
+      .map(filePath => JanusConfig.load(new File(filePath)))
+      .getOrElse(JanusConfig.load("janusData.conf"))
   }
 
   def googleSettings(config: Configuration, httpConfiguration: HttpConfiguration): GoogleAuthConfig = {
