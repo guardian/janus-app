@@ -58,7 +58,7 @@ object Loader {
   private[config] def loadPermissions(config: Config, accounts: Set[AwsAccount]): Either[String, Set[Permission]] = {
     for {
       configuredPermissions <- config.as[ConfiguredPermissions]("janus").left.map(err => s"Failed to load permissions from path `janus`: ${err.getMessage}")
-      permissions <- configuredPermissions.permissions.traverse[Either[String, ?], Permission] { configuredPermission =>
+      permissions <- configuredPermissions.permissions.traverse[Either[String, *], Permission] { configuredPermission =>
         for {
           account <- accounts.find(_.authConfigKey == configuredPermission.account)
             .toRight(s"Account `${configuredPermission.account}` is referenced in a permission (${configuredPermission.label}) but is not defined in the list of AwsAccounts")
@@ -78,13 +78,15 @@ object Loader {
   private[config] def loadAccess(config: Config, permissions: Set[Permission]): Either[String, ACL] = {
     for {
       configuredAccess <- config.as[ConfiguredAccess]("janus.access").left.map(err => s"Failed to load access from path `janus.access`: ${err.getMessage}")
-      defaultAccess <- configuredAccess.defaultPermissions.traverse[Either[String, ?], Permission] { configuredAclEntry =>
+
+      // Traverse is used to take List[ConfiguredAclEntry] and map over it to get Either[String, List[Permission]]
+      defaultAccess <- configuredAccess.defaultPermissions.traverse[Either[String, *], Permission] { configuredAclEntry =>
         permissions.find(p => configuredAclEntry.account == p.account.authConfigKey && configuredAclEntry.label == p.label)
           .toRight(s"The 'default permissions' section of the access definition includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}")
       }
-      acl <- configuredAccess.acl.toList.traverse[Either[String, ?], (String, Set[Permission])] { case (username, configuredAclEntries) =>
+      acl <- configuredAccess.acl.toList.traverse[Either[String, *], (String, Set[Permission])] { case (username, configuredAclEntries) =>
         for {
-          userPermissions <- configuredAclEntries.traverse[Either[String, ?], Permission] { configuredAclEntry =>
+          userPermissions <- configuredAclEntries.traverse[Either[String, *], Permission] { configuredAclEntry =>
             permissions.find(p => configuredAclEntry.account == p.account.authConfigKey && configuredAclEntry.label == p.label)
               .toRight(s"The access configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}")
           }
@@ -96,9 +98,9 @@ object Loader {
   private[config] def loadAdmin(config: Config, permissions: Set[Permission]): Either[String, ACL] = {
     for {
       configuredAccess <- config.as[ConfiguredAdmin]("janus.admin").left.map(err => s"Failed to load admin config from path `janus.admin`: ${err.getMessage}")
-      acl <- configuredAccess.acl.toList.traverse[Either[String, ?], (String, Set[Permission])] { case (username, configuredAclEntries) =>
+      acl <- configuredAccess.acl.toList.traverse[Either[String, *], (String, Set[Permission])] { case (username, configuredAclEntries) =>
         for {
-          userPermissions <- configuredAclEntries.traverse[Either[String, ?], Permission] { configuredAclEntry =>
+          userPermissions <- configuredAclEntries.traverse[Either[String, *], Permission] { configuredAclEntry =>
             permissions.find(p => configuredAclEntry.account == p.account.authConfigKey && configuredAclEntry.label == p.label)
               .toRight(s"The admin configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}")
           }
@@ -110,12 +112,12 @@ object Loader {
   private[config] def loadSupport(config: Config, permissions: Set[Permission]): Either[String, SupportACL] = {
     for {
       configuredSupport <- config.as[ConfiguredSupport]("janus.support").left.map(err => s"Failed to load support config from path `janus.support`: ${err.getMessage}")
-      supportAccess <- configuredSupport.supportAccess.traverse[Either[String, ?], Permission] { configuredAclEntry =>
+      supportAccess <- configuredSupport.supportAccess.traverse[Either[String, *], Permission] { configuredAclEntry =>
         permissions.find(p => configuredAclEntry.account == p.account.authConfigKey && configuredAclEntry.label == p.label)
           .toRight(s"The support access definition includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}")
       }
       period = Period.seconds(configuredSupport.period)
-      rota <- configuredSupport.rota.traverse[Either[String, ?], (DateTime, (String, String))] {
+      rota <- configuredSupport.rota.traverse[Either[String, *], (DateTime, (String, String))] {
         case ConfiguredRotaEntry(startTime, user1 :: user2 :: Nil) =>
           Right(startTime -> (user1, user2))
         case ConfiguredRotaEntry(startTime, users) =>

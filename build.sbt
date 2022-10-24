@@ -29,7 +29,7 @@ val commonDependencies = Seq(
 )
 lazy val commonSettings = Seq(
   scalaVersion := "2.13.10",
-  scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-target:jvm-1.8", "-Xfatal-warnings"),
+  scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked", "-release:8", "-Xfatal-warnings"),
   Test / testOptions ++= Seq(Tests.Argument(TestFrameworks.ScalaTest, "-o"), Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports"))
 )
 
@@ -118,7 +118,7 @@ lazy val root = (project in file("."))
 lazy val configTools = (project in file("configTools"))
   .enablePlugins(SbtTwirl)
   .settings(
-    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.11.0" cross CrossVersion.full),
+    addCompilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full),
     commonSettings,
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.0",
