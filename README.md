@@ -127,7 +127,7 @@ This will likely involve DNS or a hosts entry as well as a webserver
 Use sbt to run Janus in development mode. The server will
 automatically recompile and reload when changes are made.
 
-    sbt -Dconfig.file=<PATH>/janus.local.conf run
+    sbt -Dconfig.file=<PATH>/janusData.conf run
 
 ## Configuration
 
