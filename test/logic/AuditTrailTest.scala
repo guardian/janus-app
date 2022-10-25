@@ -7,10 +7,11 @@ import com.gu.janus.testutils.{HaveMatchers, RightValues}
 import org.joda.time.{DateTime, DateTimeZone, Duration}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{EitherValues, OptionValues}
+import org.scalatest.{OptionValues}
 
+import scala.language.implicitConversions
 
-class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with EitherValues with OptionValues with HaveMatchers {
+class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with OptionValues with HaveMatchers {
   "auditLogAttrs" - {
     val al = AuditLog("account", "username", new DateTime(2015, 11, 4, 15, 22), new Duration(3600 * 1000), "accessLevel", JCredentials, external = true)
 
@@ -98,7 +99,9 @@ class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with Eit
       }
 
       "returns a useful error message when it fails" in {
-        val (message, _) = AuditTrail.auditLogFromAttrs(attrs).left.value
+        val (message, _) = AuditTrail.auditLogFromAttrs(attrs)
+          .left.getOrElse(("nope", "nope"))
+        
         message should include("account")
       }
     }
