@@ -13,18 +13,18 @@ ThisBuild / scmInfo := Some(ScmInfo(url("https://github.com/guardian/janus-app")
 ThisBuild / homepage := scmInfo.value.map(_.browseUrl)
 ThisBuild / developers := List(Developer(id = "guardian", name = "Guardian", email = null, url = url("https://github.com/guardian")))
 
-val awsSdkVersion = "1.11.848"
-val awscalaVersion = "0.8.4"
+val awsSdkVersion = "1.12.327"
+val awscalaVersion = "0.9.2"
 val circeVersion = "0.13.0"
 val commonDependencies = Seq(
-  "org.typelevel" %% "cats-core" % "2.0.0",
-  "joda-time" % "joda-time" % "2.10.6",
-  "org.joda" % "joda-convert" % "2.2.1",
+  "org.typelevel" %% "cats-core" % "2.8.0",
+  "joda-time" % "joda-time" % "2.12.0",
+  "org.joda" % "joda-convert" % "2.2.2",
   "com.github.seratch" %% "awscala-iam" % awscalaVersion,
   "com.github.seratch" %% "awscala-sts" % awscalaVersion,
   "com.github.seratch" %% "awscala-dynamodb" % awscalaVersion,
-  "org.scalatest" %% "scalatest" % "3.2.2" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.14.1" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.14" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
   "org.scalatestplus" %% "scalacheck-1-14" % "3.2.2.0" % Test,
 )
 lazy val commonSettings = Seq(
@@ -37,8 +37,8 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion         = "2.13.2"
-val jacksonDatabindVersion = "2.13.3"
+val jacksonVersion         = "2.13.4"
+val jacksonDatabindVersion = "2.13.4.2"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core"     % "jackson-core",
@@ -85,7 +85,7 @@ lazy val root = (project in file("."))
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion,
-      "net.logstash.logback" % "logstash-logback-encoder" % "7.1.1"
+      "net.logstash.logback" % "logstash-logback-encoder" % "7.2"
     ) ++ jacksonDatabindOverrides
       ++ jacksonOverrides
       ++ akkaSerializationJacksonOverrides,
