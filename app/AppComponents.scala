@@ -33,7 +33,7 @@ class AppComponents(context: ApplicationLoader.Context)
     if (context.environment.mode == play.api.Mode.Prod) DynamoDB.at(Regions.getCurrentRegion)
     else DynamoDB.local()
 
-  val janusData = JanusConfig.load("janusData.conf")
+  val janusData = Config.janusData(configuration)
 
   Config.validateAccountConfig(janusData, configuration) match {
     case FederationConfigError(causedBy) =>
