@@ -150,3 +150,11 @@ lazy val configTools = (project in file("configTools"))
     ),
     releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease")
   )
+
+/*
+ * This is required for Scala Steward to run until SBT plugins all migrated to scala-xml 2.
+ * See https://github.com/scala-steward-org/scala-steward/blob/13d63e8ae98a714efcdac2c7af18f004130512fa/project/plugins.sbt#L16-L19
+ */
+ThisBuild / libraryDependencySchemes ++= Seq(
+  "org.scala-lang.modules" %% "scala-xml" % VersionScheme.Always
+)
