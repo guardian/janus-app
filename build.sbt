@@ -13,7 +13,7 @@ ThisBuild / scmInfo := Some(ScmInfo(url("https://github.com/guardian/janus-app")
 ThisBuild / homepage := scmInfo.value.map(_.browseUrl)
 ThisBuild / developers := List(Developer(id = "guardian", name = "Guardian", email = null, url = url("https://github.com/guardian")))
 
-val awsSdkVersion = "1.12.335"
+val awsSdkVersion = "1.12.336"
 val awscalaVersion = "0.9.2"
 val circeVersion = "0.13.0"
 val commonDependencies = Seq(
@@ -38,7 +38,7 @@ Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
 val jacksonVersion         = "2.14.0"
-val jacksonDatabindVersion = "2.13.4.2"
+val jacksonDatabindVersion = "2.14.0"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core"     % "jackson-core",
