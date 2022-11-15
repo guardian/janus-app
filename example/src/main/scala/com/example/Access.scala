@@ -16,7 +16,7 @@ object Access {
     "sherlock.holmes" -> (Root.dev ++ securityAccess),
     "john.watson" -> (Production.dev ++ Staging.dev ++ Root.billing),
     "irene.adler" -> (Production.dev ++ Staging.dev ++ DataLake.dev),
-    "mycroft.holmes" -> (productionAccessLogs ++ securityCloudtrailLogs ++ serviceControlPolicyAccess)
+    "mycroft.holmes" -> (productionAccessLogs ++ securityCloudtrailLogs ++ serviceControlPolicyManagement)
   )
 
   // Default permissions are granted to every developer that is named below
