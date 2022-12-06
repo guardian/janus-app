@@ -21,6 +21,6 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.4")
 libraryDependencies += "org.vafer" % "jdeb" % "1.10" artifacts Artifact("jdeb", "jar", "jar")
 
 // These are for releasing to Sonatype
-addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.2.0")
+addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.2.1")
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.15")
 addSbtPlugin("com.github.sbt" % "sbt-release" % "1.1.0")
