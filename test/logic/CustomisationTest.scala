@@ -6,7 +6,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.test.FakeRequest
 
-
 class CustomisationTest extends AnyFreeSpec with Matchers with OptionValues {
   import Customisation._
 

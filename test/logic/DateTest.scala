@@ -5,15 +5,18 @@ import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class DateTest extends AnyFreeSpec with Matchers with OptionValues {
   "formatPeriod" - {
     "prints a nice message for a complex period" in {
-      Date.formatPeriod(new Period(8, 10, 14, 0)) shouldEqual "8 hours, 10 minutes, 14 seconds"
+      Date.formatPeriod(
+        new Period(8, 10, 14, 0)
+      ) shouldEqual "8 hours, 10 minutes, 14 seconds"
     }
 
     "prints a nice message for a period with only a few fields" in {
-      Date.formatPeriod(new Period(8, 0, 14, 0)) shouldEqual "8 hours, 14 seconds"
+      Date.formatPeriod(
+        new Period(8, 0, 14, 0)
+      ) shouldEqual "8 hours, 14 seconds"
     }
 
     "can show a trivial interval" in {
@@ -27,29 +30,51 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
     }
 
     "correctly formats a large period" in {
-      Date.formatDuration(new Duration(12 * 60 * 60 * 1000)) shouldEqual "12 hours"
+      Date.formatDuration(
+        new Duration(12 * 60 * 60 * 1000)
+      ) shouldEqual "12 hours"
     }
 
     "correctly formats a complex period" in {
-      Date.formatDuration(new Duration((3600 + 60 + 5) * 1000)) shouldEqual "1 hour, 1 minute, 5 seconds"
+      Date.formatDuration(
+        new Duration((3600 + 60 + 5) * 1000)
+      ) shouldEqual "1 hour, 1 minute, 5 seconds"
     }
   }
 
   "firstDayOfWeek" - {
     "returns monday for the example date" in {
       val date = new DateTime(2015, 11, 6, 0, 0, 0, DateTimeZone.UTC)
-      Date.firstDayOfWeek(date) shouldEqual new DateTime(2015, 11, 2, 0, 0, 0, DateTimeZone.UTC)
+      Date.firstDayOfWeek(date) shouldEqual new DateTime(
+        2015,
+        11,
+        2,
+        0,
+        0,
+        0,
+        DateTimeZone.UTC
+      )
     }
 
     "returns the same date when given a monday" in {
       val date = new DateTime(2015, 11, 9, 0, 0, 0, DateTimeZone.UTC)
-      Date.firstDayOfWeek(date) shouldEqual new DateTime(2015, 11, 9, 0, 0, 0, DateTimeZone.UTC)
+      Date.firstDayOfWeek(date) shouldEqual new DateTime(
+        2015,
+        11,
+        9,
+        0,
+        0,
+        0,
+        DateTimeZone.UTC
+      )
     }
   }
 
   "parseDateStr" - {
     "should parse a nice date" in {
-      Date.parseDateStr("2015-11-6").value shouldEqual new DateTime(2015, 11, 6, 0, 0, 0, DateTimeZone.UTC)
+      Date
+        .parseDateStr("2015-11-6")
+        .value shouldEqual new DateTime(2015, 11, 6, 0, 0, 0, DateTimeZone.UTC)
     }
 
     "fails to parse junk" in {
@@ -60,7 +85,15 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
   "weekAround" - {
     "gets the full week surrounding the given date" in {
       val date = new DateTime(2015, 11, 6, 0, 0, 0, DateTimeZone.UTC)
-      Date.weekAround(date) shouldEqual (new DateTime(2015, 11, 2, 0, 0, 0, DateTimeZone.UTC), new DateTime(2015, 11, 9, 0, 0, 0, DateTimeZone.UTC))
+      Date.weekAround(date) shouldEqual (new DateTime(
+        2015,
+        11,
+        2,
+        0,
+        0,
+        0,
+        DateTimeZone.UTC
+      ), new DateTime(2015, 11, 9, 0, 0, 0, DateTimeZone.UTC))
     }
   }
 

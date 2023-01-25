@@ -7,7 +7,6 @@ import org.scalatest.matchers.should.Matchers
 
 import scala.util.Random.shuffle
 
-
 class AccountOrderingTest extends AnyFreeSpec with Matchers with OptionValues {
   import AccountOrdering._
 
@@ -16,38 +15,54 @@ class AccountOrderingTest extends AnyFreeSpec with Matchers with OptionValues {
 
     "given no favourites" - {
       "sorts accounts by the number of available permissions, descending" in {
-        orderedAccountAccess(perms, Nil).map(_.awsAccount) shouldEqual List(fooAct, quxAct, barAct, bazAct)
+        orderedAccountAccess(perms, Nil)
+          .map(_.awsAccount) shouldEqual List(fooAct, quxAct, barAct, bazAct)
       }
     }
 
     "given favourite accounts" - {
       "puts a favourite first" in {
-        orderedAccountAccess(perms, List("baz")).map(_.awsAccount).head shouldEqual bazAct
+        orderedAccountAccess(perms, List("baz"))
+          .map(_.awsAccount)
+          .head shouldEqual bazAct
       }
 
       "preserves sorting of non-favourite accounts" in {
-        orderedAccountAccess(perms, List("baz")).map(_.awsAccount).tail shouldEqual List(fooAct, quxAct, barAct)
+        orderedAccountAccess(perms, List("baz"))
+          .map(_.awsAccount)
+          .tail shouldEqual List(fooAct, quxAct, barAct)
       }
 
       "sorts favourites by provided order" in {
-        orderedAccountAccess(perms, List("baz", "bar")).map(_.awsAccount)shouldEqual List(bazAct, barAct, fooAct, quxAct)
+        orderedAccountAccess(perms, List("baz", "bar")).map(
+          _.awsAccount
+        ) shouldEqual List(bazAct, barAct, fooAct, quxAct)
       }
     }
 
     "sorts the account permissions" in {
-      val fooPerms = orderedAccountAccess(perms, Nil).find(_.awsAccount == fooAct).value.permissions
-      fooPerms shouldEqual List(developerPermission(fooAct), s3ManagerPermission(fooAct), accountAdminPermission(fooAct))
+      val fooPerms = orderedAccountAccess(perms, Nil)
+        .find(_.awsAccount == fooAct)
+        .value
+        .permissions
+      fooPerms shouldEqual List(
+        developerPermission(fooAct),
+        s3ManagerPermission(fooAct),
+        accountAdminPermission(fooAct)
+      )
     }
   }
 
   "Permission's ordering" - {
     "preserve dev before admin" in {
-      val perms = List(developerPermission(fooAct), accountAdminPermission(fooAct))
+      val perms =
+        List(developerPermission(fooAct), accountAdminPermission(fooAct))
       perms.sorted shouldEqual perms
     }
 
     "put dev before admin" in {
-      val perms = List(developerPermission(fooAct), accountAdminPermission(fooAct))
+      val perms =
+        List(developerPermission(fooAct), accountAdminPermission(fooAct))
       perms.reverse.sorted shouldEqual perms
     }
 
@@ -62,27 +77,42 @@ class AccountOrderingTest extends AnyFreeSpec with Matchers with OptionValues {
     }
 
     "preserve admin after another permission" in {
-      val perms = List(s3ReaderPermission(fooAct), accountAdminPermission(fooAct))
+      val perms =
+        List(s3ReaderPermission(fooAct), accountAdminPermission(fooAct))
       perms.sorted shouldEqual perms
     }
 
     "put admin after another permission" in {
-      val perms = List(s3ReaderPermission(fooAct), accountAdminPermission(fooAct))
+      val perms =
+        List(s3ReaderPermission(fooAct), accountAdminPermission(fooAct))
       perms.reverse.sorted shouldEqual perms
     }
 
     "preserves dev - other - admin" in {
-      val perms = List(developerPermission(fooAct), s3ReaderPermission(fooAct), accountAdminPermission(fooAct))
+      val perms = List(
+        developerPermission(fooAct),
+        s3ReaderPermission(fooAct),
+        accountAdminPermission(fooAct)
+      )
       perms.sorted shouldEqual perms
     }
 
     "puts dev - other - admin" in {
-      val perms = List(developerPermission(fooAct), s3ReaderPermission(fooAct), accountAdminPermission(fooAct))
+      val perms = List(
+        developerPermission(fooAct),
+        s3ReaderPermission(fooAct),
+        accountAdminPermission(fooAct)
+      )
       perms.reverse.sorted shouldEqual perms
     }
 
     "orders alphabetically for non dev/admin permissions" in {
-      val perms = List(kinesisReadPermission(fooAct), lambdaPermission(fooAct), s3ManagerPermission(fooAct), s3ReaderPermission(fooAct))
+      val perms = List(
+        kinesisReadPermission(fooAct),
+        lambdaPermission(fooAct),
+        s3ManagerPermission(fooAct),
+        s3ReaderPermission(fooAct)
+      )
       perms.reverse.sorted shouldEqual perms
     }
 

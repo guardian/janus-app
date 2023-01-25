@@ -3,13 +3,15 @@ package logic
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class PlayHelpersTest extends AnyFreeSpec with Matchers {
   import PlayHelpers._
 
   "splitQuerystringParam" - {
     "splits a querystring parameter into its parts" in {
-      splitQuerystringParam("value1,value2") shouldEqual List("value1", "value2")
+      splitQuerystringParam("value1,value2") shouldEqual List(
+        "value1",
+        "value2"
+      )
     }
 
     "works on a single value" in {

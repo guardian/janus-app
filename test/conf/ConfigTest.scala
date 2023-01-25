@@ -9,7 +9,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.Configuration
 
-
 class ConfigTest extends AnyFreeSpec with Matchers {
   "validateAccountConfig" - {
     val testJanusData = JanusData(
@@ -26,14 +25,17 @@ class ConfigTest extends AnyFreeSpec with Matchers {
       "should succeed if the accounts list in janusData is empty" in {
         val janusData = testJanusData.copy(accounts = Set.empty)
 
-        Config.validateAccountConfig(janusData, emptyConfig) shouldEqual ConfigSuccess
+        Config.validateAccountConfig(
+          janusData,
+          emptyConfig
+        ) shouldEqual ConfigSuccess
       }
 
       "should return an FederationConfigError if the janusData lists one or more accounts" in {
         val janusData = testJanusData.copy(accounts = Set(fooAct, barAct))
         val result = Config.validateAccountConfig(janusData, emptyConfig)
 
-        result shouldBe a [FederationConfigError]
+        result shouldBe a[FederationConfigError]
       }
     }
 
@@ -48,10 +50,14 @@ class ConfigTest extends AnyFreeSpec with Matchers {
                |   }
                | }
              """.stripMargin
-          ))
+          )
+        )
         val janusData = testJanusData.copy(accounts = Set.empty)
 
-        Config.validateAccountConfig(janusData, emptyConfig) shouldEqual ConfigSuccess
+        Config.validateAccountConfig(
+          janusData,
+          emptyConfig
+        ) shouldEqual ConfigSuccess
       }
 
       "should succeed if janusData and config contain the exact same accounts" in {
@@ -66,10 +72,15 @@ class ConfigTest extends AnyFreeSpec with Matchers {
                |   }
                | }
              """.stripMargin
-          ))
-        val janusData = testJanusData.copy(accounts = Set(fooAct, barAct, bazAct))
+          )
+        )
+        val janusData =
+          testJanusData.copy(accounts = Set(fooAct, barAct, bazAct))
 
-        Config.validateAccountConfig(janusData, exampleConfig) shouldEqual ConfigSuccess
+        Config.validateAccountConfig(
+          janusData,
+          exampleConfig
+        ) shouldEqual ConfigSuccess
       }
 
       "should return an error including the account missing from the config" in {
@@ -83,10 +94,15 @@ class ConfigTest extends AnyFreeSpec with Matchers {
                |   }
                | }
            """.stripMargin
-          ))
-        val janusData = testJanusData.copy(accounts = Set(fooAct, barAct, bazAct))
+          )
+        )
+        val janusData =
+          testJanusData.copy(accounts = Set(fooAct, barAct, bazAct))
 
-        Config.validateAccountConfig(janusData, exampleConfig) shouldEqual ConfigError(Set("bar"))
+        Config.validateAccountConfig(
+          janusData,
+          exampleConfig
+        ) shouldEqual ConfigError(Set("bar"))
       }
 
       "should return an error including all of the accounts missing from the config" in {
@@ -99,10 +115,15 @@ class ConfigTest extends AnyFreeSpec with Matchers {
                |   }
                | }
            """.stripMargin
-          ))
-        val janusData = testJanusData.copy(accounts = Set(fooAct, barAct, bazAct))
+          )
+        )
+        val janusData =
+          testJanusData.copy(accounts = Set(fooAct, barAct, bazAct))
 
-        Config.validateAccountConfig(janusData, exampleConfig) shouldEqual ConfigError(Set("bar", "baz"))
+        Config.validateAccountConfig(
+          janusData,
+          exampleConfig
+        ) shouldEqual ConfigError(Set("bar", "baz"))
       }
 
       "should warn if janusData is missing an account" in {
@@ -117,10 +138,14 @@ class ConfigTest extends AnyFreeSpec with Matchers {
                |   }
                | }
              """.stripMargin
-          ))
+          )
+        )
         val janusData = testJanusData.copy(accounts = Set(fooAct, bazAct))
 
-        Config.validateAccountConfig(janusData, exampleConfig) shouldEqual ConfigWarn(Set("bar"))
+        Config.validateAccountConfig(
+          janusData,
+          exampleConfig
+        ) shouldEqual ConfigWarn(Set("bar"))
       }
 
       "should warn if janusData is missing more than one account" in {
@@ -135,10 +160,14 @@ class ConfigTest extends AnyFreeSpec with Matchers {
                |   }
                | }
              """.stripMargin
-          ))
+          )
+        )
         val janusData = testJanusData.copy(accounts = Set(fooAct))
 
-        Config.validateAccountConfig(janusData, exampleConfig) shouldEqual ConfigWarn(Set("bar", "baz"))
+        Config.validateAccountConfig(
+          janusData,
+          exampleConfig
+        ) shouldEqual ConfigWarn(Set("bar", "baz"))
       }
 
     }

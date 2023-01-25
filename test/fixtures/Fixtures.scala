@@ -3,7 +3,6 @@ package fixtures
 import awscala.Policy
 import com.gu.janus.model.{AwsAccount, Permission}
 
-
 object Fixtures {
   val fooAct = AwsAccount("Foo", "foo")
   val barAct = AwsAccount("Bar", "bar")
@@ -23,7 +22,8 @@ object Fixtures {
   val quxDev = developerPermission(quxAct)
   val quxCf = accountAdminPermission(quxAct)
 
-  val allTestPerms = Set(fooDev, fooCf, fooS3, barDev, barCf, bazDev, bazCf, quxDev, quxCf)
+  val allTestPerms =
+    Set(fooDev, fooCf, fooS3, barDev, barCf, bazDev, bazCf, quxDev, quxCf)
 
   // utilities (hard-coded conventions for now)
   def developerPermission(awsAccount: AwsAccount) =
@@ -35,7 +35,13 @@ object Fixtures {
   def s3ReaderPermission(awsAccount: AwsAccount) =
     Permission(awsAccount, "s3-read", "S3 Read", Policy(Seq.empty))
   def accountAdminPermission(awsAccount: AwsAccount) =
-    Permission(awsAccount, "cloudformation", "Account admin", Policy(Seq.empty), shortTerm = true)
+    Permission(
+      awsAccount,
+      "cloudformation",
+      "Account admin",
+      Policy(Seq.empty),
+      shortTerm = true
+    )
   def s3ManagerPermission(awsAccount: AwsAccount) =
     Permission(awsAccount, "s3-all", "S3 Read and Write", Policy(Seq.empty))
 }

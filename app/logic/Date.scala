@@ -2,13 +2,20 @@ package logic
 
 import models.{DisplayMode, Festive, Normal, Spooky}
 import org.joda.time._
-import org.joda.time.format.{DateTimeFormat, ISODateTimeFormat, PeriodFormatterBuilder}
+import org.joda.time.format.{
+  DateTimeFormat,
+  ISODateTimeFormat,
+  PeriodFormatterBuilder
+}
 
 object Date {
-  val simpleDateFormatter = DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
-  val dateTimeFormatter = DateTimeFormat.forPattern("yyyy/MM/dd HH:mm:ss").withZoneUTC()
+  val simpleDateFormatter =
+    DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
+  val dateTimeFormatter =
+    DateTimeFormat.forPattern("yyyy/MM/dd HH:mm:ss").withZoneUTC()
   val timeFormatter = DateTimeFormat.forPattern("HH:mm:ss z").withZoneUTC()
-  val friendlyDateFormatter = DateTimeFormat.forPattern("d MMMM, yyyy").withZoneUTC()
+  val friendlyDateFormatter =
+    DateTimeFormat.forPattern("d MMMM, yyyy").withZoneUTC()
 
   def formatDateTime(date: DateTime): String =
     dateTimeFormatter.print(date)
@@ -28,7 +35,10 @@ object Date {
     ISODateTimeFormat.dateTime().print(date)
   }
 
-  def formatInterval(date: DateTime, comparison: DateTime = DateTime.now): String =
+  def formatInterval(
+      date: DateTime,
+      comparison: DateTime = DateTime.now
+  ): String =
     formatPeriod(new Interval(comparison, date).toPeriod)
 
   def formatDuration(duration: Duration): String =
@@ -59,10 +69,12 @@ object Date {
 
   private[logic] def isInAuditRange(date: DateTime): Boolean = {
     date.isAfter(new DateTime(2015, 11, 1, 23, 59, 59, DateTimeZone.UTC)) &&
-      date.isBefore(DateTime.now(DateTimeZone.UTC))
+    date.isBefore(DateTime.now(DateTimeZone.UTC))
   }
 
-  def prevNextAuditWeeks(date: DateTime): (Option[DateTime], Option[DateTime]) = {
+  def prevNextAuditWeeks(
+      date: DateTime
+  ): (Option[DateTime], Option[DateTime]) = {
     val week = firstDayOfWeek(date)
     (
       Some(week.minusDays(7)).filter(isInAuditRange),
@@ -94,7 +106,10 @@ object Date {
 
   def displayMode(today: DateTime): DisplayMode = {
     if (today.dayOfMonth().get == 31 && today.monthOfYear().get == 10) Spooky
-    else if ((20 to 26).contains(today.dayOfMonth().get) && today.monthOfYear().get == 12) Festive
+    else if (
+      (20 to 26)
+        .contains(today.dayOfMonth().get) && today.monthOfYear().get == 12
+    ) Festive
     else Normal
   }
 }

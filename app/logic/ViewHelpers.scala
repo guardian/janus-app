@@ -2,10 +2,11 @@ package logic
 
 import com.gu.janus.model.AwsAccount
 
-
 object ViewHelpers {
   // created as Scala function to make it easier to control whitespace
-  def shellCredentials(accountsCredentials: List[(AwsAccount, awscala.sts.TemporaryCredentials)]): String = {
+  def shellCredentials(
+      accountsCredentials: List[(AwsAccount, awscala.sts.TemporaryCredentials)]
+  ): String = {
     (for {
       (account, credentials) <- accountsCredentials
     } yield {

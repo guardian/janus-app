@@ -1,6 +1,5 @@
 package logic
 
-
 import awscala.dynamodbv2.{Attribute, AttributeValue}
 import com.gu.janus.model.{AuditLog, JConsole, JCredentials}
 import com.gu.janus.testutils.{HaveMatchers, RightValues}
@@ -11,9 +10,22 @@ import org.scalatest.{OptionValues}
 
 import scala.language.implicitConversions
 
-class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with OptionValues with HaveMatchers {
+class AuditTrailTest
+    extends AnyFreeSpec
+    with Matchers
+    with RightValues
+    with OptionValues
+    with HaveMatchers {
   "auditLogAttrs" - {
-    val al = AuditLog("account", "username", new DateTime(2015, 11, 4, 15, 22), new Duration(3600 * 1000), "accessLevel", JCredentials, external = true)
+    val al = AuditLog(
+      "account",
+      "username",
+      new DateTime(2015, 11, 4, 15, 22),
+      new Duration(3600 * 1000),
+      "accessLevel",
+      JCredentials,
+      external = true
+    )
 
     "sets up the hash key" in {
       val (hashKey, _, _) = AuditTrail.auditLogAttrs(al)
@@ -26,7 +38,9 @@ class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with Opt
     }
 
     "sets up the (date) range key correctly even when BST is in effect" in {
-      val al2 = al.copy(dateTime = new DateTime(2015, 11, 4, 16, 22, DateTimeZone.forOffsetHours(1)))
+      val al2 = al.copy(dateTime =
+        new DateTime(2015, 11, 4, 16, 22, DateTimeZone.forOffsetHours(1))
+      )
       //                        hour and timezone changed ---^--------------------^
       val (_, rangeKey, _) = AuditTrail.auditLogAttrs(al2)
       rangeKey shouldEqual 1446650520000L
@@ -49,7 +63,8 @@ class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with Opt
     }
 
     "sets up console type correctly" in {
-      val (_, _, attrs) = AuditTrail.auditLogAttrs(al.copy(accessType = JConsole))
+      val (_, _, attrs) =
+        AuditTrail.auditLogAttrs(al.copy(accessType = JConsole))
       attrs should contain("j_accessType" -> "console")
     }
   }
@@ -59,7 +74,10 @@ class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with Opt
       val attrs = Seq(
         Attribute("j_account", AttributeValue(s = Some("account"), l = Nil)),
         Attribute("j_username", AttributeValue(s = Some("username"), l = Nil)),
-        Attribute("j_timestamp", AttributeValue(n = Some("1446650520000"), l = Nil)),
+        Attribute(
+          "j_timestamp",
+          AttributeValue(n = Some("1446650520000"), l = Nil)
+        ),
         Attribute("j_duration", AttributeValue(n = Some("3600"), l = Nil)),
         Attribute("j_accessLevel", AttributeValue(s = Some("dev"), l = Nil)),
         Attribute("j_accessType", AttributeValue(s = Some("console"), l = Nil)),
@@ -79,7 +97,10 @@ class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with Opt
       }
 
       "extracts a correct (ms) duration from the DB's seconds field" in {
-        AuditTrail.auditLogFromAttrs(attrs).value.duration shouldEqual new Duration(3600 * 1000)
+        AuditTrail
+          .auditLogFromAttrs(attrs)
+          .value
+          .duration shouldEqual new Duration(3600 * 1000)
       }
     }
 
@@ -87,7 +108,10 @@ class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with Opt
       val attrs = Seq(
         // missing account
         Attribute("j_username", AttributeValue(s = Some("username"), l = Nil)),
-        Attribute("j_timestamp", AttributeValue(n = Some("1446650520000"), l = Nil)),
+        Attribute(
+          "j_timestamp",
+          AttributeValue(n = Some("1446650520000"), l = Nil)
+        ),
         Attribute("j_duration", AttributeValue(n = Some("3600"), l = Nil)),
         Attribute("j_accessLevel", AttributeValue(s = Some("dev"), l = Nil)),
         Attribute("j_accessType", AttributeValue(s = Some("console"), l = Nil)),
@@ -99,9 +123,9 @@ class AuditTrailTest extends AnyFreeSpec with Matchers with RightValues with Opt
       }
 
       "returns a useful error message when it fails" in {
-        val (message, _) = AuditTrail.auditLogFromAttrs(attrs)
-          .left.getOrElse(("nope", "nope"))
-        
+        val (message, _) =
+          AuditTrail.auditLogFromAttrs(attrs).left.getOrElse(("nope", "nope"))
+
         message should include("account")
       }
     }

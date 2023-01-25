@@ -4,7 +4,6 @@ import cats.syntax.semigroup._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class ACLMergeTest extends AnyFreeSpec with Matchers {
   "Monoid instance for ACL entries" - {
     "should correctly combine overlapping entries" in {

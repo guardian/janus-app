@@ -6,7 +6,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.mvc.Cookie
 
-
 class FavouritesTest extends AnyFreeSpec with Matchers {
   import Favourites._
 
@@ -21,7 +20,9 @@ class FavouritesTest extends AnyFreeSpec with Matchers {
       }
 
       "with data" in {
-        fromCookie(testCookie("""["example", "another-example"]""")) shouldEqual Nil
+        fromCookie(
+          testCookie("""["example", "another-example"]""")
+        ) shouldEqual Nil
       }
     }
 
@@ -42,7 +43,10 @@ class FavouritesTest extends AnyFreeSpec with Matchers {
     }
 
     "extracts multiple favourites" in {
-      fromCookie(testCookie(base64"""["foo", "bar"]""")) shouldEqual List("foo", "bar")
+      fromCookie(testCookie(base64"""["foo", "bar"]""")) shouldEqual List(
+        "foo",
+        "bar"
+      )
     }
 
     "returns empty favourites if there is no cookie present" in {
