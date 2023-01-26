@@ -8,7 +8,6 @@ import com.typesafe.config.{Config, ConfigException, ConfigFactory}
 import Validation.validationResultMonoid
 import cats.syntax.monoid._
 
-
 object JanusConfig {
   def load(dataFile: File): JanusData = {
     val config = ConfigFactory.parseFile(dataFile)
@@ -21,12 +20,16 @@ object JanusConfig {
   }
 
   private def loadContents(config: Config, source: String): JanusData = {
-    Loader.fromConfig(config).fold(
-      { errMsg =>
-        throw new JanusConfigurationException(s"Failed to load Janus Data from $source, $errMsg")
-      },
-      identity
-    )
+    Loader
+      .fromConfig(config)
+      .fold(
+        { errMsg =>
+          throw new JanusConfigurationException(
+            s"Failed to load Janus Data from $source, $errMsg"
+          )
+        },
+        identity
+      )
   }
 
   def write(janusData: JanusData): String = {
@@ -34,8 +37,11 @@ object JanusConfig {
   }
 
   def validate(janusData: JanusData): ValidationResult = {
-    Validation.policySizeChecks(janusData) |+| Validation.permissionUniqueness(janusData)
+    Validation.policySizeChecks(janusData) |+| Validation.permissionUniqueness(
+      janusData
+    )
   }
 
-  class JanusConfigurationException(message: String) extends ConfigException(message)
+  class JanusConfigurationException(message: String)
+      extends ConfigException(message)
 }

@@ -8,12 +8,12 @@ class SupportTest extends AnyFreeSpec with Matchers {
   "Future support rotas should not contain users that are not on the user access list" in {
     val now = DateTime.now
     val supportUsers = Support.acl.rota
-        .filter { case (dateTime, _) => dateTime.isAfter(now) }
-        .flatMap { case (_, (user1, user2)) => Seq(user1, user2) }
-        .toSet
-        .filterNot(_ == Support.tbd)
+      .filter { case (dateTime, _) => dateTime.isAfter(now) }
+      .flatMap { case (_, (user1, user2)) => Seq(user1, user2) }
+      .toSet
+      .filterNot(_ == Support.tbd)
 
-    val accessUsers = Access.acl.userAccess.map{ case (user, _) => user }.toSet
+    val accessUsers = Access.acl.userAccess.map { case (user, _) => user }.toSet
 
     val missingUsers = supportUsers -- accessUsers
     missingUsers shouldBe empty

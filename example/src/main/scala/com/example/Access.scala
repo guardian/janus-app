@@ -4,13 +4,15 @@ import com.example.BespokePolicies._
 import com.example.Policies.AccountExtensions
 import com.gu.janus.model._
 
-
 object Access {
 
   import Accounts._
 
   // It is possible to combine permissions using Scala
-  private val securityAccess = Security.accountAdmin ++ Security.dev ++ allAccounts.flatMap(_.securityReview)
+  private val securityAccess =
+    Security.accountAdmin ++ Security.dev ++ allAccounts.flatMap(
+      _.securityReview
+    )
 
   val users: List[(String, Set[Permission])] = List(
     "sherlock.holmes" -> (Root.dev ++ securityAccess),

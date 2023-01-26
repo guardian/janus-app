@@ -3,13 +3,12 @@ package com.example
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class AccessTest extends AnyFreeSpec with Matchers {
   "User access list should contain no duplicate entries" in {
     val duplicatedUsers = Access.users
       .groupBy { case (username, access) => username }
       .filter { case (username, accessEntries) =>
-          accessEntries.size > 1
+        accessEntries.size > 1
       }
       .map { case (username, _) => username }
     duplicatedUsers shouldEqual List()
@@ -24,7 +23,9 @@ class AccessTest extends AnyFreeSpec with Matchers {
     val usernamePattern = "^([a-zA-Z0-9-]+\\.[a-zA-Z0-9-]+)+$".r
 
     Access.users.foreach { case (username, _) =>
-      withClue(s"username {$username} should match regex ${usernamePattern.regex}") {
+      withClue(
+        s"username {$username} should match regex ${usernamePattern.regex}"
+      ) {
         usernamePattern.findFirstIn(username) shouldBe defined
       }
     }

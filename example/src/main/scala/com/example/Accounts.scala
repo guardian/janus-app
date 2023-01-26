@@ -2,7 +2,6 @@ package com.example
 
 import com.gu.janus.model.AwsAccount
 
-
 object Accounts {
   // This is the account that administers your AWS Organisation
   val Root = AwsAccount("Root", "root")
@@ -19,7 +18,7 @@ object Accounts {
   // The account where analytics and data from across our example company are stored
   val DataLake = AwsAccount("Data Lake", "data-lake")
 
-
-  val allAccounts: Set[AwsAccount] = Set(Root, Security, Production, Staging, DataLake)
+  val allAccounts: Set[AwsAccount] =
+    Set(Root, Security, Production, Staging, DataLake)
 
 }
