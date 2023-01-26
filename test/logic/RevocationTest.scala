@@ -6,7 +6,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.Checkers
 
-
 class RevocationTest extends AnyFreeSpec with Matchers with Checkers {
   import Revocation._
 
@@ -35,8 +34,8 @@ class RevocationTest extends AnyFreeSpec with Matchers with Checkers {
 
     "does not match any incorrect key" in {
       check(forAll { s: String =>
-                     (s.toLowerCase != account.authConfigKey && s.toLowerCase != account.name) ==>
-        (checkConfirmation(s, account) == false)
+        (s.toLowerCase != account.authConfigKey && s.toLowerCase != account.name) ==>
+          (checkConfirmation(s, account) == false)
       })
     }
   }

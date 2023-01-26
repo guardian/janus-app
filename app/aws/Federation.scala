@@ -11,11 +11,10 @@ import data.Policies
 import logic.Date
 import org.joda.time.{DateTime, DateTimeZone, Duration, Period}
 
-
 object Federation {
-  /**
-    * Credential/Console lease times. Defaults are used when user doesn't request specific
-    * time periods, max will limit how long can be requested.
+
+  /** Credential/Console lease times. Defaults are used when user doesn't
+    * request specific time periods, max will limit how long can be requested.
     */
   val maxShortTime = 3.hours
   val minShortTime = 15.minutes
@@ -26,18 +25,21 @@ object Federation {
 
   val awsMinimumSessionLength = 900.seconds
 
-  /**
-    * Calculates the duration of a login session.
+  /** Calculates the duration of a login session.
     *
-    * Users can request a specific length of time (up to the max), or use the default,
-    * which may depend on their timezone.
+    * Users can request a specific length of time (up to the max), or use the
+    * default, which may depend on their timezone.
     *
     * The tests explain the different cases, this is a tricky function.
     */
-  def duration(permission: Permission, requestedSeconds: Option[Duration] = None, timezone: Option[DateTimeZone] = None): Duration = {
+  def duration(
+      permission: Permission,
+      requestedSeconds: Option[Duration] = None,
+      timezone: Option[DateTimeZone] = None
+  ): Duration = {
     if (permission.shortTerm) {
       // short term permission, give them requested or default (limited by max)
-      val calculated = requestedSeconds.fold(defaultShortTime){ requested =>
+      val calculated = requestedSeconds.fold(defaultShortTime) { requested =>
         Date.minDuration(requested, maxShortTime)
       }
       Date.maxDuration(calculated, minShortTime)
@@ -49,10 +51,13 @@ object Federation {
           timezone.fold(defaultLongTime) { tz =>
             val localEndOfWork = {
               val withTime = DateTime.now(tz).withTime(19, 0, 0, 0)
-              if (withTime.isBefore(DateTime.now(tz))) withTime.plusDays(1) else withTime
+              if (withTime.isBefore(DateTime.now(tz))) withTime.plusDays(1)
+              else withTime
             }
-            val durationToEndOfWork = new Duration(DateTime.now(tz), localEndOfWork)
-            if (durationToEndOfWork.isShorterThan(maxLongTime)) durationToEndOfWork
+            val durationToEndOfWork =
+              new Duration(DateTime.now(tz), localEndOfWork)
+            if (durationToEndOfWork.isShorterThan(maxLongTime))
+              durationToEndOfWork
             else defaultLongTime
           }
         case Some(requested) =>
@@ -62,11 +67,18 @@ object Federation {
     }
   }
 
-  val getStsClient: ((String, String)) => STS = { case (awsKeyId, awsSecretKey) =>
-    STS(awsKeyId, awsSecretKey)
+  val getStsClient: ((String, String)) => STS = {
+    case (awsKeyId, awsSecretKey) =>
+      STS(awsKeyId, awsSecretKey)
   }
 
-  def assumeRole(username: String, roleArn: String, permission: Permission, sts: STS, duration: Duration): TemporaryCredentials = {
+  def assumeRole(
+      username: String,
+      roleArn: String,
+      permission: Permission,
+      sts: STS,
+      duration: Duration
+  ): TemporaryCredentials = {
     val assumeRoleReq = new securitytoken.model.AssumeRoleRequest()
       .withRoleArn(roleArn)
       .withRoleSessionName(username)
@@ -76,34 +88,47 @@ object Federation {
     TemporaryCredentials(response.getCredentials)
   }
 
-  def loginUrl(temporaryCredentials: TemporaryCredentials, host: String, sts: STS): String = {
+  def loginUrl(
+      temporaryCredentials: TemporaryCredentials,
+      host: String,
+      sts: STS
+  ): String = {
     sts.loginUrl(
       credentials = temporaryCredentials,
       consoleUrl = "https://console.aws.amazon.com/",
-      issuerUrl = host)
+      issuerUrl = host
+    )
   }
 
   def credentials(federationToken: FederationToken): TemporaryCredentials = {
     federationToken.credentials
   }
 
-  /**
-    * Revokes all privileges for this account. This works by adding a condition to
-    * Janus' user that denys access to any requests signed using temporary credentials
-    * that were obtained after the given time.
+  /** Revokes all privileges for this account. This works by adding a condition
+    * to Janus' user that denys access to any requests signed using temporary
+    * credentials that were obtained after the given time.
     *
     * For more information refer to the following AWS documentation:
     * http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_use_revoke-sessions.html
     */
-  def disableFederation(account: AwsAccount, after: DateTime, roleArn: String, stsClient: STS): Unit = {
+  def disableFederation(
+      account: AwsAccount,
+      after: DateTime,
+      roleArn: String,
+      stsClient: STS
+  ): Unit = {
     val revocationPolicyDocument = denyOlderSessionsPolicyDocument(after)
 
     // assume role in the target account to authenticate the revocation
     val creds = Federation.assumeRole(
-      "janus", roleArn, Policies.revokeAccessPermission(account), stsClient,
+      "janus",
+      roleArn,
+      Policies.revokeAccessPermission(account),
+      stsClient,
       Federation.awsMinimumSessionLength
     )
-    val sessionCredentials = Credentials(creds.accessKeyId, creds.secretAccessKey, creds.sessionToken)
+    val sessionCredentials =
+      Credentials(creds.accessKeyId, creds.secretAccessKey, creds.sessionToken)
     val provider = new AWSStaticCredentialsProvider(sessionCredentials)
     val iamClient = IAM(provider)
 
@@ -111,9 +136,10 @@ object Federation {
     val roleName = getRoleName(roleArn)
     val getRoleRequest = new GetRoleRequest().withRoleName(roleName)
     val role = Role(iamClient.getRole(getRoleRequest).getRole)
-    val roleRevocationPolicy = RolePolicy(role, "janus-role-revocation-policy", revocationPolicyDocument)
-                                              // ^
-                                              // this name should match policy in cloudformation/federation.template.yaml
+    val roleRevocationPolicy =
+      RolePolicy(role, "janus-role-revocation-policy", revocationPolicyDocument)
+    // ^
+    // this name should match policy in cloudformation/federation.template.yaml
     iamClient.putRolePolicy(roleRevocationPolicy)
     iamClient.shutdown()
   }
@@ -123,10 +149,10 @@ object Federation {
   }
 
   /*
-    * Denies access for requests signed with temporary credentials issued after the given time.
-    *
-    * Deny always beats Allow, so this will override all the user's permissions and deny everything.
-    */
+   * Denies access for requests signed with temporary credentials issued after the given time.
+   *
+   * Deny always beats Allow, so this will override all the user's permissions and deny everything.
+   */
   def denyOlderSessionsPolicyDocument(after: DateTime): String = {
     val revocationTime = Date.isoDateString(after)
     s"""{
@@ -144,12 +170,11 @@ object Federation {
         |    }
         |  ]
         |}""".stripMargin
-    }
-
+  }
 
   implicit class IntWithDurations(val int: Int) extends AnyVal {
-    /**
-      * Number of seconds in this many hours.
+
+    /** Number of seconds in this many hours.
       */
     def hours: Duration = new Period(int, 0, 0, 0).toStandardDuration
     def hour = hours

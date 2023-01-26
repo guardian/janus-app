@@ -7,10 +7,18 @@ import play.api.mvc._
 
 import scala.concurrent.ExecutionContext
 
-
-class AuthController(janusData: JanusData, controllerComponents: ControllerComponents, val authConfig: GoogleAuthConfig, val googleGroupChecker: GoogleGroupChecker, requiredGoogleGroups: Set[String])
-                    (implicit val wsClient: WSClient, ec: ExecutionContext, assetsFinder: AssetsFinder)
-  extends AbstractController(controllerComponents) with LoginSupport {
+class AuthController(
+    janusData: JanusData,
+    controllerComponents: ControllerComponents,
+    val authConfig: GoogleAuthConfig,
+    val googleGroupChecker: GoogleGroupChecker,
+    requiredGoogleGroups: Set[String]
+)(implicit
+    val wsClient: WSClient,
+    ec: ExecutionContext,
+    assetsFinder: AssetsFinder
+) extends AbstractController(controllerComponents)
+    with LoginSupport {
 
   override val failureRedirectTarget: Call = routes.AuthController.loginError
   override val defaultRedirectTarget: Call = routes.Janus.index
@@ -20,7 +28,8 @@ class AuthController(janusData: JanusData, controllerComponents: ControllerCompo
   }
 
   def loginError = Action { implicit request =>
-    val error = request.flash.get("error").getOrElse("There was an error logging in")
+    val error =
+      request.flash.get("error").getOrElse("There was an error logging in")
     Ok(views.html.error(error, None, janusData))
   }
 

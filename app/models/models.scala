@@ -1,8 +1,8 @@
 package models
 
-
 sealed trait AccountConfigStatus
-case class FederationConfigError(causedBy: Throwable) extends AccountConfigStatus
+case class FederationConfigError(causedBy: Throwable)
+    extends AccountConfigStatus
 case object ConfigSuccess extends AccountConfigStatus
 case class ConfigWarn(accounts: Set[String]) extends AccountConfigStatus
 case class ConfigError(accounts: Set[String]) extends AccountConfigStatus

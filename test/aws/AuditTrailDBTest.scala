@@ -6,7 +6,6 @@ import org.joda.time.{DateTime, DateTimeZone, Duration}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class AuditTrailDBTest extends AnyFreeSpec with Matchers {
 
   "test db stuff - use this to test DynamoDB stuff locally during development" - {
@@ -14,14 +13,33 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
 
     "insertion and querying" ignore {
       val table = AuditTrailDB.getTable()
-      val dateTime: DateTime = new DateTime(2015, 11, 5, 17, 35, DateTimeZone.UTC)
-      val al = AuditLog("account", "username", dateTime, new Duration(3600000), "accessLevel", JConsole, external = true)
+      val dateTime: DateTime =
+        new DateTime(2015, 11, 5, 17, 35, DateTimeZone.UTC)
+      val al = AuditLog(
+        "account",
+        "username",
+        dateTime,
+        new Duration(3600000),
+        "accessLevel",
+        JConsole,
+        external = true
+      )
       AuditTrailDB.insert(table, al)
 
-      val accountResults = AuditTrailDB.getAccountLogs(table, "account", dateTime.minusDays(1), dateTime.plusDays(1))
+      val accountResults = AuditTrailDB.getAccountLogs(
+        table,
+        "account",
+        dateTime.minusDays(1),
+        dateTime.plusDays(1)
+      )
       println(accountResults.toList)
 
-      val userResults = AuditTrailDB.getUserLogs(table, "username", dateTime.minusDays(1), dateTime.plusDays(1))
+      val userResults = AuditTrailDB.getUserLogs(
+        table,
+        "username",
+        dateTime.minusDays(1),
+        dateTime.plusDays(1)
+      )
       println(userResults.toList)
     }
 
@@ -34,13 +52,12 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
     }
   }
 
-
-  /**
-   * NB: Only use these for local testing
-   * use the provided CloudFormation template to create table in AWS environments.
-   *
-   * If you update this then be sure to also update the CloudFormation template's definition.
-   */
+  /** NB: Only use these for local testing use the provided CloudFormation
+    * template to create table in AWS environments.
+    *
+    * If you update this then be sure to also update the CloudFormation
+    * template's definition.
+    */
   private[aws] def createTable()(implicit dynamoDB: DynamoDB) = {
     val auditTable = Table(
       name = AuditTrailDB.tableName,
@@ -54,7 +71,10 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
       globalSecondaryIndexes = Seq(
         GlobalSecondaryIndex(
           name = "AuditTrailByUser",
-          keySchema = Seq(KeySchema("j_username", KeyType.Hash), KeySchema("j_timestamp", KeyType.Range)),
+          keySchema = Seq(
+            KeySchema("j_username", KeyType.Hash),
+            KeySchema("j_timestamp", KeyType.Range)
+          ),
           projection = Projection(ProjectionType.All),
           provisionedThroughput = ProvisionedThroughput(15, 15)
         )

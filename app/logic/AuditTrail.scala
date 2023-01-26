@@ -7,9 +7,14 @@ import org.joda.time.{DateTime, DateTimeZone, Duration}
 import logic.UserAccess.{hasExplicitAccess, username}
 import play.api.Logging
 
-
 object AuditTrail extends Logging {
-  def createLog(user: UserIdentity, permission: Permission, janusAccessType: JanusAccessType, duration: Duration, acl: ACL): AuditLog =
+  def createLog(
+      user: UserIdentity,
+      permission: Permission,
+      janusAccessType: JanusAccessType,
+      duration: Duration,
+      acl: ACL
+  ): AuditLog =
     AuditLog(
       permission.account.authConfigKey,
       username(user),
@@ -20,9 +25,8 @@ object AuditTrail extends Logging {
       !hasExplicitAccess(username(user), permission, acl)
     )
 
-  /**
-   * Converts an AuditLog into its DB representation.
-   */
+  /** Converts an AuditLog into its DB representation.
+    */
   def auditLogAttrs(auditLog: AuditLog): (String, Long, List[(String, Any)]) = {
     (
       auditLog.account,
@@ -37,17 +41,19 @@ object AuditTrail extends Logging {
     )
   }
 
-  /**
-   * Extract nice error message from db conversion.
-   */
-  def errorStrings(error: Either[(String, Seq[Attribute]), AuditLog]): Either[String, AuditLog] = {
+  /** Extract nice error message from db conversion.
+    */
+  def errorStrings(
+      error: Either[(String, Seq[Attribute]), AuditLog]
+  ): Either[String, AuditLog] = {
     error.left.map(_._1)
   }
 
-  /**
-   * Log detailed info for any DB result extraction errors.
-   */
-  def logDbResultErrs(attempt: Either[(String, Seq[Attribute]), AuditLog]): Either[(String, Seq[Attribute]), AuditLog] = {
+  /** Log detailed info for any DB result extraction errors.
+    */
+  def logDbResultErrs(
+      attempt: Either[(String, Seq[Attribute]), AuditLog]
+  ): Either[(String, Seq[Attribute]), AuditLog] = {
     attempt.left.foreach { case (message, attrs) =>
       val formattedAttrs = attrs.map { attr =>
         s"${attr.name}: ${attr.value.toString}"
@@ -57,33 +63,56 @@ object AuditTrail extends Logging {
     attempt
   }
 
-  /**
-   * (Attempt to) convert a database result into an audit log.
-   */
-  def auditLogFromAttrs(attrs: Seq[Attribute]): Either[(String, Seq[Attribute]), AuditLog] = {
+  /** (Attempt to) convert a database result into an audit log.
+    */
+  def auditLogFromAttrs(
+      attrs: Seq[Attribute]
+  ): Either[(String, Seq[Attribute]), AuditLog] = {
     for {
-      account <- attrs.find("j_account" == _.name).flatMap(_.value.s)
+      account <- attrs
+        .find("j_account" == _.name)
+        .flatMap(_.value.s)
         .toRight("Could not extract account" -> attrs)
-      username <- attrs.find("j_username" == _.name).flatMap(_.value.s)
+      username <- attrs
+        .find("j_username" == _.name)
+        .flatMap(_.value.s)
         .toRight("Could not extract username" -> attrs)
-      dateTime <- attrs.find("j_timestamp" == _.name).flatMap(_.value.n)
+      dateTime <- attrs
+        .find("j_timestamp" == _.name)
+        .flatMap(_.value.n)
         .map(ts => new DateTime(ts.toLong, DateTimeZone.UTC))
         .toRight("Could not extract dateTime" -> attrs)
-      duration <- attrs.find("j_duration" == _.name).flatMap(_.value.n)
+      duration <- attrs
+        .find("j_duration" == _.name)
+        .flatMap(_.value.n)
         .map(d => new Duration(d.toLong * 1000))
         .toRight("Could not extract duration" -> attrs)
-      accessLevel <- attrs.find("j_accessLevel" == _.name).flatMap(_.value.s)
+      accessLevel <- attrs
+        .find("j_accessLevel" == _.name)
+        .flatMap(_.value.s)
         .toRight("Could not extract accessLevel" -> attrs)
-      accessType <- attrs.find("j_accessType" == _.name).flatMap(_.value.s)
+      accessType <- attrs
+        .find("j_accessType" == _.name)
+        .flatMap(_.value.s)
         .flatMap(JanusAccessType.fromString)
         .toRight("Could not extract accessType" -> attrs)
-      external <- attrs.find("j_external" == _.name).flatMap(attr => attr.value.n)
+      external <- attrs
+        .find("j_external" == _.name)
+        .flatMap(attr => attr.value.n)
         .flatMap {
           case "0" => Some(false)
           case "1" => Some(true)
-          case _ => None
+          case _   => None
         }
         .toRight("Could not extract external" -> attrs)
-    } yield AuditLog(account, username, dateTime, duration, accessLevel, accessType, external)
+    } yield AuditLog(
+      account,
+      username,
+      dateTime,
+      duration,
+      accessLevel,
+      accessType,
+      external
+    )
   }
 }
