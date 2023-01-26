@@ -4,7 +4,6 @@ import com.gu.janus.JanusConfig.JanusConfigurationException
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class JanusConfigTest extends AnyFreeSpec with Matchers {
   "Can load a config file" in {
     noException should be thrownBy {
@@ -13,7 +12,7 @@ class JanusConfigTest extends AnyFreeSpec with Matchers {
   }
 
   "throws a Janus configuration exception if there is an error in the config" in {
-    an [JanusConfigurationException] should be thrownBy {
+    an[JanusConfigurationException] should be thrownBy {
       JanusConfig.load("invalid.conf")
     }
   }

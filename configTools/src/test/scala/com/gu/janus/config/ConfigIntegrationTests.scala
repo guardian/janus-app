@@ -8,15 +8,18 @@ import java.io.{File, PrintWriter}
 import com.gu.janus.JanusConfig
 import com.gu.janus.testutils.RightValues
 
-
-class ConfigIntegrationTests extends AnyFreeSpec with Matchers with RightValues {
+class ConfigIntegrationTests
+    extends AnyFreeSpec
+    with Matchers
+    with RightValues {
   "round trips" - {
     "the example janus data can be read, written and re-read" in {
       val testConfig = ConfigFactory.load("example.conf")
       val result = Loader.fromConfig(testConfig)
       val janusData = result.value
       val content = Writer.toConfig(janusData)
-      val file = File.createTempFile("janus-config-integration-round-trip-test", ".conf")
+      val file =
+        File.createTempFile("janus-config-integration-round-trip-test", ".conf")
       file.deleteOnExit()
       new PrintWriter(file) {
         try {
@@ -37,11 +40,15 @@ class ConfigIntegrationTests extends AnyFreeSpec with Matchers with RightValues 
     }
 
     "the example janus data that omits a permissions repo can be read, written and re-read" in {
-      val testConfig = ConfigFactory.load("example-without-permissions-repo.conf")
+      val testConfig =
+        ConfigFactory.load("example-without-permissions-repo.conf")
       val result = Loader.fromConfig(testConfig)
       val janusData = result.value
       val content = Writer.toConfig(janusData)
-      val file = File.createTempFile("janus-config-integration-round-trip-test-no-perm-repo", ".conf")
+      val file = File.createTempFile(
+        "janus-config-integration-round-trip-test-no-perm-repo",
+        ".conf"
+      )
       file.deleteOnExit()
       new PrintWriter(file) {
         try {

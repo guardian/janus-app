@@ -4,17 +4,16 @@ import Statements._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class StatementsTest extends AnyFreeSpec with Matchers {
   "policy helper" - {
     val statements = Seq(
       s3FullAccess("my-bucket", "/"),
       s3ReadAccess("your-bucket", "/"),
-      s3ReadAccess("your-bucket", "/"),
+      s3ReadAccess("your-bucket", "/")
     )
 
     "deduplicates statements" in {
-      val p = policy(statements :_*)
+      val p = policy(statements: _*)
       p.statements.distinct shouldBe p.statements
     }
   }
@@ -41,7 +40,7 @@ class StatementsTest extends AnyFreeSpec with Matchers {
     }
   }
 
-  "hierarchyPath"  - {
+  "hierarchyPath" - {
     "builds a '/*' pattern for the path '/'" in {
       hierarchyPath("/") shouldEqual "/*"
     }

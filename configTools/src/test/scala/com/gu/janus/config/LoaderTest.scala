@@ -9,10 +9,14 @@ import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-
-class LoaderTest extends AnyFreeSpec with Matchers with RightValues with OptionValues {
+class LoaderTest
+    extends AnyFreeSpec
+    with Matchers
+    with RightValues
+    with OptionValues {
   val testConfig = ConfigFactory.load("example.conf")
-  val testConfigWithoutPermissionsRepo = ConfigFactory.load("example-without-permissions-repo.conf")
+  val testConfigWithoutPermissionsRepo =
+    ConfigFactory.load("example-without-permissions-repo.conf")
 
   "fromConfig" - {
     "parses the full example" in {
@@ -75,7 +79,10 @@ class LoaderTest extends AnyFreeSpec with Matchers with RightValues with OptionV
         access.defaultPermissions shouldEqual Set(
           Permission(
             AwsAccount("Testing account", "aws-test-account"),
-            "default-test", "Default test access", "", false
+            "default-test",
+            "Default test access",
+            "",
+            false
           )
         )
       }
@@ -85,8 +92,13 @@ class LoaderTest extends AnyFreeSpec with Matchers with RightValues with OptionV
         val permissions = Loader.loadPermissions(testConfig, accounts).value
         val result = Loader.loadAccess(testConfig, permissions)
         val access = result.value
-        access.userAccess.get("employee1").value.map(_.id) shouldEqual Set("website-developer")
-        access.userAccess.get("employee4").value.map(_.id) shouldEqual Set("website-s3-manager", "aws-test-account-developer")
+        access.userAccess.get("employee1").value.map(_.id) shouldEqual Set(
+          "website-developer"
+        )
+        access.userAccess.get("employee4").value.map(_.id) shouldEqual Set(
+          "website-s3-manager",
+          "aws-test-account-developer"
+        )
       }
     }
   }
@@ -97,7 +109,9 @@ class LoaderTest extends AnyFreeSpec with Matchers with RightValues with OptionV
       val permissions = Loader.loadPermissions(testConfig, accounts).value
       val result = Loader.loadAdmin(testConfig, permissions)
       val adminAcl = result.value
-      adminAcl.userAccess.get("employee1").value.map(_.id) shouldEqual Set("website-admin")
+      adminAcl.userAccess.get("employee1").value.map(_.id) shouldEqual Set(
+        "website-admin"
+      )
     }
   }
 
@@ -120,7 +134,9 @@ class LoaderTest extends AnyFreeSpec with Matchers with RightValues with OptionV
         val permissions = Loader.loadPermissions(testConfig, accounts).value
         val result = Loader.loadSupport(testConfig, permissions)
         val supportAcl = result.value
-        supportAcl.supportPeriod shouldEqual Period.seconds(604800).toStandardSeconds
+        supportAcl.supportPeriod shouldEqual Period
+          .seconds(604800)
+          .toStandardSeconds
       }
 
       "extracts the rota" in {
@@ -129,9 +145,33 @@ class LoaderTest extends AnyFreeSpec with Matchers with RightValues with OptionV
         val result = Loader.loadSupport(testConfig, permissions)
         val supportAcl = result.value
         supportAcl.rota shouldEqual Map(
-          new DateTime(2018, 12, 27, 11, 0, 0, DateTimeZone.UTC) -> ("employee1", "employee2"),
-          new DateTime(2019,  1,  3, 11, 0, 0, DateTimeZone.UTC) -> ("employee2", "employee4"),
-          new DateTime(2019,  1, 10, 11, 0, 0, DateTimeZone.UTC) -> ("employee2", "employee5")
+          new DateTime(
+            2018,
+            12,
+            27,
+            11,
+            0,
+            0,
+            DateTimeZone.UTC
+          ) -> ("employee1", "employee2"),
+          new DateTime(
+            2019,
+            1,
+            3,
+            11,
+            0,
+            0,
+            DateTimeZone.UTC
+          ) -> ("employee2", "employee4"),
+          new DateTime(
+            2019,
+            1,
+            10,
+            11,
+            0,
+            0,
+            DateTimeZone.UTC
+          ) -> ("employee2", "employee5")
         )
       }
     }
