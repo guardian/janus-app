@@ -7,7 +7,6 @@ import com.gu.janus.config.Writer
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-
 class DataTest extends AnyFreeSpec with Matchers {
   "The Janus data should not contain any errors" in {
     JanusConfig.validate(Data.janusData).errors shouldBe empty
@@ -17,7 +16,8 @@ class DataTest extends AnyFreeSpec with Matchers {
     // write data to config representation
     val janusData = Data.janusData
     val content = Writer.toConfig(janusData)
-    val file = File.createTempFile("janus-config-integration-round-trip-test", ".conf")
+    val file =
+      File.createTempFile("janus-config-integration-round-trip-test", ".conf")
     file.deleteOnExit()
     new PrintWriter(file) {
       try {

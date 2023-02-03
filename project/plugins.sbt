@@ -4,7 +4,7 @@ addSbtPlugin("com.gu" % "sbt-riffraff-artifact" % "1.1.18")
 
 // sbt-native-packager cannot be updated to >1.9.9 until Play supports scala-xml 2
 addSbtPlugin(
-  "com.github.sbt" % "sbt-native-packager" % "1.9.9"
+  "com.github.sbt" % "sbt-native-packager" % "1.9.13"
 ) // scala-steward:off
 
 /*
@@ -16,7 +16,7 @@ ThisBuild / libraryDependencySchemes ++= Seq(
 )
 
 // The Play plugin
-addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.18")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.8.19")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-digest" % "1.1.4")
 
@@ -28,8 +28,8 @@ libraryDependencies += "org.vafer" % "jdeb" % "1.10" artifacts Artifact(
 
 // These are for releasing to Sonatype
 addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.2.1")
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.15")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.17")
 addSbtPlugin("com.github.sbt" % "sbt-release" % "1.1.0")
 
 // Formatting
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.6")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.0")
