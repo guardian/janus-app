@@ -26,7 +26,7 @@ ThisBuild / developers := List(
   )
 )
 
-val awsSdkVersion = "1.12.399"
+val awsSdkVersion = "1.12.417"
 val awscalaVersion = "0.9.2"
 val circeVersion = "0.13.0"
 val commonDependencies = Seq(
@@ -106,7 +106,7 @@ lazy val root = (project in file("."))
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion,
-      "net.logstash.logback" % "logstash-logback-encoder" % "7.2"
+      "net.logstash.logback" % "logstash-logback-encoder" % "7.3"
     ) ++ jacksonDatabindOverrides
       ++ jacksonOverrides
       ++ akkaSerializationJacksonOverrides,
