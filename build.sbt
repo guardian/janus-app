@@ -26,12 +26,12 @@ ThisBuild / developers := List(
   )
 )
 
-val awsSdkVersion = "1.12.417"
+val awsSdkVersion = "1.12.439"
 val awscalaVersion = "0.9.2"
 val circeVersion = "0.13.0"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.9.0",
-  "joda-time" % "joda-time" % "2.12.2",
+  "joda-time" % "joda-time" % "2.12.5",
   "org.joda" % "joda-convert" % "2.2.3",
   "com.github.seratch" %% "awscala-iam" % awscalaVersion,
   "com.github.seratch" %% "awscala-sts" % awscalaVersion,
