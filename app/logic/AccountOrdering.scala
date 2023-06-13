@@ -38,14 +38,14 @@ object AccountOrdering {
     * hard-coded dev/admin conventions for now, TODO: find a better
     * representation for ordering
     */
-  implicit val permissionOrdering = new Ordering[Permission] {
-    override def compare(p1: Permission, p2: Permission): Int = {
+  implicit val permissionOrdering: Ordering[Permission] =
+    (p1: Permission, p2: Permission) => {
       def sortKey(p: Permission) = p.label match {
         case "dev"            => "aaaa"
         case "cloudformation" => "zzzz"
         case label            => label
       }
+
       sortKey(p1) compare sortKey(p2)
     }
-  }
 }
