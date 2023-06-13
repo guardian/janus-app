@@ -15,5 +15,5 @@ class HstsFilter(implicit material: Materializer, ec: ExecutionContext)
     )
   }
 
-  override implicit def mat = material
+  override implicit def mat: Materializer = material
 }
