@@ -44,7 +44,7 @@ jobs:
             repo: 'janus',
             workflow_id: 'build.yml',
             event: 'workflow_dispatch',
-            created: '>${{ env.START_TIME }}'
+            created: '>=${{ env.START_TIME }}'
           });
           console.log(result);
           return result["workflow_runs"][0].id
