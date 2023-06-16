@@ -15,7 +15,7 @@ jobs:
 
     steps:
     - name: record start time
-      run: echo START_TIME=$(date "+%y-%m-%dT%H:%M:%S%Z") >> $GITHUB_ENV
+      run: echo START_TIME=$(date "+%Y-%m-%dT%H:%M:%S") >> $GITHUB_ENV
 
     - name: Trigger workflow
       uses: actions/github-script@v6
@@ -47,7 +47,7 @@ jobs:
             created: '>${{ env.START_TIME }}'
           });
           console.log(result);
-          return result[0].id
+          return result["workflow_runs"][0].id
 
     - run: sleep 300
 
@@ -56,9 +56,11 @@ jobs:
     needs: build
     steps:
     - name: fetch status
+      id: status
       uses: actions/github-script@v6
       with:
         github-token: ${{ secrets.PAT_ACTIONS_JANUS }}
+        result-encoding: string
         script: |
           const result = await github.rest.actions.getWorkflowRun({
             owner: 'guardian',
@@ -66,9 +68,10 @@ jobs:
             run_id: '${{ needs.build.outputs.workflow_run_id }}'
           });
           console.log(result);
-          return result.status;
+          return result.conclusion;
 
-    - name: Please check janus repo for build status.
-      run: echo "Please check janus repo for status"
-      
-    
+    - name: Verify job completed successfully
+      if: ${{ steps.status.outputs.result }} != 'success'
+      uses: actions/github-script@v6
+      with:
+        script: core.setFailed('Task started by build did not conclude successfully')
