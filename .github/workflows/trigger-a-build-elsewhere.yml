@@ -1,0 +1,29 @@
+name: Trigger Janus build
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Trigger workflow
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.PAT_actions_janus }}
+        script: |
+          await github.rest.actions.createWorkflowDispatch({
+            owner: 'guardian',
+            repo: 'janus',
+            workflow_id: 'build.yml',
+            ref: 'mmc/migrate-build-from-teamcity-to-gha'
+          })
+    
+    - name: Please check janus repo for build status.
+      run: echo "Please check janus repo for status"
+      
+    
