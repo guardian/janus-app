@@ -49,7 +49,7 @@ jobs:
             created: '>=${{ env.START_TIME }}'
           });
           console.log(result);
-          return result["workflow_runs"][0].id
+          return result["data"]["workflow_runs"][0].id
 
     - run: sleep 300
 
