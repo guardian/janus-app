@@ -1,4 +1,15 @@
-name: Trigger Janus build
+# This triggers a build in a separate github action
+
+## See documentation here: https://docs.google.com/document/d/1Xz-gzptICIza0oio0Kza3LWg2a6n_015o0MPu0LGfuU/edit#heading=h.k45jb8zdijoi
+## (Only available for select Guardian Staff)
+## This also relies on a personal access token, due to expire on or before 15th June 2024 ( 2024-06-15 ).
+## Details of how to renew this token in the docs.
+
+### This task is broken into 2 jobs
+### in case for whatever reason the internal build takes a long time to complete, 
+### we can just re-run the second job to check the status
+
+name: Trigger Private Janus build
 
 on:
   push:
@@ -7,7 +18,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  trigger-workflow:
     runs-on: ubuntu-latest
 
     outputs:
@@ -32,7 +43,7 @@ jobs:
             }
           })
 
-    - run: sleep 5 # wait for event to register
+    - run: sleep 5 # wait for event to register within github system
 
     - name: fetch workflow id
       id: fetch
@@ -51,11 +62,11 @@ jobs:
           console.log(result);
           return result["data"]["workflow_runs"][0].id
 
-    - run: sleep 300
+    - run: sleep 240 # wait 4 minutes for job to run
 
   check-status:
     runs-on: ubuntu-latest
-    needs: build
+    needs: trigger-workflow
     steps:
     - name: fetch status
       id: status
@@ -67,13 +78,13 @@ jobs:
           const result = await github.rest.actions.getWorkflowRun({
             owner: 'guardian',
             repo: 'janus',
-            run_id: '${{ needs.build.outputs.workflow_run_id }}'
+            run_id: '${{ needs.trigger-workflow.outputs.workflow_run_id }}'
           });
           console.log(result);
-          return result.conclusion;
+          return result["data"]["conclusion"];
 
     - name: Verify job completed successfully
-      if: ${{ steps.status.outputs.result }} != 'success'
+      if: ${{ steps.status.outputs.result != 'success' }}
       uses: actions/github-script@v6
       with:
-        script: core.setFailed('Task started by build did not conclude successfully')
+        script: core.setFailed('Task started by trigger-workflow did not conclude successfully')
