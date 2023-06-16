@@ -9,8 +9,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
+    outputs:
+      workflow_run_id: ${{ steps.fetch.outputs.result }}
+
     steps:
+    - name: record start time
+      run: echo START_TIME=$(date "+%y-%m-%dT%H:%M:%S%Z") >> $GITHUB_ENV
+
     - name: Trigger workflow
       uses: actions/github-script@v6
       with:
@@ -25,7 +31,43 @@ jobs:
               "janus-app-branch": "${{ github.ref }}"
             }
           })
-    
+
+    - name: fetch workflow id
+      id: fetch
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.PAT_ACTIONS_JANUS }}
+        result-encoding: string
+        script: |
+          const result = await github.rest.actions.listWorkflowRuns({
+            owner: 'guardian',
+            repo: 'janus',
+            workflow_id: 'build.yml',
+            event: 'workflow_dispatch',
+            created: '>${{ env.START_TIME }}'
+          });
+          console.log(result);
+          return result[0].id
+
+    - run: sleep 300
+
+  check-status:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+    - name: fetch status
+      uses: actions/github-script@v6
+      with:
+        github-token: ${{ secrets.PAT_ACTIONS_JANUS }}
+        script: |
+          const result = await github.rest.actions.getWorkflowRun({
+            owner: 'guardian',
+            repo: 'janus',
+            run_id: '${{ needs.build.outputs.workflow_run_id }}'
+          });
+          console.log(result);
+          return result.status;
+
     - name: Please check janus repo for build status.
       run: echo "Please check janus repo for status"
       
