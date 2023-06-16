@@ -32,6 +32,8 @@ jobs:
             }
           })
 
+    - run: sleep 5 # wait for event to register
+
     - name: fetch workflow id
       id: fetch
       uses: actions/github-script@v6
