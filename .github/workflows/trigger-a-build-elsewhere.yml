@@ -22,7 +22,7 @@ jobs:
             workflow_id: 'build.yml',
             ref: 'mmc/migrate-build-from-teamcity-to-gha',
             inputs: {
-              "janus-app-branch": ${{ env.GITHUB_REF_NAME }}
+              "janus-app-branch": ${{ github.ref_name }}
             }
           })
     
