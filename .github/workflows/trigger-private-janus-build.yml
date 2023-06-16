@@ -37,7 +37,7 @@ jobs:
             owner: 'guardian',
             repo: 'janus',
             workflow_id: 'build.yml',
-            ref: 'mmc/migrate-build-from-teamcity-to-gha',
+            ref: 'main',
             inputs: {
               "janus-app-branch": "${{ github.ref }}"
             }
