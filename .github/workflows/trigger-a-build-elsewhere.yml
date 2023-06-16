@@ -14,7 +14,7 @@ jobs:
     - name: Trigger workflow
       uses: actions/github-script@v6
       with:
-        github-token: ${{ secrets.PAT_actions_janus }}
+        github-token: ${{ secrets.PAT_ACTIONS_JANUS }}
         script: |
           await github.rest.actions.createWorkflowDispatch({
             owner: 'guardian',
