@@ -356,3 +356,27 @@ a.copy-text--button__small {
 .festive .btn:active, .festive .btn:focus, .festive .btn-large:active, .festive .btn-large:focus {
     background-color: #1b5e20;
 }
+
+.gold {
+    background-color: #f8bc6e;
+}
+
+.worldcup {
+    background-color: #a7c5a7;
+}
+
+.worldcup .btn,
+.worldcup .btn-large {
+    background-color: #aba6a6;
+}
+
+.worldcup .btn:hover,
+.worldcup .btn-large:hover {
+    background-color: #DAA520;
+}
+
+.worldcup {
+    background-image: url("/assets/images/worldcup/trophy.png"), url("/assets/images/worldcup/trophy.png");
+    background-position: top left, top right;
+    background-repeat: no-repeat;
+}
