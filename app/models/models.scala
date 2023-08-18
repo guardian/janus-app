@@ -11,3 +11,4 @@ sealed trait DisplayMode
 object Normal extends DisplayMode
 object Spooky extends DisplayMode
 object Festive extends DisplayMode
+object WorldCup extends DisplayMode
