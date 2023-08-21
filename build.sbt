@@ -106,7 +106,7 @@ lazy val root = (project in file("."))
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion,
-      "net.logstash.logback" % "logstash-logback-encoder" % "7.3"
+      "net.logstash.logback" % "logstash-logback-encoder" % "7.4"
     ) ++ jacksonDatabindOverrides
       ++ jacksonOverrides
       ++ akkaSerializationJacksonOverrides,
