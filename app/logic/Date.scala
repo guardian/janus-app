@@ -1,6 +1,6 @@
 package logic
 
-import models.{DisplayMode, Festive, Normal, Spooky, WorldCup}
+import models.{DisplayMode, Festive, Normal, Spooky}
 import org.joda.time._
 import org.joda.time.format.{
   DateTimeFormat,
@@ -105,13 +105,7 @@ object Date {
   }
 
   def displayMode(today: DateTime): DisplayMode = {
-    val day = today.dayOfMonth().get
-    val month = today.monthOfYear().get
-    val year = today.year().get
-
-    if (day < 22 && month == 8 && year == 2023) WorldCup
-    else if (today.dayOfMonth().get == 31 && today.monthOfYear().get == 10)
-      Spooky
+    if (today.dayOfMonth().get == 31 && today.monthOfYear().get == 10) Spooky
     else if (
       (20 to 26)
         .contains(today.dayOfMonth().get) && today.monthOfYear().get == 12
