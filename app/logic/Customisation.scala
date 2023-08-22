@@ -1,6 +1,6 @@
 package logic
 
-import models.{DisplayMode, Festive, Normal, Spooky, WorldCup}
+import models.{DisplayMode, Festive, Normal, Spooky}
 import org.joda.time.{DateTimeZone, Duration}
 import play.api.mvc.RequestHeader
 
@@ -26,10 +26,9 @@ object Customisation {
 
   def displayColour(displayMode: DisplayMode): String = {
     displayMode match {
-      case Normal   => "cyan"
-      case Spooky   => "purple"
-      case Festive  => "red"
-      case WorldCup => "gold"
+      case Normal  => "cyan"
+      case Spooky  => "purple"
+      case Festive => "red"
     }
   }
 }
