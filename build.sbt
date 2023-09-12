@@ -41,7 +41,7 @@ val commonDependencies = Seq(
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test
 )
 lazy val commonSettings = Seq(
-  scalaVersion := "2.13.11",
+  scalaVersion := "2.13.12",
   scalacOptions ++= Seq(
     "-deprecation",
     "-feature",
