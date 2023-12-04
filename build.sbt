@@ -1,5 +1,3 @@
-import com.gu.riffraff.artifact.RiffRaffArtifact
-import com.gu.riffraff.artifact.RiffRaffArtifact.autoImport._
 import play.sbt.PlayImport.PlayKeys._
 import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 import sbt.Keys._
@@ -80,7 +78,7 @@ val akkaSerializationJacksonOverrides = Seq(
 ).map(_ % jacksonVersion)
 
 lazy val root = (project in file("."))
-  .enablePlugins(PlayScala, RiffRaffArtifact, JDebPackaging, SystemdPlugin)
+  .enablePlugins(PlayScala, JDebPackaging, SystemdPlugin)
   .dependsOn(configTools % "compile->compile;test->test")
   .settings(
     commonSettings,
@@ -115,14 +113,6 @@ lazy val root = (project in file("."))
     // local development
     playDefaultPort := 9100,
     Test / fork := false,
-
-    // deployment
-    riffRaffPackageType := (Debian / packageBin).value,
-    riffRaffUploadArtifactBucket := Option("riffraff-artifact"),
-    riffRaffUploadManifestBucket := Option("riffraff-builds"),
-    riffRaffArtifactResources += (file(
-      "cloudformation/janus.template.yaml"
-    ), s"${name.value}-cfn/cfn.yaml"),
 
     // packaging / running package
     Assets / pipelineStages := Seq(digest),
