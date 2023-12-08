@@ -120,6 +120,7 @@ lazy val root = (project in file("."))
     Compile / packageDoc / publishArtifact := false,
     Debian / topLevelDirectory := Some(normalizedName.value),
     Debian / serverLoading := Some(Systemd),
+    debianPackageDependencies := Seq("java8-runtime-headless"),
     Debian / maintainer := "Developer Experience <dig.dev.tooling@theguardian.com>",
     Debian / packageSummary := "Janus webapp",
     Debian / packageDescription := "Janus: Google-based federated AWS login"
