@@ -101,7 +101,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v29" % "2.4.0",
+      "com.gu.play-googleauth" %% "play-v28" % "2.2.7",
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion,
@@ -121,6 +121,7 @@ lazy val root = (project in file("."))
     Compile / packageDoc / publishArtifact := false,
     Debian / topLevelDirectory := Some(normalizedName.value),
     Debian / serverLoading := Some(Systemd),
+    debianPackageDependencies := Seq("java8-runtime-headless"),
     Debian / maintainer := "Developer Experience <dig.dev.tooling@theguardian.com>",
     Debian / packageSummary := "Janus webapp",
     Debian / packageDescription := "Janus: Google-based federated AWS login"

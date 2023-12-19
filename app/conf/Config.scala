@@ -5,7 +5,8 @@ import com.google.auth.oauth2.ServiceAccountCredentials
 import com.gu.googleauth.{
   AntiForgeryChecker,
   GoogleAuthConfig,
-  GoogleGroupChecker
+  GoogleGroupChecker,
+  GoogleServiceAccount
 }
 import com.gu.janus.JanusConfig
 import com.gu.janus.model._
