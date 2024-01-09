@@ -88,8 +88,8 @@ lazy val root = (project in file("."))
     Universal / javaOptions ++= Seq(
       "-Dconfig.file=/etc/gu/janus.conf", // for PROD, overridden by local sbt file
       "-Dpidfile.path=/dev/null",
-      "-J-Xms2048m",
-      "-J-Xmx2048m"
+      "-J-Xms1g",
+      "-J-Xmx1g"
     ),
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
