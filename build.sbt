@@ -88,15 +88,8 @@ lazy val root = (project in file("."))
     Universal / javaOptions ++= Seq(
       "-Dconfig.file=/etc/gu/janus.conf", // for PROD, overridden by local sbt file
       "-Dpidfile.path=/dev/null",
-      "-J-XX:MaxRAMFraction=2",
-      "-J-XX:InitialRAMFraction=2",
-      "-J-XX:+UseG1GC",
-      "-J-XX:G1HeapRegionSize=32m",
-      "-J-XX:+PrintGCDetails",
-      "-J-XX:+PrintGCDateStamps",
-      "-J-Xloggc:/var/log/${packageName.value}/gc.log",
-      "-J-XX:+UseCompressedOops",
-      "-J-XX:+UseStringDeduplication"
+      "-J-Xms2048m",
+      "-J-Xmx2048m"
     ),
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
