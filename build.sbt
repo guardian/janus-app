@@ -72,7 +72,7 @@ val jacksonDatabindOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion
 )
 
-val akkaSerializationJacksonOverrides = Seq(
+val pekkoSerializationJacksonOverrides = Seq(
   "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor",
   "com.fasterxml.jackson.module" % "jackson-module-parameter-names",
   "com.fasterxml.jackson.module" %% "jackson-module-scala"
@@ -94,14 +94,14 @@ lazy val root = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v28" % "2.2.7",
+      "com.gu.play-googleauth" %% "play-v30" % "3.0.6",
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3" // scala-steward:off
     ) ++ jacksonDatabindOverrides
       ++ jacksonOverrides
-      ++ akkaSerializationJacksonOverrides,
+      ++ pekkoSerializationJacksonOverrides,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
 
     // local development
