@@ -142,3 +142,6 @@ crashlytics-build.properties
 .bsp/
 .metals/
 .vscode/
+
+# asdf
+.tool-versions
