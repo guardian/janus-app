@@ -104,6 +104,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: trigger-workflow
     steps:
+    - name: Exchange GitHub App for GitHub Token
+      uses: wow-actions/use-app-token@d7957e08172ca2e8e49b35b8d266ad585885edc7 # pinned to the hash to guarantee immutability
+      id: generate_token
+      with:
+        # These values are for the GitHub App guardian-janus-ci
+        # See https://github.com/organizations/guardian/settings/apps/guardian-janus-ci (only accesssible by GitHub owners)
+        app_id: ${{ secrets.GH_APP_ID }} # The ID of the GitHub App
+        private_key: ${{ secrets.GH_APP_PRIVATE_KEY }} # The private key of the GitHub App
     - name: fetch status
       id: status
       uses: actions/github-script@v6
