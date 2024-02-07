@@ -132,7 +132,7 @@ lazy val configTools = (project in file("configTools"))
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
       "io.circe" %% "circe-config" % "0.8.0"
-    ),
+    ) ++ jacksonDatabindOverrides,
     name := "janus-config-tools",
     description := "Library for reading and writing Janus configuration files",
     releasePublishArtifactsAction := PgpKeys.publishSigned.value,
