@@ -2,7 +2,8 @@ name: Update Dependency Graph
 on:
   push:
     branches:
-      - main # default branch of the project
+      - ts/update-sbt-dependency-workflow # for testing
+      # - main # default branch of the project
 jobs:
   dependency-graph:
     name: Update Dependency Graph
@@ -11,6 +12,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: scalacenter/sbt-dependency-submission@v2
         with:
-          configs-ignore: test-internal test
+          configs-ignore: test-internal test compile scala-tool scala-doc-tool
     permissions:
         contents: write # this permission is needed to submit the dependency graph
