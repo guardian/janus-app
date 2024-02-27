@@ -2,13 +2,8 @@ name: Update Dependency Graph
 on:
   push:
     branches:
-      - main # default branch of the project
+      - ts/use-central-dependency-workflow # testing      
+      # - main # default branch of the project
 jobs:
-  dependency-graph:
-    name: Update Dependency Graph
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: scalacenter/sbt-dependency-submission@v2
-    permissions:
-        contents: write # this permission is needed to submit the dependency graph
+  dependency-graph:  
+      uses: guardian/.github/.github/workflows/dependency-graph.yml@83fd2d720b1f4abf4684a12b4e9c581d37742ccd
