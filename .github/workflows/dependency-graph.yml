@@ -6,4 +6,6 @@ on:
       # - main # default branch of the project
 jobs:
   dependency-graph:  
-      uses: guardian/.github/.github/workflows/dependency-graph.yml@83fd2d720b1f4abf4684a12b4e9c581d37742ccd
+      uses: guardian/.github/.github/workflows/dependency-graph.yml@0b95e2fe672f33b9a6c06dd03ec2323470654aa3
+      permissions:
+        contents: write # this permission is needed to submit the dependency graph
