@@ -24,7 +24,7 @@ ThisBuild / developers := List(
   )
 )
 
-val awsSdkVersion = "1.12.661"
+val awsSdkVersion = "1.12.666"
 val awscalaVersion = "0.9.2"
 val circeVersion = "0.13.0"
 val commonDependencies = Seq(
