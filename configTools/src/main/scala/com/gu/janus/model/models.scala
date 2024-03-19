@@ -1,6 +1,7 @@
 package com.gu.janus.model
 
 import awscala.Policy
+import com.gu.janus.policy.PolicyJson
 import org.joda.time._
 
 case class JanusData(
@@ -70,7 +71,8 @@ object Permission {
       policy: Policy,
       shortTerm: Boolean = false
   ): Permission = {
-    Permission(account, label, description, policy.asJson, shortTerm)
+    val simplifiedPolicy = PolicyJson.stripSids(policy.asJson)
+    Permission(account, label, description, simplifiedPolicy, shortTerm)
   }
 }
 
