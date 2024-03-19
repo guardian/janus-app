@@ -3,26 +3,10 @@ import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 import sbt.Keys._
 import sbt.{addCompilerPlugin, _}
 import ReleaseTransformations._
+import sbtversionpolicy.withsbtrelease.ReleaseVersion
 
 ThisBuild / organization := "com.gu"
-ThisBuild / licenses := Seq(
-  "Apache V2" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")
-)
-ThisBuild / scmInfo := Some(
-  ScmInfo(
-    url("https://github.com/guardian/janus-app"),
-    "scm:git@github.com:guardian/janus-app"
-  )
-)
-ThisBuild / homepage := scmInfo.value.map(_.browseUrl)
-ThisBuild / developers := List(
-  Developer(
-    id = "guardian",
-    name = "Guardian",
-    email = null,
-    url = url("https://github.com/guardian")
-  )
-)
+ThisBuild / licenses := Seq(License.Apache2)
 
 val awsSdkVersion = "1.12.676"
 val awscalaVersion = "0.9.2"
@@ -136,8 +120,6 @@ lazy val configTools = (project in file("configTools"))
     ) ++ jacksonDatabindOverrides,
     name := "janus-config-tools",
     description := "Library for reading and writing Janus configuration files",
-    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    publishTo := sonatypePublishTo.value,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
@@ -146,14 +128,9 @@ lazy val configTools = (project in file("configTools"))
       setReleaseVersion,
       commitReleaseVersion,
       tagRelease,
-      publishArtifacts,
       setNextVersion,
       commitNextVersion
-      /** Branch protection on the remote repository does not allow pushChanges
-        * to succeed therefore the step below is disabled. All other release
-        * steps are the same as the default release process.
-        */
-//      pushChanges
     ),
-    releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease")
+    releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease"),
+    releaseVersion := ReleaseVersion.fromAggregatedAssessedCompatibilityWithLatestRelease().value,
   )
