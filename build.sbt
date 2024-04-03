@@ -92,6 +92,9 @@ lazy val root = (project in file("."))
     playDefaultPort := 9100,
     Test / fork := false,
 
+    // do not try to publish / release the root module
+    publish / skip := true,
+
     // packaging / running package
     Assets / pipelineStages := Seq(digest),
     Compile / doc / sources := Seq.empty,
