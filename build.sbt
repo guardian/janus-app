@@ -132,5 +132,7 @@ lazy val configTools = (project in file("configTools"))
       commitNextVersion
     ),
     releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease"),
-    releaseVersion := ReleaseVersion.fromAggregatedAssessedCompatibilityWithLatestRelease().value,
+    releaseVersion := ReleaseVersion
+      .fromAggregatedAssessedCompatibilityWithLatestRelease()
+      .value
   )
