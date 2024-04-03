@@ -1,8 +1,8 @@
-import play.sbt.PlayImport.PlayKeys._
 import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
-import sbt.Keys._
-import sbt.{addCompilerPlugin, _}
-import ReleaseTransformations._
+import play.sbt.PlayImport.PlayKeys.*
+import sbt.Keys.*
+import sbt.{addCompilerPlugin, *}
+import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations.*
 import sbtversionpolicy.withsbtrelease.ReleaseVersion
 
 ThisBuild / organization := "com.gu"
@@ -92,8 +92,25 @@ lazy val root = (project in file("."))
     playDefaultPort := 9100,
     Test / fork := false,
 
-    // do not try to publish / release the root module
+    // Settings for sbt release, which gets run from the root in the reusable workflow,
+    // the configTools module (below) is the one that will be published.
+    // We skip publishing here, because we do not want to publish the root module.
     publish / skip := true,
+    releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease"),
+    releaseVersion := ReleaseVersion
+      .fromAggregatedAssessedCompatibilityWithLatestRelease()
+      .value,
+    releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runClean,
+      runTest,
+      setReleaseVersion,
+      commitReleaseVersion,
+      tagRelease,
+      setNextVersion,
+      commitNextVersion
+    ),
 
     // packaging / running package
     Assets / pipelineStages := Seq(digest),
@@ -122,20 +139,5 @@ lazy val configTools = (project in file("configTools"))
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion
     ) ++ jacksonDatabindOverrides,
     name := "janus-config-tools",
-    description := "Library for reading and writing Janus configuration files",
-    releaseProcess := Seq[ReleaseStep](
-      checkSnapshotDependencies,
-      inquireVersions,
-      runClean,
-      runTest,
-      setReleaseVersion,
-      commitReleaseVersion,
-      tagRelease,
-      setNextVersion,
-      commitNextVersion
-    ),
-    releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease"),
-    releaseVersion := ReleaseVersion
-      .fromAggregatedAssessedCompatibilityWithLatestRelease()
-      .value
+    description := "Library for reading and writing Janus configuration files"
   )
