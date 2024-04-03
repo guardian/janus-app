@@ -65,6 +65,7 @@ val pekkoSerializationJacksonOverrides = Seq(
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, JDebPackaging, SystemdPlugin)
   .dependsOn(configTools % "compile->compile;test->test")
+  .aggregate(configTools)
   .settings(
     commonSettings,
     name := """janus""",
