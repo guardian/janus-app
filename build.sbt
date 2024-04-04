@@ -69,7 +69,7 @@ lazy val root = (project in file("."))
   .settings(
     commonSettings,
     name := """janus""",
-    version := "1.0-SNAPSHOT", // must match URL in cloudformation userdata
+    Debian / version := "1.0-SNAPSHOT", // must match URL in cloudformation userdata
     Universal / javaOptions ++= Seq(
       "-Dconfig.file=/etc/gu/janus.conf", // for PROD, overridden by local sbt file
       "-Dpidfile.path=/dev/null",
