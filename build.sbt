@@ -1,7 +1,7 @@
 import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 import play.sbt.PlayImport.PlayKeys.*
 import sbt.Keys.*
-import sbt.{*, addCompilerPlugin}
+import sbt.{addCompilerPlugin, *}
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations.*
 import sbtversionpolicy.withsbtrelease.ReleaseVersion
 
