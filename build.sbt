@@ -1,7 +1,7 @@
 import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 import play.sbt.PlayImport.PlayKeys.*
 import sbt.Keys.*
-import sbt.{addCompilerPlugin, *}
+import sbt.{*, addCompilerPlugin}
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations.*
 import sbtversionpolicy.withsbtrelease.ReleaseVersion
 
@@ -97,7 +97,6 @@ lazy val root = (project in file("."))
     // the configTools module (below) is the one that will be published.
     // We skip publishing here, because we do not want to publish the root module.
     publish / skip := true,
-    releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease"),
     releaseVersion := ReleaseVersion
       .fromAggregatedAssessedCompatibilityWithLatestRelease()
       .value,
