@@ -74,7 +74,6 @@ lazy val root = (project in file("."))
     // We hard-code it only in the Debian scope so it affects the name of the deb file, but does not override the version
     // that is used for the published config-tools library.
     Debian / version := "1.0-SNAPSHOT",
-
     Universal / javaOptions ++= Seq(
       "-Dconfig.file=/etc/gu/janus.conf", // for PROD, overridden by local sbt file
       "-Dpidfile.path=/dev/null",
