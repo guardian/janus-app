@@ -69,7 +69,12 @@ lazy val root = (project in file("."))
   .settings(
     commonSettings,
     name := """janus""",
-    Debian / version := "1.0-SNAPSHOT", // must match URL in cloudformation userdata
+    // The version is concatenated with the name to generate the filename for the deb file when building this project.
+    // The result must match the URL in the cloudformation userdata in another repository, so the version is hard-coded.
+    // We hard-code it only in the Debian scope so it affects the name of the deb file, but does not override the version
+    // that is used for the published config-tools library.
+    Debian / version := "1.0-SNAPSHOT",
+
     Universal / javaOptions ++= Seq(
       "-Dconfig.file=/etc/gu/janus.conf", // for PROD, overridden by local sbt file
       "-Dpidfile.path=/dev/null",
