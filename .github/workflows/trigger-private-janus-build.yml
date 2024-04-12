@@ -99,7 +99,9 @@ jobs:
           console.log(result);
           return result["data"]["workflow_runs"][0].id
 
-    - run: sleep 240 # wait 4 minutes for job to run
+    # wait 6 minutes for job to run
+    # This is the observed upper limit for builds that invalidate the sbt cache
+    - run: sleep 360
 
   # Reflect the build status from the workflow in the guardian/janus repository here
   check-status:
