@@ -239,3 +239,7 @@ your own version under a different organisation by updating the
 metadata in [the build.sbt file](build.sbt).
 
 Updates can be published by running the `release` workflow in GitHub Actions.
+
+This repo uses [`gha-scala-library-release-workflow`](https://github.com/guardian/gha-scala-library-release-workflow)
+to automate publishing the Scala client (both full and preview releases) - see
+[**Making a Release**](https://github.com/guardian/gha-scala-library-release-workflow/blob/main/docs/making-a-release.md) for more details.
