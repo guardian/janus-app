@@ -1,28 +1,12 @@
-import play.sbt.PlayImport.PlayKeys._
 import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
-import sbt.Keys._
-import sbt.{addCompilerPlugin, _}
-import ReleaseTransformations._
+import play.sbt.PlayImport.PlayKeys.*
+import sbt.Keys.*
+import sbt.{addCompilerPlugin, *}
+import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations.*
+import sbtversionpolicy.withsbtrelease.ReleaseVersion
 
 ThisBuild / organization := "com.gu"
-ThisBuild / licenses := Seq(
-  "Apache V2" -> url("http://www.apache.org/licenses/LICENSE-2.0.html")
-)
-ThisBuild / scmInfo := Some(
-  ScmInfo(
-    url("https://github.com/guardian/janus-app"),
-    "scm:git@github.com:guardian/janus-app"
-  )
-)
-ThisBuild / homepage := scmInfo.value.map(_.browseUrl)
-ThisBuild / developers := List(
-  Developer(
-    id = "guardian",
-    name = "Guardian",
-    email = null,
-    url = url("https://github.com/guardian")
-  )
-)
+ThisBuild / licenses := Seq(License.Apache2)
 
 val awsSdkVersion = "1.12.700"
 val awscalaVersion = "0.9.2"
@@ -81,10 +65,15 @@ val pekkoSerializationJacksonOverrides = Seq(
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala, JDebPackaging, SystemdPlugin)
   .dependsOn(configTools % "compile->compile;test->test")
+  .aggregate(configTools)
   .settings(
     commonSettings,
     name := """janus""",
-    version := "1.0-SNAPSHOT", // must match URL in cloudformation userdata
+    // The version is concatenated with the name to generate the filename for the deb file when building this project.
+    // The result must match the URL in the cloudformation userdata in another repository, so the version is hard-coded.
+    // We hard-code it only in the Debian scope so it affects the name of the deb file, but does not override the version
+    // that is used for the published config-tools library.
+    Debian / version := "1.0-SNAPSHOT",
     Universal / javaOptions ++= Seq(
       "-Dconfig.file=/etc/gu/janus.conf", // for PROD, overridden by local sbt file
       "-Dpidfile.path=/dev/null",
@@ -107,6 +96,25 @@ lazy val root = (project in file("."))
     // local development
     playDefaultPort := 9100,
     Test / fork := false,
+
+    // Settings for sbt release, which gets run from the root in the reusable workflow,
+    // the configTools module (below) is the one that will be published.
+    // We skip publishing here, because we do not want to publish the root module.
+    publish / skip := true,
+    releaseVersion := ReleaseVersion
+      .fromAggregatedAssessedCompatibilityWithLatestRelease()
+      .value,
+    releaseProcess := Seq[ReleaseStep](
+      checkSnapshotDependencies,
+      inquireVersions,
+      runClean,
+      runTest,
+      setReleaseVersion,
+      commitReleaseVersion,
+      tagRelease,
+      setNextVersion,
+      commitNextVersion
+    ),
 
     // packaging / running package
     Assets / pipelineStages := Seq(digest),
@@ -135,25 +143,5 @@ lazy val configTools = (project in file("configTools"))
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion
     ) ++ jacksonDatabindOverrides,
     name := "janus-config-tools",
-    description := "Library for reading and writing Janus configuration files",
-    releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    publishTo := sonatypePublishTo.value,
-    releaseProcess := Seq[ReleaseStep](
-      checkSnapshotDependencies,
-      inquireVersions,
-      runClean,
-      runTest,
-      setReleaseVersion,
-      commitReleaseVersion,
-      tagRelease,
-      publishArtifacts,
-      setNextVersion,
-      commitNextVersion
-      /** Branch protection on the remote repository does not allow pushChanges
-        * to succeed therefore the step below is disabled. All other release
-        * steps are the same as the default release process.
-        */
-//      pushChanges
-    ),
-    releaseProcess += releaseStepCommandAndRemaining("sonatypeRelease")
+    description := "Library for reading and writing Janus configuration files"
   )

@@ -238,15 +238,8 @@ would like to use a modified version of the library, you can publish
 your own version under a different organisation by updating the
 metadata in [the build.sbt file](build.sbt).
 
-Updates can be published using `sbt`.
+Updates can be published by running the `release` workflow in GitHub Actions.
 
-    sbt "project configTools" release
-
-**NOTE:** It isn't possible for the sbt release plugin to push updates
-to master because this app's Git repository is locked-down. After
-performing the release you should raise a PR to share the updated
-version number. The commits for this change will exist locally;
-checkout a new branch, then push both the branch and relevant tags:
-
-    git checkout -b <BRANCH NAME>
-    git push origin <BRANCH NAME> --follow-tags
+This repo uses [`gha-scala-library-release-workflow`](https://github.com/guardian/gha-scala-library-release-workflow)
+to automate publishing the Scala client (both full and preview releases) - see
+[**Making a Release**](https://github.com/guardian/gha-scala-library-release-workflow/blob/main/docs/making-a-release.md) for more details.
