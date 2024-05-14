@@ -32,7 +32,7 @@
                         <ul class="right hide-on-med-and-down">
                             <li><a href="/accounts">Accounts</a></li>
                             <li><a href="/support">Support</a></li>
-                            @if(hasAccess(username(user), janusData.admin)) { <li><a href="/admin">Admin</a></li> }
+                            @if(hasAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
                             <li><a href="/logout">@user.firstName @user.lastName</a></li>
                         </ul>
@@ -41,7 +41,7 @@
                             <li><a href="/">Home</a></li>
                             <li><a href="/accounts">Accounts</a></li>
                             @if(isSupportUser(username(user), DateTime.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
-                            @if(hasAccess(username(user), janusData.admin)) { <li><a href="/admin">Admin</a></li> }
+                            @if(hasAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
                             <li><a href="/logout">@user.firstName @user.lastName <i class="material-icons right">power_settings_new</i></a></li>
                         </ul>
