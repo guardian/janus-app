@@ -4,7 +4,7 @@
 
 # Home page
 GET     /                           controllers.Janus.index
-GET     /admin                      controllers.Janus.admin
+GET     /superuser                  controllers.Janus.admin
 GET     /support                    controllers.Janus.support
 GET     /console                    controllers.Janus.consoleLogin(permissionId: String)
 GET     /consoleUrl                 controllers.Janus.consoleUrl(permissionId: String)
