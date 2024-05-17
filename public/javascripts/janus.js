@@ -279,4 +279,30 @@ jQuery(function($){
         }
     });
 
+    // auto-logout (preference persisted with local storage)
+    $("#auto_logout_switch").each(function(_, autoLogoutSwitchElement){
+        const LOCAL_STORAGE_KEY__AUTO_LOGOUT = "autoLogout"
+        autoLogoutSwitchElement.checked = localStorage.getItem(LOCAL_STORAGE_KEY__AUTO_LOGOUT) === "true";
+        autoLogoutSwitchElement.onchange = (event) => {
+            autoLogoutSwitchElement.checked = event.target.checked;
+            localStorage.setItem(LOCAL_STORAGE_KEY__AUTO_LOGOUT, event.target.checked.toString());
+        };
+
+        $("a[href*='/console?permissionId=']").each(function(_, el){
+            el.onclick = (clickEvent) => {
+                if(autoLogoutSwitchElement.checked) {
+                    clickEvent.preventDefault();
+                    const targetHref = el.href;
+                    console.log("Silently attempting logout before navigating to", targetHref)
+                    fetch("https://signin.aws.amazon.com/logout", {
+                        mode: "no-cors", // we avoid CORS issues here and really only care if the request succeeds,
+                        credentials: "include", // we need AWS cookies to be sent in this log out call
+                    }).finally(() => {
+                        location.href = targetHref;
+                    });
+                }
+            }
+        });
+    });
+
 });
