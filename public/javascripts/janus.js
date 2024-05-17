@@ -279,4 +279,16 @@ jQuery(function($){
         }
     });
 
+    // auto-logout (preference persisted via cookie, so server-side can see it when redirecting to federation endpoint)
+    $("#auto_logout_switch").each(function(_, autoLogoutSwitchElement){
+        const COOKIE__AUTO_LOGOUT = "autoLogout"
+        autoLogoutSwitchElement.checked =
+          !!decodeURIComponent(document.cookie)
+          .split(";")
+          .find(_ => _.trim().startsWith(`${COOKIE__AUTO_LOGOUT}=true`));
+        autoLogoutSwitchElement.onchange = (event) => {
+            document.cookie = `${COOKIE__AUTO_LOGOUT}=${event.target.checked}; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/`
+        };
+    });
+
 });
