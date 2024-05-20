@@ -29,7 +29,7 @@ lazy val commonSettings = Seq(
     "-deprecation",
     "-feature",
     "-unchecked",
-    "-release:8",
+    "-release:11",
     "-Xfatal-warnings"
   ),
   Test / testOptions ++= Seq(
