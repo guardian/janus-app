@@ -295,8 +295,12 @@ jQuery(function($){
                     const targetHref = el.href;
                     console.log("Silently attempting logout before navigating to", targetHref)
                     fetch("https://signin.aws.amazon.com/logout", {
-                        mode: "no-cors", // we avoid CORS issues here and really only care if the request succeeds,
-                        credentials: "include", // we need AWS cookies to be sent in this log out call
+                        // we avoid CORS issues here and really only care if the request succeeds
+                        mode: "no-cors",
+                        // we need AWS cookies to be sent in this log out call
+                        credentials: "include",
+                        // give up after short delay to ensure user intent is followed promptly of log out is slow
+                        signal: AbortSignal.timeout(1500),
                     }).finally(() => {
                         location.href = targetHref;
                     });
