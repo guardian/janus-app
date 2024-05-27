@@ -13,7 +13,7 @@ val awscalaVersion = "0.9.2"
 val circeVersion = "0.14.7"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.10.0",
-  "joda-time" % "joda-time" % "2.12.5",
+  "joda-time" % "joda-time" % "2.12.7",
   "org.joda" % "joda-convert" % "2.2.3",
   "com.github.seratch" %% "awscala-iam" % awscalaVersion,
   "com.github.seratch" %% "awscala-sts" % awscalaVersion,
