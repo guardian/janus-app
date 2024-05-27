@@ -2,7 +2,7 @@ resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releas
 
 // sbt-native-packager cannot be updated to >1.9.9 until Play supports scala-xml 2
 addSbtPlugin(
-  "com.github.sbt" % "sbt-native-packager" % "1.9.16"
+  "com.github.sbt" % "sbt-native-packager" % "1.10.0"
 ) // scala-steward:off
 
 // The Play plugin
