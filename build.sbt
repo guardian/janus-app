@@ -131,7 +131,7 @@ lazy val configTools = (project in file("configTools"))
   .enablePlugins(SbtTwirl)
   .settings(
     addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
+      "org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full
     ),
     commonSettings,
     libraryDependencies ++= commonDependencies ++ Seq(
