@@ -10,7 +10,7 @@ ThisBuild / licenses := Seq(License.Apache2)
 
 val awsSdkVersion = "1.12.704"
 val awscalaVersion = "0.9.2"
-val circeVersion = "0.13.0"
+val circeVersion = "0.14.7"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.10.0",
   "joda-time" % "joda-time" % "2.12.5",
