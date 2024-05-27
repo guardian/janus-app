@@ -6,7 +6,7 @@ addSbtPlugin(
 ) // scala-steward:off
 
 // The Play plugin
-addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.1")
+addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.3")
 
 addSbtPlugin("com.github.sbt" % "sbt-digest" % "2.0.0")
 
