@@ -10,21 +10,21 @@ ThisBuild / licenses := Seq(License.Apache2)
 
 val awsSdkVersion = "1.12.704"
 val awscalaVersion = "0.9.2"
-val circeVersion = "0.13.0"
+val circeVersion = "0.14.7"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.10.0",
-  "joda-time" % "joda-time" % "2.12.5",
+  "joda-time" % "joda-time" % "2.12.7",
   "org.joda" % "joda-convert" % "2.2.3",
   "com.github.seratch" %% "awscala-iam" % awscalaVersion,
   "com.github.seratch" %% "awscala-sts" % awscalaVersion,
   "com.github.seratch" %% "awscala-dynamodb" % awscalaVersion,
-  "org.scalatest" %% "scalatest" % "3.2.17" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.17.0" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.18" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.17.1" % Test,
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-  "ch.qos.logback" % "logback-classic" % "1.2.13"
+  "ch.qos.logback" % "logback-classic" % "1.5.6"
 )
 lazy val commonSettings = Seq(
-  scalaVersion := "2.13.12",
+  scalaVersion := "2.13.14",
   scalacOptions ++= Seq(
     "-deprecation",
     "-feature",
@@ -42,8 +42,8 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.15.3"
-val jacksonDatabindVersion = "2.15.3"
+val jacksonVersion = "2.15.4"
+val jacksonDatabindVersion = "2.15.4"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core",
@@ -83,7 +83,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "4.0.0",
+      "com.gu.play-googleauth" %% "play-v30" % "8.0.0",
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion,
@@ -131,15 +131,15 @@ lazy val configTools = (project in file("configTools"))
   .enablePlugins(SbtTwirl)
   .settings(
     addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full
+      "org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full
     ),
     commonSettings,
     libraryDependencies ++= commonDependencies ++ Seq(
-      "com.typesafe" % "config" % "1.4.0",
+      "com.typesafe" % "config" % "1.4.3",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
-      "io.circe" %% "circe-config" % "0.8.0",
+      "io.circe" %% "circe-config" % "0.10.1",
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion
     ) ++ jacksonDatabindOverrides,
     name := "janus-config-tools",
