@@ -85,15 +85,18 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
   "weekAround" - {
     "gets the full week surrounding the given date" in {
       val date = new DateTime(2015, 11, 6, 0, 0, 0, DateTimeZone.UTC)
-      Date.weekAround(date) shouldEqual (new DateTime(
-        2015,
-        11,
-        2,
-        0,
-        0,
-        0,
-        DateTimeZone.UTC
-      ), new DateTime(2015, 11, 9, 0, 0, 0, DateTimeZone.UTC))
+      Date.weekAround(date) shouldEqual (
+        new DateTime(
+          2015,
+          11,
+          2,
+          0,
+          0,
+          0,
+          DateTimeZone.UTC
+        ),
+        new DateTime(2015, 11, 9, 0, 0, 0, DateTimeZone.UTC)
+      )
     }
   }
 
