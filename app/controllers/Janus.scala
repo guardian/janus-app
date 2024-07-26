@@ -98,22 +98,10 @@ class Janus(
         JConsole,
         Customisation.durationParams(request)
       )
-      loginUrl = Federation.loginUrl(credentials, host, stsClient)
+      autoLogout = Customisation.autoLogoutPreference(request.cookies)
+      loginUrl = Federation.generateLoginUrl(credentials, host, autoLogout, stsClient)
     } yield {
-      val redirectUrl = request.cookies.get("autoLogout") match {
-        case Some(cookie) if cookie.value == "true" =>
-          // NOTE us-east-1 is required in these URLs, as per https://serverfault.com/questions/985255/1097528#comment1469112_1097528
-          s"https://us-east-1.signin.aws.amazon.com/oauth?Action=logout&redirect_uri=${URLEncoder.encode(
-              loginUrl.replace(
-                "https://signin.aws.amazon.com",
-                "https://us-east-1.signin.aws.amazon.com"
-              ),
-              "UTF-8"
-            )}"
-        case _ =>
-          loginUrl
-      }
-      SeeOther(redirectUrl)
+      SeeOther(loginUrl)
         .withHeaders(CACHE_CONTROL -> "no-cache")
     }) getOrElse {
       logger.warn(
@@ -131,7 +119,8 @@ class Janus(
         JConsole,
         Customisation.durationParams(request)
       )
-      loginUrl = Federation.loginUrl(credentials, host, stsClient)
+      autoLogout = Customisation.autoLogoutPreference(request.cookies)
+      loginUrl = Federation.generateLoginUrl(credentials, host, autoLogout, stsClient)
     } yield {
       Ok(
         views.html.consoleUrl(

@@ -280,14 +280,16 @@ jQuery(function($){
     });
 
     // auto-logout (preference persisted via cookie, so server-side can see it when redirecting to federation endpoint)
+    // see also `Customisation.scala` for the function that extracts this cookie value
     $("#auto_logout_switch").each(function(_, autoLogoutSwitchElement){
-        const COOKIE__AUTO_LOGOUT = "autoLogout"
+        const COOKIE__AUTO_LOGOUT = "janus_auto_logout"
         autoLogoutSwitchElement.checked =
           !!decodeURIComponent(document.cookie)
-          .split(";")
-          .find(_ => _.trim().startsWith(`${COOKIE__AUTO_LOGOUT}=true`));
+              .split(";")
+              .find(_ => $.trim(_) === `${COOKIE__AUTO_LOGOUT}=1`);
         autoLogoutSwitchElement.onchange = (event) => {
-            document.cookie = `${COOKIE__AUTO_LOGOUT}=${event.target.checked}; expires=Fri, 31 Dec 9999 23:59:59 GMT; path=/`
+            const isEnabled = event.target.checked ? "1" : "0";
+            document.cookie = `${COOKIE__AUTO_LOGOUT}=${isEnabled}; expires=Fri, 1 Jan 2038 23:59:59 GMT; path=/`
         };
     });
 

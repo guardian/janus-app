@@ -3,9 +3,15 @@ package aws
 import awscala.Policy
 import com.gu.janus.model.{AwsAccount, Permission}
 import org.joda.time.{DateTime, DateTimeZone}
+import org.scalactic.source
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import play.api.routing.sird.{QueryStringParameterExtractor, RequiredQueryStringParameter}
 import testutils.JodaTimeUtils
+
+import java.net.URLDecoder
+import java.nio.charset.Charset
+
 
 class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
   import Federation._
@@ -141,6 +147,37 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
     }
   }
 
+  "autoLogoutUrl" - {
+    val signinUrl = "https://signin.aws.amazon.com/path/to/resource?foo=bar"
+
+    "if autoLogout is enabled" - {
+      "the returned URL is for the console logout endpoint" in {
+        val url = autoLogoutUrl(signinUrl, autoLogout = true)
+        url should startWith("https://us-east-1.signin.aws.amazon.com/oauth?Action=logout&")
+      }
+
+      "the provided URL is included (URL-encoded) in the redirect_uri GET parameter" - {
+        "with its hostname changed to point to us-east-1" in {
+          // Note: at time of writing the use of us-east-1 is required, so we enforce it here
+          // https://serverfault.com/questions/985255/1097528#comment1469112_1097528
+          val url = autoLogoutUrl(signinUrl, autoLogout = true)
+          val redirectUri = extractRedirectUri(url)
+          redirectUri should startWith("https://us-east-1.signin.aws.amazon.com/")
+        }
+
+        "and the rest of the URL unchanged" in {
+          val url = autoLogoutUrl(signinUrl, autoLogout = true)
+          val redirectUri = extractRedirectUri(url)
+          redirectUri should endWith("/path/to/resource?foo=bar")
+        }
+      }
+    }
+
+    "returns the provided URL unchanged if autoLogout is not enabled" in {
+      autoLogoutUrl(signinUrl, autoLogout = false) shouldEqual signinUrl
+    }
+  }
+
   "getRoleName" - {
     "fetches role name from example" in {
       getRoleName(
@@ -154,4 +191,14 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
       ) shouldEqual "role-name"
     }
   }
+
+  // helper for testing the autoLogoutUrl functionality
+  private val RedirectUri = QueryStringParameterExtractor.required("redirect_uri")
+  private def extractRedirectUri(url: String)(implicit pos: source.Position): String = {
+    new java.net.URL(url) match {
+      case RedirectUri(redirectUri) => URLDecoder.decode(redirectUri, "UTF-8")
+      case result => fail(s"redirect_uri parameter not present on resulting URL $result")
+    }
+  }
 }
+
