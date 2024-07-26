@@ -32,11 +32,12 @@ object Customisation {
     }
   }
 
-  /**
-   * The auto-logout functionality is controlled by a UI toggle that sets a Cookie.
-   *
-   * This function extracts the preference from the cookie for use on the server.
-   */
+  /** The auto-logout functionality is controlled by a UI toggle that sets a
+    * Cookie.
+    *
+    * This function extracts the preference from the cookie for use on the
+    * server.
+    */
   def autoLogoutPreference(cookies: Cookies): Boolean = {
     cookies.get("janus_auto_logout").exists(_.value == "1")
   }

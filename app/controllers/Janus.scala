@@ -99,7 +99,12 @@ class Janus(
         Customisation.durationParams(request)
       )
       autoLogout = Customisation.autoLogoutPreference(request.cookies)
-      loginUrl = Federation.generateLoginUrl(credentials, host, autoLogout, stsClient)
+      loginUrl = Federation.generateLoginUrl(
+        credentials,
+        host,
+        autoLogout,
+        stsClient
+      )
     } yield {
       SeeOther(loginUrl)
         .withHeaders(CACHE_CONTROL -> "no-cache")
@@ -120,7 +125,12 @@ class Janus(
         Customisation.durationParams(request)
       )
       autoLogout = Customisation.autoLogoutPreference(request.cookies)
-      loginUrl = Federation.generateLoginUrl(credentials, host, autoLogout, stsClient)
+      loginUrl = Federation.generateLoginUrl(
+        credentials,
+        host,
+        autoLogout,
+        stsClient
+      )
     } yield {
       Ok(
         views.html.consoleUrl(
