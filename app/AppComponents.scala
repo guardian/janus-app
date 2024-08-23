@@ -2,7 +2,6 @@ import aws.Clients
 import awscala.dynamodbv2.DynamoDB
 import com.amazonaws.regions.Regions
 import com.gu.googleauth.AuthAction
-import com.gu.janus.JanusConfig
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers._
@@ -32,7 +31,7 @@ class AppComponents(context: ApplicationLoader.Context)
   val dynamodDB =
     if (context.environment.mode == play.api.Mode.Prod)
       DynamoDB.at(Regions.getCurrentRegion)
-    else DynamoDB.local()
+    else Clients.localDb
 
   val janusData = Config.janusData(configuration)
 
