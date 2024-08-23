@@ -9,7 +9,7 @@ import org.scalatest.matchers.should.Matchers
 class AuditTrailDBTest extends AnyFreeSpec with Matchers {
 
   "test db stuff - use this to test DynamoDB stuff locally during development" - {
-    implicit val dynamoDB = DynamoDB.local()
+    implicit val dynamoDB: DynamoDB = Clients.localDb
 
     "insertion and querying" ignore {
       val table = AuditTrailDB.getTable()
