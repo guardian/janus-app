@@ -13,6 +13,8 @@ import org.joda.time.{DateTime, DateTimeZone, Duration}
 import play.api.{Configuration, Logging}
 import play.api.mvc._
 
+import java.net.URLEncoder
+
 class Janus(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
@@ -96,7 +98,13 @@ class Janus(
         JConsole,
         Customisation.durationParams(request)
       )
-      loginUrl = Federation.loginUrl(credentials, host, stsClient)
+      autoLogout = Customisation.autoLogoutPreference(request.cookies)
+      loginUrl = Federation.generateLoginUrl(
+        credentials,
+        host,
+        autoLogout,
+        stsClient
+      )
     } yield {
       SeeOther(loginUrl)
         .withHeaders(CACHE_CONTROL -> "no-cache")
@@ -116,7 +124,13 @@ class Janus(
         JConsole,
         Customisation.durationParams(request)
       )
-      loginUrl = Federation.loginUrl(credentials, host, stsClient)
+      autoLogout = Customisation.autoLogoutPreference(request.cookies)
+      loginUrl = Federation.generateLoginUrl(
+        credentials,
+        host,
+        autoLogout,
+        stsClient
+      )
     } yield {
       Ok(
         views.html.consoleUrl(
