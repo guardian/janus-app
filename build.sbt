@@ -10,7 +10,7 @@ ThisBuild / licenses := Seq(License.Apache2)
 
 val awsSdkVersion = "1.12.704"
 val awscalaVersion = "0.9.2"
-val circeVersion = "0.14.8"
+val circeVersion = "0.14.9"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.12.0",
   "joda-time" % "joda-time" % "2.12.7",
@@ -42,8 +42,8 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.17.1"
-val jacksonDatabindVersion = "2.17.1"
+val jacksonVersion = "2.17.2"
+val jacksonDatabindVersion = "2.17.2"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core",
@@ -83,7 +83,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "8.0.4",
+      "com.gu.play-googleauth" %% "play-v30" % "11.1.1",
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion,
