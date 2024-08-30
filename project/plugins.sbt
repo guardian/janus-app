@@ -2,7 +2,7 @@ resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releas
 
 // sbt-native-packager cannot be updated to >1.10.1 until Play supports scala-xml 2
 addSbtPlugin(
-  "com.github.sbt" % "sbt-native-packager" % "1.10.0"
+  "com.github.sbt" % "sbt-native-packager" % "1.10.4"
 ) // scala-steward:off
 
 // The Play plugin
@@ -10,7 +10,7 @@ addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.5")
 
 addSbtPlugin("com.github.sbt" % "sbt-digest" % "2.0.0")
 
-libraryDependencies += "org.vafer" % "jdeb" % "1.10" artifacts Artifact(
+libraryDependencies += "org.vafer" % "jdeb" % "1.11" artifacts Artifact(
   "jdeb",
   "jar",
   "jar"
@@ -18,7 +18,7 @@ libraryDependencies += "org.vafer" % "jdeb" % "1.10" artifacts Artifact(
 
 // These are for releasing to Sonatype
 addSbtPlugin("com.github.sbt" % "sbt-release" % "1.4.0")
-addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.11.0")
+addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.11.3")
 addSbtPlugin("ch.epfl.scala" % "sbt-version-policy" % "3.2.1")
 
 addDependencyTreePlugin
