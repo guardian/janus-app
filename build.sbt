@@ -19,7 +19,7 @@ val commonDependencies = Seq(
   "com.github.seratch" %% "awscala-sts" % awscalaVersion,
   "com.github.seratch" %% "awscala-dynamodb" % awscalaVersion,
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.18.0" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
   "ch.qos.logback" % "logback-classic" % "1.5.8"
 )
