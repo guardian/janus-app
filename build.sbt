@@ -42,8 +42,8 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.17.2"
-val jacksonDatabindVersion = "2.17.2"
+val jacksonVersion = "2.18.0"
+val jacksonDatabindVersion = "2.18.0"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core",
