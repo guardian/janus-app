@@ -42,7 +42,11 @@ object SupportACL {
 }
 
 case class AwsAccount(
+    /* The name of the account as you would like it to appear on Janus */
     name: String,
+    /** The name of the AWS profile to pass in via CLI. Should be relatively
+      * short, with no spaces
+      */
     authConfigKey: String
 )
 case class AwsAccountAccess(
