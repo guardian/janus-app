@@ -42,7 +42,24 @@ object SupportACL {
 }
 
 case class AwsAccount(
+    /** The display name for the AWS account - will appear on the Janus UI
+      */
     name: String,
+
+    /** This value is used for three purposes:
+      *
+      *   - the configuration key used to look up the role to assume, to
+      *     authenticate into this account
+      *   - forms part of the permission key used to uniquely identify a
+      *     permission (you'll see this in the URL of Janus console and
+      *     credentials requests)
+      *
+      * and most obviously to end users...
+      *
+      *   - the profile name for created Janus CLI sessions in that account
+      *     (assuming you use the standard mechanism of populating an AWS
+      *     profile with the provided name)
+      */
     authConfigKey: String
 )
 case class AwsAccountAccess(
