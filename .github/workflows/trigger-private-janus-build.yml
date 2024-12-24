@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - uses: actions/setup-java@8df1039502a15bceb9433410b1a100fbe190c53b # v4.5.0
+      - uses: actions/setup-java@7a6d8a8234af8eb26422e24e3006232cccaa061b # v4.6.0
         with:
           distribution: 'corretto'
           java-version: '11'
@@ -60,7 +60,7 @@ jobs:
       run: echo START_TIME=$(date "+%Y-%m-%dT%H:%M:%S") >> $GITHUB_ENV
 
     - name: Exchange GitHub App for GitHub Token
-      uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
+      uses: actions/create-github-app-token@c1a285145b9d317df6ced56c09f525b5c2b6f755 # v1.11.1
       id: app-token
       with:
         # These values are for the GitHub App guardian-janus-ci
@@ -112,7 +112,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
     - name: Exchange GitHub App for GitHub Token
-      uses: actions/create-github-app-token@5d869da34e18e7287c1daad50e0b8ea0f506ce69 # v1.11.0
+      uses: actions/create-github-app-token@c1a285145b9d317df6ced56c09f525b5c2b6f755 # v1.11.1
       id: app-token
       with:
         # These values are for the GitHub App guardian-janus-ci
