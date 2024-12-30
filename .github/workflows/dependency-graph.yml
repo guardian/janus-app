@@ -19,7 +19,7 @@ jobs:
           java-version: '17'
       - name: Install SBT
         id: install
-        uses: sbt/setup-sbt@50a38cca700907fb9df65ecabcefb85ebaa424a7 # v1.1.4
+        uses: sbt/setup-sbt@96cf3f09dc501acdad7807fffe97dba9fa0709be # v1.1.5
       - name: Submit dependencies
         id: submit
         uses: scalacenter/sbt-dependency-submission@64084844d2b0a9b6c3765f33acde2fbe3f5ae7d3 # v3.1.0
