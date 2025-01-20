@@ -51,9 +51,8 @@ class RevokePermissions(
         Ok(views.html.revokeConfirmation(None, request.user, janusData))
       else {
         (for {
-          account <- accountId.flatMap(aId =>
-            janusData.accounts.find(aId == _.authConfigKey)
-          )
+          account <- accountId
+            .flatMap(aId => janusData.accounts.find(aId == _.authConfigKey))
         } yield {
           Ok(
             views.html
