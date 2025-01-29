@@ -8,6 +8,7 @@ import com.amazonaws.auth.{
   AWSCredentialsProviderChain,
   InstanceProfileCredentialsProvider
 }
+import com.gu.janus.transition.aws.{AwScalaDynamoDb, AwScalaSts}
 
 import scala.annotation.nowarn
 
@@ -25,13 +26,13 @@ object Clients {
   }
 
   lazy val stsClient: STS = {
-    STS(credentialsProviderChain)
+    AwScalaSts.buildSts(credentialsProviderChain)
   }
 
   @nowarn("cat=deprecation")
   def localDb: DynamoDB = {
     val client =
-      DynamoDB("fakeMyKeyId", "fakeSecretAccessKey")(Region.default())
+     AwScalaDynamoDb.buildDynamoDb("fakeMyKeyId", "fakeSecretAccessKey")(Region.default())
     // this deprecated approach is required by the awscala helpers currently in use
     // we suppress this warning, above
     client.setEndpoint("http://localhost:8000")

@@ -1,7 +1,7 @@
 import aws.Clients
-import awscala.dynamodbv2.DynamoDB
 import com.amazonaws.regions.Regions
 import com.gu.googleauth.AuthAction
+import com.gu.janus.transition.aws.AwScalaDynamoDb
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers._
@@ -30,7 +30,7 @@ class AppComponents(context: ApplicationLoader.Context)
   val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
   val dynamodDB =
     if (context.environment.mode == play.api.Mode.Prod)
-      DynamoDB.at(Regions.getCurrentRegion)
+     AwScalaDynamoDb.buildDynamoDb(Regions.getCurrentRegion)
     else Clients.localDb
 
   val janusData = Config.janusData(configuration)

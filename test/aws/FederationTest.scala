@@ -2,18 +2,14 @@ package aws
 
 import awscala.Policy
 import com.gu.janus.model.{AwsAccount, Permission}
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.DateTimeZone
 import org.scalactic.source
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import play.api.routing.sird.{
-  QueryStringParameterExtractor,
-  RequiredQueryStringParameter
-}
+import play.api.routing.sird.QueryStringParameterExtractor
 import testutils.JodaTimeUtils
 
 import java.net.URLDecoder
-import java.nio.charset.Charset
 
 class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
   import Federation._

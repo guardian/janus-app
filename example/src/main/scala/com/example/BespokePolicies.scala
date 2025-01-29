@@ -1,6 +1,5 @@
 package com.example
 
-import awscala.{Action, Resource, Statement}
 import com.amazonaws.auth.policy.Statement.Effect
 import com.example.Accounts.{Production, Root, Security}
 import com.gu.janus.model.Permission

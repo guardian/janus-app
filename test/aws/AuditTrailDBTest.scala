@@ -1,6 +1,17 @@
 package aws
 
-import awscala.dynamodbv2._
+import awscala.dynamodbv2.{
+  AttributeDefinition,
+  AttributeType,
+  DynamoDB,
+  GlobalSecondaryIndex,
+  KeySchema,
+  KeyType,
+  Projection,
+  ProjectionType,
+  ProvisionedThroughput,
+  Table
+}
 import com.gu.janus.model.{AuditLog, JConsole}
 import org.joda.time.{DateTime, DateTimeZone, Duration}
 import org.scalatest.freespec.AnyFreeSpec
@@ -14,7 +25,7 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
     "insertion and querying" ignore {
       val table = AuditTrailDB.getTable()
       val dateTime: DateTime =
-        new DateTime(2015, 11, 5, 17, 35, DateTimeZone.UTC)
+        new DateTime(2025, 1, 28, 17, 35, DateTimeZone.UTC)
       val al = AuditLog(
         "account",
         "username",

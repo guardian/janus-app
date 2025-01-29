@@ -1,18 +1,19 @@
 package data
 
-import awscala._
+import awscala.Effect
 import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.transition.aws.AwScalaPolicy
 
 object Policies {
-  val revokeAccess = Policy(
+  val revokeAccess = AwScalaPolicy.buildPolicy(
     Seq(
-      Statement(
+      AwScalaPolicy.buildStatement(
         Effect.Allow,
         Seq(
-          Action("iam:PutRolePolicy"),
-          Action("iam:getRole")
+          AwScalaPolicy.buildAction("iam:PutRolePolicy"),
+          AwScalaPolicy.buildAction("iam:getRole")
         ),
-        Seq(Resource("*"))
+        Seq(AwScalaPolicy.buildResource("*"))
       )
     )
   )

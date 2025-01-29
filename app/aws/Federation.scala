@@ -1,12 +1,12 @@
 package aws
 
 import awscala.Credentials
-import awscala.iam._
 import awscala.sts.{FederationToken, STS, TemporaryCredentials}
 import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.services.identitymanagement.model.GetRoleRequest
 import com.amazonaws.services.securitytoken
 import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.transition.aws.AwScalaIam
 import data.Policies
 import logic.Date
 import org.joda.time.{DateTime, DateTimeZone, Duration, Period}
@@ -161,14 +161,14 @@ object Federation {
     val sessionCredentials =
       Credentials(creds.accessKeyId, creds.secretAccessKey, creds.sessionToken)
     val provider = new AWSStaticCredentialsProvider(sessionCredentials)
-    val iamClient = IAM(provider)
+    val iamClient = AwScalaIam.buildIam(provider)
 
     // remove access from assumed role
     val roleName = getRoleName(roleArn)
     val getRoleRequest = new GetRoleRequest().withRoleName(roleName)
-    val role = Role(iamClient.getRole(getRoleRequest).getRole)
+    val role = AwScalaIam.buildRole(iamClient.getRole(getRoleRequest).getRole)
     val roleRevocationPolicy =
-      RolePolicy(role, "janus-role-revocation-policy", revocationPolicyDocument)
+      AwScalaIam.buildRolePolicy(role, "janus-role-revocation-policy", revocationPolicyDocument)
     // ^
     // this name should match policy in cloudformation/federation.template.yaml
     iamClient.putRolePolicy(roleRevocationPolicy)

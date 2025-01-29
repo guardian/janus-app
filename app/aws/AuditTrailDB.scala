@@ -1,6 +1,6 @@
 package aws
 
-import awscala.dynamodbv2.{DynamoDBCondition, _}
+import awscala.dynamodbv2.{DynamoDB, DynamoDBCondition, Table}
 import com.gu.janus.model.AuditLog
 import logic.AuditTrail
 import org.joda.time.DateTime

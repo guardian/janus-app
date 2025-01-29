@@ -1,7 +1,7 @@
 package controllers
 
 import aws.AuditTrailDB
-import awscala.dynamodbv2._
+import awscala.dynamodbv2.DynamoDB
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import logic.Date
@@ -44,6 +44,9 @@ class Audit(
     ) flatMap Date.parseDateStr getOrElse Date.today
     val (startDate, endDate) = Date.weekAround(date)
     logger.info(s"Getting logs for $username from $startDate to $endDate")
+    val x = dynamodDB.table("AuditTrail")
+    val y = dynamodDB.describe("AuditTrail")
+    val z = dynamodDB.listTables()
     val table = AuditTrailDB.getTable()
     val auditLogs =
       AuditTrailDB.getUserLogs(table, username, startDate, endDate)

@@ -1,12 +1,13 @@
 package com.gu.janus.policy
 
-import awscala._
+import awscala.{Policy, Statement}
 import com.amazonaws.auth.policy.Statement.Effect
+import com.gu.janus.transition.aws.AwScalaPolicy
 
 object Statements {
 
   def policy(statements: Seq[Statement]*): Policy = {
-    Policy(statements.flatten.distinct)
+    AwScalaPolicy.buildPolicy(statements.flatten.distinct)
   }
 
   private[policy] def enforceCorrectPath(path: String): Boolean = {
@@ -33,12 +34,12 @@ object Statements {
       s"Provided path should include leading slash and omit trailing slash ($bucketName :: $path)"
     )
     s3ConsoleEssentials(bucketName) :+
-      Statement(
+      AwScalaPolicy.buildStatement(
         effect,
-        Seq(Action("s3:Get*"), Action("s3:List*")),
+        Seq(AwScalaPolicy.buildAction("s3:Get*"), AwScalaPolicy.buildAction("s3:List*")),
         Seq(
-          Resource(s"arn:aws:s3:::$bucketName$path"),
-          Resource(s"arn:aws:s3:::$bucketName${hierarchyPath(path)}")
+          AwScalaPolicy.buildResource(s"arn:aws:s3:::$bucketName$path"),
+          AwScalaPolicy.buildResource(s"arn:aws:s3:::$bucketName${hierarchyPath(path)}")
         )
       )
   }
@@ -53,12 +54,12 @@ object Statements {
       s"Provided path should include leading slash and omit trailing slash ($bucketName :: $path)"
     )
     s3ConsoleEssentials(bucketName) :+
-      Statement(
+      AwScalaPolicy.buildStatement(
         Effect.Allow,
-        Seq(Action("s3:*")),
+        Seq(AwScalaPolicy.buildAction("s3:*")),
         Seq(
-          Resource(s"arn:aws:s3:::$bucketName$path"),
-          Resource(s"arn:aws:s3:::$bucketName${hierarchyPath(path)}")
+          AwScalaPolicy.buildResource(s"arn:aws:s3:::$bucketName$path"),
+          AwScalaPolicy.buildResource(s"arn:aws:s3:::$bucketName${hierarchyPath(path)}")
         )
       )
   }
@@ -70,18 +71,18 @@ object Statements {
     */
   def s3ConsoleEssentials(bucketName: String): Seq[Statement] = {
     Seq(
-      Statement(
+      AwScalaPolicy.buildStatement(
         Effect.Allow,
         Seq(
-          Action("s3:ListAllMyBuckets"),
-          Action("s3:GetBucketLocation")
+          AwScalaPolicy.buildAction("s3:ListAllMyBuckets"),
+          AwScalaPolicy.buildAction("s3:GetBucketLocation")
         ),
-        Seq(Resource("arn:aws:s3:::*"))
+        Seq(AwScalaPolicy.buildResource("arn:aws:s3:::*"))
       ),
-      Statement(
+      AwScalaPolicy.buildStatement(
         Effect.Allow,
-        Seq(Action("s3:ListBucket")),
-        Seq(Resource(s"arn:aws:s3:::$bucketName"))
+        Seq(AwScalaPolicy.buildAction("s3:ListBucket")),
+        Seq(AwScalaPolicy.buildResource(s"arn:aws:s3:::$bucketName"))
       )
     )
   }
@@ -91,18 +92,18 @@ object Statements {
     */
   def s3BucketBasicAccessStatements(bucketName: String): Seq[Statement] = {
     Seq(
-      Statement(
+      AwScalaPolicy.buildStatement(
         Effect.Allow,
         Seq(
-          Action("s3:ListAllMyBuckets"),
-          Action("s3:GetBucketLocation")
+          AwScalaPolicy.buildAction("s3:ListAllMyBuckets"),
+          AwScalaPolicy.buildAction("s3:GetBucketLocation")
         ),
-        Seq(Resource("arn:aws:s3:::*"))
+        Seq(AwScalaPolicy.buildResource("arn:aws:s3:::*"))
       ),
-      Statement(
+      AwScalaPolicy.buildStatement(
         Effect.Allow,
-        Seq(Action("s3:ListBucket")),
-        Seq(Resource(s"arn:aws:s3:::$bucketName"))
+        Seq(AwScalaPolicy.buildAction("s3:ListBucket")),
+        Seq(AwScalaPolicy.buildResource(s"arn:aws:s3:::$bucketName"))
       )
     )
   }
