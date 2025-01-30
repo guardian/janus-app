@@ -131,3 +131,6 @@ crashlytics-build.properties
 .metals/
 .vscode/
 .bloop/
+
+# parcel
+.parcel-cache/
