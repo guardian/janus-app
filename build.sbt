@@ -8,7 +8,6 @@ import sbtversionpolicy.withsbtrelease.ReleaseVersion
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "1.12.780"
 val awscalaVersion = "0.9.2"
 val circeVersion = "0.14.10"
 val commonDependencies = Seq(
@@ -84,9 +83,6 @@ lazy val root = (project in file("."))
       ws,
       filters,
       "com.gu.play-googleauth" %% "play-v30" % "19.0.0",
-      "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
-      "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
-      "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3" // scala-steward:off
     ) ++ jacksonDatabindOverrides
       ++ jacksonOverrides
@@ -139,8 +135,7 @@ lazy val configTools = (project in file("configTools"))
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
-      "io.circe" %% "circe-config" % "0.10.1",
-      "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion
+      "io.circe" %% "circe-config" % "0.10.1"
     ) ++ jacksonDatabindOverrides,
     name := "janus-config-tools",
     description := "Library for reading and writing Janus configuration files"
