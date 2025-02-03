@@ -146,4 +146,4 @@ crashlytics-build.properties
 .vscode/
 
 # parcel
-.parcel-cache/
+frontend/.parcel-cache
