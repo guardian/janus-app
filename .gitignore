@@ -135,4 +135,4 @@ crashlytics-build.properties
 .bloop/
 
 # parcel
-.parcel-cache/
+frontend/.parcel-cache
