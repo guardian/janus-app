@@ -1,8 +1,10 @@
 package com.gu.janus.policy
 
-import Statements._
+import com.gu.janus.policy.Statements._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+
+import scala.jdk.CollectionConverters._
 
 class StatementsTest extends AnyFreeSpec with Matchers {
   "policy helper" - {
@@ -14,7 +16,7 @@ class StatementsTest extends AnyFreeSpec with Matchers {
 
     "deduplicates statements" in {
       val p = policy(statements: _*)
-      p.statements.distinct shouldBe p.statements
+      p.statements.asScala.distinct.asJava shouldBe p.statements
     }
   }
 
