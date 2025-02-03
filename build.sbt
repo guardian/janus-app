@@ -5,6 +5,8 @@ import sbt.{addCompilerPlugin, *}
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations.*
 import sbtversionpolicy.withsbtrelease.ReleaseVersion
 
+import play.sbt.PlayImport.PlayKeys.playRunHooks
+
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
@@ -76,6 +78,8 @@ lazy val root = (project in file("."))
       "-J-Xms1g",
       "-J-Xmx1g"
     ),
+    // allows us to kick off the frontend dev-server when the API is run
+    playRunHooks += RunClientHook(root.base),
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
