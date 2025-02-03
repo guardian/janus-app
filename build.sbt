@@ -85,7 +85,6 @@ lazy val root = (project in file("."))
       filters,
       "com.gu.play-googleauth" %% "play-v30" % "19.0.0",
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
-      "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3" // scala-steward:off
     ) ++ jacksonDatabindOverrides
