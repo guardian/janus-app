@@ -132,6 +132,12 @@ automatically recompile and reload when changes are made.
 
     sbt -Dconfig.file=<PATH>/janus.local.conf run
 
+#### Local audit log support
+
+To get the audit endpoints to work and test audit logging locally, follow the instructions in this 
+[README](local-dev/README.md).
+
+
 ## Configuration
 
 ### Janus' AWS config
