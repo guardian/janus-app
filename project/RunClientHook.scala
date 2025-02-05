@@ -21,7 +21,7 @@ object RunClientHook {
        */
       override def beforeStarted(): Unit = {
         if (!(base / "frontend" / "node_modules").exists())
-          Process(install, base / "frontent").!
+          Process(install, base / "frontend").!
       }
 
       /**
