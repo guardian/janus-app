@@ -8,8 +8,8 @@ import conf.Config
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
 import org.joda.time.{DateTime, DateTimeZone, Duration}
+import play.api.{Configuration, Logging, Mode}
 import play.api.mvc._
-import play.api.{Configuration, Logging}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.model.Credentials
@@ -21,7 +21,7 @@ class Janus(
     host: String,
     stsClient: StsClient,
     configuration: Configuration
-)(implicit dynamodDB: DynamoDbClient, assetsFinder: AssetsFinder)
+)(implicit dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 
