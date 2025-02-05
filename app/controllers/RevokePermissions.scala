@@ -8,7 +8,7 @@ import conf.Config
 import logic.Revocation
 import logic.UserAccess._
 import org.joda.time.{DateTime, DateTimeZone}
-import play.api.{Configuration, Logging}
+import play.api.{Configuration, Logging, Mode}
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents}
 
 class RevokePermissions(
@@ -17,7 +17,7 @@ class RevokePermissions(
     authAction: AuthAction[AnyContent],
     stsClient: STS,
     configuration: Configuration
-)(implicit assetsFinder: AssetsFinder)
+)(implicit mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 

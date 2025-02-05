@@ -5,14 +5,14 @@ import awscala.dynamodbv2._
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import logic.Date
-import play.api.Logging
+import play.api.{Logging, Mode}
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents}
 
 class Audit(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent]
-)(implicit dynamodDB: DynamoDB, assetsFinder: AssetsFinder)
+)(implicit dynamodDB: DynamoDB, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 

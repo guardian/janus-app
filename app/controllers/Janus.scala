@@ -10,7 +10,7 @@ import conf.Config
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
 import org.joda.time.{DateTime, DateTimeZone, Duration}
-import play.api.{Configuration, Logging}
+import play.api.{Configuration, Logging, Mode}
 import play.api.mvc._
 
 import java.net.URLEncoder
@@ -22,7 +22,7 @@ class Janus(
     host: String,
     stsClient: STS,
     configuration: Configuration
-)(implicit dynamodDB: DynamoDB, assetsFinder: AssetsFinder)
+)(implicit dynamodDB: DynamoDB, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 

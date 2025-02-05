@@ -1,8 +1,9 @@
 @import awscala.sts.TemporaryCredentials
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
+@import play.api.Mode
 
-@(url: String, accountName: String, credentials: TemporaryCredentials, user: UserIdentity, janusData: JanusData)(implicit assetsFinder: AssetsFinder)
+@(url: String, accountName: String, credentials: TemporaryCredentials, user: UserIdentity, janusData: JanusData)(implicit mode: Mode, assetsFinder: AssetsFinder)
 
 @import logic.Date
 
