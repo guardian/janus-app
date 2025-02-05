@@ -1,12 +1,13 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
 @import org.joda.time.DateTime
+@import play.api.Mode
 
 @(activeSupportUsers: Option[(DateTime, (Option[String], Option[String]))],
     nextSupportUsers: Option[(DateTime, (Option[String], Option[String]))],
   futureSupportDates: List[(DateTime, String)], user: UserIdentity, janusData: JanusData
 
-    )(implicit req: RequestHeader, assetsFinder: AssetsFinder)
+    )(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Support", Some(user), janusData) {
     <div class="container">

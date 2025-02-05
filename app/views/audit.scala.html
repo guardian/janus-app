@@ -1,8 +1,9 @@
 @import com.gu.janus.model.{AuditLog, JConsole, JanusData}
 @import com.gu.googleauth.UserIdentity
 @import org.joda.time.DateTime
+@import play.api.Mode
 
-@(auditLogs: Seq[scala.Either[String, AuditLog]], key: Either[String, String], startDate: DateTime, prevNextWeeks: (Option[DateTime], Option[DateTime]), user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, assetsFinder: AssetsFinder)
+@(auditLogs: Seq[scala.Either[String, AuditLog]], key: Either[String, String], startDate: DateTime, prevNextWeeks: (Option[DateTime], Option[DateTime]), user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @import logic.Date.{formatDateTime, formatDate, formatDuration, rawDate}
 @import helper._
