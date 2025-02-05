@@ -3,8 +3,9 @@
 @import logic.UserAccess.{hasAccess, isSupportUser, username}
 @import org.joda.time.DateTime
 @import logic.Customisation.displayColour
+@import play.api.Mode
 
-@(title: String, userOpt: Option[UserIdentity], janusData: JanusData, displayMode: DisplayMode = Normal)(content: Html)(implicit assetsFinder: AssetsFinder)
+@(title: String, userOpt: Option[UserIdentity], janusData: JanusData, displayMode: DisplayMode = Normal)(content: Html)(implicit mode: Mode, assetsFinder: AssetsFinder)
 
 <!DOCTYPE html>
 <html lang="en">
@@ -14,7 +15,11 @@
         <title>@title - Janus</title>
 
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-        <link href="http://localhost:1234/main.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+        @if(mode == Mode.Dev) {
+            <link href="http://localhost:1234/main.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+        } else {
+            <link href="@assetsFinder.path("main.css")" type="text/css" rel="stylesheet" media="screen,projection"/>
+        }
 
         <link rel="icon" href="@assetsFinder.path("images/favicon.ico")"/>
     </head>
@@ -79,7 +84,17 @@
             </div>
         </footer>
 
-        <script src="@assetsFinder.path("janus.js")"></script>
+        @if(mode == Mode.Dev) {
+            <script src="http://localhost:1234/janus.js"></script>
+        } else {
+            <script src="@assetsFinder.path("janus.js")"></script>
+        }
+
+        @if(mode == Mode.Dev) {
+            <script src="http://localhost:1234/snow.js"></script>
+        } else {
+            <script src="@assetsFinder.path("snow.js")"></script>
+        }
         @if(displayMode == Festive) {
             <script src="@assetsFinder.path("snow.js")"></script>
         }
