@@ -23,7 +23,7 @@
   "homepage": "https://github.com/guardian/janus-app#readme",
   "dependencies": {
     "jquery": "^2.1.4",
-    "materialize-css": "^0.98.1",
+    "materialize-css": "^0.100.2",
     "parcel": "^2.13.3"
   }
 }

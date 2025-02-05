@@ -60,7 +60,7 @@ val pekkoSerializationJacksonOverrides = Seq(
   "com.fasterxml.jackson.module" %% "jackson-module-scala"
 ).map(_ % jacksonVersion)
 
-lazy val root = (project in file("."))
+lazy val root: Project = (project in file("."))
   .enablePlugins(PlayScala, JDebPackaging, SystemdPlugin)
   .dependsOn(configTools % "compile->compile;test->test")
   .aggregate(configTools)
