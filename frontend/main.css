@@ -19,10 +19,6 @@ main {
     vertical-align: -3px;
 }
 
-.star {
-    color: white;
-}
-
 .switch label:has(> #auto_logout_switch) span {
     margin-top: -2px;
     font-size: 1rem;
@@ -274,6 +270,10 @@ input[type=text].input--slim {
 
 .card-content--aws-account-header__button--favourite:focus {
     background-color: transparent;
+}
+
+.card-content--aws-account-header__button--favourite i {
+    color: white;
 }
 
 .collapsible--fixed-paragraphs .collapsible-body p {
