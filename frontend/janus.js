@@ -38,7 +38,7 @@ jQuery(function($){
         });
     }
 
-    // audit log
+    // audit log TODO: fix datepicker
     if ($('.container.audit').length) {
         var dateInput = $('.datepicker.audit-log').pickadate({
             selectMonths: true,
@@ -62,7 +62,7 @@ jQuery(function($){
         });
     }
 
-    // copy-text
+    // copy-text TODO: check copy in accordion  .copy-text--button
     $(".copy-text--button").each(function(_, el){
         var button = $(el),
             container = button.parents(".copy-textarea"),
@@ -116,7 +116,7 @@ jQuery(function($){
         recalculate();
     });
 
-    // allow user to simultaneously obtain credentials from multiple accounts
+    // allow user to simultaneously obtain credentials from multiple accounts  TODO fix this (no checkbox currently)
     $(".multiple-credentials-control__container").each(function(_, el){
         var checkboxes = $(".multi-select__checkbox"),
             container = $(el),
@@ -201,7 +201,7 @@ jQuery(function($){
         link.prop("href", link.prop("href") + "&tzOffset=" + tzOffset);
     });
 
-    // login lease time
+    // login lease time TODO: fix
     $(".login-duration__container").each(function(_, el){
         var defaultLongDurationLink = $(".dropdown-time__link--default[data-length=standard]"),
             container = $(el),
@@ -237,7 +237,7 @@ jQuery(function($){
         // enable feature if JS is available
         links.removeAttr("disabled");
 
-        // add click handlers to time choices
+        // add click handlers to time choices TODO: check if this works when dropdown-time-standard, dropdown-time-admin fixed
         $(".dropdown-time__link").each(function(_, el){
             var link = $(el);
             link.click(function(e){
@@ -248,7 +248,7 @@ jQuery(function($){
                 link.parents(".login-duration__header").find(".dropdown-button").text(link.text());
             });
         });
-        // remove wallclock option if we're too far from 19:00
+        // remove wallclock option if we're too far from 19:00 TODO check this works just after 7pm
         if (msToEndOfWork > maxLongDuration) {
             var walltimeSelector = $(".dropdown-time__link--walltime[data-length=standard]");
             walltimeSelector
@@ -262,7 +262,7 @@ jQuery(function($){
         }
     });
 
-    // local times
+    // local times TODO: check by changing local timezone 
     $(".local-date").each(function(_, el){
         var dateSpan = $(el),
             datestamp = dateSpan.data("date"),
