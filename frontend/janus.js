@@ -1,13 +1,13 @@
 import jQuery from "jquery";
-import Materialize from "materialize-css";
+import "materialize-css";
+
+document.addEventListener('DOMContentLoaded', function() {
+    var sidenavElems = document.querySelectorAll('.sidenav');
+    var sidenavInstances = M.Sidenav.init(sidenavElems);
+  });
 
 jQuery(function($){
     "use strict";
-
-    // materialize setup
-    $('.button-collapse').sideNav();
-    $('.modal').modal();
-    Materialize.updateTextFields();
 
     // aws-profile-name
     if ($('.editable-aws-profile').length) {
