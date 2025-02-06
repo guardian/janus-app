@@ -18,7 +18,7 @@
         @if(mode == Mode.Dev) {
             <link href="http://localhost:1234/main.css" type="text/css" rel="stylesheet" media="screen,projection"/>
         } else {
-            <link href="@assetsFinder.path("main.css")" type="text/css" rel="stylesheet" media="screen,projection"/>
+            <link href="@assetsFinder.path("frontend/main.css")" type="text/css" rel="stylesheet" media="screen,projection"/>
         }
         <link rel="icon" href="@assetsFinder.path("images/favicon.ico")"/>
     </head>
@@ -86,16 +86,15 @@
         @if(mode == Mode.Dev) {
             <script src="http://localhost:1234/janus.js"></script>
         } else {
-            <script src="@assetsFinder.path("janus.js")"></script>
+            <script src="@assetsFinder.path("frontend/janus.js")"></script>
         }
 
-        @if(mode == Mode.Dev) {
-            <script src="http://localhost:1234/snow.js"></script>
-        } else {
-            <script src="@assetsFinder.path("snow.js")"></script>
-        }
         @if(displayMode == Festive) {
-            <script src="@assetsFinder.path("snow.js")"></script>
+            @if(mode == Mode.Dev) {
+                <script src="http://localhost:1234/snow.js"></script>
+            } else {
+                <script src="@assetsFinder.path("frontend/snow.js")"></script>
+            }
         }
 
     </body>
