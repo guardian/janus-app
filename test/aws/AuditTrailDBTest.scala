@@ -5,6 +5,7 @@ import org.joda.time.{DateTime, DateTimeZone, Duration}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.KeyType.{HASH, RANGE}
 import software.amazon.awssdk.services.dynamodb.model._
 
 class AuditTrailDBTest extends AnyFreeSpec with Matchers {
@@ -69,12 +70,12 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
         KeySchemaElement
           .builder()
           .attributeName("j_account")
-          .keyType("HASH")
+          .keyType(HASH)
           .build(),
         KeySchemaElement
           .builder()
           .attributeName("j_timestamp")
-          .keyType("RANGE")
+          .keyType(RANGE)
           .build()
       )
       .attributeDefinitions(
@@ -102,12 +103,12 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
             KeySchemaElement
               .builder()
               .attributeName("j_username")
-              .keyType("HASH")
+              .keyType(HASH)
               .build(),
             KeySchemaElement
               .builder()
               .attributeName("j_timestamp")
-              .keyType("RANGE")
+              .keyType(RANGE)
               .build()
           )
           .projection(Projection.builder().projectionType("ALL").build())

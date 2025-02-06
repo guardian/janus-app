@@ -8,6 +8,7 @@ import software.amazon.awssdk.services.dynamodb.model.ComparisonOperator.{
   BETWEEN,
   EQ
 }
+import software.amazon.awssdk.services.dynamodb.model.KeyType.{HASH, RANGE}
 import software.amazon.awssdk.services.dynamodb.model._
 
 import scala.jdk.CollectionConverters._
@@ -28,8 +29,8 @@ object AuditTrailDB {
   ): Unit = {
     val keySchema = table.keySchema().asScala
     val partitionKeyName =
-      keySchema.find(_.keyType() == "HASH").get.attributeName()
-    val sortKeyName = keySchema.find(_.keyType() == "RANGE").get.attributeName()
+      keySchema.find(_.keyType() == HASH).get.attributeName()
+    val sortKeyName = keySchema.find(_.keyType() == RANGE).get.attributeName()
     val (hash_project, range_date, attrs) = auditLogAttrs(auditLog)
     val partitionKey = partitionKeyName -> AttributeValue.fromS(hash_project)
     val sortKey = sortKeyName -> AttributeValue.fromN(range_date.toString)
