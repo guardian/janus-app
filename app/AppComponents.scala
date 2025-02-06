@@ -11,6 +11,7 @@ import play.api.routing.Router
 import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging}
 import play.filters.HttpFiltersComponents
 import router.Routes
+import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 class AppComponents(context: ApplicationLoader.Context)
@@ -29,7 +30,7 @@ class AppComponents(context: ApplicationLoader.Context)
   val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
   val dynamodDB =
     if (context.environment.mode == play.api.Mode.Prod)
-      DynamoDbClient.create()
+      DynamoDbClient.builder().region(EU_WEST_1).build()
     else Clients.localDb
 
   val janusData = Config.janusData(configuration)

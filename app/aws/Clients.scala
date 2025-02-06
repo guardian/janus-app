@@ -10,6 +10,7 @@ import software.amazon.awssdk.auth.credentials.{
   AwsBasicCredentials,
   StaticCredentialsProvider
 }
+import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.net.URI
@@ -39,6 +40,7 @@ object Clients {
           AwsBasicCredentials.create("fakeMyKeyId", "fakeSecretAccessKey")
         )
       )
+      .region(EU_WEST_1)
       .endpointOverride(URI.create("http://localhost:8000"))
       .build()
 }
