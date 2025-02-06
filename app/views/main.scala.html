@@ -20,7 +20,6 @@
         } else {
             <link href="@assetsFinder.path("main.css")" type="text/css" rel="stylesheet" media="screen,projection"/>
         }
-
         <link rel="icon" href="@assetsFinder.path("images/favicon.ico")"/>
     </head>
     <body>
@@ -41,7 +40,7 @@
                             <li><a href="/logout">@user.firstName @user.lastName</a></li>
                         </ul>
 
-                        <ul id="nav-mobile" class="side-nav">
+                        <ul id="nav-mobile" class="sidenav">
                             <li><a href="/">Home</a></li>
                             <li><a href="/accounts">Accounts</a></li>
                             @if(isSupportUser(username(user), DateTime.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
@@ -51,7 +50,7 @@
                         </ul>
                     }
 
-                    <a href="#" data-activates="nav-mobile" class="button-collapse"><i class="material-icons">menu</i></a>
+                    <a href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
                 </div>
             </nav>
         </header>
@@ -98,5 +97,6 @@
         @if(displayMode == Festive) {
             <script src="@assetsFinder.path("snow.js")"></script>
         }
+
     </body>
 </html>
