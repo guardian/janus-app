@@ -91,7 +91,7 @@ object AuditTrailDB {
     val request = QueryRequest
       .builder()
       .tableName(table.tableName())
-        .indexName(secondaryIndexName)
+      .indexName(secondaryIndexName)
       .keyConditions(
         Map(
           "j_username" -> Condition
@@ -107,7 +107,10 @@ object AuditTrailDB {
     queryResult(dynamoDB, request)
   }
 
-  private def dateRangeCondition(startDate: DateTime, endDate: DateTime): (String, Condition) = {
+  private def dateRangeCondition(
+      startDate: DateTime,
+      endDate: DateTime
+  ): (String, Condition) = {
     "j_timestamp" -> Condition
       .builder()
       .comparisonOperator(BETWEEN)
@@ -118,7 +121,10 @@ object AuditTrailDB {
       .build()
   }
 
-  private def queryResult(dynamoDB: DynamoDbClient, request: QueryRequest): Seq[Either[String, AuditLog]] = {
+  private def queryResult(
+      dynamoDB: DynamoDbClient,
+      request: QueryRequest
+  ): Seq[Either[String, AuditLog]] = {
     val result = dynamoDB.query(request)
     result
       .items()
