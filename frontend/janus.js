@@ -1,5 +1,5 @@
-import jQuery from "jquery";
-import "materialize-css";
+import jQuery from 'jquery';
+import 'materialize-css';
 
 document.addEventListener('DOMContentLoaded', function() {
     var sidenavElems = document.querySelectorAll('.sidenav');
@@ -7,11 +7,21 @@ document.addEventListener('DOMContentLoaded', function() {
     var modalElems = document.querySelectorAll('.modal');
     var modalInstances = M.Modal.init(modalElems);
     M.updateTextFields();
+
+    const auditContainer = document.querySelectorAll('.container.audit');
+    console.log('auditconatiner.length', auditContainer.length);
+    if (auditContainer.length) {
+        const datePicker = document.getElementById('datepicker-audit');
+        const dateForm = datePicker.closest('form');
+        datePicker.addEventListener('change', (event) => {});
+        datePicker.onchange = () => {
+            dateForm.submit()};
+    }
+    
   });
 
 jQuery(function($){
     "use strict";
-
     // aws-profile-name
     if ($('.editable-aws-profile').length) {
         var profileIdContainers = $('.editable-aws-profile .aws-profile-id');
@@ -35,30 +45,6 @@ jQuery(function($){
                     el.get(0).innerText = replaced.join("\n");
                 }
             });
-        });
-    }
-
-    // audit log TODO: fix datepicker
-    if ($('.container.audit').length) {
-        var dateInput = $('.datepicker.audit-log').pickadate({
-            selectMonths: true,
-            clear: false,
-            format: "dd mmmm, yyyy",
-            formatSubmit: "yyyy-mm-dd",
-            hiddenName: true,
-            min: new Date(2015, 10, 2),
-            max: new Date(),
-            firstDay: true,
-            onSet: function(context) {
-                if (context.select) {
-                    this.$node.parents("form").submit();
-                }
-            }
-        });
-        $('.audit-change-week').click(function(e) {
-            e.stopPropagation();
-            dateInput.focus();
-            dateInput.pickadate('picker').open();
         });
     }
 
