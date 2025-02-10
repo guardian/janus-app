@@ -1,7 +1,9 @@
 package controllers
 
 import aws.{AuditTrailDB, Federation}
-import awscala.sts.{STS, TemporaryCredentials}
+import software.amazon.awssdk.services.sts.StsClient
+import software.amazon.awssdk.services.sts.model.Credentials
+//import awscala.sts.{STS, TemporaryCredentials}
 import cats.syntax.all._
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model._
@@ -18,7 +20,7 @@ class Janus(
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
     host: String,
-    stsClient: STS,
+    stsClient: StsClient,
     configuration: Configuration
 )(implicit dynamodDB: DynamoDbClient, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
@@ -221,7 +223,7 @@ class Janus(
       permissionId: String,
       accessType: JanusAccessType,
       durationParams: (Option[Duration], Option[DateTimeZone])
-  ): Option[(TemporaryCredentials, Permission)] = {
+  ): Option[(Credentials, Permission)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
       permission <- checkUserPermission(
@@ -262,7 +264,7 @@ class Janus(
       user: UserIdentity,
       permissionIds: List[String],
       durationParams: (Option[Duration], Option[DateTimeZone])
-  ): Option[List[(AwsAccount, TemporaryCredentials)]] = {
+  ): Option[List[(AwsAccount, Credentials)]] = {
     permissionIds
       .map(assumeRole(user, _, JCredentials, durationParams))
       .map(_.map { case (credentials, permission) =>

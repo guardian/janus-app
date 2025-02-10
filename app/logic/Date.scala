@@ -1,12 +1,21 @@
 package logic
 
 import models.{DisplayMode, Festive, Normal, Spooky}
-import org.joda.time._
+import org.joda.time.{
+  DateTime,
+  DateTimeConstants,
+  DateTimeZone,
+  Duration,
+  Interval,
+  Period
+}
 import org.joda.time.format.{
   DateTimeFormat,
   ISODateTimeFormat,
   PeriodFormatterBuilder
 }
+
+import java.time.Instant
 
 object Date {
   val simpleDateFormatter =
@@ -17,11 +26,15 @@ object Date {
   val friendlyDateFormatter =
     DateTimeFormat.forPattern("d MMMM, yyyy").withZoneUTC()
 
+  private def toJodaDateTime(instant: Instant): DateTime = {
+    new DateTime(instant.toEpochMilli, DateTimeZone.UTC)
+  }
+
   def formatDateTime(date: DateTime): String =
     dateTimeFormatter.print(date)
 
-  def formatTime(date: DateTime): String =
-    timeFormatter.print(date)
+  def formatTime(instant: Instant): String =
+    timeFormatter.print(toJodaDateTime(instant))
 
   def formatDate(date: DateTime): String = {
     friendlyDateFormatter.print(date)
@@ -31,15 +44,21 @@ object Date {
     simpleDateFormatter.print(date)
   }
 
+  def isoDateString(instant: Instant): String = {
+    ISODateTimeFormat.dateTime().print(toJodaDateTime(instant))
+  }
+
   def isoDateString(date: DateTime): String = {
     ISODateTimeFormat.dateTime().print(date)
   }
 
   def formatInterval(
-      date: DateTime,
+      instant: Instant,
       comparison: DateTime = DateTime.now
-  ): String =
+  ): String = {
+    val date = toJodaDateTime(instant)
     formatPeriod(new Interval(comparison, date).toPeriod)
+  }
 
   def formatDuration(duration: Duration): String =
     formatPeriod(duration.toPeriod)

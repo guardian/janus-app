@@ -1,17 +1,9 @@
 package aws
 
-import awscala.sts.STS
-import com.amazonaws.auth.profile.ProfileCredentialsProvider
-import com.amazonaws.auth.{
-  AWSCredentialsProviderChain,
-  InstanceProfileCredentialsProvider
-}
-import software.amazon.awssdk.auth.credentials.{
-  AwsBasicCredentials,
-  StaticCredentialsProvider
-}
+import software.amazon.awssdk.auth.credentials._
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.sts.StsClient
 
 import java.net.URI
 
@@ -21,16 +13,15 @@ object Clients {
   // different to the credentials you normally want to use
   val profileName = "janus"
 
-  lazy val credentialsProviderChain: AWSCredentialsProviderChain = {
-    new AWSCredentialsProviderChain(
-      InstanceProfileCredentialsProvider.getInstance(),
-      new ProfileCredentialsProvider(profileName)
-    )
-  }
+  private lazy val credentialsProviderChain: AwsCredentialsProviderChain =
+    AwsCredentialsProviderChain
+      .builder()
+      .addCredentialsProvider(InstanceProfileCredentialsProvider.create())
+      .addCredentialsProvider(ProfileCredentialsProvider.create(profileName))
+      .build()
 
-  lazy val stsClient: STS = {
-    STS(credentialsProviderChain)
-  }
+  lazy val stsClient: StsClient =
+    StsClient.builder().credentialsProvider(credentialsProviderChain).build()
 
   def localDb: DynamoDbClient =
     DynamoDbClient

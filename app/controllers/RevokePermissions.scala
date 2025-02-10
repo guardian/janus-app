@@ -1,21 +1,21 @@
 package controllers
 
 import aws.Federation
-import awscala.sts.STS
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import conf.Config
 import logic.Revocation
 import logic.UserAccess._
 import org.joda.time.{DateTime, DateTimeZone}
-import play.api.{Configuration, Logging}
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents}
+import play.api.{Configuration, Logging}
+import software.amazon.awssdk.services.sts.StsClient
 
 class RevokePermissions(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
-    stsClient: STS,
+    stsClient: StsClient,
     configuration: Configuration
 )(implicit assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)

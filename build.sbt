@@ -17,7 +17,6 @@ val commonDependencies = Seq(
   "joda-time" % "joda-time" % "2.13.0",
   "org.joda" % "joda-convert" % "3.0.1",
   "com.github.seratch" %% "awscala-iam" % awscalaVersion,
-  "com.github.seratch" %% "awscala-sts" % awscalaVersion,
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
@@ -85,7 +84,7 @@ lazy val root = (project in file("."))
       filters,
       "com.gu.play-googleauth" %% "play-v30" % "19.0.0",
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
-      "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
+      "software.amazon.awssdk" % "sts" % awsSdkV2Version,
       "software.amazon.awssdk" % "dynamodb" % awsSdkV2Version,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3" // scala-steward:off
     ) ++ jacksonDatabindOverrides
