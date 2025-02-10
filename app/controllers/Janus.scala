@@ -1,7 +1,6 @@
 package controllers
 
 import aws.{AuditTrailDB, Federation}
-import awscala.dynamodbv2.DynamoDB
 import awscala.sts.{STS, TemporaryCredentials}
 import cats.syntax.all._
 import com.gu.googleauth.{AuthAction, UserIdentity}
@@ -10,10 +9,9 @@ import conf.Config
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
 import org.joda.time.{DateTime, DateTimeZone, Duration}
-import play.api.{Configuration, Logging}
 import play.api.mvc._
-
-import java.net.URLEncoder
+import play.api.{Configuration, Logging}
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 class Janus(
     janusData: JanusData,
@@ -22,7 +20,7 @@ class Janus(
     host: String,
     stsClient: STS,
     configuration: Configuration
-)(implicit dynamodDB: DynamoDB, assetsFinder: AssetsFinder)
+)(implicit dynamodDB: DynamoDbClient, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 

@@ -1,15 +1,19 @@
 package aws
 
-import awscala.Region
-import awscala.dynamodbv2.DynamoDB
 import awscala.sts.STS
 import com.amazonaws.auth.profile.ProfileCredentialsProvider
 import com.amazonaws.auth.{
   AWSCredentialsProviderChain,
   InstanceProfileCredentialsProvider
 }
+import software.amazon.awssdk.auth.credentials.{
+  AwsBasicCredentials,
+  StaticCredentialsProvider
+}
+import software.amazon.awssdk.regions.Region.EU_WEST_1
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
-import scala.annotation.nowarn
+import java.net.URI
 
 object Clients {
   // local dev is in a separate profile name so it isn't overwritten when you obtain credentials using Janus
@@ -28,13 +32,15 @@ object Clients {
     STS(credentialsProviderChain)
   }
 
-  @nowarn("cat=deprecation")
-  def localDb: DynamoDB = {
-    val client =
-      DynamoDB("fakeMyKeyId", "fakeSecretAccessKey")(Region.default())
-    // this deprecated approach is required by the awscala helpers currently in use
-    // we suppress this warning, above
-    client.setEndpoint("http://localhost:8000")
-    client
-  }
+  def localDb: DynamoDbClient =
+    DynamoDbClient
+      .builder()
+      .credentialsProvider(
+        StaticCredentialsProvider.create(
+          AwsBasicCredentials.create("fakeMyKeyId", "fakeSecretAccessKey")
+        )
+      )
+      .region(EU_WEST_1)
+      .endpointOverride(URI.create("http://localhost:8000"))
+      .build()
 }

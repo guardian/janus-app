@@ -1,12 +1,12 @@
 package logic
 
-import awscala.dynamodbv2.{Attribute, AttributeValue}
 import com.gu.janus.model.{AuditLog, JConsole, JCredentials}
 import com.gu.janus.testutils.{HaveMatchers, RightValues}
 import org.joda.time.{DateTime, DateTimeZone, Duration}
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{OptionValues}
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 import scala.language.implicitConversions
 
@@ -71,17 +71,14 @@ class AuditTrailTest
 
   "auditLogFromAttrs" - {
     "given valid attributes" - {
-      val attrs = Seq(
-        Attribute("j_account", AttributeValue(s = Some("account"), l = Nil)),
-        Attribute("j_username", AttributeValue(s = Some("username"), l = Nil)),
-        Attribute(
-          "j_timestamp",
-          AttributeValue(n = Some("1446650520000"), l = Nil)
-        ),
-        Attribute("j_duration", AttributeValue(n = Some("3600"), l = Nil)),
-        Attribute("j_accessLevel", AttributeValue(s = Some("dev"), l = Nil)),
-        Attribute("j_accessType", AttributeValue(s = Some("console"), l = Nil)),
-        Attribute("j_external", AttributeValue(n = Some("1"), l = Nil))
+      val attrs = Map(
+        "j_account" -> AttributeValue.fromS("account"),
+        "j_username" -> AttributeValue.fromS("username"),
+        "j_timestamp" -> AttributeValue.fromN("1446650520000"),
+        "j_duration" -> AttributeValue.fromN("3600"),
+        "j_accessLevel" -> AttributeValue.fromS("dev"),
+        "j_accessType" -> AttributeValue.fromS("console"),
+        "j_external" -> AttributeValue.fromN("1")
       )
 
       "extracts an audit log from valid attributes" in {
@@ -105,17 +102,14 @@ class AuditTrailTest
     }
 
     "when missing a required field" - {
-      val attrs = Seq(
+      val attrs = Map(
         // missing account
-        Attribute("j_username", AttributeValue(s = Some("username"), l = Nil)),
-        Attribute(
-          "j_timestamp",
-          AttributeValue(n = Some("1446650520000"), l = Nil)
-        ),
-        Attribute("j_duration", AttributeValue(n = Some("3600"), l = Nil)),
-        Attribute("j_accessLevel", AttributeValue(s = Some("dev"), l = Nil)),
-        Attribute("j_accessType", AttributeValue(s = Some("console"), l = Nil)),
-        Attribute("j_external", AttributeValue(n = Some("1"), l = Nil))
+        "j_username" -> AttributeValue.fromS("username"),
+        "j_timestamp" -> AttributeValue.fromN("1446650520000"),
+        "j_duration" -> AttributeValue.fromN("3600"),
+        "j_accessLevel" -> AttributeValue.fromS("dev"),
+        "j_accessType" -> AttributeValue.fromS("console"),
+        "j_external" -> AttributeValue.fromN("1")
       )
 
       "fails to extract an AccessLog record" in {
