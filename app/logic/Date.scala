@@ -1,7 +1,14 @@
 package logic
 
 import models.{DisplayMode, Festive, Normal, Spooky}
-import org.joda.time._
+import org.joda.time.{
+  DateTime,
+  DateTimeConstants,
+  DateTimeZone,
+  Duration,
+  Interval,
+  Period
+}
 import org.joda.time.format.{
   DateTimeFormat,
   ISODateTimeFormat,
@@ -9,19 +16,24 @@ import org.joda.time.format.{
 }
 
 object Date {
-  val simpleDateFormatter =
+  private val simpleDateFormatter =
     DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
-  val dateTimeFormatter =
+  private val dateTimeFormatter =
     DateTimeFormat.forPattern("yyyy/MM/dd HH:mm:ss").withZoneUTC()
-  val timeFormatter = DateTimeFormat.forPattern("HH:mm:ss z").withZoneUTC()
-  val friendlyDateFormatter =
+  private val timeFormatter =
+    DateTimeFormat.forPattern("HH:mm:ss z").withZoneUTC()
+  private val friendlyDateFormatter =
     DateTimeFormat.forPattern("d MMMM, yyyy").withZoneUTC()
+
+  private def toJodaDateTime(instant: java.time.Instant): DateTime = {
+    new DateTime(instant.toEpochMilli, DateTimeZone.UTC)
+  }
 
   def formatDateTime(date: DateTime): String =
     dateTimeFormatter.print(date)
 
-  def formatTime(date: DateTime): String =
-    timeFormatter.print(date)
+  def formatTime(instant: java.time.Instant): String =
+    timeFormatter.print(toJodaDateTime(instant))
 
   def formatDate(date: DateTime): String = {
     friendlyDateFormatter.print(date)
@@ -31,15 +43,21 @@ object Date {
     simpleDateFormatter.print(date)
   }
 
+  def isoDateString(instant: java.time.Instant): String = {
+    ISODateTimeFormat.dateTime().print(toJodaDateTime(instant))
+  }
+
   def isoDateString(date: DateTime): String = {
     ISODateTimeFormat.dateTime().print(date)
   }
 
   def formatInterval(
-      date: DateTime,
+      instant: java.time.Instant,
       comparison: DateTime = DateTime.now
-  ): String =
+  ): String = {
+    val date = toJodaDateTime(instant)
     formatPeriod(new Interval(comparison, date).toPeriod)
+  }
 
   def formatDuration(duration: Duration): String =
     formatPeriod(duration.toPeriod)
@@ -88,7 +106,7 @@ object Date {
         simpleDateFormatter.parseDateTime(dateStr)
       }
     } catch {
-      case e: IllegalArgumentException => None
+      case _: IllegalArgumentException => None
     }
   }
 

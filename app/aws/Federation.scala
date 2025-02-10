@@ -1,31 +1,39 @@
 package aws
 
-import awscala.Credentials
 import awscala.iam._
-import awscala.sts.{FederationToken, STS, TemporaryCredentials}
-import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.services.identitymanagement.model.GetRoleRequest
-import com.amazonaws.services.securitytoken
 import com.gu.janus.model.{AwsAccount, Permission}
 import data.Policies
 import logic.Date
 import org.joda.time.{DateTime, DateTimeZone, Duration, Period}
+import play.api.libs.json.Json
+import software.amazon.awssdk.services.sts.StsClient
+import software.amazon.awssdk.services.sts.model.{
+  AssumeRoleRequest,
+  Credentials
+}
 
-import java.net.URLEncoder
+import java.net.{URI, URLEncoder}
+import java.nio.charset.StandardCharsets.UTF_8
+import scala.io.Source
 
 object Federation {
 
   /** Credential/Console lease times. Defaults are used when user doesn't
     * request specific time periods, max will limit how long can be requested.
     */
-  val maxShortTime = 3.hours
-  val minShortTime = 15.minutes
-  val defaultShortTime = 1.hour
-  val maxLongTime = 10.hours
-  val minLongTime = 1.hour
-  val defaultLongTime = 8.hours
+  val maxShortTime: Duration = 3.hours
+  val minShortTime: Duration = 15.minutes
+  val defaultShortTime: Duration = 1.hour
+  val maxLongTime: Duration = 10.hours
+  val minLongTime: Duration = 1.hour
+  val defaultLongTime: Duration = 8.hours
 
-  val awsMinimumSessionLength = 900.seconds
+  private val awsMinimumSessionLength = 900.seconds
+
+  private val signInUrl = "https://signin.aws.amazon.com/federation"
+  private val consoleUrl =
+    URLEncoder.encode("https://console.aws.amazon.com/", UTF_8)
 
   /** Calculates the duration of a login session.
     *
@@ -69,39 +77,47 @@ object Federation {
     }
   }
 
-  val getStsClient: ((String, String)) => STS = {
-    case (awsKeyId, awsSecretKey) =>
-      STS(awsKeyId, awsSecretKey)
-  }
-
   def assumeRole(
       username: String,
       roleArn: String,
       permission: Permission,
-      sts: STS,
+      sts: StsClient,
       duration: Duration
-  ): TemporaryCredentials = {
-    val assumeRoleReq = new securitytoken.model.AssumeRoleRequest()
-      .withRoleArn(roleArn)
-      .withRoleSessionName(username)
-      .withPolicy(permission.policy)
-      .withDurationSeconds(duration.getStandardSeconds.toInt)
-    val response = sts.assumeRole(assumeRoleReq)
-    TemporaryCredentials(response.getCredentials)
+  ): Credentials = {
+    val request = AssumeRoleRequest
+      .builder()
+      .roleArn(roleArn)
+      .roleSessionName(username)
+      .policy(permission.policy)
+      .durationSeconds(duration.getStandardSeconds.toInt)
+      .build()
+    val response = sts.assumeRole(request)
+    response.credentials()
   }
 
   def generateLoginUrl(
-      temporaryCredentials: TemporaryCredentials,
+      temporaryCredentials: Credentials,
       host: String,
-      autoLogout: Boolean,
-      sts: STS
+      autoLogout: Boolean
   ): String = {
-    val url = sts.loginUrl(
-      credentials = temporaryCredentials,
-      consoleUrl = "https://console.aws.amazon.com/",
-      issuerUrl = host
-    )
+    // See https://github.com/seratch/AWScala/blob/5d9012dec25eafc4275765bfc5cbe46c3ed37ba2/sts/src/main/scala/awscala/sts/STS.scala
+    val token = URLEncoder.encode(signinToken(temporaryCredentials), UTF_8)
+    val issuer = URLEncoder.encode(host, UTF_8)
+    val url =
+      s"$signInUrl?Action=login&SigninToken=$token&Issuer=$issuer&Destination=$consoleUrl"
     autoLogoutUrl(url, autoLogout)
+  }
+
+  private def signinToken(credentials: Credentials): String = {
+    val sessionJsonValue =
+      s"""{"sessionId":"${credentials.accessKeyId}","sessionKey":"${credentials.secretAccessKey}","sessionToken":"${credentials.sessionToken}"}\n"""
+    val session = URLEncoder.encode(sessionJsonValue, UTF_8)
+    val url =
+      s"$signInUrl?Action=getSigninToken&SessionType=json&Session=$session"
+    val source = Source.fromURL(new URI(url).toURL)
+    val response = source.getLines().mkString("\n")
+    source.close()
+    (Json.parse(response) \ "SigninToken").as[String]
   }
 
   /** Janus supports logging users out before redirecting them to the Console.
@@ -131,12 +147,8 @@ object Federation {
     }
   }
 
-  def credentials(federationToken: FederationToken): TemporaryCredentials = {
-    federationToken.credentials
-  }
-
   /** Revokes all privileges for this account. This works by adding a condition
-    * to Janus' user that denys access to any requests signed using temporary
+    * to Janus' user that denies access to any requests signed using temporary
     * credentials that were obtained after the given time.
     *
     * For more information refer to the following AWS documentation:
@@ -146,7 +158,7 @@ object Federation {
       account: AwsAccount,
       after: DateTime,
       roleArn: String,
-      stsClient: STS
+      stsClient: StsClient
   ): Unit = {
     val revocationPolicyDocument = denyOlderSessionsPolicyDocument(after)
 
@@ -158,10 +170,7 @@ object Federation {
       stsClient,
       Federation.awsMinimumSessionLength
     )
-    val sessionCredentials =
-      Credentials(creds.accessKeyId, creds.secretAccessKey, creds.sessionToken)
-    val provider = new AWSStaticCredentialsProvider(sessionCredentials)
-    val iamClient = IAM(provider)
+    val iamClient = IAM(creds.accessKeyId(), creds.secretAccessKey())
 
     // remove access from assumed role
     val roleName = getRoleName(roleArn)
@@ -184,7 +193,7 @@ object Federation {
    *
    * Deny always beats Allow, so this will override all the user's permissions and deny everything.
    */
-  def denyOlderSessionsPolicyDocument(after: DateTime): String = {
+  private def denyOlderSessionsPolicyDocument(after: DateTime): String = {
     val revocationTime = Date.isoDateString(after)
     s"""{
         |  "Version": "2012-10-17",
@@ -208,10 +217,10 @@ object Federation {
     /** Number of seconds in this many hours.
       */
     def hours: Duration = new Period(int, 0, 0, 0).toStandardDuration
-    def hour = hours
+    def hour: Duration = hours
     def minutes: Duration = new Period(0, int, 0, 0).toStandardDuration
-    def minute = minutes
+    def minute: Duration = minutes
     def seconds: Duration = new Period(0, 0, int, 0).toStandardDuration
-    def second = seconds
+    def second: Duration = seconds
   }
 }

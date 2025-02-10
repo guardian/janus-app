@@ -1,22 +1,35 @@
 package logic
 
 import fixtures.Fixtures._
-import awscala.sts.TemporaryCredentials
-import org.joda.time.DateTime
-import ViewHelpers.shellCredentials
+import logic.ViewHelpers.shellCredentials
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import software.amazon.awssdk.services.sts.model.Credentials
+
+import java.time.Instant
 
 class ViewHelpersTest extends AnyFreeSpec with Matchers {
+
+  private def mkCredentials(
+      accessKeyId: String,
+      secretAccessKey: String,
+      sessionToken: String
+  ) =
+    Credentials
+      .builder()
+      .accessKeyId(accessKeyId)
+      .secretAccessKey(secretAccessKey)
+      .sessionToken(sessionToken)
+      .expiration(Instant.now())
+      .build()
 
   "shellCredentials" - {
     "for a single account" - {
       val creds = List(
-        fooAct -> TemporaryCredentials(
+        fooAct -> mkCredentials(
           "foo-key",
           "foo-secret",
-          "foo-token",
-          DateTime.now()
+          "foo-token"
         )
       )
 
@@ -52,17 +65,15 @@ class ViewHelpersTest extends AnyFreeSpec with Matchers {
 
     "for multiple accounts" - {
       val multiCreds = List(
-        fooAct -> TemporaryCredentials(
+        fooAct -> mkCredentials(
           "foo-key",
           "foo-secret",
-          "foo-token",
-          DateTime.now()
+          "foo-token"
         ),
-        barAct -> TemporaryCredentials(
+        barAct -> mkCredentials(
           "bar-key",
           "bar-secret",
-          "bar-token",
-          DateTime.now()
+          "bar-token"
         )
       )
 
