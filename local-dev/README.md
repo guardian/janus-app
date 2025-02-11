@@ -9,7 +9,8 @@ To make this table available for testing auditing functionality:
 1. Start Docker
 2. Start up a local Dynamo DB container:
 ```shell
+cd local-dev
 docker-compose up -d
 ```
-3. Create the audit table schema by running [Creation test](test/aws/AuditTrailDBTest.scala#L46).
-4. Populate the table with some test data by running [Insertion test](test/aws/AuditTrailDBTest.scala#L52).
+3. Create the audit table schema by running [Creation test](../test/aws/AuditTrailDBTest.scala#L48).
+4. Populate the table with some test data by running [Insertion test](../test/aws/AuditTrailDBTest.scala#L16).
