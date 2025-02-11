@@ -39,12 +39,7 @@ main {
 }
 
 .index-main__container {
-    padding-top: 10px;
-}
-
-.logout-button {
-    padding: 20px 10px 0px;
-    float: right;
+    padding-top: 30px;
 }
 
 .controls__hero {

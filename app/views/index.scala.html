@@ -10,18 +10,6 @@
 @main("Your permissions", Some(user), janusData, displayMode) {
     <div class="container">
         <h1 class="header orange-text hide">Your permissions</h1>
-
-        <div class="row">
-            <div class="logout-button">
-                <a href="https://signin.aws.amazon.com/oauth?Action=logout"
-                   target="_blank"
-                   class="waves-effect waves-light btn">
-                    <i class="material-icons">exit_to_app</i>
-                    logout
-                </a>
-            </div>
-        </div>
-
         <div class="index-main__container">
             @form(routes.Janus.favourite()) {
                 @CSRF.formField
