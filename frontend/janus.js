@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     M.updateTextFields();
     const collapsibleElems = document.querySelectorAll('.collapsible');
     const collapsibleInstances = M.Collapsible.init(collapsibleElems);
-    var dropdownElems = document.querySelectorAll('.dropdown-trigger');
-    var dropdownInstances = M.Dropdown.init(dropdownElems);
+    const dropdownElems = document.querySelectorAll('.dropdown-trigger');
+    const dropdownInstances = M.Dropdown.init(dropdownElems);
 
     const auditContainer = document.querySelectorAll('.container.audit');
     if (auditContainer.length) {
