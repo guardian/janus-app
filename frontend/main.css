@@ -1,5 +1,6 @@
 @import 'npm:materialize-css/dist/css/materialize.css';
 @import 'npm:@fontsource/roboto';
+@import 'npm:material-icons';
 
 body {
     display: flex;
