@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
     var modalElems = document.querySelectorAll('.modal');
     var modalInstances = M.Modal.init(modalElems);
     M.updateTextFields();
+    const collapsibleElems = document.querySelectorAll('.collapsible');
+    const collapsibleInstances = M.Collapsible.init(collapsibleElems);
 
     const auditContainer = document.querySelectorAll('.container.audit');
     console.log('auditconatiner.length', auditContainer.length);
