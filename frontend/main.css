@@ -340,6 +340,10 @@ a.copy-text--button__small {
     overflow: hidden;
 }
 
+.owners__header.collapsible-header {
+    justify-content: space-between;
+}
+
 .owners__list {
     font-size: 0.9rem;
 }
