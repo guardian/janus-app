@@ -219,6 +219,10 @@ textarea.textarea--aws-profile-id.aws-profile-id {
     .card-action-link--spaced {
         margin-right: 10px;
     }
+
+    .federation__link--cta {
+        padding: 0 2rem;
+    }
 }
 
 .multi-select__container {
