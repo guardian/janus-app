@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     M.updateTextFields();
     const collapsibleElems = document.querySelectorAll('.collapsible');
     const collapsibleInstances = M.Collapsible.init(collapsibleElems);
+    var dropdownElems = document.querySelectorAll('.dropdown-trigger');
+    var dropdownInstances = M.Dropdown.init(dropdownElems);
 
     const auditContainer = document.querySelectorAll('.container.audit');
     if (auditContainer.length) {
@@ -49,7 +51,7 @@ jQuery(function($){
         });
     }
 
-    // copy-text TODO: check copy in accordion  .copy-text--button
+    // copy-text
     $(".copy-text--button").each(function(_, el){
         var button = $(el),
             container = button.parents(".copy-textarea"),
@@ -188,7 +190,7 @@ jQuery(function($){
         link.prop("href", link.prop("href") + "&tzOffset=" + tzOffset);
     });
 
-    // login lease time TODO: fix
+    // login lease time
     $(".login-duration__container").each(function(_, el){
         var defaultLongDurationLink = $(".dropdown-time__link--default[data-length=standard]"),
             container = $(el),
@@ -224,7 +226,7 @@ jQuery(function($){
         // enable feature if JS is available
         links.removeAttr("disabled");
 
-        // add click handlers to time choices TODO: check if this works when dropdown-time-standard, dropdown-time-admin fixed
+        // add click handlers to time choices 
         $(".dropdown-time__link").each(function(_, el){
             var link = $(el);
             link.click(function(e){
@@ -232,14 +234,14 @@ jQuery(function($){
                 // update hrefs
                 updateHrefDurations(link.data("duration"), "short" === link.data("length"));
                 // update button text
-                link.parents(".login-duration__header").find(".dropdown-button").text(link.text());
+                link.parents(".login-duration__header").find(".dropdown-trigger").text(link.text());
             });
         });
         // remove wallclock option if we're too far from 19:00 TODO check this works just after 7pm
         if (msToEndOfWork > maxLongDuration) {
             var walltimeSelector = $(".dropdown-time__link--walltime[data-length=standard]");
             walltimeSelector
-                .parents(".login-duration__header").find(".dropdown-button")
+                .parents(".login-duration__header").find(".dropdown-trigger")
                 .text(defaultLongDurationLink.text());
             walltimeSelector.remove();
         }
