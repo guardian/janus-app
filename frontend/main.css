@@ -290,6 +290,7 @@ input[type=text].input--slim {
     height: auto;
     padding: 10px;
     background-color: #f5f5f5;
+    line-height: 1.5;
 }
 
 a.copy-text--button__small {
