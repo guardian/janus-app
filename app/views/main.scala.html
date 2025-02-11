@@ -14,8 +14,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no"/>
         <title>@title - Janus</title>
 
-        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
-        @if(mode == Mode.Dev) {
+         @if(mode == Mode.Dev) {
             <link href="http://localhost:1234/main.css" type="text/css" rel="stylesheet" media="screen,projection"/>
         } else {
             <link href="@assetsFinder.path("frontend/main.css")" type="text/css" rel="stylesheet" media="screen,projection"/>
