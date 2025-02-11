@@ -9,6 +9,7 @@ ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
 val awsSdkVersion = "1.12.780"
+val awsSdkV2Version = "2.30.16"
 val awscalaVersion = "0.9.2"
 val circeVersion = "0.14.10"
 val commonDependencies = Seq(
@@ -17,7 +18,6 @@ val commonDependencies = Seq(
   "org.joda" % "joda-convert" % "3.0.1",
   "com.github.seratch" %% "awscala-iam" % awscalaVersion,
   "com.github.seratch" %% "awscala-sts" % awscalaVersion,
-  "com.github.seratch" %% "awscala-dynamodb" % awscalaVersion,
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
@@ -86,7 +86,7 @@ lazy val root = (project in file("."))
       "com.gu.play-googleauth" %% "play-v30" % "19.0.0",
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
       "com.amazonaws" % "aws-java-sdk-sts" % awsSdkVersion,
-      "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion,
+      "software.amazon.awssdk" % "dynamodb" % awsSdkV2Version,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3" // scala-steward:off
     ) ++ jacksonDatabindOverrides
       ++ jacksonOverrides
@@ -139,8 +139,7 @@ lazy val configTools = (project in file("configTools"))
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
-      "io.circe" %% "circe-config" % "0.10.1",
-      "com.amazonaws" % "aws-java-sdk-dynamodb" % awsSdkVersion
+      "io.circe" %% "circe-config" % "0.10.1"
     ) ++ jacksonDatabindOverrides,
     name := "janus-config-tools",
     description := "Library for reading and writing Janus configuration files"
