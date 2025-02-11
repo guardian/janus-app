@@ -12,5 +12,5 @@ To make this table available for testing auditing functionality:
 cd local-dev
 docker-compose up -d
 ```
-3. Create the audit table schema by running [Creation test](../test/aws/AuditTrailDBTest.scala#L48).
-4. Populate the table with some test data by running [Insertion test](../test/aws/AuditTrailDBTest.scala#L16).
+3. Create the audit table schema by running [Creation test](https://github.com/guardian/janus-app/blob/f522bca83d9d90657634b038c7734a9871974161/test/aws/AuditTrailDBTest.scala#L48-L50).
+4. Populate the table with some test data by running [Insertion test](https://github.com/guardian/janus-app/blob/f522bca83d9d90657634b038c7734a9871974161/test/aws/AuditTrailDBTest.scala#L16-L46).
