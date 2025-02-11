@@ -96,11 +96,9 @@ class Janus(
         JConsole,
         Customisation.durationParams(request)
       )
-      autoLogout = Customisation.autoLogoutPreference(request.cookies)
       loginUrl = Federation.generateLoginUrl(
         credentials,
         host,
-        autoLogout,
         stsClient
       )
     } yield {
@@ -122,11 +120,9 @@ class Janus(
         JConsole,
         Customisation.durationParams(request)
       )
-      autoLogout = Customisation.autoLogoutPreference(request.cookies)
       loginUrl = Federation.generateLoginUrl(
         credentials,
         host,
-        autoLogout,
         stsClient
       )
     } yield {
