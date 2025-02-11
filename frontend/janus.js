@@ -237,7 +237,7 @@ jQuery(function($){
                 link.parents(".login-duration__header").find(".dropdown-trigger").text(link.text());
             });
         });
-        // remove wallclock option if we're too far from 19:00 TODO check this works just after 7pm
+        // remove wallclock option if we're too far from 19:00
         if (msToEndOfWork > maxLongDuration) {
             var walltimeSelector = $(".dropdown-time__link--walltime[data-length=standard]");
             walltimeSelector
@@ -251,7 +251,7 @@ jQuery(function($){
         }
     });
 
-    // local times TODO: check by changing local timezone 
+    // local times
     $(".local-date").each(function(_, el){
         var dateSpan = $(el),
             datestamp = dateSpan.data("date"),
