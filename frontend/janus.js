@@ -11,11 +11,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const collapsibleInstances = M.Collapsible.init(collapsibleElems);
 
     const auditContainer = document.querySelectorAll('.container.audit');
-    console.log('auditconatiner.length', auditContainer.length);
     if (auditContainer.length) {
         const datePicker = document.getElementById('datepicker-audit');
         const dateForm = datePicker.closest('form');
-        datePicker.addEventListener('change', (event) => {});
+        datePicker.addEventListener('change', () => {});
         datePicker.onchange = () => {
             dateForm.submit()};
     }
