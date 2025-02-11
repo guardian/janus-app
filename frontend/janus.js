@@ -103,7 +103,7 @@ jQuery(function($){
         recalculate();
     });
 
-    // allow user to simultaneously obtain credentials from multiple accounts  TODO fix this (no checkbox currently)
+    // allow user to simultaneously obtain credentials from multiple accounts
     $(".multiple-credentials-control__container").each(function(_, el){
         var checkboxes = $(".multi-select__checkbox"),
             container = $(el),
