@@ -2,10 +2,10 @@ import jQuery from 'jquery';
 import 'materialize-css';
 
 document.addEventListener('DOMContentLoaded', function() {
-    var sidenavElems = document.querySelectorAll('.sidenav');
-    var sidenavInstances = M.Sidenav.init(sidenavElems);
-    var modalElems = document.querySelectorAll('.modal');
-    var modalInstances = M.Modal.init(modalElems);
+    const sidenavElems = document.querySelectorAll('.sidenav');
+    const sidenavInstances = M.Sidenav.init(sidenavElems);
+    const modalElems = document.querySelectorAll('.modal');
+    const modalInstances = M.Modal.init(modalElems);
     M.updateTextFields();
     const collapsibleElems = document.querySelectorAll('.collapsible');
     const collapsibleInstances = M.Collapsible.init(collapsibleElems);
