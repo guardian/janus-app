@@ -42,7 +42,7 @@ jQuery(function($) {
             return createSnowFlake();
         });
 
-        $(window).resize(function(){
+        $(window).on('resize', function(){
             const newWidth = $(window).width() - flakeDiameter;
             const newHeight = footer.offset().top + footer.outerHeight() - flakeDiameter;
             flakes.map(function(flake) {
