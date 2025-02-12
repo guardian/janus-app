@@ -29,7 +29,7 @@ jQuery(function($){
     if ($('.editable-aws-profile').length) {
         var profileIdContainers = $('.editable-aws-profile .aws-profile-id');
 
-        $('#aws-profile-id').keyup(function(){
+        $('#aws-profile-id').on('keyup', function(){
             var input = $(this);
             profileIdContainers.each(function(){
                 var el = $(this),
@@ -59,11 +59,12 @@ jQuery(function($){
             defaultIcon = container.find(".copy-text--default"),
             confirmationIcon = container.find(".copy-text--confirm"),
             warnIcon = container.find(".copy-text--warn");
-        button.click(function(e){
+        button.on('click', function(e){
             e.preventDefault();
             try {
-                target.select();
-                document.execCommand('copy');
+                target.trigger('select');
+                document.execCommand('copy'); // we should replace this with the clipboard function below, see https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand
+                // navigator.clipboard.writeText(target.value); // only works in secure environments, see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/clipboard
                 confirmationIcon.css("display", "inline");
                 defaultIcon.css("display", "none");
                 setTimeout(function () {
@@ -100,8 +101,8 @@ jQuery(function($){
         // enable feature if JS is available
         controlContainer.show();
 
-        win.scroll(recalculate);
-        win.resize(recalculate);
+        win.on('scroll', recalculate);
+        win.on('resize', recalculate);
         recalculate();
     });
 
@@ -173,8 +174,8 @@ jQuery(function($){
                 updateLink(permissions);
             };
         container.show();
-        checkboxes.change(updateSelection);
-        clearButton.click(function() {
+        checkboxes.on('change', updateSelection);
+        clearButton.on('click', function() {
             checkboxes
                 .prop("checked", false)
                 .removeAttr("disabled");
@@ -229,7 +230,7 @@ jQuery(function($){
         // add click handlers to time choices 
         $(".dropdown-time__link").each(function(_, el){
             var link = $(el);
-            link.click(function(e){
+            link.on('click', function(e){
                 e.preventDefault();
                 // update hrefs
                 updateHrefDurations(link.data("duration"), "short" === link.data("length"));
@@ -268,7 +269,7 @@ jQuery(function($){
 
     //adjust for windows OS
     $(".textarea--code.aws-profile-id").each(function(_, el){
-        if (navigator.platform.indexOf("Win") >= 0) {
+        if (navigator.userAgent.includes("Win") >= 0) { // TODO: test this change in Windows
             var winCmd = $(el).val().replace(/\\\n/g, "^\n").replace(/^ /mg, "");
             $(el).val(winCmd);
         }
