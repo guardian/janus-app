@@ -33,8 +33,7 @@ object Federation {
   private val awsMinimumSessionLength = 900.seconds
 
   private val signInUrl = "https://signin.aws.amazon.com/federation"
-  private val consoleUrl =
-    URLEncoder.encode("https://console.aws.amazon.com/", UTF_8)
+  private val consoleUrl = "https://console.aws.amazon.com/"
 
   /** Calculates the duration of a login session.
     *
@@ -104,8 +103,9 @@ object Federation {
     // See https://github.com/seratch/AWScala/blob/5d9012dec25eafc4275765bfc5cbe46c3ed37ba2/sts/src/main/scala/awscala/sts/STS.scala
     val token = URLEncoder.encode(signinToken(temporaryCredentials), UTF_8)
     val issuer = URLEncoder.encode(host, UTF_8)
+    val destination = URLEncoder.encode(consoleUrl, UTF_8)
     val url =
-      s"$signInUrl?Action=login&SigninToken=$token&Issuer=$issuer&Destination=$consoleUrl"
+      s"$signInUrl?Action=login&SigninToken=$token&Issuer=$issuer&Destination=$destination"
     autoLogoutUrl(url, autoLogout)
   }
 
