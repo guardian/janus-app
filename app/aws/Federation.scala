@@ -7,6 +7,7 @@ import data.Policies
 import logic.Date
 import org.joda.time.{DateTime, DateTimeZone, Duration, Period}
 import play.api.libs.json.Json
+import software.amazon.awssdk.auth.credentials.AwsSessionCredentials
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.model.{
   AssumeRoleRequest,
@@ -170,7 +171,15 @@ object Federation {
       stsClient,
       Federation.awsMinimumSessionLength
     )
-    val iamClient = IAM(creds.accessKeyId(), creds.secretAccessKey())
+    val sessionCredentials = AwsSessionCredentials.create(
+      creds.accessKeyId(),
+      creds.secretAccessKey(),
+      creds.sessionToken()
+    )
+    val iamClient = IAM(
+      sessionCredentials.accessKeyId(),
+      sessionCredentials.secretAccessKey()
+    )
 
     // remove access from assumed role
     val roleName = getRoleName(roleArn)
