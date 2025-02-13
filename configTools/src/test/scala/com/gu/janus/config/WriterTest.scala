@@ -1,9 +1,10 @@
 package com.gu.janus.config
 
 import com.gu.janus.model._
-import org.joda.time.Period
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+
+import java.time.Duration
 
 class WriterTest extends AnyFreeSpec with Matchers {
   val account1 = AwsAccount("Test 1", "test1")
@@ -15,7 +16,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Set.empty,
         ACL(Map.empty, Set.empty),
         ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty, Period.seconds(100)),
+        SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
         None
       )
       Writer.allPermissions(janusData) shouldBe empty
@@ -28,7 +29,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Set.empty,
         access = ACL(Map.empty, Set(permission)),
         ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty, Period.seconds(100)),
+        SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
         None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission)
@@ -41,7 +42,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Set.empty,
         access = ACL(Map("user1" -> Set(permission)), Set.empty),
         ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty, Period.seconds(100)),
+        SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
         None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission)
@@ -62,7 +63,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
           Set.empty
         ),
         ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty, Period.seconds(100)),
+        SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
         None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission1, permission2)
@@ -83,7 +84,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
           ),
           Set.empty
         ),
-        SupportACL.create(Map.empty, Set.empty, Period.seconds(100)),
+        SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
         None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission1, permission2)
@@ -97,7 +98,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         ACL(Map.empty, Set.empty),
         ACL(Map.empty, Set.empty),
         support =
-          SupportACL.create(Map.empty, Set(permission), Period.seconds(100)),
+          SupportACL.create(Map.empty, Set(permission), Duration.ofSeconds(100)),
         None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission)
@@ -130,7 +131,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
           ),
           Set.empty
         ),
-        SupportACL.create(Map.empty, Set(permission5), Period.seconds(100)),
+        SupportACL.create(Map.empty, Set(permission5), Duration.ofSeconds(100)),
         None
       )
       Writer.allPermissions(janusData) shouldEqual Set(
@@ -149,7 +150,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Set.empty,
         ACL(Map.empty, Set.empty),
         ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty, Period.seconds(123456789)),
+        SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(123456789)),
         None
       )
       Writer.toConfig(janusData) should include("period = 123456789")
@@ -160,7 +161,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Set.empty,
         ACL(Map.empty, Set.empty),
         ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty, Period.weeks(1)),
+        SupportACL.create(Map.empty, Set.empty, Duration.ofDays(7)),
         None
       )
       Writer.toConfig(janusData) should include("period = 604800")
@@ -171,7 +172,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Set.empty,
         ACL(Map.empty, Set.empty),
         ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty, Period.weeks(1)),
+        SupportACL.create(Map.empty, Set.empty, Duration.ofDays(7)),
         Some("https://example.com/")
       )
       Writer.toConfig(janusData) should include(
@@ -184,7 +185,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Set.empty,
         ACL(Map.empty, Set.empty),
         ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty, Period.weeks(1)),
+        SupportACL.create(Map.empty, Set.empty, Duration.ofDays(7)),
         None
       )
       Writer.toConfig(janusData) should not include "permissionsRepo"

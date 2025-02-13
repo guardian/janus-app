@@ -1,9 +1,9 @@
 @import com.gu.janus.model.{AuditLog, JConsole, JanusData}
 @import com.gu.googleauth.UserIdentity
-@import org.joda.time.DateTime
 @import play.api.Mode
+@import java.time.{Instant, ZonedDateTime, ZoneOffset}
 
-@(auditLogs: Seq[scala.Either[String, AuditLog]], key: Either[String, String], startDate: DateTime, prevNextWeeks: (Option[DateTime], Option[DateTime]), user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(auditLogs: Seq[scala.Either[String, AuditLog]], key: Either[String, String], startDate: Instant, prevNextWeeks: (Option[Instant], Option[Instant]), user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @import logic.Date.{formatDateTime, formatDate, formatDuration, rawDate}
 @import helper._
@@ -17,7 +17,7 @@
                 For <b>@key.fold(s => s, s => s)</b>, week commencing Monday @formatDate(startDate).
             </p>
 
-            @if(startDate.isBefore(new org.joda.time.DateTime(2016, 7, 6, 0, 0)) && startDate.isAfter(new org.joda.time.DateTime(2016, 3, 9, 0, 0))) {
+            @if(startDate.isBefore(ZonedDateTime.of(2016, 7, 6, 0, 0, 0, 0, ZoneOffset.UTC).toInstant) && startDate.isAfter(ZonedDateTime.of(2016, 3, 9, 0, 0, 0, 0, ZoneOffset.UTC).toInstant)) {
                 <p class="card-panel yellow lighten-4">
                     <i class="material-icons">info</i>
                     Between 9th March 2016 and 6th July 2016 all Credentials access will show up as Console, due to a bug in the audit collection code.
@@ -64,7 +64,7 @@
                                     Credentials <i class="material-icons">vpn_key</i>
                                 }
                             </td>
-                            <td>@formatDateTime(auditLog.dateTime)</td>
+                            <td>@formatDateTime(auditLog.instant)</td>
                             <td>@formatDuration(auditLog.duration)</td>
                             <td>
                                 @if(auditLog.external){
@@ -101,7 +101,7 @@
                     @CSRF.formField
                     <div class="file-field input-field">
                         <div class="file-path-wrapper">
-                            <input type="date" name="audit-date" id="datepicker-audit" class="datepicker audit-log" min="2015-10-02" max="@rawDate(new org.joda.time.DateTime())">
+                            <input type="date" name="audit-date" id="datepicker-audit" class="datepicker audit-log" min="2015-10-02" max="@rawDate(Instant.now())">
                         </div>
                         <button class="btn" id="audit-submit">submit</button>
                     </div>

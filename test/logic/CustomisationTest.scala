@@ -1,10 +1,11 @@
 package logic
 
-import org.joda.time.{DateTimeZone, Duration}
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.test.FakeRequest
+
+import java.time.{Duration, ZoneOffset}
 
 class CustomisationTest extends AnyFreeSpec with Matchers with OptionValues {
   import Customisation._
@@ -13,7 +14,7 @@ class CustomisationTest extends AnyFreeSpec with Matchers with OptionValues {
     "extracts duration from request if present" in {
       val request = FakeRequest("GET", "/test?duration=3600")
       val (duration, _) = durationParams(request)
-      duration.value shouldEqual new Duration(3600)
+      duration.value shouldEqual Duration.ofMillis(3600)
     }
 
     "extracts duration as None if no parameter is available" in {
@@ -37,7 +38,7 @@ class CustomisationTest extends AnyFreeSpec with Matchers with OptionValues {
     "extracts timezone offset from request if present" in {
       val request = FakeRequest("GET", "/test?tzOffset=1")
       val (_, tzOffset) = durationParams(request)
-      tzOffset.value shouldEqual DateTimeZone.forOffsetHours(1)
+      tzOffset.value shouldEqual ZoneOffset.ofHours(1)
     }
 
     "extracts timezone as None if it is present but empty" in {
@@ -49,7 +50,7 @@ class CustomisationTest extends AnyFreeSpec with Matchers with OptionValues {
     "extracts -ve timezone offset from request" in {
       val request = FakeRequest("GET", "/test?tzOffset=-4")
       val (_, tzOffset) = durationParams(request)
-      tzOffset.value shouldEqual DateTimeZone.forOffsetHours(-4)
+      tzOffset.value shouldEqual ZoneOffset.ofHours(-4)
     }
 
     "extracts timezone offset as None if no parameter is available" in {
@@ -67,8 +68,8 @@ class CustomisationTest extends AnyFreeSpec with Matchers with OptionValues {
     "extracts duration and timezone offset" in {
       val request = FakeRequest("GET", "/test?tzOffset=1&duration=3600")
       val (duration, tzOffset) = durationParams(request)
-      duration.value shouldEqual new Duration(3600)
-      tzOffset.value shouldEqual DateTimeZone.forOffsetHours(1)
+      duration.value shouldEqual Duration.ofMillis(3600)
+      tzOffset.value shouldEqual ZoneOffset.ofHours(1)
     }
   }
 }

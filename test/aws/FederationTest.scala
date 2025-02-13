@@ -2,16 +2,14 @@ package aws
 
 import com.gu.janus.model.{AwsAccount, Permission}
 import com.gu.janus.policy.Iam.Policy
-import org.joda.time.DateTimeZone
-import org.scalactic.source
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import play.api.routing.sird.QueryStringParameterExtractor
-import testutils.JodaTimeUtils
+import testutils.TimeUtils
 
-import java.net.{URI, URLDecoder}
+import java.time.ZoneOffset
+import java.time.ZoneOffset.UTC
 
-class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
+class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
   import Federation._
 
   "duration" - {
@@ -44,13 +42,14 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
         }
 
         "issues default short time even near 19:00 with a timezone present" in withSystemTime(
-          18,
-          30
-        ) {
+          hour = 18,
+          minute = 30,
+          zoneId = Some(UTC)
+        ) { clock =>
           duration(
             permission,
             None,
-            Some(DateTimeZone.UTC)
+            clock
           ) shouldEqual defaultShortTime
         }
       }
@@ -81,65 +80,72 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
 
       "if no time is requested" - {
         "gives default time if we're a very long way from 19:00 local time" in withSystemTime(
-          3,
-          0
-        ) {
+          hour = 3,
+          minute = 0,
+          zoneId = Some(UTC)
+        ) { clock =>
           duration(
             permission,
             None,
-            Some(DateTimeZone.UTC)
+            clock
           ) shouldEqual defaultLongTime
         }
 
         "gives default time if we're after 19:00 local time" in withSystemTime(
-          21,
-          0
-        ) {
+          hour = 21,
+          minute = 0,
+          zoneId = Some(UTC)
+        ) { clock =>
           duration(
             permission,
             None,
-            Some(DateTimeZone.UTC)
+            clock
           ) shouldEqual defaultLongTime
         }
 
         "gives until 19:00 if we're within <max time> of 19:00 local time" in withSystemTime(
-          10,
-          0
-        ) {
-          duration(permission, None, Some(DateTimeZone.UTC)) shouldEqual 9.hours
+          hour = 10,
+          minute = 0,
+          zoneId = Some(UTC)
+        ) { clock =>
+          duration(permission, None, clock) shouldEqual 9.hours
         }
 
         "and no timezone is supplied, provides the default time, even near 19:00" in withSystemTime(
-          15,
-          0
-        ) {
-          duration(permission, None, None) shouldEqual defaultLongTime
+          hour = 15,
+          minute = 0,
+          zoneId = None
+        ) { clock =>
+          duration(permission, None, clock) shouldEqual defaultLongTime
         }
 
         "and we're quite near 19:00 with a TZ, give the remaining period" in withSystemTime(
-          15,
-          0
-        ) {
-          duration(permission, None, Some(DateTimeZone.UTC)) shouldEqual 4.hours
+          hour = 15,
+          minute = 0,
+          zoneId = Some(UTC)
+        ) { clock =>
+          duration(permission, None, clock) shouldEqual 4.hours
         }
 
         "and we're *very* near 19:00 with a TZ, give the remaining period" ignore withSystemTime(
-          18,
-          30
-        ) {
+          hour = 18,
+          minute = 30,
+          zoneId = Some(UTC)
+        ) { clock =>
           // do we need special logic near 19:00 so people don't get pointless perms?
-          duration(permission, None, Some(DateTimeZone.UTC)) shouldEqual 4.hours
+          duration(permission, None, clock) shouldEqual 4.hours
         }
 
         "uses the provided timezone to calculate the correct duration" in withSystemTime(
-          15,
-          0
-        ) {
+          hour = 15,
+          minute = 0,
+          zoneId = Some(ZoneOffset.ofHours(1))
+        ) { clock =>
           duration(
             permission,
             None,
-            Some(DateTimeZone.forOffsetHours(1))
-          ) shouldEqual 3.hours
+            clock
+          ) shouldEqual 4.hours
         }
       }
     }
@@ -156,19 +162,6 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
       getRoleName(
         "arn:aws:iam::012345678910:role/path/role-name"
       ) shouldEqual "role-name"
-    }
-  }
-
-  // helper for testing the autoLogoutUrl functionality
-  private val RedirectUri =
-    QueryStringParameterExtractor.required("redirect_uri")
-  private def extractRedirectUri(
-      url: String
-  )(implicit pos: source.Position): String = {
-    new URI(url) match {
-      case RedirectUri(redirectUri) => URLDecoder.decode(redirectUri, "UTF-8")
-      case result =>
-        fail(s"redirect_uri parameter not present on resulting URL $result")
     }
   }
 }

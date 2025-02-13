@@ -3,7 +3,6 @@ package aws
 import com.gu.janus.model.{AwsAccount, Permission}
 import data.Policies
 import logic.Date
-import org.joda.time.{DateTime, DateTimeZone, Duration, Period}
 import play.api.libs.json.Json
 import software.amazon.awssdk.auth.credentials._
 import software.amazon.awssdk.services.iam.IamClient
@@ -13,6 +12,7 @@ import software.amazon.awssdk.services.sts.model._
 
 import java.net.{URI, URLEncoder}
 import java.nio.charset.StandardCharsets.UTF_8
+import java.time.{Clock, Duration, Instant, ZonedDateTime}
 import scala.io.Source
 
 object Federation {
@@ -42,7 +42,7 @@ object Federation {
   def duration(
       permission: Permission,
       requestedSeconds: Option[Duration] = None,
-      timezone: Option[DateTimeZone] = None
+      clock: Option[Clock] = None
   ): Duration = {
     if (permission.shortTerm) {
       // short term permission, give them requested or default (limited by max)
@@ -55,15 +55,15 @@ object Federation {
       // if nothing is requested, try to give them until 19:00 local time (requires timezone)
       val calculated = requestedSeconds match {
         case None =>
-          timezone.fold(defaultLongTime) { tz =>
+          clock.fold(defaultLongTime) { c =>
+            val now = ZonedDateTime.now(c)
             val localEndOfWork = {
-              val withTime = DateTime.now(tz).withTime(19, 0, 0, 0)
-              if (withTime.isBefore(DateTime.now(tz))) withTime.plusDays(1)
+              val withTime = now.withHour(19)
+              if (withTime.isBefore(now)) withTime.plusDays(1)
               else withTime
             }
-            val durationToEndOfWork =
-              new Duration(DateTime.now(tz), localEndOfWork)
-            if (durationToEndOfWork.isShorterThan(maxLongTime))
+            val durationToEndOfWork = Duration.between(now, localEndOfWork)
+            if (durationToEndOfWork.compareTo(maxLongTime) < 0)
               durationToEndOfWork
             else defaultLongTime
           }
@@ -86,7 +86,7 @@ object Federation {
       .roleArn(roleArn)
       .roleSessionName(username)
       .policy(permission.policy)
-      .durationSeconds(duration.getStandardSeconds.toInt)
+      .durationSeconds(duration.getSeconds.toInt)
       .build()
     val response = sts.assumeRole(request)
     response.credentials()
@@ -124,7 +124,7 @@ object Federation {
     */
   def disableFederation(
       account: AwsAccount,
-      after: DateTime,
+      after: Instant,
       roleArn: String,
       stsClient: StsClient
   ): Unit = {
@@ -169,7 +169,7 @@ object Federation {
    *
    * Deny always beats Allow, so this will override all the user's permissions and deny everything.
    */
-  private def denyOlderSessionsPolicyDocument(after: DateTime): String = {
+  private def denyOlderSessionsPolicyDocument(after: Instant): String = {
     val revocationTime = Date.isoDateString(after)
     s"""{
         |  "Version": "2012-10-17",
@@ -189,14 +189,11 @@ object Federation {
   }
 
   implicit class IntWithDurations(val int: Int) extends AnyVal {
-
-    /** Number of seconds in this many hours.
-      */
-    def hours: Duration = new Period(int, 0, 0, 0).toStandardDuration
+    def hours: Duration = Duration.ofHours(int)
     def hour: Duration = hours
-    def minutes: Duration = new Period(0, int, 0, 0).toStandardDuration
+    def minutes: Duration = Duration.ofMinutes(int)
     def minute: Duration = minutes
-    def seconds: Duration = new Period(0, 0, int, 0).toStandardDuration
+    def seconds: Duration = Duration.ofSeconds(int)
     def second: Duration = seconds
   }
 }
