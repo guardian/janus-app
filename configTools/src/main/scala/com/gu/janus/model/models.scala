@@ -1,7 +1,7 @@
 package com.gu.janus.model
 
-import awscala.Policy
 import org.joda.time._
+import software.amazon.awssdk.policybuilder.iam.IamPolicy
 
 case class JanusData(
     accounts: Set[AwsAccount],
@@ -84,10 +84,10 @@ object Permission {
       account: AwsAccount,
       label: String,
       description: String,
-      policy: Policy,
+      policy: IamPolicy,
       shortTerm: Boolean = false
   ): Permission = {
-    Permission(account, label, description, policy.asJson, shortTerm)
+    Permission(account, label, description, policy.toJson, shortTerm)
   }
 }
 

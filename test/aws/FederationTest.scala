@@ -1,19 +1,16 @@
 package aws
 
-import awscala.Policy
 import com.gu.janus.model.{AwsAccount, Permission}
-import org.joda.time.{DateTime, DateTimeZone}
+import org.joda.time.DateTimeZone
 import org.scalactic.source
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import play.api.routing.sird.{
-  QueryStringParameterExtractor,
-  RequiredQueryStringParameter
-}
+import play.api.routing.sird.QueryStringParameterExtractor
+import play.api.test.Helpers.ALLOW
+import software.amazon.awssdk.policybuilder.iam.{IamPolicy, IamStatement}
 import testutils.JodaTimeUtils
 
-import java.net.URLDecoder
-import java.nio.charset.Charset
+import java.net.{URI, URLDecoder}
 
 class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
   import Federation._
@@ -24,7 +21,10 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
         AwsAccount("test", "test"),
         "short-test",
         "Short Test Permission",
-        Policy(Nil, None),
+        IamPolicy
+          .builder()
+          .addStatement(IamStatement.builder().effect(ALLOW).build())
+          .build(),
         shortTerm = true
       )
 
@@ -65,8 +65,10 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
         AwsAccount("test", "test"),
         "long-test",
         "Long Test Permission",
-        Policy(Nil, None),
-        shortTerm = false
+        IamPolicy
+          .builder()
+          .addStatement(IamStatement.builder().effect(ALLOW).build())
+          .build()
       )
 
       "if a time is explicitly asked for" - {
@@ -204,7 +206,7 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
   private def extractRedirectUri(
       url: String
   )(implicit pos: source.Position): String = {
-    new java.net.URL(url) match {
+    new URI(url) match {
       case RedirectUri(redirectUri) => URLDecoder.decode(redirectUri, "UTF-8")
       case result =>
         fail(s"redirect_uri parameter not present on resulting URL $result")

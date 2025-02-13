@@ -1,27 +1,28 @@
 package data
 
-import awscala._
 import com.gu.janus.model.{AwsAccount, Permission}
+import software.amazon.awssdk.policybuilder.iam.IamEffect.ALLOW
+import software.amazon.awssdk.policybuilder.iam.{IamPolicy, IamStatement}
 
 object Policies {
-  val revokeAccess = Policy(
-    Seq(
-      Statement(
-        Effect.Allow,
-        Seq(
-          Action("iam:PutRolePolicy"),
-          Action("iam:getRole")
-        ),
-        Seq(Resource("*"))
-      )
+  private val revokeAccess = IamPolicy
+    .builder()
+    .addStatement(
+      IamStatement
+        .builder()
+        .effect(ALLOW)
+        .addAction("iam:PutRolePolicy")
+        .addAction("iam:getRole")
+        .addResource("*")
+        .build()
     )
-  )
-  def revokeAccessPermission(awsAccount: AwsAccount) =
+    .build()
+  def revokeAccessPermission(awsAccount: AwsAccount): Permission =
     Permission(
       awsAccount,
       "revoke-access",
       "Revoke Janus access",
       revokeAccess,
-      true
+      shortTerm = true
     )
 }
