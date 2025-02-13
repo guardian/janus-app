@@ -97,6 +97,7 @@ class IamSpec extends AnyFreeSpec with Matchers {
                          |"Effect":"Allow",
                          |"Action":["iam:PutRolePolicy","iam:getRole"],
                          |"Resource":["*"],
+                         |"Sid":"1",
                          |"Condition":{"StringEquals":{"aws:SourceIp":["203.0.113.0/24"]}}
                          |}""".stripMargin.replaceAll("\\s", "")
 
@@ -116,6 +117,7 @@ class IamSpec extends AnyFreeSpec with Matchers {
                          |"Effect":"Allow",
                          |"Action":["iam:PutRolePolicy","iam:getRole"],
                          |"Resource":["*"],
+                         |"Sid":"1",
                          |"Principal":{
                          |"AWS":["AROAXXXXXXXXXXXXXXX1","AROAXXXXXXXXXXXXXXX2"],
                          |"Kubernetes":["ServiceAccount1"]
@@ -190,6 +192,7 @@ class IamSpec extends AnyFreeSpec with Matchers {
       )
 
       val json = complexPolicy.asJson.noSpaces
+      // Verify that the generated JSON is valid
       decode[JsonObject](json).isRight shouldBe true
 
       "with correct version" in {
