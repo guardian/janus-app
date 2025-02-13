@@ -1,18 +1,15 @@
 package aws
 
-import awscala.iam._
-import com.amazonaws.auth.AWSStaticCredentialsProvider
-import com.amazonaws.services.identitymanagement.model.GetRoleRequest
 import com.gu.janus.model.{AwsAccount, Permission}
 import data.Policies
 import logic.Date
 import org.joda.time.{DateTime, DateTimeZone, Duration, Period}
 import play.api.libs.json.Json
+import software.amazon.awssdk.auth.credentials._
+import software.amazon.awssdk.services.iam.IamClient
+import software.amazon.awssdk.services.iam.model.PutRolePolicyRequest
 import software.amazon.awssdk.services.sts.StsClient
-import software.amazon.awssdk.services.sts.model.{
-  AssumeRoleRequest,
-  Credentials
-}
+import software.amazon.awssdk.services.sts.model._
 
 import java.net.{URI, URLEncoder}
 import java.nio.charset.StandardCharsets.UTF_8
@@ -141,24 +138,24 @@ object Federation {
       stsClient,
       Federation.awsMinimumSessionLength
     )
-    val sessionCredentials = awscala.Credentials(
+    val sessionCredentials = AwsSessionCredentials.create(
       creds.accessKeyId,
       creds.secretAccessKey,
       creds.sessionToken
     )
-    val provider = new AWSStaticCredentialsProvider(sessionCredentials)
-    val iamClient = IAM(provider)
+    val provider = StaticCredentialsProvider.create(sessionCredentials)
+    val iamClient = IamClient.builder().credentialsProvider(provider).build()
 
     // remove access from assumed role
     val roleName = getRoleName(roleArn)
-    val getRoleRequest = new GetRoleRequest().withRoleName(roleName)
-    val role = Role(iamClient.getRole(getRoleRequest).getRole)
-    val roleRevocationPolicy =
-      RolePolicy(role, "janus-role-revocation-policy", revocationPolicyDocument)
-    // ^
-    // this name should match policy in cloudformation/federation.template.yaml
+    val roleRevocationPolicy = PutRolePolicyRequest
+      .builder()
+      .roleName(roleName)
+      .policyName("janus-role-revocation-policy")
+      .policyDocument(revocationPolicyDocument)
+      .build()
     iamClient.putRolePolicy(roleRevocationPolicy)
-    iamClient.shutdown()
+    iamClient.close()
   }
 
   private[aws] def getRoleName(roleArn: String): String = {

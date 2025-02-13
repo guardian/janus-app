@@ -1,10 +1,9 @@
 package logic
 
-import awscala.DateTime
 import com.gu.googleauth.UserIdentity
 import fixtures.Fixtures._
 import com.gu.janus.model.{ACL, SupportACL}
-import org.joda.time.{DateTimeZone, Period}
+import org.joda.time.{DateTime, DateTimeZone, Period}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Inspectors, OptionValues}

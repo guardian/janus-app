@@ -1,6 +1,6 @@
 package com.gu.janus.policy
 
-import Statements._
+import com.gu.janus.policy.Statements._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
