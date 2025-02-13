@@ -97,8 +97,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Set.empty,
         ACL(Map.empty, Set.empty),
         ACL(Map.empty, Set.empty),
-        support =
-          SupportACL.create(Map.empty, Set(permission), Duration.ofSeconds(100)),
+        support = SupportACL
+          .create(Map.empty, Set(permission), Duration.ofSeconds(100)),
         None
       )
       Writer.allPermissions(janusData) shouldEqual Set(permission)

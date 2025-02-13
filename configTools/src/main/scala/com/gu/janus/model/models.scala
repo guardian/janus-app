@@ -20,7 +20,7 @@ case class ACL(
 case class SupportACL private (
     rota: Map[Instant, (String, String)],
     supportAccess: Set[Permission],
-    supportPeriod: Duration,
+    supportPeriod: Duration
 )
 object SupportACL {
 
@@ -30,11 +30,11 @@ object SupportACL {
   def create(
       rota: Map[Instant, (String, String)],
       supportAccess: Set[Permission],
-      supportPeriod: Duration,
+      supportPeriod: Duration
   ): SupportACL = new SupportACL(
     rota,
     supportAccess,
-    supportPeriod,
+    supportPeriod
   )
 }
 
