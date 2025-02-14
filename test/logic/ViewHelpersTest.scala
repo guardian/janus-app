@@ -1,23 +1,25 @@
 package logic
 
 import fixtures.Fixtures._
-import awscala.sts.TemporaryCredentials
-import org.joda.time.DateTime
-import ViewHelpers.shellCredentials
+import logic.ViewHelpers.shellCredentials
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import software.amazon.awssdk.services.sts.model.Credentials
+
+import java.time.Instant
 
 class ViewHelpersTest extends AnyFreeSpec with Matchers {
 
   "shellCredentials" - {
     "for a single account" - {
       val creds = List(
-        fooAct -> TemporaryCredentials(
-          "foo-key",
-          "foo-secret",
-          "foo-token",
-          DateTime.now()
-        )
+        fooAct -> Credentials
+          .builder()
+          .accessKeyId("foo-key")
+          .secretAccessKey("foo-secret")
+          .sessionToken("foo-token")
+          .expiration(Instant.now())
+          .build()
       )
 
       "includes provided key" in {
@@ -52,18 +54,20 @@ class ViewHelpersTest extends AnyFreeSpec with Matchers {
 
     "for multiple accounts" - {
       val multiCreds = List(
-        fooAct -> TemporaryCredentials(
-          "foo-key",
-          "foo-secret",
-          "foo-token",
-          DateTime.now()
-        ),
-        barAct -> TemporaryCredentials(
-          "bar-key",
-          "bar-secret",
-          "bar-token",
-          DateTime.now()
-        )
+        fooAct -> Credentials
+          .builder()
+          .accessKeyId("foo-key")
+          .secretAccessKey("foo-secret")
+          .sessionToken("foo-token")
+          .expiration(Instant.now())
+          .build(),
+        barAct -> Credentials
+          .builder()
+          .accessKeyId("bar-key")
+          .secretAccessKey("bar-secret")
+          .sessionToken("bar-token")
+          .expiration(Instant.now())
+          .build()
       )
 
       "puts leading space on all commands to exclude from bash history" in {

@@ -1,7 +1,6 @@
 package controllers
 
 import aws.{AuditTrailDB, Federation}
-import awscala.sts.{STS, TemporaryCredentials}
 import cats.syntax.all._
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model._
@@ -12,13 +11,15 @@ import org.joda.time.{DateTime, DateTimeZone, Duration}
 import play.api.mvc._
 import play.api.{Configuration, Logging}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.sts.StsClient
+import software.amazon.awssdk.services.sts.model.Credentials
 
 class Janus(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
     host: String,
-    stsClient: STS,
+    stsClient: StsClient,
     configuration: Configuration
 )(implicit dynamodDB: DynamoDbClient, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
@@ -90,17 +91,13 @@ class Janus(
 
   def consoleLogin(permissionId: String) = authAction { implicit request =>
     (for {
-      (credentials, permission) <- assumeRole(
+      (credentials, _) <- assumeRole(
         request.user,
         permissionId,
         JConsole,
         Customisation.durationParams(request)
       )
-      loginUrl = Federation.generateLoginUrl(
-        credentials,
-        host,
-        stsClient
-      )
+      loginUrl = Federation.generateLoginUrl(credentials, host)
     } yield {
       SeeOther(loginUrl)
         .withHeaders(CACHE_CONTROL -> "no-cache")
@@ -120,11 +117,7 @@ class Janus(
         JConsole,
         Customisation.durationParams(request)
       )
-      loginUrl = Federation.generateLoginUrl(
-        credentials,
-        host,
-        stsClient
-      )
+      loginUrl = Federation.generateLoginUrl(credentials, host)
     } yield {
       Ok(
         views.html.consoleUrl(
@@ -217,7 +210,7 @@ class Janus(
       permissionId: String,
       accessType: JanusAccessType,
       durationParams: (Option[Duration], Option[DateTimeZone])
-  ): Option[(TemporaryCredentials, Permission)] = {
+  ): Option[(Credentials, Permission)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
       permission <- checkUserPermission(
@@ -258,7 +251,7 @@ class Janus(
       user: UserIdentity,
       permissionIds: List[String],
       durationParams: (Option[Duration], Option[DateTimeZone])
-  ): Option[List[(AwsAccount, TemporaryCredentials)]] = {
+  ): Option[List[(AwsAccount, Credentials)]] = {
     permissionIds
       .map(assumeRole(user, _, JCredentials, durationParams))
       .map(_.map { case (credentials, permission) =>
