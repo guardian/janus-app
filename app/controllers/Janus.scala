@@ -91,14 +91,13 @@ class Janus(
 
   def consoleLogin(permissionId: String) = authAction { implicit request =>
     (for {
-      (credentials, permission) <- assumeRole(
+      (credentials, _) <- assumeRole(
         request.user,
         permissionId,
         JConsole,
         Customisation.durationParams(request)
       )
-      autoLogout = Customisation.autoLogoutPreference(request.cookies)
-      loginUrl = Federation.generateLoginUrl(credentials, host, autoLogout)
+      loginUrl = Federation.generateLoginUrl(credentials, host)
     } yield {
       SeeOther(loginUrl)
         .withHeaders(CACHE_CONTROL -> "no-cache")
@@ -118,8 +117,7 @@ class Janus(
         JConsole,
         Customisation.durationParams(request)
       )
-      autoLogout = Customisation.autoLogoutPreference(request.cookies)
-      loginUrl = Federation.generateLoginUrl(credentials, host, autoLogout)
+      loginUrl = Federation.generateLoginUrl(credentials, host)
     } yield {
       Ok(
         views.html.consoleUrl(
