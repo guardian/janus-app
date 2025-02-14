@@ -93,42 +93,13 @@ object Federation {
   def generateLoginUrl(
       temporaryCredentials: TemporaryCredentials,
       host: String,
-      autoLogout: Boolean,
       sts: STS
   ): String = {
-    val url = sts.loginUrl(
+    sts.loginUrl(
       credentials = temporaryCredentials,
       consoleUrl = "https://console.aws.amazon.com/",
       issuerUrl = host
     )
-    autoLogoutUrl(url, autoLogout)
-  }
-
-  /** Janus supports logging users out before redirecting them to the Console.
-    *
-    * If this setting is enabled we send the user to the console logout page,
-    * with their login URL as the post-logout redirect URL. This means AWS logs
-    * the user out of the console before sending them to log in with their
-    * temporary session.
-    *
-    * NOTE: us-east-1 is required in these URLs, as per
-    * https://serverfault.com/questions/985255/1097528#comment1469112_1097528
-    */
-  private[aws] def autoLogoutUrl(
-      loginUrl: String,
-      autoLogout: Boolean
-  ): String = {
-    if (autoLogout) {
-      s"https://us-east-1.signin.aws.amazon.com/oauth?Action=logout&redirect_uri=${URLEncoder.encode(
-          loginUrl.replace(
-            "https://signin.aws.amazon.com/",
-            "https://us-east-1.signin.aws.amazon.com/"
-          ),
-          "UTF-8"
-        )}"
-    } else {
-      loginUrl
-    }
   }
 
   def credentials(federationToken: FederationToken): TemporaryCredentials = {
