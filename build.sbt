@@ -9,7 +9,7 @@ ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
 val awsSdkVersion = "1.12.781"
-val awsSdkV2Version = "2.30.17"
+val awsSdkV2Version = "2.30.20"
 val awscalaVersion = "0.9.2"
 val circeVersion = "0.14.10"
 val commonDependencies = Seq(
