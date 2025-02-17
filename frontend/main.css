@@ -22,15 +22,6 @@ main {
     vertical-align: -3px;
 }
 
-.switch label:has(> #auto_logout_switch) span {
-    margin-top: -2px;
-    font-size: 1rem;
-}
-
-.switch label:has(> #auto_logout_switch) .lever{
-    margin-left: 10px;
-}
-
 .switch label input[type=checkbox]:checked+.lever {
     background-color: #efb57c;
 }
@@ -53,7 +44,7 @@ main {
 }
 
 .index-main__container {
-    padding-top: 10px;
+    padding-top: 30px;
 }
 
 .logout-button {
