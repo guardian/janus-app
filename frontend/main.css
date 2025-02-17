@@ -1,12 +1,16 @@
 @import 'npm:materialize-css/dist/css/materialize.css';
-@import 'npm:@fontsource/roboto';
+@import 'npm:@fontsource/roboto/100.css';
+@import 'npm:@fontsource/roboto/300.css';
+@import 'npm:@fontsource/roboto/400.css';
+@import 'npm:@fontsource/roboto/500.css';
+@import 'npm:@fontsource/roboto/700.css';
 @import 'npm:material-icons';
 
 body {
     display: flex;
     min-height: 100vh;
     flex-direction: column;
-    font-family: Roboto, sans-serif;
+    font-family: Roboto, sans-serif !important;
 }
 
 main {
@@ -237,7 +241,7 @@ textarea.textarea--aws-profile-id.aws-profile-id {
     padding: 2px 17px 12px 17px;
 }
 .aws-account-body .card-content.card-content--permission-heading {
-    font-weight: bold;
+    font-weight: 700;
     padding: 12px 17px 2px 17px;
 }
 
