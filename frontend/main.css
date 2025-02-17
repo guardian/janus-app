@@ -31,6 +31,14 @@ main {
     vertical-align: -2px;
 }
 
+button .btn {
+    font-size: 1rem;
+}
+
+button .btn, .btn-large {
+    font-family: Roboto, sans-serif !important;
+}
+
 .btn .material-icons {
     vertical-align: -3px;
 }
@@ -252,6 +260,11 @@ textarea.textarea--aws-profile-id.aws-profile-id {
 .aws-account-body .card-content.card-content--permission-heading {
     font-weight: 700;
     padding: 12px 17px 2px 17px;
+}
+
+input[type=text]#revocation-confirmation {
+    font-family: Roboto, sans-serif;
+    font-size: 1rem;
 }
 
 input[type=text].input--inline {
