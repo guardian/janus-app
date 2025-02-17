@@ -335,6 +335,8 @@ a.copy-text--button__small {
     position: absolute;
     top: 0;
     right: 0;
+    font-size: 1rem;
+    padding: 0 2rem;
 }
 
 .account-summary__button--audit i {
@@ -347,6 +349,8 @@ a.copy-text--button__small {
 
 .owners__header.collapsible-header {
     justify-content: space-between;
+    padding: 0 1rem;
+    line-height: 3rem;
 }
 
 .owners__list {
