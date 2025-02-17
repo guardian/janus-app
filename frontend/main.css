@@ -17,6 +17,10 @@ main {
     flex: 1 0 auto;
 }
 
+.header.orange-text {
+    margin: 2.1rem 0 1.68rem 0;
+}
+
 .container .row {
     margin-left: -.75rem;
     margin-right: -.75rem;
