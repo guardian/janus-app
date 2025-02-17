@@ -17,6 +17,11 @@ main {
     flex: 1 0 auto;
 }
 
+.container .row {
+    margin-left: -.75rem;
+    margin-right: -.75rem;
+  }
+
 .material-icons {
     font-size: 15px;
     vertical-align: -2px;
