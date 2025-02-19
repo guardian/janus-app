@@ -26,6 +26,11 @@ main {
     margin-right: -.75rem;
   }
 
+ .collapsible-header {
+    padding: 0 1rem;
+    min-height: 3rem;
+    align-items: center;
+}
 .material-icons {
     font-size: 15px;
     vertical-align: -2px;
