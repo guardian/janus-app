@@ -2,7 +2,7 @@ package logic
 
 import models.{DisplayMode, Festive, Normal, Spooky}
 import org.joda.time.{DateTimeZone, Duration}
-import play.api.mvc.{Cookies, RequestHeader}
+import play.api.mvc.RequestHeader
 
 import scala.util.Try
 
@@ -30,15 +30,5 @@ object Customisation {
       case Spooky  => "purple"
       case Festive => "red"
     }
-  }
-
-  /** The auto-logout functionality is controlled by a UI toggle that sets a
-    * Cookie.
-    *
-    * This function extracts the preference from the cookie for use on the
-    * server.
-    */
-  def autoLogoutPreference(cookies: Cookies): Boolean = {
-    cookies.get("janus_auto_logout").exists(_.value == "1")
   }
 }
