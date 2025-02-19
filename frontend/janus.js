@@ -269,7 +269,7 @@ jQuery(function($){
 
     //adjust for windows OS
     $(".textarea--code.aws-profile-id").each(function(_, el){
-        if (navigator.userAgent.includes("Win") >= 0) { // TODO: test this change in Windows
+        if (navigator.userAgent.includes("Win")) { // TODO: test this change in Windows
             var winCmd = $(el).val().replace(/\\\n/g, "^\n").replace(/^ /mg, "");
             $(el).val(winCmd);
         }
