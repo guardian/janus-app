@@ -16,8 +16,8 @@ object Date {
   private val friendlyDateFormatter =
     DateTimeFormatter.ofPattern("d MMMM, yyyy").withZone(ZoneOffset.UTC)
 
-  def formatDateTime(date: Instant): String =
-    dateTimeFormatter.format(date)
+  def formatDateTime(instant: Instant): String =
+    dateTimeFormatter.format(instant)
 
   def formatTime(instant: Instant): String =
     timeFormatter.format(instant)
@@ -62,13 +62,12 @@ object Date {
 
   def weekAround(instant: Instant): (Instant, Instant) = {
     val start = firstDayOfWeek(instant)
-    (start, start.plus(7, ChronoUnit.DAYS))
+    (start, start.plus(Period.ofWeeks(1)))
   }
 
   private[logic] def isInAuditRange(instant: Instant): Boolean = {
-    val auditStart = LocalDateTime
-      .of(2015, 11, 1, 23, 59, 59)
-      .toInstant(ZoneOffset.UTC)
+    val auditStart =
+      ZonedDateTime.of(2015, 11, 1, 23, 59, 59, 0, ZoneOffset.UTC).toInstant
     instant.isAfter(auditStart) &&
     instant.isBefore(Instant.now())
   }
@@ -78,8 +77,8 @@ object Date {
   ): (Option[Instant], Option[Instant]) = {
     val week = firstDayOfWeek(instant)
     (
-      Some(week.minus(7, ChronoUnit.DAYS)).filter(isInAuditRange),
-      Some(week.plus(7, ChronoUnit.DAYS)).filter(isInAuditRange)
+      Some(week.minus(Period.ofDays(7))).filter(isInAuditRange),
+      Some(week.plus(Period.ofDays(7))).filter(isInAuditRange)
     )
   }
 
@@ -88,8 +87,8 @@ object Date {
       Some {
         LocalDate
           .parse(dateStr, simpleDateFormatter)
-          .atStartOfDay()
-          .toInstant(ZoneOffset.UTC)
+          .atStartOfDay(ZoneOffset.UTC)
+          .toInstant
       }
     } catch {
       case _: Exception => None

@@ -41,23 +41,27 @@ object Federation {
     * The tests explain the different cases, this is a tricky function.
     */
   def duration(
-                permission: Permission,
-                requestedSeconds: Option[Duration],
-                timezone: Option[ZoneId]
-              ): Duration = {
+      permission: Permission,
+      requestedSeconds: Option[Duration],
+      timezone: Option[ZoneId]
+  ): Duration = {
     if (permission.shortTerm) {
       // short term
-      val calculated = requestedSeconds.getOrElse(defaultShortTime).min(maxShortTime)
+      val calculated =
+        requestedSeconds.getOrElse(defaultShortTime).min(maxShortTime)
       calculated.max(minShortTime)
     } else {
       // long term
       val calculated = requestedSeconds.getOrElse {
         timezone.fold(defaultLongTime) { tz =>
           val now = ZonedDateTime.now(tz)
-          val withTime = now.withHour(19).withMinute(0).withSecond(0).withNano(0)
-          val endOfWork = if (withTime.isBefore(now)) withTime.plusDays(1) else withTime
+          val withTime =
+            now.withHour(19).withMinute(0).withSecond(0).withNano(0)
+          val endOfWork =
+            if (withTime.isBefore(now)) withTime.plusDays(1) else withTime
           val durToEndOfWork = Duration.between(now, endOfWork)
-          if (durToEndOfWork.compareTo(maxLongTime) < 0) durToEndOfWork else defaultLongTime
+          if (durToEndOfWork.compareTo(maxLongTime) < 0) durToEndOfWork
+          else defaultLongTime
         }
       }
       calculated.min(maxLongTime).max(minLongTime)

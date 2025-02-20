@@ -2,16 +2,16 @@ package aws
 
 import com.gu.janus.model.{AwsAccount, Permission}
 import com.gu.janus.policy.Iam.Policy
-import org.joda.time.DateTimeZone
 import org.scalactic.source
+import org.scalatest.Assertion
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.routing.sird.QueryStringParameterExtractor
-import testutils.JodaTimeUtils
 
 import java.net.{URI, URLDecoder}
+import java.time.ZoneOffset
 
-class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
+class FederationTest extends AnyFreeSpec with Matchers {
   import Federation._
 
   "duration" - {
@@ -50,7 +50,7 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
           duration(
             permission,
             None,
-            Some(DateTimeZone.UTC)
+            Some(ZoneOffset.UTC)
           ) shouldEqual defaultShortTime
         }
       }
@@ -87,7 +87,7 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
           duration(
             permission,
             None,
-            Some(DateTimeZone.UTC)
+            Some(ZoneOffset.UTC)
           ) shouldEqual defaultLongTime
         }
 
@@ -98,7 +98,7 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
           duration(
             permission,
             None,
-            Some(DateTimeZone.UTC)
+            Some(ZoneOffset.UTC)
           ) shouldEqual defaultLongTime
         }
 
@@ -106,7 +106,7 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
           10,
           0
         ) {
-          duration(permission, None, Some(DateTimeZone.UTC)) shouldEqual 9.hours
+          duration(permission, None, Some(ZoneOffset.UTC)) shouldEqual 9.hours
         }
 
         "and no timezone is supplied, provides the default time, even near 19:00" in withSystemTime(
@@ -120,7 +120,7 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
           15,
           0
         ) {
-          duration(permission, None, Some(DateTimeZone.UTC)) shouldEqual 4.hours
+          duration(permission, None, Some(ZoneOffset.UTC)) shouldEqual 4.hours
         }
 
         "and we're *very* near 19:00 with a TZ, give the remaining period" ignore withSystemTime(
@@ -128,7 +128,7 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
           30
         ) {
           // do we need special logic near 19:00 so people don't get pointless perms?
-          duration(permission, None, Some(DateTimeZone.UTC)) shouldEqual 4.hours
+          duration(permission, None, Some(ZoneOffset.UTC)) shouldEqual 4.hours
         }
 
         "uses the provided timezone to calculate the correct duration" in withSystemTime(
@@ -138,12 +138,14 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
           duration(
             permission,
             None,
-            Some(DateTimeZone.forOffsetHours(1))
+            Some(ZoneOffset.ofHours(1))
           ) shouldEqual 3.hours
         }
       }
     }
   }
+
+  private def withSystemTime(i: Int, i1: Int)(a: Assertion) = ???
 
   "getRoleName" - {
     "fetches role name from example" in {

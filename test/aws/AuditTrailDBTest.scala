@@ -10,19 +10,21 @@ import software.amazon.awssdk.services.dynamodb.model.KeyType.{HASH, RANGE}
 import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType.{N, S}
 import software.amazon.awssdk.services.dynamodb.model._
 
+import java.time.{Duration, ZoneOffset, ZonedDateTime}
+
 class AuditTrailDBTest extends AnyFreeSpec with Matchers {
 
   "test db stuff - use this to test DynamoDB stuff locally during development" - {
     implicit val dynamoDB: DynamoDbClient = Clients.localDb
 
     "insertion and querying" ignore {
-      val dateTime: DateTime =
-        new DateTime(2015, 11, 5, 17, 35, DateTimeZone.UTC)
+      val dateTime =
+        ZonedDateTime.of(2015, 11, 5, 17, 35, 0, 0, ZoneOffset.UTC).toInstant
       val al = AuditLog(
         "account",
         "username",
         dateTime,
-        new Duration(3600000),
+        Duration.ofMillis(3600000),
         "accessLevel",
         JConsole,
         external = true
@@ -31,15 +33,15 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
 
       val accountResults = AuditTrailDB.getAccountLogs(
         "account",
-        dateTime.minusDays(1),
-        dateTime.plusDays(1)
+        dateTime.minus(Duration.ofDays(1)),
+        dateTime.plus(Duration.ofDays(1))
       )
       println(accountResults.toList)
 
       val userResults = AuditTrailDB.getUserLogs(
         "username",
-        dateTime.minusDays(1),
-        dateTime.plusDays(1)
+        dateTime.minus(Duration.ofDays(1)),
+        dateTime.plus(Duration.ofDays(1))
       )
       println(userResults.toList)
     }
