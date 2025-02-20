@@ -60,10 +60,15 @@ class UserAccessTest
 
   "support functions" - {
     val baseline =
-      ZonedDateTime.of(2016, 7, 19, 11, 0, 0, 0,ZoneId.of("Europe/London")).toInstant
+      ZonedDateTime
+        .of(2016, 7, 19, 11, 0, 0, 0, ZoneId.of("Europe/London"))
+        .toInstant
     val supportAcl = SupportACL.create(
       Map(
-        baseline.minus(Period.ofDays(7)) -> ("old.support.user", "another.support.user"), // out of date
+        baseline.minus(Period.ofDays(7)) -> (
+          "old.support.user",
+          "another.support.user"
+        ), // out of date
         baseline -> ("support.user", "") // in effect
       ),
       Set(fooCf, barCf),
@@ -247,7 +252,10 @@ class UserAccessTest
 
         "returns None if there are no entries for today's date" in {
           val acl = testActiveSupportAcl("user.1", "user.2")
-          activeSupportUsers(currentTime.minus(Period.ofDays(20)), acl) shouldEqual None
+          activeSupportUsers(
+            currentTime.minus(Period.ofDays(20)),
+            acl
+          ) shouldEqual None
         }
 
         "returns the date the rota started at" in {
@@ -321,7 +329,9 @@ class UserAccessTest
             supportAcl,
             "user1"
           )
-          slots shouldEqual List((rotaStartTime.plus(Period.ofWeeks(4)), "user5"))
+          slots shouldEqual List(
+            (rotaStartTime.plus(Period.ofWeeks(4)), "user5")
+          )
         }
 
         "returns the correct set of future rota slots for user2 from currentTime+2w" in {
@@ -330,7 +340,9 @@ class UserAccessTest
             supportAcl,
             "user2"
           )
-          slots shouldEqual List((rotaStartTime.plus(Period.ofWeeks(5)), "user4"))
+          slots shouldEqual List(
+            (rotaStartTime.plus(Period.ofWeeks(5)), "user4")
+          )
         }
 
         "returns no slots for userA" in {
@@ -453,7 +465,10 @@ class UserAccessTest
     val admins = ACL(Map("admin" -> Set(fooCf, barDev)))
     val supportAcl = SupportACL.create(
       Map(
-        Instant.now().minus(Period.ofDays(1)) -> ("support.user", "another.support.user")
+        Instant.now().minus(Period.ofDays(1)) -> (
+          "support.user",
+          "another.support.user"
+        )
       ),
       Set(fooCf, barDev),
       Duration.ofDays(7)
