@@ -36,6 +36,16 @@ main {
     vertical-align: -2px;
 }
 
+.file-field.input-field {
+    display: flex;
+    justify-content: center;
+}
+
+.file-path-wrapper {
+    width: 200px;
+    margin-right: 10px;
+}
+
 button .btn {
     font-size: 1rem;
 }
