@@ -24,3 +24,6 @@ addDependencyTreePlugin
 
 // Formatting
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")
+
+// Scala 3 upgrade
+addSbtPlugin("ch.epfl.scala" % "sbt-scala3-migrate" % "0.6.2")

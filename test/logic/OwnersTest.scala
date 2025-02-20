@@ -8,7 +8,7 @@ import org.scalatest.matchers.should.Matchers
 class OwnersTest extends AnyFreeSpec with Matchers {
   import Owners._
 
-  val acl = ACL(
+  val acl: ACL = ACL(
     Map(
       "test.user" -> Set(fooDev),
       "test.yet-another-user" -> Set(fooDev),

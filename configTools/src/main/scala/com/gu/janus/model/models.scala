@@ -1,7 +1,6 @@
 package com.gu.janus.model
 
 import awscala.Policy
-import org.joda.time._
 
 case class JanusData(
     accounts: Set[AwsAccount],
@@ -15,7 +14,7 @@ case class ACL(
     userAccess: Map[String, Set[Permission]],
     defaultPermissions: Set[Permission] = Set.empty
 )
-case class SupportACL private (
+case class SupportACL(
     rota: Map[DateTime, (String, String)],
     supportAccess: Set[Permission],
     supportPeriod: Seconds
@@ -75,7 +74,7 @@ case class Permission(
     policy: String,
     shortTerm: Boolean
 ) {
-  val id = s"${account.authConfigKey}-$label"
+  val id: String = s"${account.authConfigKey}-$label"
 
   override def toString: String = s"Permission<$id>"
 }
@@ -117,8 +116,8 @@ case class AccountOwners(
     devs: List[String],
     others: List[String]
 ) {
-  val isEmpty = admins.isEmpty && devs.isEmpty && others.isEmpty
+  val isEmpty: Boolean = admins.isEmpty && devs.isEmpty && others.isEmpty
 }
 object AccountOwners {
-  def empty = AccountOwners(Nil, Nil, Nil)
+  def empty: AccountOwners = AccountOwners(Nil, Nil, Nil)
 }

@@ -4,37 +4,37 @@ import awscala.Policy
 import com.gu.janus.model.{AwsAccount, Permission}
 
 object Fixtures {
-  val fooAct = AwsAccount("Foo", "foo")
-  val barAct = AwsAccount("Bar", "bar")
-  val bazAct = AwsAccount("Baz", "baz")
-  val quxAct = AwsAccount("Qux", "qux")
+  val fooAct: AwsAccount = AwsAccount("Foo", "foo")
+  val barAct: AwsAccount = AwsAccount("Bar", "bar")
+  val bazAct: AwsAccount = AwsAccount("Baz", "baz")
+  val quxAct: AwsAccount = AwsAccount("Qux", "qux")
 
-  val fooDev = developerPermission(fooAct)
-  val fooCf = accountAdminPermission(fooAct)
-  val fooS3 = s3ManagerPermission(fooAct)
+  val fooDev: Permission = developerPermission(fooAct)
+  val fooCf: Permission = accountAdminPermission(fooAct)
+  val fooS3: Permission = s3ManagerPermission(fooAct)
 
-  val barDev = developerPermission(barAct)
-  val barCf = accountAdminPermission(barAct)
+  val barDev: Permission = developerPermission(barAct)
+  val barCf: Permission = accountAdminPermission(barAct)
 
-  val bazDev = developerPermission(bazAct)
-  val bazCf = accountAdminPermission(bazAct)
+  val bazDev: Permission = developerPermission(bazAct)
+  val bazCf: Permission = accountAdminPermission(bazAct)
 
-  val quxDev = developerPermission(quxAct)
-  val quxCf = accountAdminPermission(quxAct)
+  val quxDev: Permission = developerPermission(quxAct)
+  val quxCf: Permission = accountAdminPermission(quxAct)
 
-  val allTestPerms =
+  val allTestPerms: Set[Permission] =
     Set(fooDev, fooCf, fooS3, barDev, barCf, bazDev, bazCf, quxDev, quxCf)
 
   // utilities (hard-coded conventions for now)
-  def developerPermission(awsAccount: AwsAccount) =
+  def developerPermission(awsAccount: AwsAccount): Permission =
     Permission(awsAccount, "dev", "Developer", Policy(Seq.empty))
-  def kinesisReadPermission(awsAccount: AwsAccount) =
+  def kinesisReadPermission(awsAccount: AwsAccount): Permission =
     Permission(awsAccount, "kinesis-read", "Kinesis Read", Policy(Seq.empty))
-  def lambdaPermission(awsAccount: AwsAccount) =
+  def lambdaPermission(awsAccount: AwsAccount): Permission =
     Permission(awsAccount, "lambda", "AWS Lambda access", Policy(Seq.empty))
-  def s3ReaderPermission(awsAccount: AwsAccount) =
+  def s3ReaderPermission(awsAccount: AwsAccount): Permission =
     Permission(awsAccount, "s3-read", "S3 Read", Policy(Seq.empty))
-  def accountAdminPermission(awsAccount: AwsAccount) =
+  def accountAdminPermission(awsAccount: AwsAccount): Permission =
     Permission(
       awsAccount,
       "cloudformation",
@@ -42,6 +42,6 @@ object Fixtures {
       Policy(Seq.empty),
       shortTerm = true
     )
-  def s3ManagerPermission(awsAccount: AwsAccount) =
+  def s3ManagerPermission(awsAccount: AwsAccount): Permission =
     Permission(awsAccount, "s3-all", "S3 Read and Write", Policy(Seq.empty))
 }

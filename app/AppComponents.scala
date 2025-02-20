@@ -13,6 +13,8 @@ import play.filters.HttpFiltersComponents
 import router.Routes
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import com.gu.googleauth.{ GoogleAuthConfig, GoogleGroupChecker }
+import com.gu.janus.model.JanusData
 
 class AppComponents(context: ApplicationLoader.Context)
     extends BuiltInComponentsFromContext(context)
@@ -24,16 +26,16 @@ class AppComponents(context: ApplicationLoader.Context)
   override def httpFilters: Seq[EssentialFilter] =
     super.httpFilters :+ new HstsFilter
 
-  val host = Config.host(configuration)
-  val googleAuthConfig = Config.googleSettings(configuration, httpConfiguration)
-  val googleGroupChecker = Config.googleGroupChecker(configuration)
-  val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
-  val dynamodDB =
+  val host: String = Config.host(configuration)
+  val googleAuthConfig: GoogleAuthConfig = Config.googleSettings(configuration, httpConfiguration)
+  val googleGroupChecker: GoogleGroupChecker = Config.googleGroupChecker(configuration)
+  val requiredGoogleGroups: Set[String] = Set(Config.twoFAGroup(configuration))
+  val dynamodDB: DynamoDbClient =
     if (context.environment.mode == play.api.Mode.Prod)
       DynamoDbClient.builder().region(EU_WEST_1).build()
     else Clients.localDb
 
-  val janusData = Config.janusData(configuration)
+  val janusData: JanusData = Config.janusData(configuration)
 
   Config.validateAccountConfig(janusData, configuration) match {
     case FederationConfigError(causedBy) =>

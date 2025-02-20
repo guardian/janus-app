@@ -7,6 +7,7 @@ import logic.Date
 import play.api.Logging
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import play.api.mvc
 
 class Audit(
     janusData: JanusData,
@@ -16,7 +17,7 @@ class Audit(
     extends AbstractController(controllerComponents)
     with Logging {
 
-  def byAccount(account: String) = authAction { implicit request =>
+  def byAccount(account: String): mvc.Action[AnyContent] = authAction { implicit request =>
     val date = request.getQueryString(
       "date"
     ) flatMap Date.parseDateStr getOrElse Date.today
@@ -38,7 +39,7 @@ class Audit(
     )
   }
 
-  def byUser(username: String) = authAction { implicit request =>
+  def byUser(username: String): mvc.Action[AnyContent] = authAction { implicit request =>
     val date = request.getQueryString(
       "date"
     ) flatMap Date.parseDateStr getOrElse Date.today
@@ -60,7 +61,7 @@ class Audit(
     )
   }
 
-  def changeUserDate(username: String) = authAction { implicit request =>
+  def changeUserDate(username: String): mvc.Action[AnyContent] = authAction { implicit request =>
     val logDateStrOpt = for {
       submission <- request.body.asFormUrlEncoded
       logDateSubmission <- submission.get("audit-date")
@@ -70,7 +71,7 @@ class Audit(
     SeeOther(s"/audit/user/$username$param")
   }
 
-  def changeAccountDate(account: String) = authAction { implicit request =>
+  def changeAccountDate(account: String): mvc.Action[AnyContent] = authAction { implicit request =>
     val logDateStrOpt = for {
       submission <- request.body.asFormUrlEncoded
       logDateSubmission <- submission.get("audit-date")

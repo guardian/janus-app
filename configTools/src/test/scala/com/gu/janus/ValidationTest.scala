@@ -7,10 +7,10 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 class ValidationTest extends AnyFreeSpec with Matchers {
-  val account1 = AwsAccount("Test 1", "test1")
-  val account2 = AwsAccount("Test 2", "test2")
-  val emptyAcl = ACL(Map.empty, Set.empty)
-  val emptySupportAcl =
+  val account1: AwsAccount = AwsAccount("Test 1", "test1")
+  val account2: AwsAccount = AwsAccount("Test 2", "test2")
+  val emptyAcl: ACL = ACL(Map.empty, Set.empty)
+  val emptySupportAcl: SupportACL =
     SupportACL.create(Map.empty, Set.empty, Period.seconds(100))
 
   "policySizeChecks" - {

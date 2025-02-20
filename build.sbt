@@ -14,8 +14,6 @@ val awscalaVersion = "0.9.2"
 val circeVersion = "0.14.10"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.12.0",
-  "joda-time" % "joda-time" % "2.13.0",
-  "org.joda" % "joda-convert" % "3.0.1",
   "com.github.seratch" %% "awscala-iam" % awscalaVersion,
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
@@ -129,9 +127,6 @@ lazy val root = (project in file("."))
 lazy val configTools = (project in file("configTools"))
   .enablePlugins(SbtTwirl)
   .settings(
-    addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full
-    ),
     commonSettings,
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.3",
