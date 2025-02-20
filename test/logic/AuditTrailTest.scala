@@ -9,6 +9,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
+import java.time.{Duration, ZoneOffset, ZonedDateTime}
 import scala.language.implicitConversions
 
 class AuditTrailTest
@@ -17,12 +18,13 @@ class AuditTrailTest
     with RightValues
     with OptionValues
     with HaveMatchers {
+
   "auditLogAttrs" - {
     val al = AuditLog(
       "account",
       "username",
-      new DateTime(2015, 11, 4, 15, 22),
-      new Duration(3600 * 1000),
+      ZonedDateTime.of(2015, 11, 4, 15, 22, 0, 0, ZoneOffset.UTC).toInstant,
+      Duration.ofMillis(3600 * 1000),
       "accessLevel",
       JCredentials,
       external = true
@@ -41,10 +43,11 @@ class AuditTrailTest
     }
 
     "sets up the (date) range key correctly even when BST is in effect" in {
-      val al2 = al.copy(dateTime =
-        new DateTime(2015, 11, 4, 16, 22, DateTimeZone.forOffsetHours(1))
+      val al2 = al.copy(
+        instant = ZonedDateTime
+          .of(2015, 11, 4, 16, 22, 0, 0, ZoneOffset.ofHours(1))
+          .toInstant
       )
-      //                        hour and timezone changed ---^--------------------^
       val attrs = AuditLogDbEntryAttrs.fromAuditLog(al2)
       val (_, value) = attrs.sortKey
       value.n().toLong shouldEqual 1446650520000L
@@ -93,19 +96,20 @@ class AuditTrailTest
         AuditTrail.auditLogFromAttrs(attrs).value should have(
           "account" as "account",
           "username" as "username",
-          "dateTime" as new DateTime(2015, 11, 4, 15, 22, DateTimeZone.UTC),
-          "duration" as new Duration(3600000),
+          "dateTime" as ZonedDateTime
+            .of(2015, 11, 4, 15, 22, 0, 0, ZoneOffset.UTC),
+          "duration" as Duration.ofMillis(3600000),
           "accessLevel" as "dev",
           "accessType" as JConsole,
           "external" as true
         )
       }
 
-      "extracts a correct (ms) duration from the DB's seconds field" in {
+      "extracts a correct (ms) duration from the DB\'s seconds field" in {
         AuditTrail
           .auditLogFromAttrs(attrs)
           .value
-          .duration shouldEqual new Duration(3600 * 1000)
+          .duration shouldEqual Duration.ofMillis(3600 * 1000)
       }
     }
 

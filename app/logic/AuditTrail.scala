@@ -3,9 +3,10 @@ package logic
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.{ACL, AuditLog, JanusAccessType, Permission}
 import logic.UserAccess.{hasExplicitAccess, username}
-import org.joda.time.{DateTime, DateTimeZone, Duration}
 import play.api.Logging
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+
+import java.time.{Duration, Instant}
 
 import scala.util.Try
 
@@ -89,7 +90,7 @@ object AuditTrail extends Logging {
     AuditLog(
       permission.account.authConfigKey,
       username(user),
-      DateTime.now(),
+      Instant.now(),
       duration,
       permission.label,
       janusAccessType,
@@ -131,10 +132,10 @@ object AuditTrail extends Logging {
         "Could not extract username" -> attrs
       )
       dateTime <- longValue(attrs, timestampSortKeyName)
-        .map(ts => new DateTime(ts, DateTimeZone.UTC))
+        .map(ts => Instant.ofEpochMilli(ts.toLong))
         .toRight("Could not extract dateTime" -> attrs)
       duration <- longValue(attrs, durationAttrName)
-        .map(d => new Duration(d * 1000))
+        .map(d => Duration.ofSeconds(d.toLong))
         .toRight("Could not extract duration" -> attrs)
       accessLevel <- stringValue(attrs, accessLevelAttrName).toRight(
         "Could not extract accessLevel" -> attrs

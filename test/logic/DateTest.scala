@@ -1,9 +1,10 @@
 package logic
 
-import org.joda.time._
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+
+import java.time.Duration
 
 class DateTest extends AnyFreeSpec with Matchers with OptionValues {
   "formatPeriod" - {
@@ -137,8 +138,8 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
   }
 
   "duration" - {
-    val smallDuration = new Duration(1000)
-    val largeDuration = new Duration(5000)
+    val smallDuration = Duration.ofSeconds(1000)
+    val largeDuration = Duration.ofSeconds(5000)
 
     "max" - {
       "returns the first duration if it is larger" in {
