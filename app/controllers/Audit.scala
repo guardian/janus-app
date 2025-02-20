@@ -4,7 +4,7 @@ import aws.AuditTrailDB
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import logic.Date
-import play.api.Logging
+import play.api.{Logging, Mode}
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -12,7 +12,7 @@ class Audit(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent]
-)(implicit dynamodDB: DynamoDbClient, assetsFinder: AssetsFinder)
+)(implicit dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 
