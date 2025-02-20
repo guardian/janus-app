@@ -1,11 +1,11 @@
 package logic
 
-import awscala.dynamodbv2.Attribute
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.{ACL, AuditLog, JanusAccessType, Permission}
-import org.joda.time.{DateTime, DateTimeZone, Duration}
 import logic.UserAccess.{hasExplicitAccess, username}
+import org.joda.time.{DateTime, DateTimeZone, Duration}
 import play.api.Logging
+import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 object AuditTrail extends Logging {
   def createLog(
@@ -44,7 +44,7 @@ object AuditTrail extends Logging {
   /** Extract nice error message from db conversion.
     */
   def errorStrings(
-      error: Either[(String, Seq[Attribute]), AuditLog]
+      error: Either[(String, Map[String, AttributeValue]), AuditLog]
   ): Either[String, AuditLog] = {
     error.left.map(_._1)
   }
@@ -52,11 +52,11 @@ object AuditTrail extends Logging {
   /** Log detailed info for any DB result extraction errors.
     */
   def logDbResultErrs(
-      attempt: Either[(String, Seq[Attribute]), AuditLog]
-  ): Either[(String, Seq[Attribute]), AuditLog] = {
-    attempt.left.foreach { case (message, attrs) =>
-      val formattedAttrs = attrs.map { attr =>
-        s"${attr.name}: ${attr.value.toString}"
+      attempt: Either[(String, Map[String, AttributeValue]), AuditLog]
+  ): Either[(String, Map[String, AttributeValue]), AuditLog] = {
+    attempt.left.foreach { case (_, attrs) =>
+      val formattedAttrs = attrs.map { case (name, value) =>
+        s"$name: ${value.toString}"
       } mkString ", "
       logger.error(s"Failed to extract auditLog data $formattedAttrs")
     }
@@ -66,39 +66,39 @@ object AuditTrail extends Logging {
   /** (Attempt to) convert a database result into an audit log.
     */
   def auditLogFromAttrs(
-      attrs: Seq[Attribute]
-  ): Either[(String, Seq[Attribute]), AuditLog] = {
+      attrs: Map[String, AttributeValue]
+  ): Either[(String, Map[String, AttributeValue]), AuditLog] = {
     for {
       account <- attrs
-        .find("j_account" == _.name)
-        .flatMap(_.value.s)
+        .find { case (name, _) => "j_account" == name }
+        .flatMap { case (_, value) => Some(value.s()) }
         .toRight("Could not extract account" -> attrs)
       username <- attrs
-        .find("j_username" == _.name)
-        .flatMap(_.value.s)
+        .find { case (name, _) => "j_username" == name }
+        .flatMap { case (_, value) => Some(value.s()) }
         .toRight("Could not extract username" -> attrs)
       dateTime <- attrs
-        .find("j_timestamp" == _.name)
-        .flatMap(_.value.n)
+        .find { case (name, _) => "j_timestamp" == name }
+        .flatMap { case (_, value) => Some(value.n()) }
         .map(ts => new DateTime(ts.toLong, DateTimeZone.UTC))
         .toRight("Could not extract dateTime" -> attrs)
       duration <- attrs
-        .find("j_duration" == _.name)
-        .flatMap(_.value.n)
+        .find { case (name, _) => "j_duration" == name }
+        .flatMap { case (_, value) => Some(value.n()) }
         .map(d => new Duration(d.toLong * 1000))
         .toRight("Could not extract duration" -> attrs)
       accessLevel <- attrs
-        .find("j_accessLevel" == _.name)
-        .flatMap(_.value.s)
+        .find { case (name, _) => "j_accessLevel" == name }
+        .flatMap { case (_, value) => Some(value.s()) }
         .toRight("Could not extract accessLevel" -> attrs)
       accessType <- attrs
-        .find("j_accessType" == _.name)
-        .flatMap(_.value.s)
+        .find { case (name, _) => "j_accessType" == name }
+        .flatMap { case (_, value) => Some(value.s()) }
         .flatMap(JanusAccessType.fromString)
         .toRight("Could not extract accessType" -> attrs)
       external <- attrs
-        .find("j_external" == _.name)
-        .flatMap(attr => attr.value.n)
+        .find { case (name, _) => "j_external" == name }
+        .flatMap { case (_, value) => Some(value.n()) }
         .flatMap {
           case "0" => Some(false)
           case "1" => Some(true)

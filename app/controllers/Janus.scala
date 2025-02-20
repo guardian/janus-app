@@ -1,8 +1,6 @@
 package controllers
 
 import aws.{AuditTrailDB, Federation}
-import awscala.dynamodbv2.DynamoDB
-import awscala.sts.{STS, TemporaryCredentials}
 import cats.syntax.all._
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model._
@@ -10,19 +8,20 @@ import conf.Config
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
 import org.joda.time.{DateTime, DateTimeZone, Duration}
-import play.api.{Configuration, Logging}
 import play.api.mvc._
-
-import java.net.URLEncoder
+import play.api.{Configuration, Logging}
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.sts.StsClient
+import software.amazon.awssdk.services.sts.model.Credentials
 
 class Janus(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
     host: String,
-    stsClient: STS,
+    stsClient: StsClient,
     configuration: Configuration
-)(implicit dynamodDB: DynamoDB, assetsFinder: AssetsFinder)
+)(implicit dynamodDB: DynamoDbClient, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 
@@ -92,19 +91,13 @@ class Janus(
 
   def consoleLogin(permissionId: String) = authAction { implicit request =>
     (for {
-      (credentials, permission) <- assumeRole(
+      (credentials, _) <- assumeRole(
         request.user,
         permissionId,
         JConsole,
         Customisation.durationParams(request)
       )
-      autoLogout = Customisation.autoLogoutPreference(request.cookies)
-      loginUrl = Federation.generateLoginUrl(
-        credentials,
-        host,
-        autoLogout,
-        stsClient
-      )
+      loginUrl = Federation.generateLoginUrl(credentials, host)
     } yield {
       SeeOther(loginUrl)
         .withHeaders(CACHE_CONTROL -> "no-cache")
@@ -124,13 +117,7 @@ class Janus(
         JConsole,
         Customisation.durationParams(request)
       )
-      autoLogout = Customisation.autoLogoutPreference(request.cookies)
-      loginUrl = Federation.generateLoginUrl(
-        credentials,
-        host,
-        autoLogout,
-        stsClient
-      )
+      loginUrl = Federation.generateLoginUrl(credentials, host)
     } yield {
       Ok(
         views.html.consoleUrl(
@@ -223,7 +210,7 @@ class Janus(
       permissionId: String,
       accessType: JanusAccessType,
       durationParams: (Option[Duration], Option[DateTimeZone])
-  ): Option[(TemporaryCredentials, Permission)] = {
+  ): Option[(Credentials, Permission)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
       permission <- checkUserPermission(
@@ -264,7 +251,7 @@ class Janus(
       user: UserIdentity,
       permissionIds: List[String],
       durationParams: (Option[Duration], Option[DateTimeZone])
-  ): Option[List[(AwsAccount, TemporaryCredentials)]] = {
+  ): Option[List[(AwsAccount, Credentials)]] = {
     permissionIds
       .map(assumeRole(user, _, JCredentials, durationParams))
       .map(_.map { case (credentials, permission) =>

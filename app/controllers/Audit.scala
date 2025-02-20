@@ -1,18 +1,18 @@
 package controllers
 
 import aws.AuditTrailDB
-import awscala.dynamodbv2._
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import logic.Date
 import play.api.Logging
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents}
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 class Audit(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent]
-)(implicit dynamodDB: DynamoDB, assetsFinder: AssetsFinder)
+)(implicit dynamodDB: DynamoDbClient, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 
