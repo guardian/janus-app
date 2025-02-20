@@ -3,9 +3,10 @@ package logic
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.{ACL, AuditLog, JanusAccessType, Permission}
 import logic.UserAccess.{hasExplicitAccess, username}
-import org.joda.time.{DateTime, DateTimeZone, Duration}
 import play.api.Logging
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
+
+import java.time.{Duration, Instant}
 
 object AuditTrail extends Logging {
   def createLog(
@@ -18,7 +19,7 @@ object AuditTrail extends Logging {
     AuditLog(
       permission.account.authConfigKey,
       username(user),
-      DateTime.now(),
+      Instant.now(),
       duration,
       permission.label,
       janusAccessType,
@@ -30,10 +31,10 @@ object AuditTrail extends Logging {
   def auditLogAttrs(auditLog: AuditLog): (String, Long, List[(String, Any)]) = {
     (
       auditLog.account,
-      auditLog.dateTime.withZone(DateTimeZone.UTC).getMillis,
+      auditLog.instant.toEpochMilli,
       List(
         "j_username" -> auditLog.username,
-        "j_duration" -> auditLog.duration.getStandardSeconds,
+        "j_duration" -> auditLog.duration.getSeconds,
         "j_accessLevel" -> auditLog.accessLevel,
         "j_accessType" -> auditLog.accessType.toString,
         "j_external" -> (if (auditLog.external) 1 else 0)
@@ -80,12 +81,12 @@ object AuditTrail extends Logging {
       dateTime <- attrs
         .find { case (name, _) => "j_timestamp" == name }
         .flatMap { case (_, value) => Some(value.n()) }
-        .map(ts => new DateTime(ts.toLong, DateTimeZone.UTC))
+        .map(ts => Instant.ofEpochMilli(ts.toLong))
         .toRight("Could not extract dateTime" -> attrs)
       duration <- attrs
         .find { case (name, _) => "j_duration" == name }
         .flatMap { case (_, value) => Some(value.n()) }
-        .map(d => new Duration(d.toLong * 1000))
+        .map(d => Duration.ofSeconds(d.toLong))
         .toRight("Could not extract duration" -> attrs)
       accessLevel <- attrs
         .find { case (name, _) => "j_accessLevel" == name }

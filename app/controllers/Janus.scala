@@ -7,12 +7,13 @@ import com.gu.janus.model._
 import conf.Config
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
-import org.joda.time.{DateTime, DateTimeZone, Duration}
 import play.api.mvc._
 import play.api.{Configuration, Logging}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.model.Credentials
+
+import java.time.{Duration, Instant, ZoneId, ZonedDateTime}
 
 class Janus(
     janusData: JanusData,
@@ -30,7 +31,7 @@ class Janus(
 
   def index = authAction { implicit request =>
     val displayMode =
-      Date.displayMode(DateTime.now(DateTimeZone.forID("Europe/London")))
+      Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")).toInstant)
     (for {
       permissions <- userAccess(username(request.user), janusData.access)
       favourites = Favourites.fromCookie(request.cookies.get("favourites"))
@@ -55,7 +56,7 @@ class Janus(
   }
 
   def support = authAction { implicit request =>
-    val now = DateTime.now()
+    val now = Instant.now()
     val currentSupportUsers = activeSupportUsers(now, janusData.support)
     val supportUsersInNextPeriod = nextSupportUsers(now, janusData.support)
     val currentUserFutureSupportPeriods =
@@ -209,14 +210,14 @@ class Janus(
       user: UserIdentity,
       permissionId: String,
       accessType: JanusAccessType,
-      durationParams: (Option[Duration], Option[DateTimeZone])
+      durationParams: (Option[Duration], Option[ZoneId])
   ): Option[(Credentials, Permission)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
       permission <- checkUserPermission(
         username(user),
         permissionId,
-        DateTime.now(),
+        Instant.now(),
         janusData.access,
         janusData.admin,
         janusData.support
@@ -250,7 +251,7 @@ class Janus(
   private def multiAccountAssumption(
       user: UserIdentity,
       permissionIds: List[String],
-      durationParams: (Option[Duration], Option[DateTimeZone])
+      durationParams: (Option[Duration], Option[ZoneId])
   ): Option[List[(AwsAccount, Credentials)]] = {
     permissionIds
       .map(assumeRole(user, _, JCredentials, durationParams))

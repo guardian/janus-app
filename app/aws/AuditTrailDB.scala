@@ -2,15 +2,12 @@ package aws
 
 import com.gu.janus.model.AuditLog
 import logic.AuditTrail
-import org.joda.time.DateTime
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import software.amazon.awssdk.services.dynamodb.model.ComparisonOperator.{
-  BETWEEN,
-  EQ
-}
+import software.amazon.awssdk.services.dynamodb.model.ComparisonOperator._
 import software.amazon.awssdk.services.dynamodb.model.KeyType.{HASH, RANGE}
 import software.amazon.awssdk.services.dynamodb.model._
 
+import java.time.Instant
 import scala.jdk.CollectionConverters._
 
 object AuditTrailDB {
@@ -62,8 +59,8 @@ object AuditTrailDB {
   def getAccountLogs(
       table: TableDescription,
       account: String,
-      startDate: DateTime,
-      endDate: DateTime
+      startDate: Instant,
+      endDate: Instant
   )(implicit dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] = {
     val request = QueryRequest
       .builder()
@@ -86,8 +83,8 @@ object AuditTrailDB {
   def getUserLogs(
       table: TableDescription,
       username: String,
-      startDate: DateTime,
-      endDate: DateTime
+      startDate: Instant,
+      endDate: Instant
   )(implicit dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] = {
     val request = QueryRequest
       .builder()
@@ -109,15 +106,15 @@ object AuditTrailDB {
   }
 
   private def dateRangeCondition(
-      startDate: DateTime,
-      endDate: DateTime
+      startDate: Instant,
+      endDate: Instant
   ): (String, Condition) = {
     "j_timestamp" -> Condition
       .builder()
       .comparisonOperator(BETWEEN)
       .attributeValueList(
-        AttributeValue.fromN(startDate.getMillis.toString),
-        AttributeValue.fromN(endDate.getMillis.toString)
+        AttributeValue.fromN(startDate.toEpochMilli.toString),
+        AttributeValue.fromN(endDate.toEpochMilli.toString)
       )
       .build()
   }

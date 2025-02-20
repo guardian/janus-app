@@ -1,132 +1,121 @@
 package logic
 
 import models.{DisplayMode, Festive, Normal, Spooky}
-import org.joda.time.{
-  DateTime,
-  DateTimeConstants,
-  DateTimeZone,
-  Duration,
-  Interval,
-  Period
-}
-import org.joda.time.format.{
-  DateTimeFormat,
-  ISODateTimeFormat,
-  PeriodFormatterBuilder
-}
+
+import java.time._
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 object Date {
   private val simpleDateFormatter =
-    DateTimeFormat.forPattern("yyyy-MM-dd").withZoneUTC()
+    DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneOffset.UTC)
   private val dateTimeFormatter =
-    DateTimeFormat.forPattern("yyyy/MM/dd HH:mm:ss").withZoneUTC()
+    DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss").withZone(ZoneOffset.UTC)
   private val timeFormatter =
-    DateTimeFormat.forPattern("HH:mm:ss z").withZoneUTC()
+    DateTimeFormatter.ofPattern("HH:mm:ss z").withZone(ZoneOffset.UTC)
   private val friendlyDateFormatter =
-    DateTimeFormat.forPattern("d MMMM, yyyy").withZoneUTC()
+    DateTimeFormatter.ofPattern("d MMMM, yyyy").withZone(ZoneOffset.UTC)
 
-  private def toJodaDateTime(instant: java.time.Instant): DateTime = {
-    new DateTime(instant.toEpochMilli, DateTimeZone.UTC)
+  def formatDateTime(date: Instant): String =
+    dateTimeFormatter.format(date)
+
+  def formatTime(instant: Instant): String =
+    timeFormatter.format(instant)
+
+  def formatDate(instant: Instant): String = {
+    friendlyDateFormatter.format(instant)
   }
 
-  def formatDateTime(date: DateTime): String =
-    dateTimeFormatter.print(date)
-
-  def formatTime(instant: java.time.Instant): String =
-    timeFormatter.print(toJodaDateTime(instant))
-
-  def formatDate(date: DateTime): String = {
-    friendlyDateFormatter.print(date)
+  def rawDate(instant: Instant): String = {
+    simpleDateFormatter.format(instant)
   }
 
-  def rawDate(date: DateTime): String = {
-    simpleDateFormatter.print(date)
-  }
-
-  def isoDateString(instant: java.time.Instant): String = {
-    ISODateTimeFormat.dateTime().print(toJodaDateTime(instant))
-  }
-
-  def isoDateString(date: DateTime): String = {
-    ISODateTimeFormat.dateTime().print(date)
+  def isoDateString(instant: Instant): String = {
+    DateTimeFormatter.ISO_DATE_TIME.format(instant)
   }
 
   def formatInterval(
-      instant: java.time.Instant,
-      comparison: DateTime = DateTime.now
+      instant: Instant,
+      comparison: Instant = Instant.now()
   ): String = {
-    val date = toJodaDateTime(instant)
-    formatPeriod(new Interval(comparison, date).toPeriod)
+    formatDuration(Duration.between(comparison, instant))
   }
 
-  def formatDuration(duration: Duration): String =
-    formatPeriod(duration.toPeriod)
+  def formatDuration(duration: Duration): String = {
+    val hours = duration.toHours
+    val minutes = duration.minusHours(hours).toMinutes
+    val seconds = duration.minusHours(hours).minusMinutes(minutes).getSeconds
 
-  def formatPeriod(period: Period): String = {
-    val minutesAndSeconds = new PeriodFormatterBuilder()
-      .appendHours()
-      .appendSuffix(" hour", " hours")
-      .appendSeparator(", ")
-      .appendMinutes()
-      .appendSuffix(" minute", " minutes")
-      .appendSeparator(", ")
-      .appendSeconds()
-      .appendSuffix(" second", " seconds")
-      .toFormatter
-    minutesAndSeconds.print(period)
+    val hourStr = if (hours == 1) "hour" else "hours"
+    val minStr = if (minutes == 1) "minute" else "minutes"
+    val secStr = if (seconds == 1) "second" else "seconds"
+
+    s"$hours $hourStr, $minutes $minStr, $seconds $secStr"
   }
 
-  def firstDayOfWeek(date: DateTime): DateTime = {
-    date.withDayOfWeek(DateTimeConstants.MONDAY)
+  def firstDayOfWeek(instant: Instant): Instant = {
+    instant
+      .atZone(ZoneOffset.UTC)
+      .`with`(DayOfWeek.MONDAY)
+      .toInstant
   }
 
-  def weekAround(date: DateTime): (DateTime, DateTime) = {
-    val start = firstDayOfWeek(date)
-    (start, start.plusDays(7))
+  def weekAround(instant: Instant): (Instant, Instant) = {
+    val start = firstDayOfWeek(instant)
+    (start, start.plus(7, ChronoUnit.DAYS))
   }
 
-  private[logic] def isInAuditRange(date: DateTime): Boolean = {
-    date.isAfter(new DateTime(2015, 11, 1, 23, 59, 59, DateTimeZone.UTC)) &&
-    date.isBefore(DateTime.now(DateTimeZone.UTC))
+  private[logic] def isInAuditRange(instant: Instant): Boolean = {
+    val auditStart = LocalDateTime
+      .of(2015, 11, 1, 23, 59, 59)
+      .toInstant(ZoneOffset.UTC)
+    instant.isAfter(auditStart) &&
+    instant.isBefore(Instant.now())
   }
 
   def prevNextAuditWeeks(
-      date: DateTime
-  ): (Option[DateTime], Option[DateTime]) = {
-    val week = firstDayOfWeek(date)
+      instant: Instant
+  ): (Option[Instant], Option[Instant]) = {
+    val week = firstDayOfWeek(instant)
     (
-      Some(week.minusDays(7)).filter(isInAuditRange),
-      Some(week.plusDays(7)).filter(isInAuditRange)
+      Some(week.minus(7, ChronoUnit.DAYS)).filter(isInAuditRange),
+      Some(week.plus(7, ChronoUnit.DAYS)).filter(isInAuditRange)
     )
   }
 
-  def parseDateStr(dateStr: String): Option[DateTime] = {
+  def parseDateStr(dateStr: String): Option[Instant] = {
     try {
       Some {
-        simpleDateFormatter.parseDateTime(dateStr)
+        LocalDate
+          .parse(dateStr, simpleDateFormatter)
+          .atStartOfDay()
+          .toInstant(ZoneOffset.UTC)
       }
     } catch {
-      case _: IllegalArgumentException => None
+      case _: Exception => None
     }
   }
 
-  def today: DateTime = {
-    DateTime.now(DateTimeZone.UTC).withTimeAtStartOfDay
+  def today: Instant = {
+    LocalDate
+      .now(ZoneOffset.UTC)
+      .atStartOfDay()
+      .toInstant(ZoneOffset.UTC)
   }
 
   def maxDuration(d1: Duration, d2: Duration): Duration = {
-    if (d1.getMillis > d2.getMillis) d1 else d2
+    if (d1.compareTo(d2) > 0) d1 else d2
   }
 
   def minDuration(d1: Duration, d2: Duration): Duration = {
-    if (d1.getMillis < d2.getMillis) d1 else d2
+    if (d1.compareTo(d2) < 0) d1 else d2
   }
 
-  def displayMode(today: DateTime): DisplayMode = {
-    if (today.dayOfMonth().get == 31 && today.monthOfYear().get == 10) Spooky
+  def displayMode(today: Instant): DisplayMode = {
+    val date = today.atZone(ZoneOffset.UTC)
+    if (date.getDayOfMonth == 31 && date.getMonthValue == 10) Spooky
     else if (
-      (20 to 26)
-        .contains(today.dayOfMonth().get) && today.monthOfYear().get == 12
+      (20 to 26).contains(date.getDayOfMonth) && date.getMonthValue == 12
     ) Festive
     else Normal
   }

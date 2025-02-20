@@ -1,6 +1,8 @@
-@(loggedInUsername: String, activeSupportUsers: Option[(org.joda.time.DateTime, (Option[String], Option[String]))],
-    nextSupportUsers: Option[(org.joda.time.DateTime, (Option[String], Option[String]))],
-  futureSupportDates: List[(org.joda.time.DateTime, String)]
+@import java.time.Instant
+
+@(loggedInUsername: String, activeSupportUsers: Option[(Instant, (Option[String], Option[String]))],
+    nextSupportUsers: Option[(Instant, (Option[String], Option[String]))],
+  futureSupportDates: List[(Instant, String)]
 )(implicit assetsFinder: AssetsFinder)
 
 <div class="row">
