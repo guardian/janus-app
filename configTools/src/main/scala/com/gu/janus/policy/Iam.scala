@@ -4,7 +4,6 @@ import io.circe.syntax._
 import io.circe.{Encoder, Json, JsonObject}
 
 import scala.collection.immutable.ListMap
-import scala.collection.mutable
 
 /** This models the AWS IAM policy types and subtypes.
   *
