@@ -15,8 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const auditContainer = document.querySelectorAll('.container.audit');
     if (auditContainer.length) {
-        const datePicker = document.getElementById('datepicker-audit');
-        const dateForm = datePicker.closest('form');
+        const dateForm = document.getElementById('audit-form');
         document.getElementById('audit-submit').on('change',() => dateForm.submit());
     }    
   });
