@@ -1,5 +1,6 @@
 import jQuery from 'jquery';
 import 'materialize-css';
+import { Datepicker } from 'materialize-css';
 
 document.addEventListener('DOMContentLoaded', function() {
     const sidenavElems = document.querySelectorAll('.sidenav');
@@ -16,11 +17,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (auditContainer.length) {
         const datePicker = document.getElementById('datepicker-audit');
         const dateForm = datePicker.closest('form');
-        datePicker.addEventListener('change', () => {});
-        datePicker.onchange = () => {
-            dateForm.submit()};
-    }
-    
+        document.getElementById('audit-submit').on('change',() => dateForm.submit());
+    }    
   });
 
 jQuery(function($){
