@@ -23,4 +23,4 @@ addSbtPlugin("ch.epfl.scala" % "sbt-version-policy" % "3.2.1")
 addDependencyTreePlugin
 
 // Formatting
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.2")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")
