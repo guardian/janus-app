@@ -21,7 +21,11 @@ object Clients {
       .build()
 
   lazy val stsClient: StsClient =
-    StsClient.builder().credentialsProvider(credentialsProviderChain).build()
+    StsClient
+      .builder()
+      .credentialsProvider(credentialsProviderChain)
+      .region(EU_WEST_1)
+      .build()
 
   def localDb: DynamoDbClient =
     DynamoDbClient
