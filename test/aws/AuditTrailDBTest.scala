@@ -1,12 +1,13 @@
 package aws
 
 import com.gu.janus.model.{AuditLog, JConsole}
-import org.joda.time.{DateTime, DateTimeZone, Duration}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.KeyType.{HASH, RANGE}
 import software.amazon.awssdk.services.dynamodb.model._
+
+import java.time.{Duration, ZoneOffset, ZonedDateTime}
 
 class AuditTrailDBTest extends AnyFreeSpec with Matchers {
 
@@ -15,13 +16,13 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
 
     "insertion and querying" ignore {
       val table = AuditTrailDB.getTable()
-      val dateTime: DateTime =
-        new DateTime(2015, 11, 5, 17, 35, DateTimeZone.UTC)
+      val dateTime =
+        ZonedDateTime.of(2015, 11, 5, 17, 35, 0, 0, ZoneOffset.UTC).toInstant
       val al = AuditLog(
         "account",
         "username",
         dateTime,
-        new Duration(3600000),
+        Duration.ofMillis(3600000),
         "accessLevel",
         JConsole,
         external = true
@@ -31,16 +32,16 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
       val accountResults = AuditTrailDB.getAccountLogs(
         table,
         "account",
-        dateTime.minusDays(1),
-        dateTime.plusDays(1)
+        dateTime.minus(Duration.ofDays(1)),
+        dateTime.plus(Duration.ofDays(1))
       )
       println(accountResults.toList)
 
       val userResults = AuditTrailDB.getUserLogs(
         table,
         "username",
-        dateTime.minusDays(1),
-        dateTime.plusDays(1)
+        dateTime.minus(Duration.ofDays(1)),
+        dateTime.plus(Duration.ofDays(1))
       )
       println(userResults.toList)
     }
