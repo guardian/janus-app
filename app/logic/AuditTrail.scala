@@ -7,7 +7,71 @@ import org.joda.time.{DateTime, DateTimeZone, Duration}
 import play.api.Logging
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
+import scala.util.Try
+
 object AuditTrail extends Logging {
+
+  val tableName = "AuditTrail"
+  val secondaryIndexName = "AuditTrailByUser"
+
+  val partitionKeyName = "j_account"
+  val sortKeyName = "j_timestamp"
+  val userNameAttrName = "j_username"
+  val durationAttrName = "j_duration"
+  val accessLevelAttrName = "j_accessLevel"
+  val accessTypeAttrName = "j_accessType"
+  val isExternalAttrName = "j_external"
+
+  private type DbAttr = (String, AttributeValue)
+
+  /** Database item attributes for a single audit log entry. */
+  case class AuditLogDbEntryAttrs(
+      partitionKey: DbAttr,
+      sortKey: DbAttr,
+      userName: DbAttr,
+      sessionDuration: DbAttr,
+      accessLevel: DbAttr,
+      accessType: DbAttr,
+      isExternal: DbAttr
+  ) {
+    val toMap: Map[String, AttributeValue] = Seq(
+      partitionKey,
+      sortKey,
+      userName,
+      sessionDuration,
+      accessLevel,
+      accessType,
+      isExternal
+    ).toMap
+  }
+  object AuditLogDbEntryAttrs {
+
+    /** Converts an AuditLog into its DB representation. */
+    def fromAuditLog(auditLog: AuditLog): AuditLogDbEntryAttrs =
+      AuditLogDbEntryAttrs(
+        partitionKey =
+          partitionKeyName -> AttributeValue.fromS(auditLog.account),
+        sortKey = {
+          val accessTime =
+            auditLog.dateTime.withZone(DateTimeZone.UTC).getMillis
+          sortKeyName -> AttributeValue.fromN(accessTime.toString)
+        },
+        userName = userNameAttrName -> AttributeValue.fromS(auditLog.username),
+        sessionDuration = durationAttrName -> AttributeValue.fromN(
+          auditLog.duration.getStandardSeconds.toString
+        ),
+        accessLevel =
+          accessLevelAttrName -> AttributeValue.fromS(auditLog.accessLevel),
+        accessType = accessTypeAttrName -> AttributeValue.fromS(
+          auditLog.accessType.toString
+        ),
+        isExternal = isExternalAttrName -> AttributeValue.fromN(
+          (if (auditLog.external) 1 else 0).toString
+        )
+      )
+  }
+
+  /** Create an audit log entry for a user's access attempt. */
   def createLog(
       user: UserIdentity,
       permission: Permission,
@@ -24,22 +88,6 @@ object AuditTrail extends Logging {
       janusAccessType,
       !hasExplicitAccess(username(user), permission, acl)
     )
-
-  /** Converts an AuditLog into its DB representation.
-    */
-  def auditLogAttrs(auditLog: AuditLog): (String, Long, List[(String, Any)]) = {
-    (
-      auditLog.account,
-      auditLog.dateTime.withZone(DateTimeZone.UTC).getMillis,
-      List(
-        "j_username" -> auditLog.username,
-        "j_duration" -> auditLog.duration.getStandardSeconds,
-        "j_accessLevel" -> auditLog.accessLevel,
-        "j_accessType" -> auditLog.accessType.toString,
-        "j_external" -> (if (auditLog.external) 1 else 0)
-      )
-    )
-  }
 
   /** Extract nice error message from db conversion.
     */
@@ -69,40 +117,29 @@ object AuditTrail extends Logging {
       attrs: Map[String, AttributeValue]
   ): Either[(String, Map[String, AttributeValue]), AuditLog] = {
     for {
-      account <- attrs
-        .find { case (name, _) => "j_account" == name }
-        .flatMap { case (_, value) => Some(value.s()) }
-        .toRight("Could not extract account" -> attrs)
-      username <- attrs
-        .find { case (name, _) => "j_username" == name }
-        .flatMap { case (_, value) => Some(value.s()) }
-        .toRight("Could not extract username" -> attrs)
-      dateTime <- attrs
-        .find { case (name, _) => "j_timestamp" == name }
-        .flatMap { case (_, value) => Some(value.n()) }
-        .map(ts => new DateTime(ts.toLong, DateTimeZone.UTC))
+      account <- stringValue(attrs, partitionKeyName).toRight(
+        "Could not extract account" -> attrs
+      )
+      username <- stringValue(attrs, userNameAttrName).toRight(
+        "Could not extract username" -> attrs
+      )
+      dateTime <- longValue(attrs, sortKeyName)
+        .map(ts => new DateTime(ts, DateTimeZone.UTC))
         .toRight("Could not extract dateTime" -> attrs)
-      duration <- attrs
-        .find { case (name, _) => "j_duration" == name }
-        .flatMap { case (_, value) => Some(value.n()) }
-        .map(d => new Duration(d.toLong * 1000))
+      duration <- longValue(attrs, durationAttrName)
+        .map(d => new Duration(d * 1000))
         .toRight("Could not extract duration" -> attrs)
-      accessLevel <- attrs
-        .find { case (name, _) => "j_accessLevel" == name }
-        .flatMap { case (_, value) => Some(value.s()) }
-        .toRight("Could not extract accessLevel" -> attrs)
-      accessType <- attrs
-        .find { case (name, _) => "j_accessType" == name }
-        .flatMap { case (_, value) => Some(value.s()) }
+      accessLevel <- stringValue(attrs, accessLevelAttrName).toRight(
+        "Could not extract accessLevel" -> attrs
+      )
+      accessType <- stringValue(attrs, accessTypeAttrName)
         .flatMap(JanusAccessType.fromString)
         .toRight("Could not extract accessType" -> attrs)
-      external <- attrs
-        .find { case (name, _) => "j_external" == name }
-        .flatMap { case (_, value) => Some(value.n()) }
+      external <- longValue(attrs, isExternalAttrName)
         .flatMap {
-          case "0" => Some(false)
-          case "1" => Some(true)
-          case _   => None
+          case 0 => Some(false)
+          case 1 => Some(true)
+          case _ => None
         }
         .toRight("Could not extract external" -> attrs)
     } yield AuditLog(
@@ -115,4 +152,22 @@ object AuditTrail extends Logging {
       external
     )
   }
+
+  private def stringValue(
+      attrs: Map[String, AttributeValue],
+      attrName: String
+  ) =
+    attrValue(attrs, attrName, v => Some(v.s()))
+
+  private def longValue(attrs: Map[String, AttributeValue], attrName: String) =
+    attrValue(attrs, attrName, v => Try(v.n().toLong).toOption)
+
+  private def attrValue[A](
+      attrs: Map[String, AttributeValue],
+      attrName: String,
+      result: AttributeValue => Option[A]
+  ) =
+    attrs
+      .find { case (name, _) => attrName == name }
+      .flatMap { case (_, value) => result(value) }
 }
