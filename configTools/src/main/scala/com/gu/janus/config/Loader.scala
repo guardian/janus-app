@@ -1,11 +1,11 @@
 package com.gu.janus.config
 
-import cats.implicits._
-import com.gu.janus.model._
+import cats.implicits.*
+import com.gu.janus.model.*
 import com.typesafe.config.Config
 import io.circe.Decoder
-import io.circe.config.syntax._
-import io.circe.generic.auto._
+import io.circe.config.syntax.*
+import io.circe.generic.auto.*
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone, Period}
 
@@ -15,55 +15,50 @@ import scala.util.control.NonFatal
 /** Loads an instance of JanusData from a Typesafe Config definition. If it
   * fails, a description of the failure is made available.
   */
-object Loader {
-  def fromConfig(config: Config): Either[String, JanusData] = {
-    for {
+object Loader:
+  def fromConfig(config: Config): Either[String, JanusData] =
+    for
       permissionsRepo <- loadPermissionsRepo(config)
       accounts <- loadAccounts(config)
       permissions <- loadPermissions(config, accounts)
       access <- loadAccess(config, permissions)
       admin <- loadAdmin(config, permissions)
       support <- loadSupport(config, permissions)
-    } yield JanusData(accounts, access, admin, support, permissionsRepo)
-  }
+    yield JanusData(accounts, access, admin, support, permissionsRepo)
 
   private[config] def loadPermissionsRepo(
       config: Config
-  ): Either[String, Option[String]] = {
+  ): Either[String, Option[String]] =
     val path = "janus.permissionsRepo"
-    for {
+    for
       permissionsRepo <-
-        if (config.hasPath(path)) {
+        if config.hasPath(path) then
           Try(Option(config.getString(path))).toEither.left.map(_.getMessage)
-        } else {
+        else
           Right(None)
-        }
-    } yield permissionsRepo
-  }
+    yield permissionsRepo
 
   private[config] def loadAccounts(
       config: Config
-  ): Either[String, Set[AwsAccount]] = {
-    for {
+  ): Either[String, Set[AwsAccount]] =
+    for
       configuredAccounts <- config
         .as[ConfiguredAccounts]("janus")
         .left
         .map(_.getMessage)
-    } yield {
+    yield
       configuredAccounts.accounts.map { configuredAccount =>
         AwsAccount(
           name = configuredAccount.name,
           authConfigKey = configuredAccount.key
         )
       }.toSet
-    }
-  }
 
   private[config] def loadPermissions(
       config: Config,
       accounts: Set[AwsAccount]
-  ): Either[String, Set[Permission]] = {
-    for {
+  ): Either[String, Set[Permission]] =
+    for
       configuredPermissions <- config
         .as[ConfiguredPermissions]("janus")
         .left
@@ -72,13 +67,13 @@ object Loader {
         )
       permissions <- configuredPermissions.permissions.traverse {
         configuredPermission =>
-          for {
+          for
             account <- accounts
               .find(_.authConfigKey == configuredPermission.account)
               .toRight(
                 s"Account `${configuredPermission.account}` is referenced in a permission (${configuredPermission.label}) but is not defined in the list of AwsAccounts"
               )
-          } yield {
+          yield
             Permission(
               account = account,
               label = configuredPermission.label,
@@ -86,16 +81,14 @@ object Loader {
               policy = configuredPermission.policy,
               shortTerm = configuredPermission.shortTerm
             )
-          }
       }
-    } yield permissions.toSet
-  }
+    yield permissions.toSet
 
   private[config] def loadAccess(
       config: Config,
       permissions: Set[Permission]
-  ): Either[String, ACL] = {
-    for {
+  ): Either[String, ACL] =
+    for
       configuredAccess <- config
         .as[ConfiguredAccess]("janus.access")
         .left
@@ -114,7 +107,7 @@ object Loader {
       }
       acl <- configuredAccess.acl.toList.traverse {
         case (username, configuredAclEntries) =>
-          for {
+          for
             userPermissions <- configuredAclEntries.traverse {
               configuredAclEntry =>
                 permissions
@@ -125,16 +118,15 @@ object Loader {
                     s"The access configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
                   )
             }
-          } yield username -> userPermissions.toSet
+          yield username -> userPermissions.toSet
       }
-    } yield ACL(acl.toMap, defaultAccess.toSet)
-  }
+    yield ACL(acl.toMap, defaultAccess.toSet)
 
   private[config] def loadAdmin(
       config: Config,
       permissions: Set[Permission]
-  ): Either[String, ACL] = {
-    for {
+  ): Either[String, ACL] =
+    for
       configuredAccess <- config
         .as[ConfiguredAdmin]("janus.admin")
         .left
@@ -143,7 +135,7 @@ object Loader {
         )
       acl <- configuredAccess.acl.toList.traverse {
         case (username, configuredAclEntries) =>
-          for {
+          for
             userPermissions <- configuredAclEntries.traverse {
               configuredAclEntry =>
                 permissions
@@ -154,19 +146,18 @@ object Loader {
                     s"The admin configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
                   )
             }
-          } yield username -> userPermissions.toSet
+          yield username -> userPermissions.toSet
       }
-    } yield ACL(
+    yield ACL(
       acl.toMap,
       Set.empty
     ) // TODO: these shouldn't share a representation since Admin doesn't need the default permissions
-  }
 
   private[config] def loadSupport(
       config: Config,
       permissions: Set[Permission]
-  ): Either[String, SupportACL] = {
-    for {
+  ): Either[String, SupportACL] =
+    for
       configuredSupport <- config
         .as[ConfiguredSupport]("janus.support")
         .left
@@ -193,19 +184,17 @@ object Loader {
                 .mkString("`", ", ", "`")}"
           )
       }
-    } yield SupportACL.create(rota.toMap, supportAccess.toSet, period)
-  }
+    yield SupportACL.create(rota.toMap, supportAccess.toSet, period)
 
-  private implicit val decodeDateTime: Decoder[DateTime] =
-    Decoder.decodeString.emap { s =>
-      try {
-        Right(
-          DateTime
-            .parse(s, ISODateTimeFormat.dateTime())
-            .withZone(DateTimeZone.UTC)
-        )
-      } catch {
-        case NonFatal(e) => Left(e.getMessage)
+  given Decoder[DateTime] with
+    def apply(c: io.circe.HCursor): Decoder.Result[DateTime] =
+      c.as[String].flatMap { s =>
+        try
+          Right(
+            DateTime
+              .parse(s, ISODateTimeFormat.dateTime())
+              .withZone(DateTimeZone.UTC)
+          )
+        catch
+          case NonFatal(e) => Left(io.circe.DecodingFailure(e.getMessage, c.history))
       }
-    }
-}
