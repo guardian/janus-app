@@ -82,7 +82,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "19.0.0",
+      "com.gu.play-googleauth" %% "play-v30" % "19.0.1",
       "com.amazonaws" % "aws-java-sdk-iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkV2Version,
       "software.amazon.awssdk" % "dynamodb" % awsSdkV2Version,
