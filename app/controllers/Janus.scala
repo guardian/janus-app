@@ -230,7 +230,6 @@ class Janus(
         stsClient,
         duration
       )
-      table = AuditTrailDB.getTable()
       auditLog = AuditTrail.createLog(
         user,
         permission,
@@ -239,7 +238,7 @@ class Janus(
         janusData.access
       )
     } yield {
-      AuditTrailDB.insert(table, auditLog)
+      AuditTrailDB.insert(auditLog)
       logger.info(
         s"$accessType access to $permissionId granted for ${username(user)}"
       )

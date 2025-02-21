@@ -14,7 +14,6 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
     implicit val dynamoDB: DynamoDbClient = Clients.localDb
 
     "insertion and querying" ignore {
-      val table = AuditTrailDB.getTable()
       val dateTime: DateTime =
         new DateTime(2015, 11, 5, 17, 35, DateTimeZone.UTC)
       val al = AuditLog(
@@ -26,10 +25,9 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
         JConsole,
         external = true
       )
-      AuditTrailDB.insert(table, al)
+      AuditTrailDB.insert(al)
 
       val accountResults = AuditTrailDB.getAccountLogs(
-        table,
         "account",
         dateTime.minusDays(1),
         dateTime.plusDays(1)
@@ -37,7 +35,6 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
       println(accountResults.toList)
 
       val userResults = AuditTrailDB.getUserLogs(
-        table,
         "username",
         dateTime.minusDays(1),
         dateTime.plusDays(1)

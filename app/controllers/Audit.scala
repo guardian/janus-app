@@ -22,9 +22,7 @@ class Audit(
     ) flatMap Date.parseDateStr getOrElse Date.today
     val (startDate, endDate) = Date.weekAround(date)
     logger.info(s"Getting logs for $account from $startDate to $endDate")
-    val table = AuditTrailDB.getTable()
-    val auditLogs =
-      AuditTrailDB.getAccountLogs(table, account, startDate, endDate)
+    val auditLogs = AuditTrailDB.getAccountLogs(account, startDate, endDate)
     val prevNextWeeks = Date.prevNextAuditWeeks(date)
     Ok(
       views.html.audit(
@@ -44,9 +42,7 @@ class Audit(
     ) flatMap Date.parseDateStr getOrElse Date.today
     val (startDate, endDate) = Date.weekAround(date)
     logger.info(s"Getting logs for $username from $startDate to $endDate")
-    val table = AuditTrailDB.getTable()
-    val auditLogs =
-      AuditTrailDB.getUserLogs(table, username, startDate, endDate)
+    val auditLogs = AuditTrailDB.getUserLogs(username, startDate, endDate)
     val prevNextWeeks = Date.prevNextAuditWeeks(date)
     Ok(
       views.html.audit(

@@ -4,11 +4,7 @@ import com.gu.janus.model.AuditLog
 import logic.AuditTrail
 import org.joda.time.DateTime
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import software.amazon.awssdk.services.dynamodb.model.ComparisonOperator.{
-  BETWEEN,
-  EQ
-}
-import software.amazon.awssdk.services.dynamodb.model.KeyType.{HASH, RANGE}
+import software.amazon.awssdk.services.dynamodb.model.ComparisonOperator._
 import software.amazon.awssdk.services.dynamodb.model._
 
 import scala.jdk.CollectionConverters._
@@ -16,32 +12,20 @@ import scala.jdk.CollectionConverters._
 object AuditTrailDB {
   import AuditTrail._
 
-  val tableName = "AuditTrail"
+  private[aws] val tableName = "AuditTrail"
+  private val partitionKeyName: String = ???
+  private val sortKeyName: String = ???
   private val secondaryIndexName = "AuditTrailByUser"
 
-  def getTable()(implicit dynamoDB: DynamoDbClient): TableDescription = {
-    val request = DescribeTableRequest.builder().tableName(tableName).build()
-    dynamoDB.describeTable(request).table()
-  }
-
-  def insert(table: TableDescription, auditLog: AuditLog)(implicit
-      dynamoDB: DynamoDbClient
-  ): Unit = {
-    val keySchema = table.keySchema().asScala
-    val partitionKeyName =
-      keySchema.find(_.keyType() == HASH).get.attributeName()
-    val sortKeyName = keySchema.find(_.keyType() == RANGE).get.attributeName()
+  def insert(auditLog: AuditLog)(implicit dynamoDB: DynamoDbClient): Unit = {
     val (hash_project, range_date, attrs) = auditLogAttrs(auditLog)
     val partitionKey = partitionKeyName -> AttributeValue.fromS(hash_project)
     val sortKey = sortKeyName -> AttributeValue.fromN(range_date.toString)
     val item = (attrs.toMap.view
       .mapValues(toAttribValue)
       .toMap + partitionKey + sortKey).asJava
-    val request = PutItemRequest
-      .builder()
-      .tableName(tableName)
-      .item(item)
-      .build()
+    val request =
+      PutItemRequest.builder().tableName(tableName).item(item).build()
     dynamoDB.putItem(request)
   }
 
@@ -60,14 +44,13 @@ object AuditTrailDB {
   }
 
   def getAccountLogs(
-      table: TableDescription,
       account: String,
       startDate: DateTime,
       endDate: DateTime
   )(implicit dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] = {
     val request = QueryRequest
       .builder()
-      .tableName(table.tableName())
+      .tableName(tableName)
       .keyConditions(
         Map(
           "j_account" -> Condition
@@ -84,14 +67,13 @@ object AuditTrailDB {
   }
 
   def getUserLogs(
-      table: TableDescription,
       username: String,
       startDate: DateTime,
       endDate: DateTime
   )(implicit dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] = {
     val request = QueryRequest
       .builder()
-      .tableName(table.tableName())
+      .tableName(tableName)
       .indexName(secondaryIndexName)
       .keyConditions(
         Map(

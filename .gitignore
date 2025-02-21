@@ -142,3 +142,4 @@ crashlytics-build.properties
 .bsp/
 .metals/
 .vscode/
+.bloop
