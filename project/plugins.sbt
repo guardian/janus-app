@@ -7,7 +7,7 @@ addSbtPlugin(
 // The Play plugin
 addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.6")
 
-addSbtPlugin("com.github.sbt" % "sbt-digest" % "2.0.0")
+addSbtPlugin("com.github.sbt" % "sbt-digest" % "2.1.0")
 
 libraryDependencies += "org.vafer" % "jdeb" % "1.12" artifacts Artifact(
   "jdeb",
