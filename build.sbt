@@ -11,8 +11,8 @@ ThisBuild / licenses := Seq(License.Apache2)
 val awsSdkVersion = "2.30.20"
 val circeVersion = "0.14.10"
 val commonDependencies = Seq(
-  "org.typelevel" %% "cats-core" % "2.12.0",
-  "joda-time" % "joda-time" % "2.13.0",
+  "org.typelevel" %% "cats-core" % "2.13.0",
+  "joda-time" % "joda-time" % "2.13.1",
   "org.joda" % "joda-convert" % "3.0.1",
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
@@ -79,7 +79,7 @@ lazy val root = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "19.0.0",
+      "com.gu.play-googleauth" %% "play-v30" % "19.0.1",
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
