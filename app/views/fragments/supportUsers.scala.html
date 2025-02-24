@@ -49,10 +49,10 @@
     </div>
     <div class="col m6 s12">
         <ul class="collapsible" data-collapsible="accordion">
-            <li>
+            <li class="active">
                 @nextSupportUsers match {
                     case Some((startTime, (user1, user2))) => {
-                        <div class="collapsible-header active">
+                        <div class="collapsible-header">
                             <i class="material-icons">date_range</i>
                             @logic.Date.formatDate(startTime)
                         </div>

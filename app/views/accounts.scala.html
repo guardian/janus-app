@@ -1,7 +1,8 @@
 @import com.gu.janus.model.{AwsAccount, AccountOwners, JanusData}
 @import com.gu.googleauth.UserIdentity
+@import play.api.Mode
 
-@(accountOwners: List[(AwsAccount, AccountOwners)], user: UserIdentity, janusData: JanusData)(implicit assetsFinder: AssetsFinder)
+@(accountOwners: List[(AwsAccount, AccountOwners)], user: UserIdentity, janusData: JanusData)(implicit mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Accounts", Some(user), janusData) {
     <div class="container" xmlns="http://www.w3.org/1999/html">
