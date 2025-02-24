@@ -169,7 +169,7 @@ class IamSpec extends AnyFreeSpec with Matchers {
       policy.asJson.noSpaces shouldBe expected
     }
 
-    "should encode complex policy correctly" in {
+    "should encode complex policy correctly" - {
       val complexPolicy = Policy(
         statements = List(
           Statement(
@@ -193,17 +193,80 @@ class IamSpec extends AnyFreeSpec with Matchers {
       )
 
       val json = complexPolicy.asJson.noSpaces
-      // Verify that the generated JSON is valid
       decode[JsonObject](json).isRight shouldBe true
 
-      // Verify specific elements
-      json should include(""""Version":"2012-10-17"""")
-      json should include(""""Id":"ComplexPolicy"""")
-      json should include(""""Effect":"Allow"""")
-      json should include(""""Sid":"statement1"""")
-      json should include(""""aws:SourceIp":["203.0.113.0/24"]""")
-      json should include(""""AWS":["AROAXXXXXXXXXXXXXXX"]""")
-      json should include(""""Kubernetes":["ServiceAccount1"]""")
+      "with correct version" in {
+        val json = complexPolicy.asJson.noSpaces
+        json should include(""""Version":"2012-10-17"""")
+      }
+
+      "with correct ID" in {
+        val json = complexPolicy.asJson.noSpaces
+        json should include(""""Id":"ComplexPolicy"""")
+      }
+
+      "with correct effect" in {
+        val json = complexPolicy.asJson.noSpaces
+        json should include(""""Effect":"Allow"""")
+      }
+
+      "with explicitly set statement ID" in {
+        val json = complexPolicy.asJson.noSpaces
+        json should include(""""Sid":"statement1"""")
+      }
+
+      "with correct condition" in {
+        val json = complexPolicy.asJson.noSpaces
+        json should include(""""aws:SourceIp":["203.0.113.0/24"]""")
+      }
+
+      "with correct principal" in {
+        val json = complexPolicy.asJson.noSpaces
+        json should include(""""AWS":["AROAXXXXXXXXXXXXXXX"]""")
+      }
+
+      "with correct second principal" in {
+        val json = complexPolicy.asJson.noSpaces
+        json should include(""""Kubernetes":["ServiceAccount1"]""")
+      }
+
+      "with correct complete json string" in {
+        val json = complexPolicy.asJson.spaces2
+        val expected = """{
+                         |  "Version" : "2012-10-17",
+                         |  "Statement" : [
+                         |    {
+                         |      "Effect" : "Allow",
+                         |      "Action" : [
+                         |        "s3:GetObject",
+                         |        "s3:PutObject"
+                         |      ],
+                         |      "Resource" : [
+                         |        "arn:aws:s3:::my-bucket/*",
+                         |        "arn:aws:s3:::my-bucket-2/*"
+                         |      ],
+                         |      "Sid" : "statement1",
+                         |      "Condition" : {
+                         |        "StringEquals" : {
+                         |          "aws:SourceIp" : [
+                         |            "203.0.113.0/24"
+                         |          ]
+                         |        }
+                         |      },
+                         |      "Principal" : {
+                         |        "AWS" : [
+                         |          "AROAXXXXXXXXXXXXXXX"
+                         |        ],
+                         |        "Kubernetes" : [
+                         |          "ServiceAccount1"
+                         |        ]
+                         |      }
+                         |    }
+                         |  ],
+                         |  "Id" : "ComplexPolicy"
+                         |}""".stripMargin
+        json shouldBe expected
+      }
     }
   }
 }
