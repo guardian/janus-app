@@ -1,19 +1,15 @@
 package aws
 
-import awscala.Policy
 import com.gu.janus.model.{AwsAccount, Permission}
-import org.joda.time.{DateTime, DateTimeZone}
+import com.gu.janus.policy.Iam.Policy
+import org.joda.time.DateTimeZone
 import org.scalactic.source
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import play.api.routing.sird.{
-  QueryStringParameterExtractor,
-  RequiredQueryStringParameter
-}
+import play.api.routing.sird.QueryStringParameterExtractor
 import testutils.JodaTimeUtils
 
-import java.net.URLDecoder
-import java.nio.charset.Charset
+import java.net.{URI, URLDecoder}
 
 class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
   import Federation._
@@ -169,7 +165,7 @@ class FederationTest extends AnyFreeSpec with Matchers with JodaTimeUtils {
   private def extractRedirectUri(
       url: String
   )(implicit pos: source.Position): String = {
-    new java.net.URL(url) match {
+    new URI(url) match {
       case RedirectUri(redirectUri) => URLDecoder.decode(redirectUri, "UTF-8")
       case result =>
         fail(s"redirect_uri parameter not present on resulting URL $result")
