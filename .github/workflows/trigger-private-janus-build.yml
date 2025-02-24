@@ -26,6 +26,17 @@ jobs:
       - name: Install Scala
         uses: guardian/setup-scala@v1
 
+      - name: Install Node
+        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        with: 
+          node-version: '20'
+      
+      - name: Install frontend build dependencies
+        run: npm ci
+
+      - name: Build frontend app
+        run: npm run build
+
       - run: sbt clean compile scalafmtCheckAll scalafmtSbtCheck test
 
       - name: Test Report for Janus-App
