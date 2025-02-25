@@ -61,15 +61,14 @@ class IamSpec extends AnyFreeSpec with Matchers {
       effect = Effect.Allow,
       actions = List(Action("iam:PutRolePolicy"), Action("iam:getRole")),
       resources = List(Resource("*")),
-      id = Some("1")
+      id = None
     )
 
     "should encode basic statement correctly" in {
       val expected = """{
                          |"Effect":"Allow",
                          |"Action":["iam:PutRolePolicy","iam:getRole"],
-                         |"Resource":["*"],
-                         |"Sid":"1"
+                         |"Resource":["*"]
                          |}""".stripMargin.replaceAll("\\s", "")
 
       basicStatement.asJson.noSpaces shouldBe expected
@@ -98,7 +97,6 @@ class IamSpec extends AnyFreeSpec with Matchers {
                          |"Effect":"Allow",
                          |"Action":["iam:PutRolePolicy","iam:getRole"],
                          |"Resource":["*"],
-                         |"Sid":"1",
                          |"Condition":{"StringEquals":{"aws:SourceIp":["203.0.113.0/24"]}}
                          |}""".stripMargin.replaceAll("\\s", "")
 
@@ -118,7 +116,6 @@ class IamSpec extends AnyFreeSpec with Matchers {
                          |"Effect":"Allow",
                          |"Action":["iam:PutRolePolicy","iam:getRole"],
                          |"Resource":["*"],
-                         |"Sid":"1",
                          |"Principal":{
                          |"AWS":["AROAXXXXXXXXXXXXXXX1","AROAXXXXXXXXXXXXXXX2"],
                          |"Kubernetes":["ServiceAccount1"]
