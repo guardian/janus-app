@@ -306,6 +306,7 @@ input[type=text].input--slim {
     background-color: transparent;
     border: none;
     margin-top: 7px;
+    cursor: pointer;
 }
 
 .card-content--aws-account-header__button--favourite:focus {
