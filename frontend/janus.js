@@ -3,6 +3,7 @@ import 'materialize-css';
 import { Datepicker } from 'materialize-css';
 
 document.addEventListener('DOMContentLoaded', function() {
+    //Initialise Materialize elements
     const sidenavElems = document.querySelectorAll('.sidenav');
     const sidenavInstances = M.Sidenav.init(sidenavElems);
     const modalElems = document.querySelectorAll('.modal');
@@ -11,7 +12,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const collapsibleElems = document.querySelectorAll('.collapsible');
     const collapsibleInstances = M.Collapsible.init(collapsibleElems);
     const dropdownElems = document.querySelectorAll('.dropdown-trigger');
-    const dropdownInstances = M.Dropdown.init(dropdownElems);
+    const dropdownInstances = M.Dropdown.init(dropdownElems);  
+    const tooltipElems = document.querySelectorAll('.tooltipped');
+    const instances = M.Tooltip.init(tooltipElems);
 
     const auditContainer = document.querySelectorAll('.container.audit');
     if (auditContainer.length) {
