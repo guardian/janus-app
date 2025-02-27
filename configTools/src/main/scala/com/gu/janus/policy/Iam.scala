@@ -40,13 +40,6 @@ object Iam {
   )
 
   case class Principal(id: String, provider: String)
-  object Principal {
-    implicit val encoder: Encoder[Principal] = Encoder.instance { principal =>
-      Json.obj(
-        principal.provider -> Json.fromString(principal.id)
-      )
-    }
-  }
 
   case class Statement(
       effect: Effect,

@@ -23,14 +23,6 @@ class IamSpec extends AnyFreeSpec with Matchers {
     }
   }
 
-  "Principal" - {
-    "should encode single principal correctly" in {
-      val principal = Principal("AROAXXXXXXXXXXXXXXX", "AWS")
-      val expected = """{"AWS":"AROAXXXXXXXXXXXXXXX"}"""
-      principal.asJson.noSpaces shouldBe expected
-    }
-  }
-
   "Statement" - {
     val basicStatement = Statement(
       effect = Effect.Allow,
@@ -160,7 +152,31 @@ class IamSpec extends AnyFreeSpec with Matchers {
       statementWithConditions.asJson.spaces2 shouldBe expected
     }
 
-    "should encode statement with principals correctly" in {
+    "should encode statement with single principal correctly" in {
+      val statementWithPrincipal = basicStatement.copy(principals =
+        List(Principal("AROAXXXXXXXXXXXXXXX1", "AWS"))
+      )
+
+      val expected = """{
+                       |  "Effect" : "Allow",
+                       |  "Action" : [
+                       |    "iam:PutRolePolicy",
+                       |    "iam:getRole"
+                       |  ],
+                       |  "Resource" : [
+                       |    "*"
+                       |  ],
+                       |  "Principal" : {
+                       |    "AWS" : [
+                       |      "AROAXXXXXXXXXXXXXXX1"
+                       |    ]
+                       |  }
+                       |}""".stripMargin
+
+      statementWithPrincipal.asJson.spaces2 shouldBe expected
+    }
+
+    "should encode statement with multiple principals correctly" in {
       val statementWithPrincipals = basicStatement.copy(
         principals = List(
           Principal("AROAXXXXXXXXXXXXXXX1", "AWS"),
