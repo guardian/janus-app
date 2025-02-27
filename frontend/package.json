@@ -1,0 +1,11 @@
+{
+  "name": "janus-app",
+  "version": "1.0.0",
+  "description": "Use Google Authentication to provide audited temporary access to AWS resources",
+  "main": "index.js",
+  "scripts": {
+    "build": "echo \"Running pretend build\""
+  },
+  "author": "",
+  "license": "ISC"
+}
