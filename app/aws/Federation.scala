@@ -152,6 +152,8 @@ object Federation {
       .builder()
       .roleName(roleName)
       .policyName("janus-role-revocation-policy")
+      //           ^
+      // this name should match policy in cloudformation/federation.template.yaml
       .policyDocument(revocationPolicyDocument)
       .build()
     iamClient.putRolePolicy(roleRevocationPolicy)
