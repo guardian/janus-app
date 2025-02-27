@@ -38,17 +38,6 @@ object Iam {
       typeName: String,
       conditionValues: Seq[String]
   )
-  object Condition {
-    implicit val encoder: Encoder[Condition] = Encoder.instance { condition =>
-      Json.obj(
-        condition.typeName -> Json.obj(
-          condition.key -> Json.fromValues(
-            condition.conditionValues.map(Json.fromString)
-          )
-        )
-      )
-    }
-  }
 
   case class Principal(id: String, provider: String)
   object Principal {

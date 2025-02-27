@@ -23,31 +23,6 @@ class IamSpec extends AnyFreeSpec with Matchers {
     }
   }
 
-  "Condition" - {
-    "should encode single condition correctly" in {
-      val condition = Condition(
-        key = "aws:SourceIp",
-        typeName = "StringEquals",
-        conditionValues = List("203.0.113.0/24")
-      )
-
-      val expected = """{"StringEquals":{"aws:SourceIp":["203.0.113.0/24"]}}"""
-      condition.asJson.noSpaces shouldBe expected
-    }
-
-    "should encode multiple condition values correctly" in {
-      val condition = Condition(
-        key = "aws:SourceIp",
-        typeName = "StringEquals",
-        conditionValues = List("203.0.113.0/24", "203.0.113.1/24")
-      )
-
-      val expected =
-        """{"StringEquals":{"aws:SourceIp":["203.0.113.0/24","203.0.113.1/24"]}}"""
-      condition.asJson.noSpaces shouldBe expected
-    }
-  }
-
   "Principal" - {
     "should encode single principal correctly" in {
       val principal = Principal("AROAXXXXXXXXXXXXXXX", "AWS")
@@ -86,7 +61,7 @@ class IamSpec extends AnyFreeSpec with Matchers {
       statementWithId.asJson.noSpaces shouldBe expected
     }
 
-    "should encode statement with conditions correctly" in {
+    "should encode statement with single condition correctly" in {
       val statementWithCondition = basicStatement.copy(
         conditions = List(
           Condition("aws:SourceIp", "StringEquals", List("203.0.113.0/24"))
@@ -94,13 +69,95 @@ class IamSpec extends AnyFreeSpec with Matchers {
       )
 
       val expected = """{
-                         |"Effect":"Allow",
-                         |"Action":["iam:PutRolePolicy","iam:getRole"],
-                         |"Resource":["*"],
-                         |"Condition":{"StringEquals":{"aws:SourceIp":["203.0.113.0/24"]}}
-                         |}""".stripMargin.replaceAll("\\s", "")
+                       |  "Effect" : "Allow",
+                       |  "Action" : [
+                       |    "iam:PutRolePolicy",
+                       |    "iam:getRole"
+                       |  ],
+                       |  "Resource" : [
+                       |    "*"
+                       |  ],
+                       |  "Condition" : {
+                       |    "StringEquals" : {
+                       |      "aws:SourceIp" : [
+                       |        "203.0.113.0/24"
+                       |      ]
+                       |    }
+                       |  }
+                       |}""".stripMargin
 
-      statementWithCondition.asJson.noSpaces shouldBe expected
+      statementWithCondition.asJson.spaces2 shouldBe expected
+    }
+
+    "should encode statement with single condition with multiple values correctly" in {
+      val statementWithCondition = basicStatement.copy(
+        conditions = List(
+          Condition(
+            "aws:SourceIp",
+            "StringEquals",
+            List("203.0.113.0/24", "203.0.113.1/24")
+          )
+        )
+      )
+
+      val expected = """{
+                       |  "Effect" : "Allow",
+                       |  "Action" : [
+                       |    "iam:PutRolePolicy",
+                       |    "iam:getRole"
+                       |  ],
+                       |  "Resource" : [
+                       |    "*"
+                       |  ],
+                       |  "Condition" : {
+                       |    "StringEquals" : {
+                       |      "aws:SourceIp" : [
+                       |        "203.0.113.0/24",
+                       |        "203.0.113.1/24"
+                       |      ]
+                       |    }
+                       |  }
+                       |}""".stripMargin
+
+      statementWithCondition.asJson.spaces2 shouldBe expected
+    }
+
+    "should encode statement with multiple conditions correctly" in {
+      val statementWithConditions = basicStatement.copy(
+        conditions = List(
+          Condition("aws:SourceIp", "StringEquals", List("203.0.113.0/24")),
+          Condition(
+            "aws:TokenIssueTime",
+            "DateLessThan",
+            List("2025-02-27T09:33:01.000Z")
+          )
+        )
+      )
+
+      val expected = """{
+                       |  "Effect" : "Allow",
+                       |  "Action" : [
+                       |    "iam:PutRolePolicy",
+                       |    "iam:getRole"
+                       |  ],
+                       |  "Resource" : [
+                       |    "*"
+                       |  ],
+                       |  "Condition" : {
+                       |    "StringEquals" : {
+                       |      "aws:SourceIp" : [
+                       |        "203.0.113.0/24"
+                       |      ]
+                       |    },
+                       |    "DateLessThan" : {
+                       |      "aws:TokenIssueTime" : [
+                       |        "2025-02-27T09:33:01.000Z"
+                       |      ]
+                       |    }
+                       |  }
+                       |}""".stripMargin
+
+      statementWithConditions.asJson.spaces2 shouldBe expected
     }
 
     "should encode statement with principals correctly" in {
