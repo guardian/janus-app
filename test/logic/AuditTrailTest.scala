@@ -30,12 +30,14 @@ class AuditTrailTest
 
     "sets up the hash key" in {
       val attrs = AuditLogDbEntryAttrs.fromAuditLog(al)
-      attrs.partitionKey._2.s() shouldEqual "account"
+      val (_, value) = attrs.partitionKey
+      value.s() shouldEqual "account"
     }
 
     "sets up the (date) range key as milliseconds" in {
       val attrs = AuditLogDbEntryAttrs.fromAuditLog(al)
-      attrs.sortKey._2.n().toLong shouldEqual 1446650520000L
+      val (_, value) = attrs.sortKey
+      value.n().toLong shouldEqual 1446650520000L
     }
 
     "sets up the (date) range key correctly even when BST is in effect" in {
@@ -44,12 +46,14 @@ class AuditTrailTest
       )
       //                        hour and timezone changed ---^--------------------^
       val attrs = AuditLogDbEntryAttrs.fromAuditLog(al2)
-      attrs.sortKey._2.n().toLong shouldEqual 1446650520000L
+      val (_, value) = attrs.sortKey
+      value.n().toLong shouldEqual 1446650520000L
     }
 
     "converts duration type to seconds" in {
       val attrs = AuditLogDbEntryAttrs.fromAuditLog(al)
-      attrs.sessionDuration._2.n().toInt shouldEqual 3600
+      val (_, value) = attrs.sessionDuration
+      value.n().toInt shouldEqual 3600
     }
 
     "sets up other attributes with db fieldnames" in {
@@ -68,7 +72,8 @@ class AuditTrailTest
     "sets up console type correctly" in {
       val attrs =
         AuditLogDbEntryAttrs.fromAuditLog(al.copy(accessType = JConsole))
-      attrs.accessType._2.s() shouldEqual "console"
+      val (_, value) = attrs.accessType
+      value.s() shouldEqual "console"
     }
   }
 

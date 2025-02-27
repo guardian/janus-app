@@ -22,17 +22,15 @@ object AuditTrail extends Logging {
   val accessTypeAttrName = "j_accessType"
   val isExternalAttrName = "j_external"
 
-  private type DbAttr = (String, AttributeValue)
-
   /** Database item attributes for a single audit log entry. */
   case class AuditLogDbEntryAttrs(
-      partitionKey: DbAttr,
-      sortKey: DbAttr,
-      userName: DbAttr,
-      sessionDuration: DbAttr,
-      accessLevel: DbAttr,
-      accessType: DbAttr,
-      isExternal: DbAttr
+      partitionKey: (String, AttributeValue),
+      sortKey: (String, AttributeValue),
+      userName: (String, AttributeValue),
+      sessionDuration: (String, AttributeValue),
+      accessLevel: (String, AttributeValue),
+      accessType: (String, AttributeValue),
+      isExternal: (String, AttributeValue)
   ) {
     val toMap: Map[String, AttributeValue] = Seq(
       partitionKey,
