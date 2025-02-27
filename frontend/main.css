@@ -1,16 +1,57 @@
+@import 'npm:materialize-css/dist/css/materialize.css';
+@import 'npm:@fontsource/roboto/100.css';
+@import 'npm:@fontsource/roboto/300.css';
+@import 'npm:@fontsource/roboto/400.css';
+@import 'npm:@fontsource/roboto/500.css';
+@import 'npm:@fontsource/roboto/700.css';
+@import 'npm:material-icons';
+
 body {
     display: flex;
     min-height: 100vh;
     flex-direction: column;
+    font-family: Roboto, sans-serif !important;
 }
 
 main {
     flex: 1 0 auto;
 }
 
+.header.orange-text {
+    margin: 2.1rem 0 1.68rem 0;
+}
+
+.container .row {
+    margin-left: -.75rem;
+    margin-right: -.75rem;
+  }
+
+ .collapsible-header {
+    padding: 0 1rem;
+    min-height: 3rem;
+    align-items: center;
+}
 .material-icons {
     font-size: 15px;
     vertical-align: -2px;
+}
+
+.file-field.input-field {
+    display: flex;
+    justify-content: center;
+}
+
+.file-path-wrapper {
+    width: 200px;
+    margin-right: 10px;
+}
+
+button .btn {
+    font-size: 1rem;
+}
+
+button .btn, .btn-large {
+    font-family: Roboto, sans-serif !important;
 }
 
 .btn .material-icons {
@@ -40,6 +81,11 @@ main {
 
 .index-main__container {
     padding-top: 30px;
+}
+
+.logout-button {
+    padding: 20px 10px 0px;
+    float: right;
 }
 
 .controls__hero {
@@ -203,6 +249,10 @@ textarea.textarea--aws-profile-id.aws-profile-id {
     .card-action-link--spaced {
         margin-right: 10px;
     }
+
+    .federation__link--cta {
+        padding: 0 2rem;
+    }
 }
 
 .multi-select__container {
@@ -223,8 +273,13 @@ textarea.textarea--aws-profile-id.aws-profile-id {
     padding: 2px 17px 12px 17px;
 }
 .aws-account-body .card-content.card-content--permission-heading {
-    font-weight: bold;
+    font-weight: 700;
     padding: 12px 17px 2px 17px;
+}
+
+input[type=text]#revocation-confirmation {
+    font-family: Roboto, sans-serif;
+    font-size: 1rem;
 }
 
 input[type=text].input--inline {
@@ -236,6 +291,7 @@ input[type=text].input--inline {
 input[type=text].input--slim {
     height: 1.4em;
     margin-bottom: 4px;
+    font-size: 1rem;
 }
 
 .aws-account-image {
@@ -250,10 +306,15 @@ input[type=text].input--slim {
     background-color: transparent;
     border: none;
     margin-top: 7px;
+    cursor: pointer;
 }
 
 .card-content--aws-account-header__button--favourite:focus {
     background-color: transparent;
+}
+
+.card-content--aws-account-header__button--favourite i {
+    color: white;
 }
 
 .collapsible--fixed-paragraphs .collapsible-body p {
@@ -266,6 +327,7 @@ input[type=text].input--slim {
     height: auto;
     padding: 10px;
     background-color: #f5f5f5;
+    line-height: 1.5;
 }
 
 a.copy-text--button__small {
@@ -306,6 +368,8 @@ a.copy-text--button__small {
     position: absolute;
     top: 0;
     right: 0;
+    font-size: 1rem;
+    padding: 0 2rem;
 }
 
 .account-summary__button--audit i {
@@ -314,6 +378,12 @@ a.copy-text--button__small {
 
 .owners__header {
     overflow: hidden;
+}
+
+.owners__header.collapsible-header {
+    justify-content: space-between;
+    padding: 0 1rem;
+    line-height: 3rem;
 }
 
 .owners__list {
@@ -333,13 +403,13 @@ a.copy-text--button__small {
 }
 
 .spooky {
-    background-image: url("/assets/images/spooky/web.png"), url("/assets/images/spooky/bat.png");
+    background-image: url("/images/spooky/web.png"), url("/images/spooky/bat.png");
     background-position: top left, top right;
     background-repeat: no-repeat;
 }
 
 .festive {
-    background-image: url("/assets/images/festive/snowflake.gif"), url("/assets/images/festive/present.png");
+    background-image: url("/images/festive/snowflake.gif"), url("/images/festive/present.png");
     background-position: top left, top right;
     background-repeat: no-repeat;
 }

@@ -1,8 +1,9 @@
 @import software.amazon.awssdk.services.sts.model.Credentials
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
+@import play.api.Mode
 
-@(url: String, accountName: String, credentials: Credentials, user: UserIdentity, janusData: JanusData)(implicit assetsFinder: AssetsFinder)
+@(url: String, accountName: String, credentials: Credentials, user: UserIdentity, janusData: JanusData)(implicit mode: Mode, assetsFinder: AssetsFinder)
 
 @import logic.Date
 
