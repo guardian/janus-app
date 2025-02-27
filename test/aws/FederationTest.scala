@@ -2,16 +2,13 @@ package aws
 
 import com.gu.janus.model.{AwsAccount, Permission}
 import com.gu.janus.policy.Iam.Policy
-import org.scalactic.source
-import org.scalatest.Assertion
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import play.api.routing.sird.QueryStringParameterExtractor
+import testutils.TimeUtils
 
-import java.net.{URI, URLDecoder}
 import java.time.ZoneOffset
 
-class FederationTest extends AnyFreeSpec with Matchers {
+class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
   import Federation._
 
   "duration" - {
@@ -83,7 +80,7 @@ class FederationTest extends AnyFreeSpec with Matchers {
         "gives default time if we're a very long way from 19:00 local time" in withSystemTime(
           3,
           0
-        ) {
+        ) { clock =>
           duration(
             permission,
             None,
@@ -145,8 +142,6 @@ class FederationTest extends AnyFreeSpec with Matchers {
     }
   }
 
-  private def withSystemTime(i: Int, i1: Int)(a: Assertion) = ???
-
   "getRoleName" - {
     "fetches role name from example" in {
       getRoleName(
@@ -158,19 +153,6 @@ class FederationTest extends AnyFreeSpec with Matchers {
       getRoleName(
         "arn:aws:iam::012345678910:role/path/role-name"
       ) shouldEqual "role-name"
-    }
-  }
-
-  // helper for testing the autoLogoutUrl functionality
-  private val RedirectUri =
-    QueryStringParameterExtractor.required("redirect_uri")
-  private def extractRedirectUri(
-      url: String
-  )(implicit pos: source.Position): String = {
-    new URI(url) match {
-      case RedirectUri(redirectUri) => URLDecoder.decode(redirectUri, "UTF-8")
-      case result =>
-        fail(s"redirect_uri parameter not present on resulting URL $result")
     }
   }
 }

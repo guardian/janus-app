@@ -59,10 +59,9 @@ class UserAccessTest
   }
 
   "support functions" - {
-    val baseline =
-      ZonedDateTime
-        .of(2016, 7, 19, 11, 0, 0, 0, ZoneId.of("Europe/London"))
-        .toInstant
+    val baseline = ZonedDateTime
+      .of(2016, 7, 19, 11, 0, 0, 0, ZoneId.of("Europe/London"))
+      .toInstant
     val supportAcl = SupportACL.create(
       Map(
         baseline.minus(Period.ofDays(7)) -> (
@@ -74,10 +73,9 @@ class UserAccessTest
       Set(fooCf, barCf),
       Duration.ofDays(7)
     )
-    val rotaTime =
-      ZonedDateTime
-        .of(2016, 7, 22, 12, 0, 0, 0, ZoneOffset.of("Europe/London"))
-        .toInstant
+    val rotaTime = ZonedDateTime
+      .of(2016, 7, 22, 12, 0, 0, 0, ZoneId.of("Europe/London"))
+      .toInstant
 
     "userSupportAccess" - {
       "returns support access when given a user currently on the support rota" in {
@@ -111,16 +109,7 @@ class UserAccessTest
       "around the cutoff point" - {
         "returns support access just before 11am UK time" in {
           val justBeforeCutoff = ZonedDateTime
-            .of(
-              2016,
-              7,
-              26,
-              10,
-              59,
-              0,
-              0,
-              ZoneId.of("Europe/London")
-            )
+            .of(2016, 7, 26, 10, 59, 0, 0, ZoneId.of("Europe/London"))
             .toInstant
           userSupportAccess(
             "support.user",

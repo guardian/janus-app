@@ -12,9 +12,8 @@ import software.amazon.awssdk.services.sts.model._
 
 import java.net.{URI, URLEncoder}
 import java.nio.charset.StandardCharsets.UTF_8
-import java.time.{Duration, Instant, ZoneId, ZonedDateTime}
+import java.time.{Clock, Duration, Instant, ZoneId, ZonedDateTime}
 import scala.io.Source
-import scala.math.Ordering.Implicits.infixOrderingOps
 
 object Federation {
 
@@ -42,29 +41,36 @@ object Federation {
     */
   def duration(
       permission: Permission,
-      requestedSeconds: Option[Duration],
-      timezone: Option[ZoneId]
+      requestedSeconds: Option[Duration] = None,
+      timezone: Option[ZoneId] = None,
+      clock:Clock
   ): Duration = {
     if (permission.shortTerm) {
-      // short term
-      val calculated =
-        requestedSeconds.getOrElse(defaultShortTime).min(maxShortTime)
-      calculated.max(minShortTime)
-    } else {
-      // long term
-      val calculated = requestedSeconds.getOrElse {
-        timezone.fold(defaultLongTime) { tz =>
-          val now = ZonedDateTime.now(tz)
-          val withTime =
-            now.withHour(19).withMinute(0).withSecond(0).withNano(0)
-          val endOfWork =
-            if (withTime.isBefore(now)) withTime.plusDays(1) else withTime
-          val durToEndOfWork = Duration.between(now, endOfWork)
-          if (durToEndOfWork.compareTo(maxLongTime) < 0) durToEndOfWork
-          else defaultLongTime
-        }
+      // short term permission, give them requested or default (limited by max)
+      val calculated = requestedSeconds.fold(defaultShortTime) { requested =>
+        Date.minDuration(requested, maxShortTime)
       }
-      calculated.min(maxLongTime).max(minLongTime)
+      Date.maxDuration(calculated, minShortTime)
+    } else {
+      // use requested or default (limited by max)
+      // if nothing is requested, try to give them until 19:00 local time (requires timezone)
+      val calculated = requestedSeconds match {
+        case None =>
+          timezone.fold(defaultLongTime) { tz =>
+            val now = ZonedDateTime.now(tz)
+            val withTime =
+              now.withHour(19).withMinute(0).withSecond(0).withNano(0)
+            val localEndOfWork =
+              if (withTime.isBefore(now)) withTime.plusDays(1) else withTime
+            val durToEndOfWork = Duration.between(now, localEndOfWork)
+            if (durToEndOfWork.compareTo(maxLongTime) < 0)
+              durToEndOfWork
+            else defaultLongTime
+          }
+        case Some(requested) =>
+          Date.minDuration(requested, maxLongTime)
+      }
+      Date.maxDuration(calculated, minLongTime)
     }
   }
 
