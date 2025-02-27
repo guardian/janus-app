@@ -7,7 +7,7 @@ import io.circe.syntax._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-class IamSpec extends AnyFreeSpec with Matchers {
+class IamTest extends AnyFreeSpec with Matchers {
 
   "Action" - {
     "should encode action name correctly" in {
