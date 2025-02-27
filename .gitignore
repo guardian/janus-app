@@ -1,6 +1,6 @@
 import 
 
-# frontend build
+# Frontend build files
 
 public/frontend/
 frontend/.parcel-cache
@@ -140,6 +140,3 @@ crashlytics-build.properties
 .metals/
 .vscode/
 .bloop/
-
-# parcel
-frontend/.parcel-cache
