@@ -73,12 +73,12 @@ object Iam {
         .groupBy(_.typeName)
         .view
         .mapValues(conditions =>
-          Json.obj(
+          Json.fromFields(
             conditions.map(condition =>
               condition.key -> Json.fromValues(
                 condition.conditionValues.map(Json.fromString)
               )
-            ): _*
+            )
           )
         )
         .toMap
