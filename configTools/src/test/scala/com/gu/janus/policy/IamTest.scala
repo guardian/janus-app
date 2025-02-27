@@ -33,24 +33,34 @@ class IamTest extends AnyFreeSpec with Matchers {
 
     "should encode basic statement correctly" in {
       val expected = """{
-                         |"Effect":"Allow",
-                         |"Action":["iam:PutRolePolicy","iam:getRole"],
-                         |"Resource":["*"]
-                         |}""".stripMargin.replaceAll("\\s", "")
+                       |  "Effect" : "Allow",
+                       |  "Action" : [
+                       |    "iam:PutRolePolicy",
+                       |    "iam:getRole"
+                       |  ],
+                       |  "Resource" : [
+                       |    "*"
+                       |  ]
+                       |}""".stripMargin
 
-      basicStatement.asJson.noSpaces shouldBe expected
+      basicStatement.asJson.spaces2 shouldBe expected
     }
 
     "should encode statement with ID correctly" in {
       val statementWithId = basicStatement.copy(id = Some("statement1"))
       val expected = """{
-                         |"Effect":"Allow",
-                         |"Action":["iam:PutRolePolicy","iam:getRole"],
-                         |"Resource":["*"],
-                         |"Sid":"statement1"
-                         |}""".stripMargin.replaceAll("\\s", "")
+                       |  "Effect" : "Allow",
+                       |  "Action" : [
+                       |    "iam:PutRolePolicy",
+                       |    "iam:getRole"
+                       |  ],
+                       |  "Resource" : [
+                       |    "*"
+                       |  ],
+                       |  "Sid" : "statement1"
+                       |}""".stripMargin
 
-      statementWithId.asJson.noSpaces shouldBe expected
+      statementWithId.asJson.spaces2 shouldBe expected
     }
 
     "should encode statement with single condition correctly" in {
@@ -186,16 +196,26 @@ class IamTest extends AnyFreeSpec with Matchers {
       )
 
       val expected = """{
-                         |"Effect":"Allow",
-                         |"Action":["iam:PutRolePolicy","iam:getRole"],
-                         |"Resource":["*"],
-                         |"Principal":{
-                         |"AWS":["AROAXXXXXXXXXXXXXXX1","AROAXXXXXXXXXXXXXXX2"],
-                         |"Kubernetes":["ServiceAccount1"]
-                         |}
-                         |}""".stripMargin.replaceAll("\\s", "")
+                       |  "Effect" : "Allow",
+                       |  "Action" : [
+                       |    "iam:PutRolePolicy",
+                       |    "iam:getRole"
+                       |  ],
+                       |  "Resource" : [
+                       |    "*"
+                       |  ],
+                       |  "Principal" : {
+                       |    "AWS" : [
+                       |      "AROAXXXXXXXXXXXXXXX1",
+                       |      "AROAXXXXXXXXXXXXXXX2"
+                       |    ],
+                       |    "Kubernetes" : [
+                       |      "ServiceAccount1"
+                       |    ]
+                       |  }
+                       |}""".stripMargin
 
-      statementWithPrincipals.asJson.noSpaces shouldBe expected
+      statementWithPrincipals.asJson.spaces2 shouldBe expected
     }
   }
 
@@ -209,15 +229,21 @@ class IamTest extends AnyFreeSpec with Matchers {
     "should encode basic policy correctly" in {
       val policy = Policy(statements = List(basicStatement))
       val expected = """{
-                         |"Version":"2012-10-17",
-                         |"Statement":[{
-                         |"Effect":"Allow",
-                         |"Action":["s3:GetObject"],
-                         |"Resource":["arn:aws:s3:::my-bucket/*"]
-                         |}]
-                         |}""".stripMargin.replaceAll("\\s", "")
+                       |  "Version" : "2012-10-17",
+                       |  "Statement" : [
+                       |    {
+                       |      "Effect" : "Allow",
+                       |      "Action" : [
+                       |        "s3:GetObject"
+                       |      ],
+                       |      "Resource" : [
+                       |        "arn:aws:s3:::my-bucket/*"
+                       |      ]
+                       |    }
+                       |  ]
+                       |}""".stripMargin
 
-      policy.asJson.noSpaces shouldBe expected
+      policy.asJson.spaces2 shouldBe expected
     }
 
     "should encode policy with ID correctly" in {
@@ -227,16 +253,22 @@ class IamTest extends AnyFreeSpec with Matchers {
       )
 
       val expected = """{
-                         |"Version":"2012-10-17",
-                         |"Statement":[{
-                         |"Effect":"Allow",
-                         |"Action":["s3:GetObject"],
-                         |"Resource":["arn:aws:s3:::my-bucket/*"]
-                         |}],
-                         |"Id":"MyPolicyId"
-                         |}""".stripMargin.replaceAll("\\s", "")
+                       |  "Version" : "2012-10-17",
+                       |  "Statement" : [
+                       |    {
+                       |      "Effect" : "Allow",
+                       |      "Action" : [
+                       |        "s3:GetObject"
+                       |      ],
+                       |      "Resource" : [
+                       |        "arn:aws:s3:::my-bucket/*"
+                       |      ]
+                       |    }
+                       |  ],
+                       |  "Id" : "MyPolicyId"
+                       |}""".stripMargin
 
-      policy.asJson.noSpaces shouldBe expected
+      policy.asJson.spaces2 shouldBe expected
     }
 
     "should encode complex policy correctly" - {
