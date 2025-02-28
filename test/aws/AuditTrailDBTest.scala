@@ -2,7 +2,6 @@ package aws
 
 import com.gu.janus.model.{AuditLog, JConsole}
 import logic.AuditTrail
-import org.joda.time.{DateTime, DateTimeZone, Duration}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient

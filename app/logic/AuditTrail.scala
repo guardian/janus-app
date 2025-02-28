@@ -7,7 +7,6 @@ import play.api.Logging
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
 import java.time.{Duration, Instant}
-
 import scala.util.Try
 
 object AuditTrail extends Logging {
@@ -60,13 +59,12 @@ object AuditTrail extends Logging {
         partitionKey =
           accountPartitionKeyName -> AttributeValue.fromS(auditLog.account),
         sortKey = {
-          val accessTime =
-            auditLog.dateTime.withZone(DateTimeZone.UTC).getMillis
+          val accessTime = auditLog.instant.toEpochMilli
           timestampSortKeyName -> AttributeValue.fromN(accessTime.toString)
         },
         userName = userNameAttrName -> AttributeValue.fromS(auditLog.username),
         sessionDuration = durationAttrName -> AttributeValue.fromN(
-          auditLog.duration.getStandardSeconds.toString
+          auditLog.duration.getSeconds.toString
         ),
         accessLevel =
           accessLevelAttrName -> AttributeValue.fromS(auditLog.accessLevel),
@@ -125,21 +123,18 @@ object AuditTrail extends Logging {
       attrs: Map[String, AttributeValue]
   ): Either[(String, Map[String, AttributeValue]), AuditLog] = {
     for {
-      account <- stringValue(attrs, accountPartitionKeyName).toRight(
-        "Could not extract account" -> attrs
-      )
-      username <- stringValue(attrs, userNameAttrName).toRight(
-        "Could not extract username" -> attrs
-      )
+      account <- stringValue(attrs, accountPartitionKeyName)
+        .toRight("Could not extract account" -> attrs)
+      username <- stringValue(attrs, userNameAttrName)
+        .toRight("Could not extract username" -> attrs)
       dateTime <- longValue(attrs, timestampSortKeyName)
-        .map(ts => Instant.ofEpochMilli(ts.toLong))
+        .map(Instant.ofEpochMilli)
         .toRight("Could not extract dateTime" -> attrs)
       duration <- longValue(attrs, durationAttrName)
-        .map(d => Duration.ofSeconds(d.toLong))
+        .map(Duration.ofSeconds)
         .toRight("Could not extract duration" -> attrs)
-      accessLevel <- stringValue(attrs, accessLevelAttrName).toRight(
-        "Could not extract accessLevel" -> attrs
-      )
+      accessLevel <- stringValue(attrs, accessLevelAttrName)
+        .toRight("Could not extract accessLevel" -> attrs)
       accessType <- stringValue(attrs, accessTypeAttrName)
         .flatMap(JanusAccessType.fromString)
         .toRight("Could not extract accessType" -> attrs)

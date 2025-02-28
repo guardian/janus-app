@@ -23,31 +23,31 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
 
       "if a time is explicitly asked for" - {
         "grants the requested time if it is within the limit" in {
-          duration(permission, Some(2.hours), None) shouldEqual 2.hours
+          duration(permission, Some(2.hours)) shouldEqual 2.hours
         }
 
         "grants the max time if user requests a time longer than this" in {
-          duration(permission, Some(24.hours), None) shouldEqual maxShortTime
+          duration(permission, Some(24.hours)) shouldEqual maxShortTime
         }
 
         "grants at least the minimum duration" in {
-          duration(permission, Some(10.seconds), None) shouldEqual minShortTime
+          duration(permission, Some(10.seconds)) shouldEqual minShortTime
         }
       }
 
       "if no time is requested" - {
         "issues default short time" in {
-          duration(permission, None, None) shouldEqual defaultShortTime
+          duration(permission, None) shouldEqual defaultShortTime
         }
 
         "issues default short time even near 19:00 with a timezone present" in withSystemTime(
           18,
           30
-        ) {
+        ) { clock =>
           duration(
             permission,
             None,
-            Some(ZoneOffset.UTC)
+            clock
           ) shouldEqual defaultShortTime
         }
       }
@@ -64,15 +64,15 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
 
       "if a time is explicitly asked for" - {
         "grants the requested time if it is provided and less than the maximum" in {
-          duration(permission, Some(2.hours), None) shouldEqual 2.hours
+          duration(permission, Some(2.hours)) shouldEqual 2.hours
         }
 
         "grants the max time if requested time is too long" in {
-          duration(permission, Some(24.hours), None) shouldEqual maxLongTime
+          duration(permission, Some(24.hours)) shouldEqual maxLongTime
         }
 
         "grants at least the minimum number of seconds" in {
-          duration(permission, Some(10.seconds), None) shouldEqual minLongTime
+          duration(permission, Some(10.seconds)) shouldEqual minLongTime
         }
       }
 
@@ -84,58 +84,59 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
           duration(
             permission,
             None,
-            Some(ZoneOffset.UTC)
+            clock
           ) shouldEqual defaultLongTime
         }
 
         "gives default time if we're after 19:00 local time" in withSystemTime(
           21,
           0
-        ) {
+        ) { clock =>
           duration(
             permission,
             None,
-            Some(ZoneOffset.UTC)
+            clock
           ) shouldEqual defaultLongTime
         }
 
         "gives until 19:00 if we're within <max time> of 19:00 local time" in withSystemTime(
           10,
           0
-        ) {
-          duration(permission, None, Some(ZoneOffset.UTC)) shouldEqual 9.hours
+        ) { clock =>
+          duration(permission, None, clock) shouldEqual 9.hours
         }
 
         "and no timezone is supplied, provides the default time, even near 19:00" in withSystemTime(
           15,
           0
-        ) {
-          duration(permission, None, None) shouldEqual defaultLongTime
+        ) { clock =>
+          duration(permission, None, clock) shouldEqual defaultLongTime
         }
 
         "and we're quite near 19:00 with a TZ, give the remaining period" in withSystemTime(
           15,
           0
-        ) {
-          duration(permission, None, Some(ZoneOffset.UTC)) shouldEqual 4.hours
+        ) { clock =>
+          duration(permission, None, clock) shouldEqual 4.hours
         }
 
         "and we're *very* near 19:00 with a TZ, give the remaining period" ignore withSystemTime(
           18,
           30
-        ) {
+        ) { clock =>
           // do we need special logic near 19:00 so people don't get pointless perms?
-          duration(permission, None, Some(ZoneOffset.UTC)) shouldEqual 4.hours
+          duration(permission, None, clock) shouldEqual 4.hours
         }
 
         "uses the provided timezone to calculate the correct duration" in withSystemTime(
           15,
-          0
-        ) {
+          0,
+          ZoneOffset.ofHours(1)
+        ) { clock =>
           duration(
             permission,
             None,
-            Some(ZoneOffset.ofHours(1))
+            clock
           ) shouldEqual 3.hours
         }
       }

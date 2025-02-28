@@ -13,7 +13,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.model.Credentials
 
-import java.time.{Duration, Instant, ZoneId, ZonedDateTime}
+import java.time._
 
 class Janus(
     janusData: JanusData,
@@ -222,7 +222,11 @@ class Janus(
         janusData.admin,
         janusData.support
       )
-      duration = Federation.duration(permission, requestedDuration, tzOffset)
+      duration = Federation.duration(
+        permission,
+        requestedDuration,
+        tzOffset.map(Clock.system).getOrElse(Clock.systemUTC())
+      )
       roleArn = Config.roleArn(permission.account.authConfigKey, configuration)
       credentials = Federation.assumeRole(
         username(user),

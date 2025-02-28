@@ -3,7 +3,6 @@ package logic
 import com.gu.janus.model.{AuditLog, JConsole, JCredentials}
 import com.gu.janus.testutils.{HaveMatchers, RightValues}
 import logic.AuditTrail._
-import org.joda.time.{DateTime, DateTimeZone, Duration}
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
