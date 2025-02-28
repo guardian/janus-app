@@ -237,8 +237,8 @@ class Janus(
         duration,
         janusData.access
       )
+      _ = AuditTrailDB.insert(auditLog)
     } yield {
-      AuditTrailDB.insert(auditLog)
       logger.info(
         s"$accessType access to $permissionId granted for ${username(user)}"
       )
