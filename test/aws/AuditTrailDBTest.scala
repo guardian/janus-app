@@ -1,11 +1,13 @@
 package aws
 
 import com.gu.janus.model.{AuditLog, JConsole}
+import logic.AuditTrail
 import org.joda.time.{DateTime, DateTimeZone, Duration}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.KeyType.{HASH, RANGE}
+import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType.{N, S}
 import software.amazon.awssdk.services.dynamodb.model._
 
 class AuditTrailDBTest extends AnyFreeSpec with Matchers {
@@ -14,7 +16,6 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
     implicit val dynamoDB: DynamoDbClient = Clients.localDb
 
     "insertion and querying" ignore {
-      val table = AuditTrailDB.getTable()
       val dateTime: DateTime =
         new DateTime(2015, 11, 5, 17, 35, DateTimeZone.UTC)
       val al = AuditLog(
@@ -26,10 +27,9 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
         JConsole,
         external = true
       )
-      AuditTrailDB.insert(table, al)
+      AuditTrailDB.insert(al)
 
       val accountResults = AuditTrailDB.getAccountLogs(
-        table,
         "account",
         dateTime.minusDays(1),
         dateTime.plusDays(1)
@@ -37,7 +37,6 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
       println(accountResults.toList)
 
       val userResults = AuditTrailDB.getUserLogs(
-        table,
         "username",
         dateTime.minusDays(1),
         dateTime.plusDays(1)
@@ -65,49 +64,49 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
   ): CreateTableResponse = {
     val auditTableCreateRequest = CreateTableRequest
       .builder()
-      .tableName(AuditTrailDB.tableName)
+      .tableName(AuditTrail.tableName)
       .keySchema(
         KeySchemaElement
           .builder()
-          .attributeName("j_account")
+          .attributeName(AuditTrail.accountPartitionKeyName)
           .keyType(HASH)
           .build(),
         KeySchemaElement
           .builder()
-          .attributeName("j_timestamp")
+          .attributeName(AuditTrail.timestampSortKeyName)
           .keyType(RANGE)
           .build()
       )
       .attributeDefinitions(
         AttributeDefinition
           .builder()
-          .attributeName("j_account")
-          .attributeType("S")
+          .attributeName(AuditTrail.accountPartitionKeyName)
+          .attributeType(S)
           .build(),
         AttributeDefinition
           .builder()
-          .attributeName("j_timestamp")
-          .attributeType("N")
+          .attributeName(AuditTrail.timestampSortKeyName)
+          .attributeType(N)
           .build(),
         AttributeDefinition
           .builder()
-          .attributeName("j_username")
-          .attributeType("S")
+          .attributeName(AuditTrail.userNameAttrName)
+          .attributeType(S)
           .build()
       )
       .globalSecondaryIndexes(
         GlobalSecondaryIndex
           .builder()
-          .indexName("AuditTrailByUser")
+          .indexName(AuditTrail.secondaryIndexName)
           .keySchema(
             KeySchemaElement
               .builder()
-              .attributeName("j_username")
+              .attributeName(AuditTrail.userNameAttrName)
               .keyType(HASH)
               .build(),
             KeySchemaElement
               .builder()
-              .attributeName("j_timestamp")
+              .attributeName(AuditTrail.timestampSortKeyName)
               .keyType(RANGE)
               .build()
           )
@@ -137,7 +136,7 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
       dynamoDB: DynamoDbClient
   ): DeleteTableResponse = {
     val request =
-      DeleteTableRequest.builder().tableName(AuditTrailDB.tableName).build()
+      DeleteTableRequest.builder().tableName(AuditTrail.tableName).build()
     dynamoDB.deleteTable(request)
   }
 }

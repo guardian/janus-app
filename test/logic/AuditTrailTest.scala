@@ -2,6 +2,7 @@ package logic
 
 import com.gu.janus.model.{AuditLog, JConsole, JCredentials}
 import com.gu.janus.testutils.{HaveMatchers, RightValues}
+import logic.AuditTrail._
 import org.joda.time.{DateTime, DateTimeZone, Duration}
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
@@ -28,13 +29,15 @@ class AuditTrailTest
     )
 
     "sets up the hash key" in {
-      val (hashKey, _, _) = AuditTrail.auditLogAttrs(al)
-      hashKey shouldEqual "account"
+      val attrs = AuditLogDbEntryAttrs.fromAuditLog(al)
+      val (_, value) = attrs.partitionKey
+      value.s() shouldEqual "account"
     }
 
     "sets up the (date) range key as milliseconds" in {
-      val (_, rangeKey, _) = AuditTrail.auditLogAttrs(al)
-      rangeKey shouldEqual 1446650520000L
+      val attrs = AuditLogDbEntryAttrs.fromAuditLog(al)
+      val (_, value) = attrs.sortKey
+      value.n().toLong shouldEqual 1446650520000L
     }
 
     "sets up the (date) range key correctly even when BST is in effect" in {
@@ -42,43 +45,48 @@ class AuditTrailTest
         new DateTime(2015, 11, 4, 16, 22, DateTimeZone.forOffsetHours(1))
       )
       //                        hour and timezone changed ---^--------------------^
-      val (_, rangeKey, _) = AuditTrail.auditLogAttrs(al2)
-      rangeKey shouldEqual 1446650520000L
+      val attrs = AuditLogDbEntryAttrs.fromAuditLog(al2)
+      val (_, value) = attrs.sortKey
+      value.n().toLong shouldEqual 1446650520000L
     }
 
     "converts duration type to seconds" in {
-      val (_, _, attrs) = AuditTrail.auditLogAttrs(al)
-      attrs.find(_._1 == "j_duration").map(_._2).value shouldEqual 3600
+      val attrs = AuditLogDbEntryAttrs.fromAuditLog(al)
+      val (_, value) = attrs.sessionDuration
+      value.n().toInt shouldEqual 3600
     }
 
     "sets up other attributes with db fieldnames" in {
-      val (_, _, attrs) = AuditTrail.auditLogAttrs(al)
-      attrs shouldEqual List(
-        "j_username" -> "username",
-        "j_duration" -> 3600,
-        "j_accessLevel" -> "accessLevel",
-        "j_accessType" -> "credentials",
-        "j_external" -> 1
+      val attrs = AuditLogDbEntryAttrs.fromAuditLog(al)
+      attrs.toMap shouldEqual Map(
+        accountPartitionKeyName -> AttributeValue.fromS("account"),
+        timestampSortKeyName -> AttributeValue.fromN(1446650520000L.toString),
+        userNameAttrName -> AttributeValue.fromS("username"),
+        durationAttrName -> AttributeValue.fromN(3600.toString),
+        accessLevelAttrName -> AttributeValue.fromS("accessLevel"),
+        accessTypeAttrName -> AttributeValue.fromS("credentials"),
+        isExternalAttrName -> AttributeValue.fromN(1.toString)
       )
     }
 
     "sets up console type correctly" in {
-      val (_, _, attrs) =
-        AuditTrail.auditLogAttrs(al.copy(accessType = JConsole))
-      attrs should contain("j_accessType" -> "console")
+      val attrs =
+        AuditLogDbEntryAttrs.fromAuditLog(al.copy(accessType = JConsole))
+      val (_, value) = attrs.accessType
+      value.s() shouldEqual "console"
     }
   }
 
   "auditLogFromAttrs" - {
     "given valid attributes" - {
       val attrs = Map(
-        "j_account" -> AttributeValue.fromS("account"),
-        "j_username" -> AttributeValue.fromS("username"),
-        "j_timestamp" -> AttributeValue.fromN("1446650520000"),
-        "j_duration" -> AttributeValue.fromN("3600"),
-        "j_accessLevel" -> AttributeValue.fromS("dev"),
-        "j_accessType" -> AttributeValue.fromS("console"),
-        "j_external" -> AttributeValue.fromN("1")
+        accountPartitionKeyName -> AttributeValue.fromS("account"),
+        userNameAttrName -> AttributeValue.fromS("username"),
+        timestampSortKeyName -> AttributeValue.fromN("1446650520000"),
+        durationAttrName -> AttributeValue.fromN("3600"),
+        accessLevelAttrName -> AttributeValue.fromS("dev"),
+        accessTypeAttrName -> AttributeValue.fromS("console"),
+        isExternalAttrName -> AttributeValue.fromN("1")
       )
 
       "extracts an audit log from valid attributes" in {
@@ -104,12 +112,12 @@ class AuditTrailTest
     "when missing a required field" - {
       val attrs = Map(
         // missing account
-        "j_username" -> AttributeValue.fromS("username"),
-        "j_timestamp" -> AttributeValue.fromN("1446650520000"),
-        "j_duration" -> AttributeValue.fromN("3600"),
-        "j_accessLevel" -> AttributeValue.fromS("dev"),
-        "j_accessType" -> AttributeValue.fromS("console"),
-        "j_external" -> AttributeValue.fromN("1")
+        userNameAttrName -> AttributeValue.fromS("username"),
+        timestampSortKeyName -> AttributeValue.fromN("1446650520000"),
+        durationAttrName -> AttributeValue.fromN("3600"),
+        accessLevelAttrName -> AttributeValue.fromS("dev"),
+        accessTypeAttrName -> AttributeValue.fromS("console"),
+        isExternalAttrName -> AttributeValue.fromN("1")
       )
 
       "fails to extract an AccessLog record" in {
