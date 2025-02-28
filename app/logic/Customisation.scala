@@ -19,7 +19,7 @@ object Customisation {
     val tzOffset = Try {
       request
         .getQueryString("tzOffset")
-        .map(hours => ZoneId.ofOffset("UTC", ZoneOffset.ofHours(hours.toInt)))
+        .map(hours => ZoneOffset.ofHours(hours.toInt))
     }.toOption.flatten
 
     (duration, tzOffset)

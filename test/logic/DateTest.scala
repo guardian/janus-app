@@ -4,7 +4,7 @@ import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.time.{Duration, Instant, ZoneOffset, ZonedDateTime}
+import java.time.{Duration, Instant, LocalDateTime, ZoneOffset, ZonedDateTime}
 
 class DateTest extends AnyFreeSpec with Matchers with OptionValues {
   "formatDuration" - {
@@ -16,7 +16,7 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
 
     "prints a nice message for a duration with only a few fields" in {
       Date.formatDuration(
-        Duration.ofHours(8).plusMinutes(0).plusSeconds(14)
+        Duration.ofHours(8).plusSeconds(14)
       ) shouldEqual "8 hours, 14 seconds"
     }
 
@@ -51,35 +51,23 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
     }
 
     "returns the same date when given a monday" in {
-      val date =
-        ZonedDateTime.of(2015, 11, 9, 0, 0, 0, 0, ZoneOffset.UTC).toInstant
-      Date.firstDayOfWeek(date) shouldEqual ZonedDateTime.of(
-        2015,
-        11,
-        9,
-        0,
-        0,
-        0,
-        0,
-        ZoneOffset.UTC
-      )
+      val date = ZonedDateTime
+        .of(LocalDateTime.of(2015, 11, 9, 0, 0), ZoneOffset.UTC)
+        .toInstant
+      Date.firstDayOfWeek(date) shouldEqual ZonedDateTime
+        .of(LocalDateTime.of(2015, 11, 9, 0, 0), ZoneOffset.UTC)
+        .toInstant
     }
   }
 
   "parseDateStr" - {
     "should parse a nice date" in {
-      Date
-        .parseDateStr("2015-11-6")
-        .value shouldEqual ZonedDateTime.of(
-        2015,
-        11,
-        6,
-        0,
-        0,
-        0,
-        0,
-        ZoneOffset.UTC
-      )
+      Date.parseDateStr("2015-11-06").value shouldEqual ZonedDateTime
+        .of(
+          LocalDateTime.of(2015, 11, 6, 0, 0),
+          ZoneOffset.UTC
+        )
+        .toInstant
     }
 
     "fails to parse junk" in {
@@ -89,20 +77,16 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
 
   "weekAround" - {
     "gets the full week surrounding the given date" in {
-      val date =
-        ZonedDateTime.of(2015, 11, 6, 0, 0, 0, 0, ZoneOffset.UTC).toInstant
+      val date = ZonedDateTime
+        .of(LocalDateTime.of(2015, 11, 6, 0, 0), ZoneOffset.UTC)
+        .toInstant
       Date.weekAround(date) shouldEqual (
-        ZonedDateTime.of(
-          2015,
-          11,
-          2,
-          0,
-          0,
-          0,
-          0,
-          ZoneOffset.UTC
-        ),
-        ZonedDateTime.of(2015, 11, 9, 0, 0, 0, 0, ZoneOffset.UTC).toInstant
+        ZonedDateTime
+          .of(LocalDateTime.of(2015, 11, 2, 0, 0), ZoneOffset.UTC)
+          .toInstant,
+        ZonedDateTime
+          .of(LocalDateTime.of(2015, 11, 9, 0, 0), ZoneOffset.UTC)
+          .toInstant
       )
     }
   }

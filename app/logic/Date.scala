@@ -4,7 +4,7 @@ import models.{DisplayMode, Festive, Normal, Spooky}
 
 import java.time._
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
+import scala.util.Try
 
 object Date {
   private val simpleDateFormatter =
@@ -43,14 +43,21 @@ object Date {
 
   def formatDuration(duration: Duration): String = {
     val hours = duration.toHours
-    val minutes = duration.minusHours(hours).toMinutes
-    val seconds = duration.minusHours(hours).minusMinutes(minutes).getSeconds
+    val minutes = duration.toMinutesPart
+    val seconds = duration.toSecondsPart
 
-    val hourStr = if (hours == 1) "hour" else "hours"
-    val minStr = if (minutes == 1) "minute" else "minutes"
-    val secStr = if (seconds == 1) "second" else "seconds"
+    val parts = Seq(
+      if (hours > 0) Some(s"$hours ${if (hours == 1) "hour" else "hours"}")
+      else None,
+      if (minutes > 0)
+        Some(s"$minutes ${if (minutes == 1) "minute" else "minutes"}")
+      else None,
+      if (seconds > 0 || (hours == 0 && minutes == 0))
+        Some(s"$seconds ${if (seconds == 1) "second" else "seconds"}")
+      else None
+    ).flatten
 
-    s"$hours $hourStr, $minutes $minStr, $seconds $secStr"
+    parts.mkString(", ")
   }
 
   def firstDayOfWeek(instant: Instant): Instant = {
@@ -82,18 +89,15 @@ object Date {
     )
   }
 
-  def parseDateStr(dateStr: String): Option[Instant] = {
-    try {
-      Some {
-        LocalDate
-          .parse(dateStr, simpleDateFormatter)
-          .atStartOfDay(ZoneOffset.UTC)
-          .toInstant
-      }
-    } catch {
-      case _: Exception => None
-    }
-  }
+  /** Parses a date string in the format "yyyy-MM-dd" and if it's valid returns
+    * the instant at the start of that date in UTC.
+    */
+  def parseDateStr(dateStr: String): Option[Instant] =
+    Try {
+      val localDate = LocalDate.parse(dateStr, simpleDateFormatter)
+      // Convert LocalDate to Instant by setting time to start of day (midnight) in UTC
+      localDate.atStartOfDay().toInstant(ZoneOffset.UTC)
+    }.toOption
 
   def today: Instant = {
     LocalDate

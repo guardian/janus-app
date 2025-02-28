@@ -225,7 +225,7 @@ class Janus(
       duration = Federation.duration(
         permission,
         requestedDuration,
-        tzOffset.map(Clock.system).getOrElse(Clock.systemUTC())
+        tzOffset.map(Clock.system)
       )
       roleArn = Config.roleArn(permission.account.authConfigKey, configuration)
       credentials = Federation.assumeRole(

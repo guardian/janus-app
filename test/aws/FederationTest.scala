@@ -6,7 +6,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import testutils.TimeUtils
 
-import java.time.ZoneOffset
+import java.time.{ZoneId, ZoneOffset}
 
 class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
   import Federation._
@@ -41,8 +41,9 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
         }
 
         "issues default short time even near 19:00 with a timezone present" in withSystemTime(
-          18,
-          30
+          hour = 18,
+          minute = 30,
+          zoneId = Some(ZoneId.of("UTC"))
         ) { clock =>
           duration(
             permission,
@@ -78,8 +79,9 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
 
       "if no time is requested" - {
         "gives default time if we're a very long way from 19:00 local time" in withSystemTime(
-          3,
-          0
+          hour = 3,
+          minute = 0,
+          zoneId = Some(ZoneId.of("UTC"))
         ) { clock =>
           duration(
             permission,
@@ -89,8 +91,9 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
         }
 
         "gives default time if we're after 19:00 local time" in withSystemTime(
-          21,
-          0
+          hour = 21,
+          minute = 0,
+          zoneId = Some(ZoneId.of("UTC"))
         ) { clock =>
           duration(
             permission,
@@ -100,44 +103,48 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
         }
 
         "gives until 19:00 if we're within <max time> of 19:00 local time" in withSystemTime(
-          10,
-          0
+          hour = 10,
+          minute = 0,
+          zoneId = Some(ZoneId.of("UTC"))
         ) { clock =>
           duration(permission, None, clock) shouldEqual 9.hours
         }
 
         "and no timezone is supplied, provides the default time, even near 19:00" in withSystemTime(
-          15,
-          0
+          hour = 15,
+          minute = 0,
+          zoneId = None
         ) { clock =>
           duration(permission, None, clock) shouldEqual defaultLongTime
         }
 
         "and we're quite near 19:00 with a TZ, give the remaining period" in withSystemTime(
-          15,
-          0
+          hour = 15,
+          minute = 0,
+          zoneId = Some(ZoneId.of("UTC"))
         ) { clock =>
           duration(permission, None, clock) shouldEqual 4.hours
         }
 
         "and we're *very* near 19:00 with a TZ, give the remaining period" ignore withSystemTime(
-          18,
-          30
+          hour = 18,
+          minute = 30,
+          zoneId = Some(ZoneId.of("UTC"))
         ) { clock =>
           // do we need special logic near 19:00 so people don't get pointless perms?
           duration(permission, None, clock) shouldEqual 4.hours
         }
 
         "uses the provided timezone to calculate the correct duration" in withSystemTime(
-          15,
-          0,
-          ZoneOffset.ofHours(1)
+          hour = 15,
+          minute = 0,
+          zoneId = Some(ZoneId.ofOffset("", ZoneOffset.ofHours(1)))
         ) { clock =>
           duration(
             permission,
             None,
             clock
-          ) shouldEqual 3.hours
+          ) shouldEqual 4.hours
         }
       }
     }

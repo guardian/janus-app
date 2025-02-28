@@ -8,7 +8,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
-import java.time.{Duration, ZoneOffset, ZonedDateTime}
+import java.time.{Duration, LocalDateTime, ZoneOffset, ZonedDateTime}
 import scala.language.implicitConversions
 
 class AuditTrailTest
@@ -95,8 +95,9 @@ class AuditTrailTest
         AuditTrail.auditLogFromAttrs(attrs).value should have(
           "account" as "account",
           "username" as "username",
-          "dateTime" as ZonedDateTime
-            .of(2015, 11, 4, 15, 22, 0, 0, ZoneOffset.UTC),
+          "instant" as ZonedDateTime
+            .of(LocalDateTime.of(2015, 11, 4, 15, 22), ZoneOffset.UTC)
+            .toInstant,
           "duration" as Duration.ofMillis(3600000),
           "accessLevel" as "dev",
           "accessType" as JConsole,
