@@ -1,7 +1,6 @@
 package com.gu.janus.policy
 
-import awscala._
-import com.amazonaws.auth.policy.Statement.Effect
+import com.gu.janus.policy.Iam._
 
 object Statements {
 
