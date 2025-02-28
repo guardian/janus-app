@@ -7,7 +7,7 @@ import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.time.{Duration, ZoneOffset, ZonedDateTime}
+import java.time.{Duration, LocalDateTime, ZoneOffset, ZonedDateTime}
 
 class LoaderTest
     extends AnyFreeSpec
@@ -133,9 +133,7 @@ class LoaderTest
         val permissions = Loader.loadPermissions(testConfig, accounts).value
         val result = Loader.loadSupport(testConfig, permissions)
         val supportAcl = result.value
-        supportAcl.supportPeriod shouldEqual Duration
-          .ofSeconds(604800L)
-          .toSeconds
+        supportAcl.supportPeriod shouldEqual Duration.ofSeconds(604800L)
       }
 
       "extracts the rota" in {
@@ -144,36 +142,24 @@ class LoaderTest
         val result = Loader.loadSupport(testConfig, permissions)
         val supportAcl = result.value
         supportAcl.rota shouldEqual Map(
-          ZonedDateTime.of(
-            2018,
-            12,
-            27,
-            11,
-            0,
-            0,
-            0,
-            ZoneOffset.UTC
-          ) -> ("employee1", "employee2"),
-          ZonedDateTime.of(
-            2019,
-            1,
-            3,
-            11,
-            0,
-            0,
-            0,
-            ZoneOffset.UTC
-          ) -> ("employee2", "employee4"),
-          ZonedDateTime.of(
-            2019,
-            1,
-            10,
-            11,
-            0,
-            0,
-            0,
-            ZoneOffset.UTC
-          ) -> ("employee2", "employee5")
+          ZonedDateTime
+            .of(
+              LocalDateTime.of(2018, 12, 27, 11, 0),
+              ZoneOffset.UTC
+            )
+            .toInstant -> ("employee1", "employee2"),
+          ZonedDateTime
+            .of(
+              LocalDateTime.of(2019, 1, 3, 11, 0),
+              ZoneOffset.UTC
+            )
+            .toInstant -> ("employee2", "employee4"),
+          ZonedDateTime
+            .of(
+              LocalDateTime.of(2019, 1, 10, 11, 0),
+              ZoneOffset.UTC
+            )
+            .toInstant -> ("employee2", "employee5")
         )
       }
     }
