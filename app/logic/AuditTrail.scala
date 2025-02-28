@@ -14,11 +14,20 @@ object AuditTrail extends Logging {
   val tableName = "AuditTrail"
   val secondaryIndexName = "AuditTrailByUser"
 
+  /* Database item attributes.
+   * Named with a 'j_' prefix to avoid conflicts with DynamoDB reserved keywords.
+   */
+  // AWS account name - used as the partition key for the table
   val accountPartitionKeyName = "j_account"
+  // Timestamp of the access attempt - used as the sort key for the table and for its secondary index
   val timestampSortKeyName = "j_timestamp"
+  // User name - indexed attribute
   val userNameAttrName = "j_username"
+  // TTL of the granted session, in seconds
   val durationAttrName = "j_duration"
+  // Access role requested
   val accessLevelAttrName = "j_accessLevel"
+  // Whether access request was for AWS console or credentials for local use
   val accessTypeAttrName = "j_accessType"
   val isExternalAttrName = "j_external"
 
