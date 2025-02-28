@@ -30,7 +30,10 @@ object AuditTrailDB {
       .tableName(tableName)
       .keyConditions(
         Map(
-          attrEqualCondition(accountPartitionKeyName, AttributeValue.fromS(account)),
+          attrEqualCondition(
+            accountPartitionKeyName,
+            AttributeValue.fromS(account)
+          ),
           dateRangeCondition(startDate, endDate)
         ).asJava
       )
