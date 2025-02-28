@@ -14,8 +14,8 @@ object AuditTrail extends Logging {
   val tableName = "AuditTrail"
   val secondaryIndexName = "AuditTrailByUser"
 
-  val partitionKeyName = "j_account"
-  val sortKeyName = "j_timestamp"
+  val accountPartitionKeyName = "j_account"
+  val timestampSortKeyName = "j_timestamp"
   val userNameAttrName = "j_username"
   val durationAttrName = "j_duration"
   val accessLevelAttrName = "j_accessLevel"
@@ -48,11 +48,11 @@ object AuditTrail extends Logging {
     def fromAuditLog(auditLog: AuditLog): AuditLogDbEntryAttrs =
       AuditLogDbEntryAttrs(
         partitionKey =
-          partitionKeyName -> AttributeValue.fromS(auditLog.account),
+          accountPartitionKeyName -> AttributeValue.fromS(auditLog.account),
         sortKey = {
           val accessTime =
             auditLog.dateTime.withZone(DateTimeZone.UTC).getMillis
-          sortKeyName -> AttributeValue.fromN(accessTime.toString)
+          timestampSortKeyName -> AttributeValue.fromN(accessTime.toString)
         },
         userName = userNameAttrName -> AttributeValue.fromS(auditLog.username),
         sessionDuration = durationAttrName -> AttributeValue.fromN(
@@ -115,13 +115,13 @@ object AuditTrail extends Logging {
       attrs: Map[String, AttributeValue]
   ): Either[(String, Map[String, AttributeValue]), AuditLog] = {
     for {
-      account <- stringValue(attrs, partitionKeyName).toRight(
+      account <- stringValue(attrs, accountPartitionKeyName).toRight(
         "Could not extract account" -> attrs
       )
       username <- stringValue(attrs, userNameAttrName).toRight(
         "Could not extract username" -> attrs
       )
-      dateTime <- longValue(attrs, sortKeyName)
+      dateTime <- longValue(attrs, timestampSortKeyName)
         .map(ts => new DateTime(ts, DateTimeZone.UTC))
         .toRight("Could not extract dateTime" -> attrs)
       duration <- longValue(attrs, durationAttrName)

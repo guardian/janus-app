@@ -59,8 +59,8 @@ class AuditTrailTest
     "sets up other attributes with db fieldnames" in {
       val attrs = AuditLogDbEntryAttrs.fromAuditLog(al)
       attrs.toMap shouldEqual Map(
-        partitionKeyName -> AttributeValue.fromS("account"),
-        sortKeyName -> AttributeValue.fromN(1446650520000L.toString),
+        accountPartitionKeyName -> AttributeValue.fromS("account"),
+        timestampSortKeyName -> AttributeValue.fromN(1446650520000L.toString),
         userNameAttrName -> AttributeValue.fromS("username"),
         durationAttrName -> AttributeValue.fromN(3600.toString),
         accessLevelAttrName -> AttributeValue.fromS("accessLevel"),
@@ -80,9 +80,9 @@ class AuditTrailTest
   "auditLogFromAttrs" - {
     "given valid attributes" - {
       val attrs = Map(
-        partitionKeyName -> AttributeValue.fromS("account"),
+        accountPartitionKeyName -> AttributeValue.fromS("account"),
         userNameAttrName -> AttributeValue.fromS("username"),
-        sortKeyName -> AttributeValue.fromN("1446650520000"),
+        timestampSortKeyName -> AttributeValue.fromN("1446650520000"),
         durationAttrName -> AttributeValue.fromN("3600"),
         accessLevelAttrName -> AttributeValue.fromS("dev"),
         accessTypeAttrName -> AttributeValue.fromS("console"),
@@ -113,7 +113,7 @@ class AuditTrailTest
       val attrs = Map(
         // missing account
         userNameAttrName -> AttributeValue.fromS("username"),
-        sortKeyName -> AttributeValue.fromN("1446650520000"),
+        timestampSortKeyName -> AttributeValue.fromN("1446650520000"),
         durationAttrName -> AttributeValue.fromN("3600"),
         accessLevelAttrName -> AttributeValue.fromS("dev"),
         accessTypeAttrName -> AttributeValue.fromS("console"),

@@ -68,24 +68,24 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
       .keySchema(
         KeySchemaElement
           .builder()
-          .attributeName(AuditTrail.partitionKeyName)
+          .attributeName(AuditTrail.accountPartitionKeyName)
           .keyType(HASH)
           .build(),
         KeySchemaElement
           .builder()
-          .attributeName(AuditTrail.sortKeyName)
+          .attributeName(AuditTrail.timestampSortKeyName)
           .keyType(RANGE)
           .build()
       )
       .attributeDefinitions(
         AttributeDefinition
           .builder()
-          .attributeName(AuditTrail.partitionKeyName)
+          .attributeName(AuditTrail.accountPartitionKeyName)
           .attributeType(S)
           .build(),
         AttributeDefinition
           .builder()
-          .attributeName(AuditTrail.sortKeyName)
+          .attributeName(AuditTrail.timestampSortKeyName)
           .attributeType(N)
           .build(),
         AttributeDefinition
@@ -106,7 +106,7 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
               .build(),
             KeySchemaElement
               .builder()
-              .attributeName(AuditTrail.sortKeyName)
+              .attributeName(AuditTrail.timestampSortKeyName)
               .keyType(RANGE)
               .build()
           )

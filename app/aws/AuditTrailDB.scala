@@ -30,7 +30,7 @@ object AuditTrailDB {
       .tableName(tableName)
       .keyConditions(
         Map(
-          attrCondition(partitionKeyName, AttributeValue.fromS(account)),
+          attrCondition(accountPartitionKeyName, AttributeValue.fromS(account)),
           dateRangeCondition(startDate, endDate)
         ).asJava
       )
@@ -73,7 +73,7 @@ object AuditTrailDB {
       startDate: DateTime,
       endDate: DateTime
   ): (String, Condition) = {
-    sortKeyName -> Condition
+    timestampSortKeyName -> Condition
       .builder()
       .comparisonOperator(BETWEEN)
       .attributeValueList(
