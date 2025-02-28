@@ -30,7 +30,7 @@ object AuditTrailDB {
       .tableName(tableName)
       .keyConditions(
         Map(
-          attrCondition(accountPartitionKeyName, AttributeValue.fromS(account)),
+          attrEqualCondition(accountPartitionKeyName, AttributeValue.fromS(account)),
           dateRangeCondition(startDate, endDate)
         ).asJava
       )
@@ -50,7 +50,7 @@ object AuditTrailDB {
       .indexName(secondaryIndexName)
       .keyConditions(
         Map(
-          attrCondition(userNameAttrName, AttributeValue.fromS(username)),
+          attrEqualCondition(userNameAttrName, AttributeValue.fromS(username)),
           dateRangeCondition(startDate, endDate)
         ).asJava
       )
@@ -59,7 +59,7 @@ object AuditTrailDB {
     queryResult(dynamoDB, request)
   }
 
-  private def attrCondition(
+  private def attrEqualCondition(
       attrName: String,
       attrValue: AttributeValue
   ) =
