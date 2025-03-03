@@ -1,7 +1,7 @@
 package data
 
-import awscala._
 import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.policy.Iam._
 
 object Policies {
   val revokeAccess = Policy(
