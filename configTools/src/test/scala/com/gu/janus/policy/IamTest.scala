@@ -162,6 +162,42 @@ class IamTest extends AnyFreeSpec with Matchers {
       statementWithConditions.asJson.spaces2 shouldBe expected
     }
 
+    "should encode statement with multiple conditions of same type correctly" in {
+      val statementWithConditions = basicStatement.copy(
+        conditions = List(
+          Condition("aws:SourceIp", "StringEquals", List("203.0.113.0/24")),
+          Condition(
+            "aws:TokenIssueTime",
+            "StringEquals",
+            List("2025-02-27T09:33:01.000Z")
+          )
+        )
+      )
+
+      val expected = """{
+                       |  "Effect" : "Allow",
+                       |  "Action" : [
+                       |    "iam:PutRolePolicy",
+                       |    "iam:getRole"
+                       |  ],
+                       |  "Resource" : [
+                       |    "*"
+                       |  ],
+                       |  "Condition" : {
+                       |    "StringEquals" : {
+                       |      "aws:SourceIp" : [
+                       |        "203.0.113.0/24"
+                       |      ],
+                       |      "aws:TokenIssueTime" : [
+                       |        "2025-02-27T09:33:01.000Z"
+                       |      ]
+                       |    }
+                       |  }
+                       |}""".stripMargin
+
+      statementWithConditions.asJson.spaces2 shouldBe expected
+    }
+
     "should encode statement with single principal correctly" in {
       val statementWithPrincipal = basicStatement.copy(principals =
         List(Principal("AROAXXXXXXXXXXXXXXX1", "AWS"))
