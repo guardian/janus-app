@@ -4,8 +4,9 @@
 @import logic.Date.formatDuration
 @import com.gu.janus.model.{AwsAccountAccess, JanusData}
 @import models.DisplayMode
+@import play.api.Mode
 
-@(accountAccesses: List[AwsAccountAccess], user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, assetsFinder: AssetsFinder)
+@(accountAccesses: List[AwsAccountAccess], user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Your permissions", Some(user), janusData, displayMode) {
     <div class="container">

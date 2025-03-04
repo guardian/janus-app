@@ -1,7 +1,8 @@
 @import com.gu.janus.model.{AwsAccount, JanusData}
 @import com.gu.googleauth.UserIdentity
+@import play.api.Mode
 
-@(accountOpt: Option[AwsAccount], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, assetsFinder: AssetsFinder)
+@(accountOpt: Option[AwsAccount], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Access revoked", Some(user), janusData) {
     <div class="container">

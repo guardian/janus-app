@@ -17,9 +17,9 @@
                     @if(allowFavs) {
                         <button name="account" value="@accountAccess.awsAccount.authConfigKey" class="right card-content--aws-account-header__button--favourite">
                             @if(accountAccess.isFavourite) {
-                                <i class="small material-icons">star</i>
+                                <i class="small material-icons star">star</i>
                             } else {
-                                <i class="small material-icons">star_border</i>
+                                <i class="small material-icons star">star_border</i>
                             }
                         </button>
                     }
@@ -54,8 +54,10 @@
                                 </a>
                                 @if(!permission.shortTerm) {
                                     <div class="multi-select__container right">
-                                        <input class="multi-select__checkbox" type="checkbox" name="@permission.id" id="@permission.id" data-permission-id="@permission.id">
-                                        <label for="@permission.id" class="multi-select__label"></label>
+                                        <label class="multi-select__label">
+                                            <input class="multi-select__checkbox" type="checkbox" name="@permission.id" id="@permission.id" data-permission-id="@permission.id">
+                                            <span></span>
+                                        </label>
                                     </div>
                                 }
                             </div>
