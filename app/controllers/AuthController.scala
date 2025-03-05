@@ -2,6 +2,7 @@ package controllers
 
 import com.gu.googleauth.{GoogleAuthConfig, GoogleGroupChecker, LoginSupport}
 import com.gu.janus.model.JanusData
+import play.api.Mode
 import play.api.libs.ws.WSClient
 import play.api.mvc._
 
@@ -16,6 +17,7 @@ class AuthController(
 )(implicit
     val wsClient: WSClient,
     ec: ExecutionContext,
+    mode: Mode,
     assetsFinder: AssetsFinder
 ) extends AbstractController(controllerComponents)
     with LoginSupport {
