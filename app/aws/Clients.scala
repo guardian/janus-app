@@ -3,6 +3,7 @@ package aws
 import software.amazon.awssdk.auth.credentials._
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.ssm.SsmClient
 import software.amazon.awssdk.services.sts.StsClient
 
 import java.net.URI
@@ -26,6 +27,12 @@ object Clients {
       .credentialsProvider(credentialsProviderChain)
       .region(EU_WEST_1)
       .build()
+
+  lazy val ssm: SsmClient = SsmClient
+    .builder()
+    .credentialsProvider(credentialsProviderChain)
+    .region(EU_WEST_1)
+    .build()
 
   def localDb: DynamoDbClient =
     DynamoDbClient
