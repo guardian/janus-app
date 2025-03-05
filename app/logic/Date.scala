@@ -114,11 +114,10 @@ object Date {
     if (d1.compareTo(d2) < 0) d1 else d2
   }
 
-  def displayMode(today: Instant): DisplayMode = {
-    val date = today.atZone(UTC)
-    if (date.getDayOfMonth == 31 && date.getMonthValue == 10) Spooky
+  def displayMode(today: ZonedDateTime): DisplayMode = {
+    if (today.getDayOfMonth == 31 && today.getMonthValue == 10) Spooky
     else if (
-      (20 to 26).contains(date.getDayOfMonth) && date.getMonthValue == 12
+      (20 to 26).contains(today.getDayOfMonth) && today.getMonthValue == 12
     ) Festive
     else Normal
   }

@@ -30,8 +30,7 @@ class Janus(
   import logic.UserAccess._
 
   def index = authAction { implicit request =>
-    val displayMode =
-      Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")).toInstant)
+    val displayMode = Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
     (for {
       permissions <- userAccess(username(request.user), janusData.access)
       favourites = Favourites.fromCookie(request.cookies.get("favourites"))
