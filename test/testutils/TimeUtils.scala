@@ -1,16 +1,14 @@
 package testutils
 
-import java.time.{Clock, ZoneId, ZonedDateTime}
+import java.time.{ZoneId, ZonedDateTime}
 
 trait TimeUtils {
   def withSystemTime[T](hour: Int, minute: Int, zoneId: Option[ZoneId] = None)(
-      block: Option[Clock] => T
+      block: Option[ZonedDateTime] => T
   ): T = {
-    val clock = zoneId.map { zone =>
-      val instant =
-        ZonedDateTime.now(zone).withHour(hour).withMinute(minute).toInstant
-      Clock.fixed(instant, zone)
+    val time = zoneId.map { zone =>
+      ZonedDateTime.now(zone).withHour(hour).withMinute(minute)
     }
-    block(clock)
+    block(time)
   }
 }

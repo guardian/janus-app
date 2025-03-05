@@ -7,8 +7,8 @@ import com.gu.janus.model._
 import conf.Config
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
-import play.api.{Configuration, Logging, Mode}
 import play.api.mvc._
+import play.api.{Configuration, Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.model.Credentials
@@ -30,7 +30,8 @@ class Janus(
   import logic.UserAccess._
 
   def index = authAction { implicit request =>
-    val displayMode = Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
+    val displayMode =
+      Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
     (for {
       permissions <- userAccess(username(request.user), janusData.access)
       favourites = Favourites.fromCookie(request.cookies.get("favourites"))
@@ -224,7 +225,7 @@ class Janus(
       duration = Federation.duration(
         permission,
         requestedDuration,
-        tzOffset.map(Clock.system)
+        tzOffset.map(ZonedDateTime.now)
       )
       roleArn = Config.roleArn(permission.account.authConfigKey, configuration)
       credentials = Federation.assumeRole(

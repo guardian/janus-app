@@ -45,11 +45,11 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
           hour = 18,
           minute = 30,
           zoneId = Some(UTC)
-        ) { clock =>
+        ) { time =>
           duration(
             permission,
             None,
-            clock
+            time
           ) shouldEqual defaultShortTime
         }
       }
@@ -83,11 +83,11 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
           hour = 3,
           minute = 0,
           zoneId = Some(UTC)
-        ) { clock =>
+        ) { time =>
           duration(
             permission,
             None,
-            clock
+            time
           ) shouldEqual defaultLongTime
         }
 
@@ -95,11 +95,11 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
           hour = 21,
           minute = 0,
           zoneId = Some(UTC)
-        ) { clock =>
+        ) { time =>
           duration(
             permission,
             None,
-            clock
+            time
           ) shouldEqual defaultLongTime
         }
 
@@ -107,44 +107,44 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
           hour = 10,
           minute = 0,
           zoneId = Some(UTC)
-        ) { clock =>
-          duration(permission, None, clock) shouldEqual 9.hours
+        ) { time =>
+          duration(permission, None, time) shouldEqual 9.hours
         }
 
         "and no timezone is supplied, provides the default time, even near 19:00" in withSystemTime(
           hour = 15,
           minute = 0,
           zoneId = None
-        ) { clock =>
-          duration(permission, None, clock) shouldEqual defaultLongTime
+        ) { time =>
+          duration(permission, None, time) shouldEqual defaultLongTime
         }
 
         "and we're quite near 19:00 with a TZ, give the remaining period" in withSystemTime(
           hour = 15,
           minute = 0,
           zoneId = Some(UTC)
-        ) { clock =>
-          duration(permission, None, clock) shouldEqual 4.hours
+        ) { time =>
+          duration(permission, None, time) shouldEqual 4.hours
         }
 
         "and we're *very* near 19:00 with a TZ, give the remaining period" ignore withSystemTime(
           hour = 18,
           minute = 30,
           zoneId = Some(UTC)
-        ) { clock =>
+        ) { time =>
           // do we need special logic near 19:00 so people don't get pointless perms?
-          duration(permission, None, clock) shouldEqual 4.hours
+          duration(permission, None, time) shouldEqual 4.hours
         }
 
         "uses the provided timezone to calculate the correct duration" in withSystemTime(
           hour = 15,
           minute = 0,
           zoneId = Some(ZoneOffset.ofHours(1))
-        ) { clock =>
+        ) { time =>
           duration(
             permission,
             None,
-            clock
+            time
           ) shouldEqual 4.hours
         }
       }
