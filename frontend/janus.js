@@ -15,12 +15,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const dropdownInstances = M.Dropdown.init(dropdownElems);  
     const tooltipElems = document.querySelectorAll('.tooltipped');
     const instances = M.Tooltip.init(tooltipElems);
-
-    const auditContainer = document.querySelectorAll('.container.audit');
-    if (auditContainer.length) {
-        const dateForm = document.getElementById('audit-form');
-        document.getElementById('audit-submit').on('change',() => dateForm.submit());
-    }    
   });
 
 jQuery(function($){
