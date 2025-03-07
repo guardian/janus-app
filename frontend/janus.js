@@ -19,18 +19,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // aws-profile-name
     if (document.querySelectorAll('.editable-aws-profile').length) {
-        var profileIdContainers = document.querySelectorAll('.editable-aws-profile .aws-profile-id');
+        const profileIdContainers = document.querySelectorAll('.editable-aws-profile .aws-profile-id');
 
         document.getElementById('aws-profile-id').addEventListener('keyup', function() {
-            var input = this;
+            const input = this;
             profileIdContainers.forEach(function(el) {
-                var lines;
+                let lines;
                 if (el.tagName === "TEXTAREA") {
                     lines = el.value.split("\n");
                 } else {
                     lines = el.innerText.split("\n");
                 }
-                var replaced = lines.map(function(line) {
+                const replaced = lines.map(function(line) {
                     return line.replace(/--profile [a-zA-Z0-9\-]*/, "--profile " + input.value);
                 });
                 if (el.tagName === "TEXTAREA") {
@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // copy-text
     document.querySelectorAll(".copy-text--button").forEach(function(button) {
-        var container = button.closest(".copy-textarea"),
+        const container = button.closest(".copy-textarea"),
             target = container.querySelector("textarea"),
             defaultIcon = container.querySelector(".copy-text--default"),
             confirmationIcon = container.querySelector(".copy-text--confirm"),
@@ -73,11 +73,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // index page controls are fixed until user scrolls to footer
     document.querySelectorAll('.controls__hero').forEach(function(container) {
-        var win = window,
+        const win = window,
             controlContainer = document.querySelector('.controls__hero'),
             footer = document.querySelector('footer'),
             recalculate = function() {
-                var lowestVisiblePixel = win.scrollY + win.innerHeight,
+                const lowestVisiblePixel = win.scrollY + win.innerHeight,
                     footerPosition = footer.getBoundingClientRect().top + win.scrollY;
 
                 if (lowestVisiblePixel > footerPosition) {
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // allow user to simultaneously obtain credentials from multiple accounts
     document.querySelectorAll(".multiple-credentials-control__container").forEach(function(container) {
-        var checkboxes = document.querySelectorAll(".multi-select__checkbox"),
+        const checkboxes = document.querySelectorAll(".multi-select__checkbox"),
             singleCredentialsLinks = document.querySelectorAll(".federation__link--credentials"),
             activeContainer = document.querySelector(".multiple-credentials-control--active"),
             inactiveContainer = document.querySelector(".multiple-credentials-control--inactive"),
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
             accountContainers = document.querySelectorAll(".card--aws-account"),
             clearButton = document.querySelector(".multiple-credentials-control--clear"),
             updateLink = function(permissions) {
-                var link = document.querySelector(".multiple-credentials__link"),
+                const link = document.querySelector(".multiple-credentials__link"),
                     hasPermissions = link.href.indexOf("permissionIds=") !== -1,
                     permissionStr = permissions.join(",");
                 if (hasPermissions) {
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             },
             updateSelection = function(event) {
-                var checked = Array.from(checkboxes).filter(function(checkbox) {
+                const checked = Array.from(checkboxes).filter(function(checkbox) {
                         return checkbox.checked;
                     }),
                     permissions = checked.map(function(checkbox) {
@@ -192,17 +192,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     // add timezone to federation links
     document.querySelectorAll(".federation__link").forEach(function(el) {
-        var link = el,
+        const link = el,
             tzOffset = (new Date().getTimezoneOffset() * -1) / 60;
         link.href = link.href + "&tzOffset=" + tzOffset;
     });
     // login lease time
     document.querySelectorAll(".login-duration__container").forEach(function(container) {
-        var defaultLongDurationLink = document.querySelector(".dropdown-time__link--default[data-length=standard]"),
+        const defaultLongDurationLink = document.querySelector(".dropdown-time__link--default[data-length=standard]"),
             links = container.querySelectorAll(".time-link"),
             maxLongDuration = document.querySelector(".dropdown-time__link--max[data-length=standard]").dataset.duration,
             endOfWorkSeconds = (function() {
-                var ms,
+                let ms,
                     endOfWork = new Date();
                 endOfWork.setHours(19);
                 endOfWork.setMinutes(0);
@@ -216,9 +216,9 @@ document.addEventListener('DOMContentLoaded', function() {
             })(),
             msToEndOfWork = endOfWorkSeconds - Date.now(),
             updateHrefDurations = function(duration, shortTerm) {
-                var selector = ".federation__link--" + (shortTerm ? "short" : "standard");
+                const selector = ".federation__link--" + (shortTerm ? "short" : "standard");
                 document.querySelectorAll(selector).forEach(function(link) {
-                    var hasDuration = link.href.indexOf("duration=") !== -1;
+                    const hasDuration = link.href.indexOf("duration=") !== -1;
                     if (hasDuration) {
                         link.href = link.href.replace(/duration=[^&]*/, "duration=" + duration);
                     } else {
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // remove wallclock option if we're too far from 19:00
         if (msToEndOfWork > maxLongDuration) {
-            var walltimeSelector = document.querySelector(".dropdown-time__link--walltime[data-length=standard]");
+            const walltimeSelector = document.querySelector(".dropdown-time__link--walltime[data-length=standard]");
             walltimeSelector.closest(".login-duration__header").querySelector(".dropdown-trigger").textContent = defaultLongDurationLink.textContent;
             walltimeSelector.remove();
         }
@@ -258,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // local times
     document.querySelectorAll(".local-date").forEach(function(el) {
-        var dateSpan = el,
+        const dateSpan = el,
             datestamp = dateSpan.getAttribute("data-date"),
             pad = function(n, width, char) {
                 char = char || '0';
@@ -266,14 +266,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 return n.length >= width ? n : new Array(width - n.length + 1).join(char) + n;
             };
         if (datestamp) {
-            var d = new Date(Date.parse(datestamp));
+            const d = new Date(Date.parse(datestamp));
             dateSpan.textContent = pad(d.getHours(), 2) + ":" + pad(d.getMinutes(), 2) + ":" + pad(d.getSeconds(), 2);
         }
     });
     // adjust for windows OS
     document.querySelectorAll(".textarea--code.aws-profile-id").forEach(function(el) {
         if (navigator.userAgent.includes("Win")) { // TODO: test this change in Windows
-            var winCmd = el.value.replace(/\\\n/g, "^\n").replace(/^ /mg, "");
+            const winCmd = el.value.replace(/\\\n/g, "^\n").replace(/^ /mg, "");
             el.value = winCmd;
         }
     });
