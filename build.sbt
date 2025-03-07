@@ -28,7 +28,8 @@ lazy val commonSettings = Seq(
     "-feature",
     "-unchecked",
     "-release:11",
-    "-Xfatal-warnings"
+    "-Xfatal-warnings",
+    "-Xsource:3"
   ),
   Test / testOptions ++= Seq(
     Tests.Argument(TestFrameworks.ScalaTest, "-o"),
