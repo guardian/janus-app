@@ -3,13 +3,14 @@ package controllers
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import logic.Owners
+import play.api.Mode
 import play.api.mvc._
 
 class Utility(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent]
-)(implicit assetsFinder: AssetsFinder)
+)(implicit mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents) {
 
   def healthcheck = Action {

@@ -1,8 +1,9 @@
 @import com.gu.janus.model.{AuditLog, JConsole, JanusData}
 @import com.gu.googleauth.UserIdentity
 @import org.joda.time.DateTime
+@import play.api.Mode
 
-@(auditLogs: Seq[scala.Either[String, AuditLog]], key: Either[String, String], startDate: DateTime, prevNextWeeks: (Option[DateTime], Option[DateTime]), user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, assetsFinder: AssetsFinder)
+@(auditLogs: Seq[scala.Either[String, AuditLog]], key: Either[String, String], startDate: DateTime, prevNextWeeks: (Option[DateTime], Option[DateTime]), user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @import logic.Date.{formatDateTime, formatDate, formatDuration, rawDate}
 @import helper._
@@ -96,12 +97,13 @@
                 }
             </div>
             <div class="col m4 s12">
-                <form action="" method="post">
+                <form action="" method="post" id="audit-form">
                     @CSRF.formField
                     <div class="file-field input-field">
                         <div class="file-path-wrapper">
-                            <input type="date" name="audit-date" class="datepicker audit-log" placeholder="Jump to date">
+                            <input type="date" name="audit-date" id="datepicker-audit" class="datepicker audit-log" min="2015-10-02" max="@rawDate(new org.joda.time.DateTime())">
                         </div>
+                        <button type="submit" class="btn" id="audit-submit" form="audit-form">Submit</button>
                     </div>
                 </form>
             </div>

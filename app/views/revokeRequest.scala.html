@@ -1,7 +1,8 @@
 @import com.gu.janus.model.{AwsAccount, JanusData}
 @import com.gu.googleauth.UserIdentity
+@import play.api.Mode
 
-@(account: AwsAccount, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, flash: Flash, assetsFinder: AssetsFinder)
+@(account: AwsAccount, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, flash: Flash, mode: Mode, assetsFinder: AssetsFinder)
 
 @import helper._
 

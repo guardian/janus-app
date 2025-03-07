@@ -1,15 +1,14 @@
 package com.example
 
-import awscala.{Action, Resource, Statement}
-import com.amazonaws.auth.policy.Statement.Effect
 import com.example.Accounts.{Production, Root, Security}
 import com.gu.janus.model.Permission
+import com.gu.janus.policy.Iam.{Action, Effect, Resource, Statement}
 import com.gu.janus.policy.Statements.{policy, s3ReadAccess}
 
 /** These are policies that apply to specific resources in fixed accounts,
-  * rather than general permission to be re-used everywhere. Separated for
-  * clarity.
-  */
+ * rather than general permission to be re-used everywhere. Separated for
+ * clarity.
+ */
 object BespokePolicies {
   val securityCloudtrailLogs = Set(
     Permission(
@@ -30,13 +29,13 @@ object BespokePolicies {
   )
 
   /** Service Control Polices (SCPs) are part of AWS Organisations, read about
-    * the features here:
-    * https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html
-    *
-    * You can only manage policies within the account that administers your AWS
-    * Organisation This policy will give a user the required permissions to
-    * manage SCPs.
-    */
+   * the features here:
+   * https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html
+   *
+   * You can only manage policies within the account that administers your AWS
+   * Organisation This policy will give a user the required permissions to
+   * manage SCPs.
+   */
   val serviceControlPolicyManagement = Set(
     Permission(
       Root,

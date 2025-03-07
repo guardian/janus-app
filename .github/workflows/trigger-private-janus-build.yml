@@ -29,7 +29,7 @@ jobs:
       - name: Install Node
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
         with: 
-          node-version: '22' # Ensure this matches the version in Janus: https://github.com/guardian/janus/blob/main/.nvmrc
+          node-version-file: '.nvmrc'
           cache: 'npm'
           cache-dependency-path: 'frontend/package-lock.json'
 
@@ -70,7 +70,7 @@ jobs:
       run: echo START_TIME=$(date "+%Y-%m-%dT%H:%M:%S") >> $GITHUB_ENV
 
     - name: Exchange GitHub App for GitHub Token
-      uses: actions/create-github-app-token@0d564482f06ca65fa9e77e2510873638c82206f2 # v1.11.5
+      uses: actions/create-github-app-token@21cfef2b496dd8ef5b904c159339626a10ad380e # v1.11.6
       id: app-token
       with:
         # These values are for the GitHub App guardian-janus-ci
@@ -122,7 +122,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
     - name: Exchange GitHub App for GitHub Token
-      uses: actions/create-github-app-token@0d564482f06ca65fa9e77e2510873638c82206f2 # v1.11.5
+      uses: actions/create-github-app-token@21cfef2b496dd8ef5b904c159339626a10ad380e # v1.11.6
       id: app-token
       with:
         # These values are for the GitHub App guardian-janus-ci

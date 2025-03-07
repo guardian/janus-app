@@ -1,7 +1,7 @@
 package fixtures
 
-import awscala.Policy
 import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.policy.Iam.Policy
 
 object Fixtures {
   val fooAct = AwsAccount("Foo", "foo")
