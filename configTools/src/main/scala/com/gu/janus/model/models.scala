@@ -2,7 +2,8 @@ package com.gu.janus.model
 
 import com.gu.janus.policy.Iam.Policy
 import io.circe.syntax.EncoderOps
-import org.joda.time._
+
+import java.time.{Duration, Instant}
 
 case class JanusData(
     accounts: Set[AwsAccount],
@@ -17,9 +18,9 @@ case class ACL(
     defaultPermissions: Set[Permission] = Set.empty
 )
 case class SupportACL private (
-    rota: Map[DateTime, (String, String)],
+    rota: Map[Instant, (String, String)],
     supportAccess: Set[Permission],
-    supportPeriod: Seconds
+    supportPeriod: Duration
 )
 object SupportACL {
 
@@ -27,19 +28,14 @@ object SupportACL {
     * representation.
     */
   def create(
-      rota: Map[DateTime, (String, String)],
+      rota: Map[Instant, (String, String)],
       supportAccess: Set[Permission],
-      supportPeriod: Period
-  ): SupportACL = {
-    val rotaWithNormalisedTimezones = rota.map { case (dt, a) =>
-      dt.withZone(DateTimeZone.UTC) -> a
-    }
-    new SupportACL(
-      rotaWithNormalisedTimezones,
-      supportAccess,
-      supportPeriod.toStandardSeconds
-    )
-  }
+      supportPeriod: Duration
+  ): SupportACL = new SupportACL(
+    rota,
+    supportAccess,
+    supportPeriod
+  )
 }
 
 case class AwsAccount(
@@ -106,7 +102,7 @@ object JanusAccessType {
 case class AuditLog(
     account: String,
     username: String,
-    dateTime: DateTime,
+    instant: Instant,
     duration: Duration,
     accessLevel: String,
     accessType: JanusAccessType,
