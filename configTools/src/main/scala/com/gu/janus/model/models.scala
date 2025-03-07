@@ -16,7 +16,7 @@ case class ACL(
     userAccess: Map[String, Set[Permission]],
     defaultPermissions: Set[Permission] = Set.empty
 )
-case class SupportACL private (
+private case class SupportACL(
     rota: Map[DateTime, (String, String)],
     supportAccess: Set[Permission],
     supportPeriod: Seconds
