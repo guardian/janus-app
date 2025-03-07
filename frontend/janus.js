@@ -1,16 +1,29 @@
+import jQuery from 'jquery';
+import 'materialize-css';
+import { Datepicker } from 'materialize-css';
+
+document.addEventListener('DOMContentLoaded', function() {
+    //Initialise Materialize elements
+    const sidenavElems = document.querySelectorAll('.sidenav');
+    const sidenavInstances = M.Sidenav.init(sidenavElems);
+    const modalElems = document.querySelectorAll('.modal');
+    const modalInstances = M.Modal.init(modalElems);
+    M.updateTextFields();
+    const collapsibleElems = document.querySelectorAll('.collapsible');
+    const collapsibleInstances = M.Collapsible.init(collapsibleElems);
+    const dropdownElems = document.querySelectorAll('.dropdown-trigger');
+    const dropdownInstances = M.Dropdown.init(dropdownElems);  
+    const tooltipElems = document.querySelectorAll('.tooltipped');
+    const instances = M.Tooltip.init(tooltipElems);
+  });
+
 jQuery(function($){
     "use strict";
-
-    // materialize setup
-    $('.button-collapse').sideNav();
-    $('.modal').modal();
-    Materialize.updateTextFields();
-
     // aws-profile-name
     if ($('.editable-aws-profile').length) {
         var profileIdContainers = $('.editable-aws-profile .aws-profile-id');
 
-        $('#aws-profile-id').keyup(function(){
+        $('#aws-profile-id').on('keyup', function(){
             var input = $(this);
             profileIdContainers.each(function(){
                 var el = $(this),
@@ -32,30 +45,6 @@ jQuery(function($){
         });
     }
 
-    // audit log
-    if ($('.container.audit').length) {
-        var dateInput = $('.datepicker.audit-log').pickadate({
-            selectMonths: true,
-            clear: false,
-            format: "dd mmmm, yyyy",
-            formatSubmit: "yyyy-mm-dd",
-            hiddenName: true,
-            min: new Date(2015, 10, 2),
-            max: new Date(),
-            firstDay: true,
-            onSet: function(context) {
-                if (context.select) {
-                    this.$node.parents("form").submit();
-                }
-            }
-        });
-        $('.audit-change-week').click(function(e) {
-            e.stopPropagation();
-            dateInput.focus();
-            dateInput.pickadate('picker').open();
-        });
-    }
-
     // copy-text
     $(".copy-text--button").each(function(_, el){
         var button = $(el),
@@ -64,11 +53,12 @@ jQuery(function($){
             defaultIcon = container.find(".copy-text--default"),
             confirmationIcon = container.find(".copy-text--confirm"),
             warnIcon = container.find(".copy-text--warn");
-        button.click(function(e){
+        button.on('click', function(e){
             e.preventDefault();
             try {
-                target.select();
-                document.execCommand('copy');
+                target.trigger('select');
+                document.execCommand('copy'); // we should replace this with the clipboard function below, see https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand
+                // navigator.clipboard.writeText(target.value); // only works in secure environments, see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/clipboard
                 confirmationIcon.css("display", "inline");
                 defaultIcon.css("display", "none");
                 setTimeout(function () {
@@ -105,8 +95,8 @@ jQuery(function($){
         // enable feature if JS is available
         controlContainer.show();
 
-        win.scroll(recalculate);
-        win.resize(recalculate);
+        win.on('scroll', recalculate);
+        win.on('resize', recalculate);
         recalculate();
     });
 
@@ -178,8 +168,8 @@ jQuery(function($){
                 updateLink(permissions);
             };
         container.show();
-        checkboxes.change(updateSelection);
-        clearButton.click(function() {
+        checkboxes.on('change', updateSelection);
+        clearButton.on('click', function() {
             checkboxes
                 .prop("checked", false)
                 .removeAttr("disabled");
@@ -231,22 +221,22 @@ jQuery(function($){
         // enable feature if JS is available
         links.removeAttr("disabled");
 
-        // add click handlers to time choices
+        // add click handlers to time choices 
         $(".dropdown-time__link").each(function(_, el){
             var link = $(el);
-            link.click(function(e){
+            link.on('click', function(e){
                 e.preventDefault();
                 // update hrefs
                 updateHrefDurations(link.data("duration"), "short" === link.data("length"));
                 // update button text
-                link.parents(".login-duration__header").find(".dropdown-button").text(link.text());
+                link.parents(".login-duration__header").find(".dropdown-trigger").text(link.text());
             });
         });
         // remove wallclock option if we're too far from 19:00
         if (msToEndOfWork > maxLongDuration) {
             var walltimeSelector = $(".dropdown-time__link--walltime[data-length=standard]");
             walltimeSelector
-                .parents(".login-duration__header").find(".dropdown-button")
+                .parents(".login-duration__header").find(".dropdown-trigger")
                 .text(defaultLongDurationLink.text());
             walltimeSelector.remove();
         }
@@ -273,7 +263,7 @@ jQuery(function($){
 
     //adjust for windows OS
     $(".textarea--code.aws-profile-id").each(function(_, el){
-        if (navigator.platform.indexOf("Win") >= 0) {
+        if (navigator.userAgent.includes("Win")) { // TODO: test this change in Windows
             var winCmd = $(el).val().replace(/\\\n/g, "^\n").replace(/^ /mg, "");
             $(el).val(winCmd);
         }
@@ -285,4 +275,5 @@ jQuery(function($){
         const COOKIE__AUTO_LOGOUT = "janus_auto_logout";
         document.cookie = `${COOKIE__AUTO_LOGOUT}=; expires=Thu, 01 Jan 1970 12:00:00 UTC; path=/`;
     }
+
 });

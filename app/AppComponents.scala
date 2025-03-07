@@ -8,7 +8,7 @@ import models._
 import play.api.libs.ws.ahc.AhcWSComponents
 import play.api.mvc.{AnyContent, EssentialFilter}
 import play.api.routing.Router
-import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging}
+import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
 import router.Routes
 import software.amazon.awssdk.regions.Region.EU_WEST_1
@@ -32,6 +32,10 @@ class AppComponents(context: ApplicationLoader.Context)
     if (context.environment.mode == play.api.Mode.Prod)
       DynamoDbClient.builder().region(EU_WEST_1).build()
     else Clients.localDb
+
+  // used by the template to detect development environment
+  // in that situation, it'll load assets directly from npm vs production, where they'll come from the bundled files
+  val mode: Mode = context.environment.mode
 
   val janusData = Config.janusData(configuration)
 
@@ -64,9 +68,10 @@ class AppComponents(context: ApplicationLoader.Context)
       host,
       Clients.stsClient,
       configuration
-    )(dynamodDB, assetsFinder),
+    )(dynamodDB, mode, assetsFinder),
     new Audit(janusData, controllerComponents, authAction)(
       dynamodDB,
+      mode,
       assetsFinder
     ),
     new RevokePermissions(
@@ -75,15 +80,18 @@ class AppComponents(context: ApplicationLoader.Context)
       authAction,
       Clients.stsClient,
       configuration
-    )(assetsFinder),
+    )(mode, assetsFinder),
     new AuthController(
       janusData,
       controllerComponents,
       googleAuthConfig,
       googleGroupChecker,
       requiredGoogleGroups
-    )(wsClient, executionContext, assetsFinder),
-    new Utility(janusData, controllerComponents, authAction)(assetsFinder),
+    )(wsClient, executionContext, mode, assetsFinder),
+    new Utility(janusData, controllerComponents, authAction)(
+      mode,
+      assetsFinder
+    ),
     assets
   )
 }

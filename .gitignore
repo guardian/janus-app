@@ -1,3 +1,12 @@
+import 
+
+# Frontend build files
+
+public/frontend/
+frontend/.parcel-cache
+frontend/dist
+frontend/node_modules/
+
 # Dependency directory
 # https://docs.npmjs.com/misc/faq#should-i-check-my-node-modules-folder-into-git
 node_modules
