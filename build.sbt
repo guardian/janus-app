@@ -1,11 +1,9 @@
 import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 import play.sbt.PlayImport.PlayKeys.*
+import sbt.*
 import sbt.Keys.*
-import sbt.{addCompilerPlugin, *}
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations.*
 import sbtversionpolicy.withsbtrelease.ReleaseVersion
-
-import play.sbt.PlayImport.PlayKeys.playRunHooks
 
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
@@ -21,31 +19,13 @@ val commonDependencies = Seq(
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
   "ch.qos.logback" % "logback-classic" % "1.5.17"
 )
-lazy val sharedScalacOptions = Seq(
-  "-deprecation",
-  "-feature",
-  "-unchecked",
-  "-release:11",
-  "-Xfatal-warnings",
-  "-Xsource:3"
-)
-lazy val scala2Options = sharedScalacOptions ++ Seq("-Xsource:3")
-lazy val scala3Options =
-  sharedScalacOptions ++ Seq("-Xunchecked-java-output-version:8", "-explain")
 lazy val commonSettings = Seq(
-  scalaVersion := "2.13.16",
+  scalaVersion := "3.3.5",
   scalacOptions ++= Seq(
-    "-deprecation",
     "-feature",
-    "-unchecked",
     "-release:11",
-    "-Xfatal-warnings",
-    "-Xsource:3"
+    "-Xfatal-warnings"
   ),
-  scalacOptions ++= {
-    if (scalaVersion.value.startsWith("3.")) scala3Options
-    else scala2Options
-  },
   Test / testOptions ++= Seq(
     Tests.Argument(TestFrameworks.ScalaTest, "-o"),
     Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports")
@@ -147,20 +127,6 @@ lazy val configTools = (project in file("configTools"))
   .enablePlugins(SbtTwirl)
   .settings(
     commonSettings,
-    libraryDependencies ++= {
-      if (scalaVersion.value.startsWith("3.")) Seq.empty
-      else
-        Seq(
-          compilerPlugin(
-            ("org.typelevel" %% "kind-projector" % "0.13.3")
-              .cross(CrossVersion.full)
-          )
-        )
-    },
-    scalacOptions ++= {
-      if (scalaVersion.value.startsWith("3.")) Seq("-Ykind-projector")
-      else Seq.empty
-    },
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.3",
       "io.circe" %% "circe-core" % circeVersion,
