@@ -21,6 +21,17 @@ val commonDependencies = Seq(
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
   "ch.qos.logback" % "logback-classic" % "1.5.17"
 )
+lazy val sharedScalacOptions = Seq(
+  "-deprecation",
+  "-feature",
+  "-unchecked",
+  "-release:11",
+  "-Xfatal-warnings",
+  "-Xsource:3"
+)
+lazy val scala2Options = sharedScalacOptions ++ Seq("-Xsource:3")
+lazy val scala3Options =
+  sharedScalacOptions ++ Seq("-Xunchecked-java-output-version:8", "-explain")
 lazy val commonSettings = Seq(
   scalaVersion := "2.13.16",
   scalacOptions ++= Seq(
@@ -31,6 +42,10 @@ lazy val commonSettings = Seq(
     "-Xfatal-warnings",
     "-Xsource:3"
   ),
+  scalacOptions ++= {
+    if (scalaVersion.value.startsWith("3.")) scala3Options
+    else scala2Options
+  },
   Test / testOptions ++= Seq(
     Tests.Argument(TestFrameworks.ScalaTest, "-o"),
     Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports")
