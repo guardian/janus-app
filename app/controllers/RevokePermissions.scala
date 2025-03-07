@@ -10,6 +10,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import play.api.{Configuration, Logging, Mode}
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents}
 import software.amazon.awssdk.services.sts.StsClient
+import play.api.mvc
 
 class RevokePermissions(
     janusData: JanusData,
@@ -21,12 +22,12 @@ class RevokePermissions(
     extends AbstractController(controllerComponents)
     with Logging {
 
-  def revoke = authAction { implicit request =>
+  def revoke: mvc.Action[AnyContent] = authAction { implicit request =>
     val sortedAccounts = janusData.accounts.toList.sortBy(_.name.toLowerCase)
     Ok(views.html.revoke(sortedAccounts, request.user, janusData))
   }
 
-  def revokeRequest(accountId: String) = authAction { implicit request =>
+  def revokeRequest(accountId: String): mvc.Action[AnyContent] = authAction { implicit request =>
     (for {
       account <- janusData.accounts.find(accountId == _.authConfigKey)
     } yield {
@@ -45,7 +46,7 @@ class RevokePermissions(
     }
   }
 
-  def revokeConfirmation(accountId: Option[String]) = authAction {
+  def revokeConfirmation(accountId: Option[String]): mvc.Action[AnyContent] = authAction {
     implicit request =>
       if (accountId.isEmpty)
         Ok(views.html.revokeConfirmation(None, request.user, janusData))
@@ -69,7 +70,7 @@ class RevokePermissions(
       }
   }
 
-  def revokeAccount(accountId: String) = authAction { implicit request =>
+  def revokeAccount(accountId: String): mvc.Action[AnyContent] = authAction { implicit request =>
     val result = for {
       account <- janusData.accounts
         .find(accountId == _.authConfigKey)

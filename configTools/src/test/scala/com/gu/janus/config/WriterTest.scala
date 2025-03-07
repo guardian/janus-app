@@ -6,8 +6,8 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 class WriterTest extends AnyFreeSpec with Matchers {
-  val account1 = AwsAccount("Test 1", "test1")
-  val account2 = AwsAccount("Test 2", "test2")
+  val account1: AwsAccount = AwsAccount("Test 1", "test1")
+  val account2: AwsAccount = AwsAccount("Test 2", "test2")
 
   "allPermissions" - {
     "returns nothing for an empty JanusData" in {

@@ -4,7 +4,7 @@ import com.gu.janus.model.{AwsAccount, Permission}
 import com.gu.janus.policy.Iam._
 
 object Policies {
-  val revokeAccess = Policy(
+  val revokeAccess: Policy = Policy(
     Seq(
       Statement(
         Effect.Allow,
@@ -16,7 +16,7 @@ object Policies {
       )
     )
   )
-  def revokeAccessPermission(awsAccount: AwsAccount) =
+  def revokeAccessPermission(awsAccount: AwsAccount): Permission =
     Permission(
       awsAccount,
       "revoke-access",

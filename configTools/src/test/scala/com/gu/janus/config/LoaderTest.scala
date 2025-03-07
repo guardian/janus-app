@@ -8,14 +8,15 @@ import org.joda.time.{DateTime, DateTimeZone, Period}
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import com.typesafe.config.Config
 
 class LoaderTest
     extends AnyFreeSpec
     with Matchers
     with RightValues
     with OptionValues {
-  val testConfig = ConfigFactory.load("example.conf")
-  val testConfigWithoutPermissionsRepo =
+  val testConfig: Config = ConfigFactory.load("example.conf")
+  val testConfigWithoutPermissionsRepo: Config =
     ConfigFactory.load("example-without-permissions-repo.conf")
 
   "fromConfig" - {

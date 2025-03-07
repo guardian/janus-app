@@ -28,7 +28,7 @@ class Janus(
   import logic.AccountOrdering._
   import logic.UserAccess._
 
-  def index = authAction { implicit request =>
+  def index: Action[AnyContent] = authAction { implicit request =>
     val displayMode =
       Date.displayMode(DateTime.now(DateTimeZone.forID("Europe/London")))
     (for {
@@ -42,7 +42,7 @@ class Janus(
     }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
   }
 
-  def admin = authAction { implicit request =>
+  def admin: Action[AnyContent] = authAction { implicit request =>
     (for {
       permissions <- userAccess(username(request.user), janusData.admin)
       awsAccountAccess = orderedAccountAccess(permissions)
@@ -54,7 +54,7 @@ class Janus(
     )
   }
 
-  def support = authAction { implicit request =>
+  def support: Action[AnyContent] = authAction { implicit request =>
     val now = DateTime.now()
     val currentSupportUsers = activeSupportUsers(now, janusData.support)
     val supportUsersInNextPeriod = nextSupportUsers(now, janusData.support)
@@ -89,7 +89,7 @@ class Janus(
     )
   }
 
-  def consoleLogin(permissionId: String) = authAction { implicit request =>
+  def consoleLogin(permissionId: String): Action[AnyContent] = authAction { implicit request =>
     (for {
       (credentials, _) <- assumeRole(
         request.user,
@@ -109,7 +109,7 @@ class Janus(
     }
   }
 
-  def consoleUrl(permissionId: String) = authAction { implicit request =>
+  def consoleUrl(permissionId: String): Action[AnyContent] = authAction { implicit request =>
     (for {
       (credentials, permission) <- assumeRole(
         request.user,
@@ -137,7 +137,7 @@ class Janus(
     }
   }
 
-  def credentials(permissionId: String) = authAction { implicit request =>
+  def credentials(permissionId: String): Action[AnyContent] = authAction { implicit request =>
     (for {
       (credentials, permission) <- assumeRole(
         request.user,
@@ -163,7 +163,7 @@ class Janus(
     }
   }
 
-  def multiCredentials(rawPermissionIds: String) = authAction {
+  def multiCredentials(rawPermissionIds: String): Action[AnyContent] = authAction {
     implicit request =>
       val permissionIds = splitQuerystringParam(rawPermissionIds)
       (for {
@@ -189,7 +189,7 @@ class Janus(
       }
   }
 
-  def favourite() = authAction { implicit request =>
+  def favourite(): Action[AnyContent] = authAction { implicit request =>
     (for {
       submission <- request.body.asFormUrlEncoded
       accountSubmission <- submission.get("account")

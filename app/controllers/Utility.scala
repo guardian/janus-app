@@ -13,11 +13,11 @@ class Utility(
 )(implicit mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents) {
 
-  def healthcheck = Action {
+  def healthcheck: Action[AnyContent] = Action {
     Ok("ok")
   }
 
-  def accounts = authAction { implicit request =>
+  def accounts: Action[AnyContent] = authAction { implicit request =>
     val sortedAccounts = janusData.accounts.toList.sortBy(_.name.toLowerCase)
     val owners = sortedAccounts.map(account =>
       account -> Owners.accountOwners(account, janusData.access)
