@@ -131,10 +131,21 @@ lazy val root: Project = (project in file("."))
 lazy val configTools = (project in file("configTools"))
   .enablePlugins(SbtTwirl)
   .settings(
-    addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full
-    ),
     commonSettings,
+    libraryDependencies ++= {
+      if (scalaVersion.value.startsWith("3.")) Seq.empty
+      else
+        Seq(
+          compilerPlugin(
+            ("org.typelevel" %% "kind-projector" % "0.13.3")
+              .cross(CrossVersion.full)
+          )
+        )
+    },
+    scalacOptions ++= {
+      if (scalaVersion.value.startsWith("3.")) Seq("-Ykind-projector")
+      else Seq.empty
+    },
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.3",
       "io.circe" %% "circe-core" % circeVersion,

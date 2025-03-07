@@ -33,7 +33,7 @@ class RevocationTest extends AnyFreeSpec with Matchers with Checkers {
     }
 
     "does not match any incorrect key" in {
-      check(forAll { s: String =>
+      check(forAll { (s: String) =>
         (s.toLowerCase != account.authConfigKey && s.toLowerCase != account.name) ==>
           (checkConfirmation(s, account) == false)
       })
