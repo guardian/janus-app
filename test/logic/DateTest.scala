@@ -81,7 +81,7 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
 
   "parseDateStr" - {
     "should parse a nice date" in {
-      Date.parseDateStr("2015-11-06").value shouldEqual ZonedDateTime
+      Date.parseUtcDateStr("2015-11-06").value shouldEqual ZonedDateTime
         .of(
           LocalDateTime.of(2015, 11, 6, 0, 0),
           UTC
@@ -90,7 +90,7 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
     }
 
     "fails to parse junk" in {
-      Date.parseDateStr("abc") shouldEqual None
+      Date.parseUtcDateStr("abc") shouldEqual None
     }
   }
 

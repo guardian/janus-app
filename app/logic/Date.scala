@@ -92,7 +92,7 @@ object Date {
   /** Parses a date string in the format "yyyy-MM-dd" and if it's valid returns
     * the instant at the start of that date in UTC.
     */
-  def parseDateStr(dateStr: String): Option[Instant] = {
+  def parseUtcDateStr(dateStr: String): Option[Instant] = {
     Try {
       val localDate = LocalDate.parse(dateStr, simpleDateFormatter)
       localDate.atStartOfDay(UTC).toInstant
