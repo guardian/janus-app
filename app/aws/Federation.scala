@@ -42,7 +42,7 @@ object Federation {
   def duration(
       permission: Permission,
       requestedSeconds: Option[Duration] = None,
-      now: Option[ZonedDateTime] = None
+      currentTimeInTimeZone: Option[ZonedDateTime] = None
   ): Duration = {
     if (permission.shortTerm) {
       // short term permission, give them requested or default (limited by max)
@@ -55,13 +55,13 @@ object Federation {
       // if nothing is requested, try to give them until 19:00 local time (requires timezone)
       val calculated = requestedSeconds match {
         case None =>
-          now.fold(defaultLongTime) { t =>
+          currentTimeInTimeZone.fold(defaultLongTime) { now =>
             val localEndOfWork = {
-              val withTime = t.withHour(19)
-              if (withTime.isBefore(t)) withTime.plusDays(1)
+              val withTime = now.withHour(19).withMinute(0).withSecond(0)
+              if (withTime.isBefore(now)) withTime.plusDays(1)
               else withTime
             }
-            val durationToEndOfWork = Duration.between(t, localEndOfWork)
+            val durationToEndOfWork = Duration.between(now, localEndOfWork)
             if (durationToEndOfWork.compareTo(maxLongTime) < 0)
               durationToEndOfWork
             else defaultLongTime

@@ -6,8 +6,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import testutils.TimeUtils
 
-import java.time.ZoneOffset
-import java.time.ZoneOffset.UTC
+import java.time.{Duration, ZoneId, ZoneOffset}
 
 class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
   import Federation._
@@ -44,7 +43,7 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
         "issues default short time even near 19:00 with a timezone present" in withSystemTime(
           hour = 18,
           minute = 30,
-          zoneId = Some(UTC)
+          zoneId = Some(ZoneId.of("US/Eastern"))
         ) { time =>
           duration(
             permission,
@@ -82,7 +81,7 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
         "gives default time if we're a very long way from 19:00 local time" in withSystemTime(
           hour = 3,
           minute = 0,
-          zoneId = Some(UTC)
+          zoneId = Some(ZoneId.of("US/Eastern"))
         ) { time =>
           duration(
             permission,
@@ -94,7 +93,7 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
         "gives default time if we're after 19:00 local time" in withSystemTime(
           hour = 21,
           minute = 0,
-          zoneId = Some(UTC)
+          zoneId = Some(ZoneId.of("US/Eastern"))
         ) { time =>
           duration(
             permission,
@@ -106,7 +105,7 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
         "gives until 19:00 if we're within <max time> of 19:00 local time" in withSystemTime(
           hour = 10,
           minute = 0,
-          zoneId = Some(UTC)
+          zoneId = Some(ZoneId.of("US/Eastern"))
         ) { time =>
           duration(permission, None, time) shouldEqual 9.hours
         }
@@ -122,7 +121,7 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
         "and we're quite near 19:00 with a TZ, give the remaining period" in withSystemTime(
           hour = 15,
           minute = 0,
-          zoneId = Some(UTC)
+          zoneId = Some(ZoneId.of("US/Eastern"))
         ) { time =>
           duration(permission, None, time) shouldEqual 4.hours
         }
@@ -130,7 +129,7 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
         "and we're *very* near 19:00 with a TZ, give the remaining period" ignore withSystemTime(
           hour = 18,
           minute = 30,
-          zoneId = Some(UTC)
+          zoneId = Some(ZoneId.of("US/Eastern"))
         ) { time =>
           // do we need special logic near 19:00 so people don't get pointless perms?
           duration(permission, None, time) shouldEqual 4.hours
@@ -138,14 +137,14 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
 
         "uses the provided timezone to calculate the correct duration" in withSystemTime(
           hour = 15,
-          minute = 0,
+          minute = 30,
           zoneId = Some(ZoneOffset.ofHours(1))
         ) { time =>
           duration(
             permission,
             None,
             time
-          ) shouldEqual 4.hours
+          ) shouldEqual Duration.ofHours(3).plusMinutes(30)
         }
       }
     }

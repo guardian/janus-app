@@ -7,7 +7,7 @@ trait TimeUtils {
       block: Option[ZonedDateTime] => T
   ): T = {
     val time = zoneId.map { zone =>
-      ZonedDateTime.now(zone).withHour(hour).withMinute(minute)
+      ZonedDateTime.now(zone).withHour(hour).withMinute(minute).withSecond(0)
     }
     block(time)
   }
