@@ -24,7 +24,7 @@ class AuditTrailTest
       "account",
       "username",
       ZonedDateTime.of(2015, 11, 4, 15, 22, 0, 0, UTC).toInstant,
-      Duration.ofMillis(3600 * 1000),
+      Duration.ofHours(1),
       "accessLevel",
       JCredentials,
       external = true
@@ -99,7 +99,7 @@ class AuditTrailTest
           "instant" as ZonedDateTime
             .of(2015, 11, 4, 15, 22, 0, 0, UTC)
             .toInstant,
-          "duration" as Duration.ofMillis(3600000),
+          "duration" as Duration.ofHours(1),
           "accessLevel" as "dev",
           "accessType" as JConsole,
           "external" as true
@@ -110,7 +110,7 @@ class AuditTrailTest
         AuditTrail
           .auditLogFromAttrs(attrs)
           .value
-          .duration shouldEqual Duration.ofMillis(3600 * 1000)
+          .duration shouldEqual Duration.ofHours(1)
       }
     }
 

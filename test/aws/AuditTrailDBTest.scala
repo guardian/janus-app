@@ -23,7 +23,7 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
         "account",
         "username",
         dateTime,
-        Duration.ofMillis(3600000),
+        Duration.ofHours(1),
         "accessLevel",
         JConsole,
         external = true
