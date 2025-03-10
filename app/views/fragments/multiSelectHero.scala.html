@@ -40,8 +40,8 @@
                         <li class="divider"></li>
                         <li><a href="#!" data-length="standard" data-duration="3600000" class="dropdown-time__link">1 hour</a></li>
                         <li><a href="#!" data-length="standard" data-duration="14400000" class="dropdown-time__link">4 hours</a></li>
-                        <li><a href="#!" data-length="standard" data-duration="@defaultLongTime.getMillis" class="dropdown-time__link dropdown-time__link--default">@formatDuration(defaultLongTime)</a></li>
-                        <li><a href="#!" data-length="standard" data-duration="@maxLongTime.getMillis" class="dropdown-time__link dropdown-time__link--max">@formatDuration(maxLongTime)</a></li>
+                        <li><a href="#!" data-length="standard" data-duration="@defaultLongTime.toMillis" class="dropdown-time__link dropdown-time__link--default">@formatDuration(defaultLongTime)</a></li>
+                        <li><a href="#!" data-length="standard" data-duration="@maxLongTime.toMillis" class="dropdown-time__link dropdown-time__link--max">@formatDuration(maxLongTime)</a></li>
                     </ul>
                 </div>
             </div>
@@ -55,8 +55,8 @@
                     </a>
                     <ul id='dropdown-time--short' class='dropdown-content'>
                         <li><a href="#!" data-length="short" data-duration="1800000" class="dropdown-time__link">30 mins</a></li>
-                        <li><a href="#!" data-length="short" data-duration="@defaultShortTime.getMillis" class="dropdown-time__link dropdown-time__link--default">@formatDuration(defaultShortTime)</a></li>
-                        <li><a href="#!" data-length="short" data-duration="@maxShortTime.getMillis" class="dropdown-time__link dropdown-time__link--max">@formatDuration(maxShortTime)</a></li>
+                        <li><a href="#!" data-length="short" data-duration="@defaultShortTime.toMillis" class="dropdown-time__link dropdown-time__link--default">@formatDuration(defaultShortTime)</a></li>
+                        <li><a href="#!" data-length="short" data-duration="@maxShortTime.toMillis" class="dropdown-time__link dropdown-time__link--max">@formatDuration(maxShortTime)</a></li>
                     </ul>
                 </div>
             </div>
