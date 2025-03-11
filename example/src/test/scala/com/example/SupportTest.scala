@@ -1,12 +1,13 @@
 package com.example
 
-import org.joda.time.DateTime
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
+import java.time.Instant
+
 class SupportTest extends AnyFreeSpec with Matchers {
   "Future support rotas should not contain users that are not on the user access list" in {
-    val now = DateTime.now
+    val now = Instant.now
     val supportUsers = Support.acl.rota
       .filter { case (dateTime, _) => dateTime.isAfter(now) }
       .flatMap { case (_, (user1, user2)) => Seq(user1, user2) }
