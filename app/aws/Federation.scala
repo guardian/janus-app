@@ -12,7 +12,7 @@ import software.amazon.awssdk.services.sts.model._
 
 import java.net.{URI, URLEncoder}
 import java.nio.charset.StandardCharsets.UTF_8
-import java.time.{Duration, Instant, ZonedDateTime}
+import java.time.{Clock, Duration, Instant, ZonedDateTime}
 import scala.io.Source
 
 object Federation {
@@ -42,7 +42,7 @@ object Federation {
   def duration(
       permission: Permission,
       requestedSeconds: Option[Duration] = None,
-      currentTimeInTimeZone: Option[ZonedDateTime] = None
+      optClock: Option[Clock] = None
   ): Duration = {
     if (permission.shortTerm) {
       // short term permission, give them requested or default (limited by max)
@@ -55,9 +55,10 @@ object Federation {
       // if nothing is requested, try to give them until 19:00 local time (requires timezone)
       val calculated = requestedSeconds match {
         case None =>
-          currentTimeInTimeZone.fold(defaultLongTime) { now =>
+          optClock.fold(defaultLongTime) { clock =>
+            val now = ZonedDateTime.now(clock)
             val localEndOfWork = {
-              val withTime = now.withHour(19).withMinute(0).withSecond(0)
+              val withTime = now.withHour(19).withMinute(0).withSecond(0).withNano(0)
               if (withTime.isBefore(now)) withTime.plusDays(1)
               else withTime
             }
