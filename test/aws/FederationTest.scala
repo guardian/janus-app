@@ -135,7 +135,7 @@ class FederationTest extends AnyFreeSpec with Matchers with TimeUtils {
           duration(permission, None, time) shouldEqual 4.hours
         }
 
-        "uses the provided timezone to calculate the correct duration" in withSystemTime(
+        "calculate the same duration in any arbitrary timezone" in withSystemTime(
           hour = 15,
           minute = 30,
           zoneId = Some(ZoneOffset.ofHours(1))
