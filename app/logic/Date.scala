@@ -99,7 +99,7 @@ object Date {
     }.toOption
   }
 
-  def today: Instant = {
+  def todayUtc: Instant = {
     LocalDate
       .now(UTC)
       .atStartOfDay(UTC)

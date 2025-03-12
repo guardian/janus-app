@@ -19,7 +19,7 @@ class Audit(
   def byAccount(account: String) = authAction { implicit request =>
     val date = request.getQueryString(
       "date"
-    ) flatMap Date.parseUtcDateStr getOrElse Date.today
+    ) flatMap Date.parseUtcDateStr getOrElse Date.todayUtc
     val (startDate, endDate) = Date.weekAround(date)
     logger.info(s"Getting logs for $account from $startDate to $endDate")
     val auditLogs = AuditTrailDB.getAccountLogs(account, startDate, endDate)
@@ -39,7 +39,7 @@ class Audit(
   def byUser(username: String) = authAction { implicit request =>
     val date = request.getQueryString(
       "date"
-    ) flatMap Date.parseUtcDateStr getOrElse Date.today
+    ) flatMap Date.parseUtcDateStr getOrElse Date.todayUtc
     val (startDate, endDate) = Date.weekAround(date)
     logger.info(s"Getting logs for $username from $startDate to $endDate")
     val auditLogs = AuditTrailDB.getUserLogs(username, startDate, endDate)
