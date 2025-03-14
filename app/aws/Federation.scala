@@ -38,27 +38,37 @@ object Federation {
     * default, which may depend on their timezone.
     *
     * The tests explain the different cases, this is a tricky function.
+    *
+    * @param permission
+    *   Used to determine if the session duration should be short-term or
+    *   standard.
+    * @param requestedDuration
+    *   Optionally, a user can request a duration for their session, which may
+    *   or may not be honoured.
+    * @param optClock
+    *   [[Clock]] to use to determine the current time.
     */
   def duration(
       permission: Permission,
-      requestedSeconds: Option[Duration] = None,
+      requestedDuration: Option[Duration] = None,
       optClock: Option[Clock] = None
   ): Duration = {
     if (permission.shortTerm) {
       // short term permission, give them requested or default (limited by max)
-      val calculated = requestedSeconds.fold(defaultShortTime) { requested =>
+      val calculated = requestedDuration.fold(defaultShortTime) { requested =>
         Date.minDuration(requested, maxShortTime)
       }
       Date.maxDuration(calculated, minShortTime)
     } else {
       // use requested or default (limited by max)
       // if nothing is requested, try to give them until 19:00 local time (requires timezone)
-      val calculated = requestedSeconds match {
+      val calculated = requestedDuration match {
         case None =>
           optClock.fold(defaultLongTime) { clock =>
             val now = ZonedDateTime.now(clock)
             val localEndOfWork = {
-              val withTime = now.withHour(19).withMinute(0).withSecond(0).withNano(0)
+              val withTime =
+                now.withHour(19).withMinute(0).withSecond(0).withNano(0)
               if (withTime.isBefore(now)) withTime.plusDays(1)
               else withTime
             }
