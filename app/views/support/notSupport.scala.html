@@ -1,11 +1,11 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
-@import org.joda.time.DateTime
 @import play.api.Mode
+@import java.time.Instant
 
-@(activeSupportUsers: Option[(DateTime, (Option[String], Option[String]))],
-    nextSupportUsers: Option[(DateTime, (Option[String], Option[String]))],
-  futureSupportDates: List[(DateTime, String)], user: UserIdentity, janusData: JanusData
+@(activeSupportUsers: Option[(Instant, (Option[String], Option[String]))],
+    nextSupportUsers: Option[(Instant, (Option[String], Option[String]))],
+  futureSupportDates: List[(Instant, String)], user: UserIdentity, janusData: JanusData
 
     )(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
