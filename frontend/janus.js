@@ -127,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     otherAccountCheckboxes = accountContainer ? accountContainer.querySelectorAll(".multi-select__checkbox:not(:checked)") : [];
 
                 // enable feature if JS is available
-                document.querySelector(".multi-select__container").style.display = "block";
+                document.querySelectorAll(".multi-select__container").forEach(el => el.style.display = "block");
 
                 // deal with disabling other permissions in the same account as the one just selected
                 if (event) {
