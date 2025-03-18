@@ -39,10 +39,13 @@ class AppComponents(context: ApplicationLoader.Context)
     case _         => "DEV"
   }
 
+  // Reads Play secret from SSM
   val secretStateSupplier: SnapshotProvider =
     new parameterstore.SecretSupplier(
       TransitionTiming(
+        // When a new secret value is read it isn't used immediately, to keep all EC2 instances in sync.  The new value is used after the usageDelay has passed.
         usageDelay = Duration.ofMinutes(3),
+        // Old secret values are still respected for an overlapDuration.
         overlapDuration = Duration.ofHours(2)
       ),
       s"/$stage/security/janus/play.http.secret.key",
