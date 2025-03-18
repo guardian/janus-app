@@ -1,6 +1,5 @@
 package conf
 
-import java.io.{File, FileInputStream}
 import com.google.auth.oauth2.ServiceAccountCredentials
 import com.gu.googleauth.{
   AntiForgeryChecker,
@@ -9,11 +8,11 @@ import com.gu.googleauth.{
 }
 import com.gu.janus.JanusConfig
 import com.gu.janus.model._
+import com.gu.play.secretrotation.SnapshotProvider
 import models._
 import play.api.Configuration
-import play.api.http.HttpConfiguration
 
-import scala.annotation.nowarn
+import java.io.{File, FileInputStream}
 import scala.util.Try
 
 object Config {
@@ -58,23 +57,19 @@ object Config {
 
   def googleSettings(
       config: Configuration,
-      httpConfiguration: HttpConfiguration
+      secretStateSupplier: SnapshotProvider
   ): GoogleAuthConfig = {
     val clientId = requiredString(config, "auth.google.clientId")
     val clientSecret = requiredString(config, "auth.google.clientSecret")
     val domain = requiredString(config, "auth.domain")
     val redirectUrl = s"${requiredString(config, "host")}/oauthCallback"
 
-    @nowarn
-    val legacyAntiForgeryChecker =
-      AntiForgeryChecker.borrowSettingsFromPlay(httpConfiguration)
-
     GoogleAuthConfig(
       clientId = clientId,
       clientSecret = clientSecret,
       redirectUrl = redirectUrl,
       domains = List(domain),
-      antiForgeryChecker = legacyAntiForgeryChecker
+      antiForgeryChecker = AntiForgeryChecker(secretStateSupplier)
     )
   }
 
