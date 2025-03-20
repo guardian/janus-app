@@ -19,7 +19,7 @@ val commonDependencies = Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-  "ch.qos.logback" % "logback-classic" % "1.5.17"
+  "ch.qos.logback" % "logback-classic" % "1.5.18"
 )
 lazy val commonSettings = Seq(
   scalaVersion := "2.13.16",
