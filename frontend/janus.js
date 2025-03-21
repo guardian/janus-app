@@ -150,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     inactiveContainer.style.display = "none";
                     // disable all non-multi credentials links to avoid confusion
                     singleCredentialsLinks.forEach(function(link) {
-                        link.disabled = true;
+                        link.classList.add('disabled');
                     });
                     accountContainers.forEach(function(container) {
                         container.style.filter = "grayscale(0)";
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     activeContainer.style.display = "none";
                     // restore single credentials links
                     singleCredentialsLinks.forEach(function(link) {
-                        link.disabled = false;
+                        link.classList.remove('disabled');
                     });
                     accountContainers.forEach(function(container) {
                         container.style.filter = "grayscale(0)";
