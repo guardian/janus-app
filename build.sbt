@@ -14,8 +14,6 @@ val awsSdkVersion = "2.30.38"
 val circeVersion = "0.14.12"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
-  "joda-time" % "joda-time" % "2.13.1",
-  "org.joda" % "joda-convert" % "3.0.1",
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
@@ -89,7 +87,8 @@ lazy val root: Project = (project in file("."))
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
-      "net.logstash.logback" % "logstash-logback-encoder" % "7.3" // scala-steward:off
+      "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
+      "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
     ) ++ jacksonDatabindOverrides
       ++ jacksonOverrides
       ++ pekkoSerializationJacksonOverrides,
