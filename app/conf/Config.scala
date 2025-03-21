@@ -13,11 +13,31 @@ import models._
 import play.api.Configuration
 
 import java.io.{File, FileInputStream}
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 object Config {
   def roleArn(awsAccountAuthConfigKey: String, config: Configuration): String =
     requiredString(config, s"federation.$awsAccountAuthConfigKey.aws.roleArn")
+
+  // extract aws account ID from Role ARN
+  private val AwsAccountId = """arn:aws:iam::(\d+):role/.*""".r
+  def accountNumber(
+      awsAccountAuthConfigKey: String,
+      config: Configuration
+  ): Try[String] = {
+    for {
+      role <- Try(roleArn(awsAccountAuthConfigKey, config))
+      accountNumber <- role match {
+        case AwsAccountId(accountId) => Success(accountId)
+        case _ =>
+          Failure(
+            new RuntimeException(
+              s"Could not extract account number from role ARN: $role"
+            )
+          )
+      }
+    } yield accountNumber
+  }
 
   def validateAccountConfig(
       janusData: JanusData,
