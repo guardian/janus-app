@@ -362,6 +362,7 @@ a.copy-text--button__small {
 
 .account-summary__container {
     position: relative;
+    padding-top: 42px;
 }
 
 .account-summary__button--audit {
@@ -386,12 +387,15 @@ a.copy-text--button__small {
     line-height: 3rem;
 }
 
-.owners__list {
-    font-size: 0.9rem;
+.owners__header.collapsible-header i.minor-header-icon {
+    font-size: 1rem;
+    width: auto;
+    margin-right: 0;
 }
 
-.owners__list--heading {
-    font-weight: bold;
+.owners__header .owner-count {
+    display: inline-block;
+    min-width: 50px;
 }
 
 .collapsible-body--small-padding {

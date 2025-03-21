@@ -113,7 +113,7 @@ class AppComponents(context: ApplicationLoader.Context)
       googleGroupChecker,
       requiredGoogleGroups
     )(wsClient, executionContext, mode, assetsFinder),
-    new Utility(janusData, controllerComponents, authAction)(
+    new Utility(janusData, controllerComponents, authAction, configuration)(
       mode,
       assetsFinder
     ),

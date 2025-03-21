@@ -9,8 +9,72 @@ import org.scalatest.matchers.should.Matchers
 import play.api.Configuration
 
 import java.time.Duration
+import scala.util.Success
 
 class ConfigTest extends AnyFreeSpec with Matchers {
+  "roleArn" - {
+    "is extracted from the application configuration for that account" in {
+      val config = Configuration(
+        ConfigFactory.parseString(
+          """{
+            |  federation {
+            |    foo.aws.roleArn="arn:aws:iam::123456789012:role/test-role"
+            |  }
+            |}
+            """.stripMargin
+        )
+      )
+      Config.roleArn(
+        "foo",
+        config
+      ) shouldEqual "arn:aws:iam::123456789012:role/test-role"
+    }
+  }
+
+  "accountNumber" - {
+    "extracts the account number from the configured role ARN for the account" in {
+      val config = Configuration(
+        ConfigFactory.parseString(
+          """{
+            |  federation {
+            |    foo.aws.roleArn="arn:aws:iam::123456789012:role/test-role"
+            |  }
+            |}
+            """.stripMargin
+        )
+      )
+      Config.accountNumber("foo", config) shouldEqual Success("123456789012")
+    }
+
+    "returns a failure if the account is not configured" in {
+      val config = Configuration(
+        ConfigFactory.parseString(
+          """{
+            |  federation {
+            |    foo.aws.roleArn="arn:aws:iam::123456789012:role/test-role"
+            |  }
+            |}
+            """.stripMargin
+        )
+      )
+      Config.accountNumber("bar", config).isFailure shouldBe true
+    }
+
+    "returns a failure if the account number cannot be extracted from the role ARN" in {
+      val config = Configuration(
+        ConfigFactory.parseString(
+          """{
+            |  federation {
+            |    foo.aws.roleArn="not a role ARN like we expect"
+            |  }
+            |}
+            """.stripMargin
+        )
+      )
+      Config.accountNumber("foo", config).isFailure shouldBe true
+    }
+  }
+
   "validateAccountConfig" - {
     val testJanusData = JanusData(
       accounts = Set.empty,

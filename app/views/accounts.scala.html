@@ -1,33 +1,49 @@
-@import com.gu.janus.model.{AwsAccount, AccountOwners, JanusData}
+@import com.gu.janus.model.{AwsAccount, JanusData}
 @import com.gu.googleauth.UserIdentity
 @import play.api.Mode
+@import scala.util.Try
 
-@(accountOwners: List[(AwsAccount, AccountOwners)], user: UserIdentity, janusData: JanusData)(implicit mode: Mode, assetsFinder: AssetsFinder)
+@import com.gu.janus.model.Permission
+@import scala.util.Failure
+@import scala.util.Success
+@import logic.ViewHelpers
+@(accountOwners: List[(AwsAccount, List[(String, Set[Permission])], Try[String])], user: UserIdentity, janusData: JanusData)(implicit mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Accounts", Some(user), janusData) {
     <div class="container" xmlns="http://www.w3.org/1999/html">
         <h1 class="header orange-text">Accounts</h1>
+        @janusData.permissionsRepo match {
+          case Some(permissionsRepo) => {
+              <p>
+                  Refer to <a href="@permissionsRepo">Janus' configuration</a> for full details on who has what access to each AWS account.
+              </p>
+          }
+          case None => {
+              <p>Refer to Janus' configuration for full details on who has what access to each AWS account.</p>
+          }
+        }
         <ul class="collapsible collapsible-accordion">
-        @for((account, owners) <- accountOwners) {
+        @for((account, owners, tryAccountNumber) <- accountOwners) {
             <li class="owners__container">
                 <div class="owners__header collapsible-header">
+                    <span>
                     @account.name
-                    <div class="right hide-on-small-only">
-                        <div class="chip">
-                            admins: @owners.admins.size
-                        </div>
 
-                        <div class="chip">
-                            devs: @owners.devs.size
-                        </div>
-
-                        <div class="chip">
-                            other: @owners.others.size
-                        </div>
-                    </div>
-                    <div class="right hide-on-med-and-up">
-                        <div class="chip">
-                            accounts: @{owners.admins.size + owners.devs.size + owners.others.size}
+                    </span>
+                    <div class="right">
+                        <span class="chip">
+                            @tryAccountNumber match {
+                                case Failure(_) => {
+                                    No account number
+                            }
+                                case Success(accountNumber) => {
+                                    @accountNumber
+                                }
+                            }
+                        </span>
+                        <div class="owner-count right-align">
+                            @owners.size
+                            <i class="material-icons tiny minor-header-icon">person</i>
                         </div>
                     </div>
                 </div>
@@ -41,36 +57,54 @@
                             @if(owners.isEmpty) {
                                 <p>There are no Janus-managed users for this account.</p>
                             } else {
-                                    @if(owners.admins.nonEmpty) {
-                                        <div class="col m4">
-                                            <p class="owners__list--heading">Admins</p>
-                                            <ul class="owners__list">
-                                            @for(admin <- owners.admins) {
-                                                <li>@admin</li>
-                                            }
+                                @* We generate 1, 2 and 3 col versions of this and show/hide responsively *@
+                                <div class="hide-on-med-and-up">
+                                    @* 1 column on small devices *@
+                                    <div class="row">
+                                        <div class="col s12">
+                                            <ul class="collection">
+                                                @for(user <- owners) {
+                                                    <li class="collection-item">@user._1</li>
+                                                }
                                             </ul>
                                         </div>
-                                    }
-                                    @if(owners.devs.nonEmpty) {
-                                        <div class="col m4">
-                                            <p class="owners__list--heading">Devs</p>
-                                            <ul class="owners__list">
-                                            @for(dev <- owners.devs) {
-                                                <li>@dev</li>
+                                    </div>
+                                </div>
+                                <div class="show-on-medium hide-on-large-only hide-on-small-and-down">
+                                    @* 2 columns on medium devices *@
+                                    <div class="row">
+                                        <ul class="collection col m6">
+                                            @for(user <- ViewHelpers.getColumn(2, owners, 0)) {
+                                                <li class="collection-item">@user._1</li>
                                             }
-                                            </ul>
-                                        </div>
-                                    }
-                                    @if(owners.others.nonEmpty) {
-                                        <div class="col m4">
-                                            <p class="owners__list--heading">Others</p>
-                                            <ul class="owners__list">
-                                            @for(other <- owners.others) {
-                                                <li>@other</li>
+                                        </ul>
+                                        <ul class="collection col m6">
+                                            @for(user <- ViewHelpers.getColumn(2, owners, 1)) {
+                                                <li class="collection-item">@user._1</li>
                                             }
-                                            </ul>
-                                        </div>
-                                    }
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="hide-on-med-and-down">
+                                    @* 3 columns on large devices *@
+                                    <div class="row">
+                                        <ul class="collection col l4">
+                                            @for(user <- ViewHelpers.getColumn(3, owners, 0)) {
+                                                <li class="collection-item">@user._1</li>
+                                            }
+                                        </ul>
+                                        <ul class="collection col l4">
+                                            @for(user <- ViewHelpers.getColumn(3, owners, 1)) {
+                                                <li class="collection-item">@user._1</li>
+                                            }
+                                        </ul>
+                                        <ul class="collection col l4">
+                                            @for(user <- ViewHelpers.getColumn(3, owners, 2)) {
+                                                <li class="collection-item">@user._1</li>
+                                            }
+                                        </ul>
+                                    </div>
+                                </div>
                             }
                         </div>
                     </div>
