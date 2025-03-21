@@ -3,7 +3,10 @@ package logic
 import com.gu.janus.model.{ACL, AwsAccount, Permission}
 
 object Owners {
-  def accountPermissions(account: AwsAccount, acl: ACL): List[(String, Set[Permission])] = {
+  def accountPermissions(
+      account: AwsAccount,
+      acl: ACL
+  ): List[(String, Set[Permission])] = {
     acl.userAccess
       .flatMap { case (username, permissions) =>
         if (permissions.exists(_.account == account))

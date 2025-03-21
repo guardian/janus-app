@@ -18,7 +18,10 @@ object ViewHelpers {
   }
 
   // Scala function so we can test it properly
-  private[logic] def columnify[A](columnCount: Int, as: List[A]): List[List[A]] = {
+  private[logic] def columnify[A](
+      columnCount: Int,
+      as: List[A]
+  ): List[List[A]] = {
     val emptyAcc: Map[Int, List[A]] =
       (0.until(columnCount)).map(i => i -> Nil).toMap
     as.zipWithIndex
