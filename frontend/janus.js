@@ -45,27 +45,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // copy-text
     document.querySelectorAll(".copy-text--button").forEach(function(button) {
         const container = button.closest(".copy-textarea"),
-            target = container.querySelector("textarea"),
-            defaultIcon = container.querySelector(".copy-text--default"),
+            textAreaTarget = container.querySelector("textarea"),
+            defaultCopyTextIcon = container.querySelector(".copy-text--default"),
             confirmationIcon = container.querySelector(".copy-text--confirm"),
             warnIcon = container.querySelector(".copy-text--warn");
-
+    
         button.addEventListener('click', function(e) {
             e.preventDefault();
             try {
-                target.select();
-                document.execCommand('copy'); // we should replace this with the clipboard function below, see https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand
-                // navigator.clipboard.writeText(target.value); // only works in secure environments, see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/clipboard
-                confirmationIcon.style.display = "inline";
-                defaultIcon.style.display = "none";
-                setTimeout(function() {
-                    confirmationIcon.style.display = "none";
-                    warnIcon.style.display = "none";
-                    defaultIcon.style.display = "inline";
-                }, 4000);
+                textAreaTarget.select();
+                navigator.clipboard.writeText(textAreaTarget.value).then(function() {
+                    confirmationIcon.style.display = "inline";
+                    defaultCopyTextIcon.style.display = "none";
+                    setTimeout(function() {
+                        confirmationIcon.style.display = "none";
+                        warnIcon.style.display = "none";
+                        defaultCopyTextIcon.style.display = "inline";
+                    }, 4000);
+                }).catch(function(err) {
+                    warnIcon.style.display = "inline";
+                    defaultCopyTextIcon.style.display = "none";
+                    throw(err);
+                });
             } catch (err) {
                 warnIcon.style.display = "inline";
-                defaultIcon.style.display = "none";
+                defaultCopyTextIcon.style.display = "none";
                 throw(err);
             }
         });
