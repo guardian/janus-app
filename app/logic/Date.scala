@@ -32,7 +32,7 @@ object Date {
   }
 
   def isoDateString(instant: Instant): String = {
-    DateTimeFormatter.ISO_DATE_TIME.format(instant)
+    DateTimeFormatter.ISO_INSTANT.format(instant)
   }
 
   def formatInterval(

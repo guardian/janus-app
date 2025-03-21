@@ -195,4 +195,11 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
       Date.displayMode(today) shouldEqual models.Normal
     }
   }
+
+  "isoDateString" - {
+    "returns the correct ISO date string for a given instant" in {
+      val date = ZonedDateTime.of(2025, 3, 21, 19, 0, 0, 0, UTC).toInstant
+      Date.isoDateString(date) shouldEqual "2025-03-21T19:00:00Z"
+    }
+  }
 }
