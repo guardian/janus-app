@@ -43,22 +43,14 @@ object Date {
   }
 
   def formatDuration(duration: Duration): String = {
-    val hours = duration.toHours
-    val minutes = duration.toMinutesPart
-    val seconds = duration.toSecondsPart
-
-    val parts = Seq(
-      if (hours > 0) Some(s"$hours ${if (hours == 1) "hour" else "hours"}")
-      else None,
-      if (minutes > 0)
-        Some(s"$minutes ${if (minutes == 1) "minute" else "minutes"}")
-      else None,
-      if (seconds > 0 || (hours == 0 && minutes == 0))
-        Some(s"$seconds ${if (seconds == 1) "second" else "seconds"}")
-      else None
-    ).flatten
-
-    parts.mkString(", ")
+    Seq(
+      duration.toHours.toInt -> "hour",
+      duration.toMinutesPart -> "minute",
+      duration.toSecondsPart -> "second"
+    ).collect {
+      case (1, unit)                  => s"1 $unit"
+      case (value, unit) if value > 1 => s"$value ${unit}s"
+    }.mkString(", ")
   }
 
   def firstDayOfWeek(instant: Instant): Instant =
