@@ -1,13 +1,14 @@
 package conf
 
 import com.gu.janus.model._
-import com.typesafe.config.{ConfigException, ConfigFactory}
+import com.typesafe.config.ConfigFactory
 import fixtures.Fixtures._
 import models.{ConfigError, ConfigSuccess, ConfigWarn, FederationConfigError}
-import org.joda.time.Period
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.Configuration
+
+import java.time.Duration
 
 class ConfigTest extends AnyFreeSpec with Matchers {
   "validateAccountConfig" - {
@@ -15,7 +16,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
       accounts = Set.empty,
       ACL(Map.empty),
       ACL(Map.empty),
-      SupportACL.create(Map.empty, Set.empty, Period.weeks(1)),
+      SupportACL.create(Map.empty, Set.empty, Duration.ofDays(7)),
       Some("https://example.com/")
     )
 

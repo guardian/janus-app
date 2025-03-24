@@ -1,12 +1,12 @@
 @import com.gu.janus.model.{AwsAccountAccess, JanusData}
 @import com.gu.googleauth.UserIdentity
-@import org.joda.time.DateTime
 @import play.api.Mode
+@import java.time.Instant
 
 @(accountAccesses: List[AwsAccountAccess],
-  activeSupportUsers: Option[(DateTime, (Option[String], Option[String]))],
-    nextSupportUsers: Option[(DateTime, (Option[String], Option[String]))],
-  futureSupportDates: List[(DateTime, String)], user: UserIdentity, janusData: JanusData
+  activeSupportUsers: Option[(Instant, (Option[String], Option[String]))],
+    nextSupportUsers: Option[(Instant, (Option[String], Option[String]))],
+  futureSupportDates: List[(Instant, String)], user: UserIdentity, janusData: JanusData
 )(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Support", Some(user), janusData) {

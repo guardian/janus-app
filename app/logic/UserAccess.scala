@@ -2,7 +2,8 @@ package logic
 
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.{ACL, AwsAccount, Permission, SupportACL}
-import org.joda.time.DateTime
+
+import java.time.{Duration, Instant}
 
 object UserAccess {
 
@@ -30,7 +31,7 @@ object UserAccess {
 
   def userSupportAccess(
       username: String,
-      date: DateTime,
+      date: Instant,
       supportACL: SupportACL
   ): Option[Set[Permission]] = {
     if (isSupportUser(username, date, supportACL))
@@ -40,7 +41,7 @@ object UserAccess {
 
   def isSupportUser(
       username: String,
-      date: DateTime,
+      date: Instant,
       supportACL: SupportACL
   ): Boolean = {
     activeSupportUsers(date, supportACL).exists {
@@ -53,9 +54,9 @@ object UserAccess {
     * (TBD) users to None.
     */
   def activeSupportUsers(
-      date: DateTime,
+      date: Instant,
       supportACL: SupportACL
-  ): Option[(DateTime, (Option[String], Option[String]))] = {
+  ): Option[(Instant, (Option[String], Option[String]))] = {
     supportACL.rota.find { case (startTime, _) =>
       date.isAfter(startTime) && date.isBefore(
         startTime.plus(supportACL.supportPeriod)
@@ -69,10 +70,10 @@ object UserAccess {
   }
 
   def nextSupportUsers(
-      date: DateTime,
+      date: Instant,
       supportACL: SupportACL
-  ): Option[(DateTime, (Option[String], Option[String]))] = {
-    activeSupportUsers(date.plusDays(7), supportACL)
+  ): Option[(Instant, (Option[String], Option[String]))] = {
+    activeSupportUsers(date.plus(Duration.ofDays(7)), supportACL)
   }
 
   /** Returns the start and end times of future (after active and next) slots
@@ -81,12 +82,12 @@ object UserAccess {
     *   Tuple of the start date and the other user on the rota
     */
   def futureRotaSlotsForUser(
-      date: DateTime,
+      date: Instant,
       supportACL: SupportACL,
       user: String
-  ): List[(DateTime, String)] = {
+  ): List[(Instant, String)] = {
     supportACL.rota.toList
-      .sortBy(_._1.getMillis)
+      .sortBy(_._1.toEpochMilli)
       .collect {
         case (startTime, (user1, user2)) if user1 == user || user2 == user =>
           (startTime, if (user1 == user) user2 else user1)
@@ -101,7 +102,7 @@ object UserAccess {
     */
   def allUserPermissions(
       username: String,
-      date: DateTime,
+      date: Instant,
       acl: ACL,
       adminACL: ACL,
       supportACL: SupportACL
@@ -117,7 +118,7 @@ object UserAccess {
     */
   def allUserAccounts(
       username: String,
-      date: DateTime,
+      date: Instant,
       acl: ACL,
       adminACL: ACL,
       supportACL: SupportACL
@@ -130,7 +131,7 @@ object UserAccess {
   def checkUserPermission(
       username: String,
       permissionId: String,
-      date: DateTime,
+      date: Instant,
       acl: ACL,
       adminACL: ACL,
       supportACL: SupportACL
@@ -150,13 +151,13 @@ object UserAccess {
     userAccess(username, acl).getOrElse(Set.empty).contains(permission)
   }
 
-  /** Checks if a user has access to an account and returns a[ppropriate
+  /** Checks if a user has access to an account and returns appropriate
     * permissions (if any).
     */
   def userAccountAccess(
       username: String,
       accountId: String,
-      date: DateTime,
+      date: Instant,
       acl: ACL,
       adminACL: ACL,
       supportACL: SupportACL

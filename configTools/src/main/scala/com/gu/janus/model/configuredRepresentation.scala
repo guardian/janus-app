@@ -1,6 +1,6 @@
 package com.gu.janus.model
 
-import org.joda.time.DateTime
+import java.time.Instant
 
 case class ConfiguredAccount(
     name: String,
@@ -47,6 +47,6 @@ case class ConfiguredSupport(
 )
 
 case class ConfiguredRotaEntry(
-    startTime: DateTime,
+    startTime: Instant,
     supporting: List[String]
 )
