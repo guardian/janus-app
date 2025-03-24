@@ -1,26 +1,27 @@
 package logic
 
 import models.{DisplayMode, Festive, Normal, Spooky}
-import org.joda.time.{DateTimeZone, Duration}
 import play.api.mvc.RequestHeader
 
+import java.time.{Duration, ZoneId, ZoneOffset}
 import scala.util.Try
 
 object Customisation {
 
-  /** Extracts requested duration and user's TZ offset from request
-    */
+  /** Extracts requested duration and user's TZ offset from request */
   def durationParams(
       request: RequestHeader
-  ): (Option[Duration], Option[DateTimeZone]) = {
+  ): (Option[Duration], Option[ZoneId]) = {
     val duration = Try {
-      request.getQueryString("duration").map(ms => new Duration(ms.toInt))
+      request.getQueryString("duration").map(ms => Duration.ofMillis(ms.toLong))
     }.toOption.flatten
+
     val tzOffset = Try {
       request
         .getQueryString("tzOffset")
-        .map(hrs => DateTimeZone.forOffsetHours(hrs.toInt))
+        .map(hrs => ZoneOffset.ofHours(hrs.toInt))
     }.toOption.flatten
+
     (duration, tzOffset)
   }
 

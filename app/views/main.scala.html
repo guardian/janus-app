@@ -1,9 +1,9 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
 @import logic.UserAccess.{hasAccess, isSupportUser, username}
-@import org.joda.time.DateTime
 @import logic.Customisation.displayColour
 @import play.api.Mode
+@import java.time.Instant
 
 @(title: String, userOpt: Option[UserIdentity], janusData: JanusData, displayMode: DisplayMode = Normal)(content: Html)(implicit mode: Mode, assetsFinder: AssetsFinder)
 
@@ -42,7 +42,7 @@
                         <ul id="nav-mobile" class="sidenav">
                             <li><a href="/">Home</a></li>
                             <li><a href="/accounts">Accounts</a></li>
-                            @if(isSupportUser(username(user), DateTime.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
+                            @if(isSupportUser(username(user), Instant.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
                             @if(hasAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
                             <li><a href="/logout">@user.firstName @user.lastName <i class="material-icons right">power_settings_new</i></a></li>
