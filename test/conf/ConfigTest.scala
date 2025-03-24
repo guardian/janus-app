@@ -21,7 +21,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
             |    foo.aws.roleArn="arn:aws:iam::123456789012:role/test-role"
             |  }
             |}
-            """.stripMargin
+            |""".stripMargin
         )
       )
       Config.roleArn(
@@ -40,7 +40,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
             |    foo.aws.roleArn="arn:aws:iam::123456789012:role/test-role"
             |  }
             |}
-            """.stripMargin
+            |""".stripMargin
         )
       )
       Config.accountNumber("foo", config) shouldEqual Success("123456789012")
@@ -54,7 +54,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
             |    foo.aws.roleArn="arn:aws:iam::123456789012:role/test-role"
             |  }
             |}
-            """.stripMargin
+            |""".stripMargin
         )
       )
       Config.accountNumber("bar", config).isFailure shouldBe true
@@ -68,7 +68,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
             |    foo.aws.roleArn="not a role ARN like we expect"
             |  }
             |}
-            """.stripMargin
+            |""".stripMargin
         )
       )
       Config.accountNumber("foo", config).isFailure shouldBe true
@@ -109,11 +109,10 @@ class ConfigTest extends AnyFreeSpec with Matchers {
       "should succeed if both account lists are empty" in {
         val emptyConfig = Configuration(
           ConfigFactory.parseString(
-            s"""
-               | {
-               |   federation {
-               |   }
-               | }
+            s"""{
+               |  federation {
+               |  }
+               |}
              """.stripMargin
           )
         )
@@ -128,15 +127,14 @@ class ConfigTest extends AnyFreeSpec with Matchers {
       "should succeed if janusData and config contain the exact same accounts" in {
         val exampleConfig = Configuration(
           ConfigFactory.parseString(
-            s"""
-               | {
-               |   federation {
-               |     foo.aws.roleArn=role
-               |     bar.aws.roleArn=role
-               |     baz.aws.roleArn=role
-               |   }
-               | }
-             """.stripMargin
+            s"""{
+               |  federation {
+               |    foo.aws.roleArn=role
+               |    bar.aws.roleArn=role
+               |    baz.aws.roleArn=role
+               |  }
+               |}
+               |""".stripMargin
           )
         )
         val janusData =
@@ -151,13 +149,12 @@ class ConfigTest extends AnyFreeSpec with Matchers {
       "should return an error including the account missing from the config" in {
         val exampleConfig = Configuration(
           ConfigFactory.parseString(
-            s"""
-               | {
-               |   federation {
-               |     foo.aws.roleArn=role
-               |     baz.aws.roleArn=role
-               |   }
-               | }
+            s"""{
+               |  federation {
+               |    foo.aws.roleArn=role
+               |    baz.aws.roleArn=role
+               |  }
+               |}
            """.stripMargin
           )
         )
@@ -173,12 +170,11 @@ class ConfigTest extends AnyFreeSpec with Matchers {
       "should return an error including all of the accounts missing from the config" in {
         val exampleConfig = Configuration(
           ConfigFactory.parseString(
-            s"""
-               | {
-               |   federation {
-               |     foo.aws.roleArn=role
-               |   }
-               | }
+            s"""{
+               |  federation {
+               |    foo.aws.roleArn=role
+               |  }
+               |}
            """.stripMargin
           )
         )
@@ -194,15 +190,14 @@ class ConfigTest extends AnyFreeSpec with Matchers {
       "should warn if janusData is missing an account" in {
         val exampleConfig = Configuration(
           ConfigFactory.parseString(
-            s"""
-               | {
-               |   federation {
-               |     foo.aws.roleArn=role
-               |     bar.aws.roleArn=role
-               |     baz.aws.roleArn=role
-               |   }
-               | }
-             """.stripMargin
+            s"""{
+               |  federation {
+               |    foo.aws.roleArn=role
+               |    bar.aws.roleArn=role
+               |    baz.aws.roleArn=role
+               |  }
+               |}
+               |""".stripMargin
           )
         )
         val janusData = testJanusData.copy(accounts = Set(fooAct, bazAct))
@@ -216,15 +211,14 @@ class ConfigTest extends AnyFreeSpec with Matchers {
       "should warn if janusData is missing more than one account" in {
         val exampleConfig = Configuration(
           ConfigFactory.parseString(
-            s"""
-               | {
-               |   federation {
-               |     foo.aws.roleArn=role
-               |     bar.aws.roleArn=role
-               |     baz.aws.roleArn=role
-               |   }
-               | }
-             """.stripMargin
+            s"""{
+               |  federation {
+               |    foo.aws.roleArn=role
+               |    bar.aws.roleArn=role
+               |    baz.aws.roleArn=role
+               |  }
+               |}
+               |""".stripMargin
           )
         )
         val janusData = testJanusData.copy(accounts = Set(fooAct))
