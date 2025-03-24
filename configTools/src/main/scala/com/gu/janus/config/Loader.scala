@@ -6,9 +6,8 @@ import com.typesafe.config.Config
 import io.circe.Decoder
 import io.circe.config.syntax._
 import io.circe.generic.auto._
-import org.joda.time.format.ISODateTimeFormat
-import org.joda.time.{DateTime, DateTimeZone, Period}
 
+import java.time.{Duration, Instant, ZoneId, ZonedDateTime, format}
 import scala.util.Try
 import scala.util.control.NonFatal
 
@@ -183,7 +182,7 @@ object Loader {
               s"The support access definition includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
             )
       }
-      period = Period.seconds(configuredSupport.period)
+      period = Duration.ofSeconds(configuredSupport.period.toLong)
       rota <- configuredSupport.rota.traverse {
         case ConfiguredRotaEntry(startTime, user1 :: user2 :: Nil) =>
           Right(startTime -> (user1, user2))
@@ -196,13 +195,13 @@ object Loader {
     } yield SupportACL.create(rota.toMap, supportAccess.toSet, period)
   }
 
-  private implicit val decodeDateTime: Decoder[DateTime] =
+  private implicit val decodeDateTime: Decoder[Instant] =
     Decoder.decodeString.emap { s =>
       try {
         Right(
-          DateTime
-            .parse(s, ISODateTimeFormat.dateTime())
-            .withZone(DateTimeZone.UTC)
+          ZonedDateTime
+            .parse(s, format.DateTimeFormatter.ISO_DATE_TIME)
+            .toInstant
         )
       } catch {
         case NonFatal(e) => Left(e.getMessage)

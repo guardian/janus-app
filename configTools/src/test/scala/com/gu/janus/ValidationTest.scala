@@ -2,16 +2,17 @@ package com.gu.janus
 
 import com.gu.janus.Validation.{isClean, noErrors}
 import com.gu.janus.model._
-import org.joda.time.{DateTime, Period}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+
+import java.time.Duration
 
 class ValidationTest extends AnyFreeSpec with Matchers {
   val account1 = AwsAccount("Test 1", "test1")
   val account2 = AwsAccount("Test 2", "test2")
   val emptyAcl = ACL(Map.empty, Set.empty)
   val emptySupportAcl =
-    SupportACL.create(Map.empty, Set.empty, Period.seconds(100))
+    SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100))
 
   "policySizeChecks" - {
     val smallPermission =
@@ -59,7 +60,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
           emptyAcl,
           emptyAcl,
           support = SupportACL
-            .create(Map.empty, Set(largePermission), Period.seconds(100)),
+            .create(Map.empty, Set(largePermission), Duration.ofSeconds(100)),
           None
         )
         Validation.policySizeChecks(janusData).warnings should not be empty

@@ -1,20 +1,19 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import fixtures.Fixtures._
 import com.gu.janus.model.{ACL, SupportACL}
-import org.joda.time.{DateTime, DateTimeZone, Period}
+import fixtures.Fixtures._
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Inspectors, OptionValues}
-import testutils.JodaTimeUtils
+
+import java.time._
 
 class UserAccessTest
     extends AnyFreeSpec
     with Matchers
     with OptionValues
-    with Inspectors
-    with JodaTimeUtils {
+    with Inspectors {
   import UserAccess._
 
   "userAccess" - {
@@ -60,20 +59,23 @@ class UserAccessTest
   }
 
   "support functions" - {
-    val baseline =
-      new DateTime(2016, 7, 19, 11, 0, DateTimeZone.forID("Europe/London"))
+    val baseline = ZonedDateTime
+      .of(2016, 7, 19, 11, 0, 0, 0, ZoneId.of("Europe/London"))
+      .toInstant
     val supportAcl = SupportACL.create(
       Map(
-        baseline.minusDays(
-          7
-        ) -> ("old.support.user", "another.support.user"), // out of date
+        baseline.minus(Duration.ofDays(7)) -> (
+          "old.support.user",
+          "another.support.user"
+        ), // out of date
         baseline -> ("support.user", "") // in effect
       ),
       Set(fooCf, barCf),
-      Period.weeks(1)
+      Duration.ofDays(7)
     )
-    val rotaTime =
-      new DateTime(2016, 7, 22, 12, 0, DateTimeZone.forID("Europe/London"))
+    val rotaTime = ZonedDateTime
+      .of(2016, 7, 22, 12, 0, 0, 0, ZoneId.of("Europe/London"))
+      .toInstant
 
     "userSupportAccess" - {
       "returns support access when given a user currently on the support rota" in {
@@ -106,14 +108,9 @@ class UserAccessTest
 
       "around the cutoff point" - {
         "returns support access just before 11am UK time" in {
-          val justBeforeCutoff = new DateTime(
-            2016,
-            7,
-            26,
-            10,
-            59,
-            DateTimeZone.forID("Europe/London")
-          )
+          val justBeforeCutoff = ZonedDateTime
+            .of(2016, 7, 26, 10, 59, 0, 0, ZoneId.of("Europe/London"))
+            .toInstant
           userSupportAccess(
             "support.user",
             justBeforeCutoff,
@@ -121,14 +118,18 @@ class UserAccessTest
           ).value shouldEqual supportAcl.supportAccess
         }
         "returns None just after 11am UK time" in {
-          val justAfterCutoff = new DateTime(
-            2016,
-            7,
-            26,
-            11,
-            1,
-            DateTimeZone.forID("Europe/London")
-          )
+          val justAfterCutoff = ZonedDateTime
+            .of(
+              2016,
+              7,
+              26,
+              11,
+              1,
+              0,
+              0,
+              ZoneId.of("Europe/London")
+            )
+            .toInstant
           userSupportAccess(
             "support.user",
             justAfterCutoff,
@@ -165,14 +166,18 @@ class UserAccessTest
 
       "around the cutoff point" - {
         "returns true just before 11am UK time" in {
-          val justBeforeCutoff = new DateTime(
-            2016,
-            7,
-            26,
-            10,
-            59,
-            DateTimeZone.forID("Europe/London")
-          )
+          val justBeforeCutoff = ZonedDateTime
+            .of(
+              2016,
+              7,
+              26,
+              10,
+              59,
+              0,
+              0,
+              ZoneId.of("Europe/London")
+            )
+            .toInstant
           isSupportUser(
             "support.user",
             justBeforeCutoff,
@@ -181,14 +186,18 @@ class UserAccessTest
         }
 
         "returns false just after 11am UK time" in {
-          val justAfterCutoff = new DateTime(
-            2016,
-            7,
-            26,
-            11,
-            1,
-            DateTimeZone.forID("Europe/London")
-          )
+          val justAfterCutoff = ZonedDateTime
+            .of(
+              2016,
+              7,
+              26,
+              11,
+              1,
+              0,
+              0,
+              ZoneId.of("Europe/London")
+            )
+            .toInstant
           isSupportUser(
             "support.user",
             justAfterCutoff,
@@ -200,16 +209,18 @@ class UserAccessTest
 
     "can check which users have support access" - {
       val rotaStartTime =
-        new DateTime(2016, 10, 11, 11, 0, DateTimeZone.forID("Europe/London"))
-          .withZone(DateTimeZone.UTC)
+        ZonedDateTime
+          .of(2016, 10, 11, 11, 0, 0, 0, ZoneId.of("Europe/London"))
+          .toInstant
       val currentTime =
-        new DateTime(2016, 10, 11, 12, 0, DateTimeZone.forID("Europe/London"))
-          .withZone(DateTimeZone.UTC)
+        ZonedDateTime
+          .of(2016, 10, 11, 12, 0, 0, 0, ZoneId.of("Europe/London"))
+          .toInstant
       def testActiveSupportAcl(user1: String, user2: String): SupportACL = {
         SupportACL.create(
           Map(rotaStartTime -> (user1, user2)),
           Set(fooCf, barCf),
-          Period.weeks(1)
+          Duration.ofDays(7)
         )
       }
 
@@ -230,7 +241,10 @@ class UserAccessTest
 
         "returns None if there are no entries for today's date" in {
           val acl = testActiveSupportAcl("user.1", "user.2")
-          activeSupportUsers(currentTime.minusDays(20), acl) shouldEqual None
+          activeSupportUsers(
+            currentTime.minus(Duration.ofDays(20)),
+            acl
+          ) shouldEqual None
         }
 
         "returns the date the rota started at" in {
@@ -241,7 +255,7 @@ class UserAccessTest
       }
 
       "nextSupportUsers" - {
-        val currentTimeForNextRota = currentTime.minusDays(7)
+        val currentTimeForNextRota = currentTime.minus(Duration.ofDays(7))
 
         "returns the correct users for the next rota" in {
           val acl = testActiveSupportAcl("user.1", "user.2")
@@ -262,7 +276,7 @@ class UserAccessTest
         "returns None if there are no entries for the next rota by provided date" in {
           val acl = testActiveSupportAcl("user.1", "user.2")
           nextSupportUsers(
-            currentTimeForNextRota.minusDays(20),
+            currentTimeForNextRota.minus(Duration.ofDays(20)),
             acl
           ) shouldEqual None
         }
@@ -279,41 +293,45 @@ class UserAccessTest
         val supportAcl = SupportACL.create(
           Map(
             rotaStartTime -> ("userA", "userB"),
-            rotaStartTime.plusWeeks(1) -> ("userC", "userD"),
-            rotaStartTime.plusWeeks(2) -> ("user1", "user2"),
-            rotaStartTime.plusWeeks(3) -> ("user3", "user4"),
-            rotaStartTime.plusWeeks(4) -> ("user5", "user1"),
-            rotaStartTime.plusWeeks(5) -> ("user2", "user4"),
-            rotaStartTime.plusWeeks(6) -> ("user5", "user3")
+            rotaStartTime.plus(Period.ofWeeks(1)) -> ("userC", "userD"),
+            rotaStartTime.plus(Period.ofWeeks(2)) -> ("user1", "user2"),
+            rotaStartTime.plus(Period.ofWeeks(3)) -> ("user3", "user4"),
+            rotaStartTime.plus(Period.ofWeeks(4)) -> ("user5", "user1"),
+            rotaStartTime.plus(Period.ofWeeks(5)) -> ("user2", "user4"),
+            rotaStartTime.plus(Period.ofWeeks(6)) -> ("user5", "user3")
           ),
           Set(fooCf, barCf),
-          Period.weeks(1)
+          Duration.ofDays(7)
         )
 
         "returns the correct set of future rota slots for user1 from currentTime" in {
           val slots = futureRotaSlotsForUser(currentTime, supportAcl, "user1")
           slots shouldEqual List(
-            (rotaStartTime.plusWeeks(2), "user2"),
-            (rotaStartTime.plusWeeks(4), "user5")
+            (rotaStartTime.plus(Period.ofWeeks(2)), "user2"),
+            (rotaStartTime.plus(Period.ofWeeks(4)), "user5")
           )
         }
 
         "returns the correct set of future rota slots for user1 from currentTime+2w" in {
           val slots = futureRotaSlotsForUser(
-            currentTime.plusWeeks(2),
+            currentTime.plus(Period.ofWeeks(2)),
             supportAcl,
             "user1"
           )
-          slots shouldEqual List((rotaStartTime.plusWeeks(4), "user5"))
+          slots shouldEqual List(
+            (rotaStartTime.plus(Period.ofWeeks(4)), "user5")
+          )
         }
 
         "returns the correct set of future rota slots for user2 from currentTime+2w" in {
           val slots = futureRotaSlotsForUser(
-            currentTime.plusWeeks(2),
+            currentTime.plus(Period.ofWeeks(2)),
             supportAcl,
             "user2"
           )
-          slots shouldEqual List((rotaStartTime.plusWeeks(5), "user4"))
+          slots shouldEqual List(
+            (rotaStartTime.plus(Period.ofWeeks(5)), "user4")
+          )
         }
 
         "returns no slots for userA" in {
@@ -334,17 +352,20 @@ class UserAccessTest
     val adminAcl = ACL(Map("admin" -> allTestPerms))
     val supportAcl = SupportACL.create(
       Map(
-        DateTime.now().minusDays(1) -> ("support.user", "another.support.user")
+        Instant.now().minus(Duration.ofDays(1)) -> (
+          "support.user",
+          "another.support.user"
+        )
       ),
       allTestPerms,
-      Period.weeks(1)
+      Duration.ofDays(7)
     )
 
     "returns the permission if a user has been granted access" in {
       checkUserPermission(
         "user",
         fooDev.id,
-        DateTime.now(),
+        Instant.now(),
         acl,
         adminAcl,
         supportAcl
@@ -356,7 +377,7 @@ class UserAccessTest
         checkUserPermission(
           "admin",
           adminPermission.id,
-          DateTime.now(),
+          Instant.now(),
           acl,
           adminAcl,
           supportAcl
@@ -369,7 +390,7 @@ class UserAccessTest
         checkUserPermission(
           "support.user",
           supportPermission.id,
-          DateTime.now(),
+          Instant.now(),
           acl,
           adminAcl,
           supportAcl
@@ -381,7 +402,7 @@ class UserAccessTest
       checkUserPermission(
         "no.permissions",
         fooDev.id,
-        DateTime.now(),
+        Instant.now(),
         acl,
         adminAcl,
         supportAcl
@@ -399,10 +420,13 @@ class UserAccessTest
     val adminAcl = ACL(Map("admin" -> Set(fooDev)))
     val supportAcl = SupportACL.create(
       Map(
-        DateTime.now().minusDays(1) -> ("support.user", "another.support.user")
+        Instant.now().minus(Duration.ofDays(1)) -> (
+          "support.user",
+          "another.support.user"
+        )
       ),
       Set(fooDev),
-      Period.weeks(1)
+      Duration.ofDays(7)
     )
 
     "returns true if a user has been granted explicit access" in {
@@ -430,17 +454,20 @@ class UserAccessTest
     val admins = ACL(Map("admin" -> Set(fooCf, barDev)))
     val supportAcl = SupportACL.create(
       Map(
-        DateTime.now().minusDays(1) -> ("support.user", "another.support.user")
+        Instant.now().minus(Period.ofDays(1)) -> (
+          "support.user",
+          "another.support.user"
+        )
       ),
       Set(fooCf, barDev),
-      Period.weeks(1)
+      Duration.ofDays(7)
     )
 
     "returns permissions if a user has been granted explicit access" in {
       userAccountAccess(
         "user",
         fooAct.authConfigKey,
-        DateTime.now(),
+        Instant.now(),
         acl,
         admins,
         supportAcl
@@ -451,7 +478,7 @@ class UserAccessTest
       userAccountAccess(
         "admin",
         fooAct.authConfigKey,
-        DateTime.now(),
+        Instant.now(),
         acl,
         admins,
         supportAcl
@@ -462,7 +489,7 @@ class UserAccessTest
       userAccountAccess(
         "support.user",
         fooAct.authConfigKey,
-        DateTime.now(),
+        Instant.now(),
         acl,
         admins,
         supportAcl
@@ -473,7 +500,7 @@ class UserAccessTest
       userAccountAccess(
         "user",
         barAct.authConfigKey,
-        DateTime.now(),
+        Instant.now(),
         acl,
         admins,
         supportAcl

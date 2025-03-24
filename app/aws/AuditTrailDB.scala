@@ -2,11 +2,11 @@ package aws
 
 import com.gu.janus.model.AuditLog
 import logic.AuditTrail
-import org.joda.time.DateTime
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.ComparisonOperator._
 import software.amazon.awssdk.services.dynamodb.model._
 
+import java.time.Instant
 import scala.jdk.CollectionConverters._
 
 object AuditTrailDB {
@@ -22,8 +22,8 @@ object AuditTrailDB {
 
   def getAccountLogs(
       account: String,
-      startDate: DateTime,
-      endDate: DateTime
+      startDate: Instant,
+      endDate: Instant
   )(implicit dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] = {
     val request = QueryRequest
       .builder()
@@ -44,8 +44,8 @@ object AuditTrailDB {
 
   def getUserLogs(
       username: String,
-      startDate: DateTime,
-      endDate: DateTime
+      startDate: Instant,
+      endDate: Instant
   )(implicit dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] = {
     val request = QueryRequest
       .builder()
@@ -73,15 +73,15 @@ object AuditTrailDB {
       .build()
 
   private def dateRangeCondition(
-      startDate: DateTime,
-      endDate: DateTime
+      startDate: Instant,
+      endDate: Instant
   ): (String, Condition) = {
     timestampSortKeyName -> Condition
       .builder()
       .comparisonOperator(BETWEEN)
       .attributeValueList(
-        AttributeValue.fromN(startDate.getMillis.toString),
-        AttributeValue.fromN(endDate.getMillis.toString)
+        AttributeValue.fromN(startDate.toEpochMilli.toString),
+        AttributeValue.fromN(endDate.toEpochMilli.toString)
       )
       .build()
   }

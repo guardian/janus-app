@@ -6,10 +6,11 @@ import com.gu.janus.model.JanusData
 import conf.Config
 import logic.Revocation
 import logic.UserAccess._
-import org.joda.time.{DateTime, DateTimeZone}
 import play.api.{Configuration, Logging, Mode}
 import play.api.mvc.{AbstractController, AnyContent, ControllerComponents}
 import software.amazon.awssdk.services.sts.StsClient
+
+import java.time.{Instant, ZoneOffset}
 
 class RevokePermissions(
     janusData: JanusData,
@@ -86,7 +87,7 @@ class RevokePermissions(
       if (Revocation.checkConfirmation(confirmationKey, account)) {
         Federation.disableFederation(
           account,
-          DateTime.now(DateTimeZone.UTC),
+          Instant.now(),
           targetRoleArn,
           stsClient
         )
