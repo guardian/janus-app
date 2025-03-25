@@ -140,3 +140,6 @@ crashlytics-build.properties
 .metals/
 .vscode/
 .bloop/
+
+# HTTP client env
+http-client.private.env.json
