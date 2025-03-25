@@ -113,6 +113,7 @@ class AppComponents(context: ApplicationLoader.Context)
       googleGroupChecker,
       requiredGoogleGroups
     )(wsClient, executionContext, mode, assetsFinder),
+    new PasskeyController(controllerComponents),
     new Utility(janusData, controllerComponents, authAction)(
       mode,
       assetsFinder
