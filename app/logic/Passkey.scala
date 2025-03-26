@@ -13,10 +13,11 @@ import com.webauthn4j.verifier.exception.VerificationException
 import models._
 import play.api.http.Status.BAD_REQUEST
 
-import java.net.URI
-import java.nio.charset.StandardCharsets.UTF_8
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Try}
+
+import java.net.URI
+import java.nio.charset.StandardCharsets.UTF_8
 
 /** Logic for registration of passkeys and authentication using them. */
 object Passkey {
@@ -66,6 +67,69 @@ object Passkey {
     *   A PublicKeyCredentialCreationOptions object containing the registration
     *   options.
     */
+  // TODO: move out
+  private object config {
+    /* When true, requires the user to verify their identity
+     * (with Touch ID or other authentication method)
+     * before completing the registration.
+     */
+    val userVerificationRequired = true
+
+    val publicKeyCredentialParameters
+    : util.List[PublicKeyCredentialParameters] = List(
+      // ES256 is widely supported and efficient
+      new PublicKeyCredentialParameters(
+        PublicKeyCredentialType.PUBLIC_KEY,
+        COSEAlgorithmIdentifier.ES256
+      ),
+      // RS256 for broader compatibility
+      new PublicKeyCredentialParameters(
+        PublicKeyCredentialType.PUBLIC_KEY,
+        COSEAlgorithmIdentifier.RS256
+      ),
+      // EdDSA for better security/performance in newer authenticators
+      new PublicKeyCredentialParameters(
+        PublicKeyCredentialType.PUBLIC_KEY,
+        COSEAlgorithmIdentifier.EdDSA
+      )
+    ).asJava
+  }
+
+  sealed trait PasskeyFailure {
+    def details: String
+
+    def cause: Throwable
+  }
+
+  case class InvalidInputFailure(details: String, cause: Throwable)
+    extends PasskeyFailure
+
+  case class VerificationFailure(details: String, cause: Throwable)
+    extends PasskeyFailure
+
+  case class StorageFailure(details: String, cause: Throwable)
+    extends PasskeyFailure
+
+  // TODO: look into how this is configured
+  private val webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager()
+
+  /** Creates registration options for a new passkey. This is required by a
+   * browser to initiate the registration process.
+   *
+   * @param appName
+   * The name of the application the passkey will authenticate (the relying
+   * party).
+   * @param appHost
+   * The host of the application the passkey will authenticate (the relying
+   * party).
+   * @param user
+   * The user identity retrieved from Google auth.
+   * @param challenge
+   * The challenge to be used for registration.
+   * @return
+   * A PublicKeyCredentialCreationOptions object containing the registration
+   * options.
+   */
   def registrationOptions(
       appName: String,
       appHost: String,
