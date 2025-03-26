@@ -1,7 +1,7 @@
 package com.gu.janus.config
 
 import com.gu.janus.model.{AwsAccount, Permission}
-import com.gu.janus.testutils.RightValues
+import com.gu.janus.testutils.{HaveMatchers, RightValues}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
@@ -14,7 +14,8 @@ class LoaderTest
     extends AnyFreeSpec
     with Matchers
     with RightValues
-    with OptionValues {
+    with OptionValues
+    with HaveMatchers {
   val testConfig = ConfigFactory.load("example.conf")
   val testConfigWithoutPermissionsRepo =
     ConfigFactory.load("example-without-permissions-repo.conf")
@@ -82,7 +83,8 @@ class LoaderTest
             AwsAccount("Testing account", "aws-test-account"),
             "default-test",
             "Default test access",
-            "",
+            Some(""),
+            Some(List("""arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess""", """arn:aws:iam::aws:policy/EC2InstanceConnect""")),
             false
           )
         )
@@ -99,6 +101,36 @@ class LoaderTest
         access.userAccess.get("employee4").value.map(_.id) shouldEqual Set(
           "website-s3-manager",
           "aws-test-account-developer"
+        )
+      }
+
+      "properly extracts a standard inline-policy permission" in {
+        val accounts = Loader.loadAccounts(testConfig).value
+        val permissions = Loader.loadPermissions(testConfig, accounts).value
+        val result = Loader.loadAccess(testConfig, permissions)
+        val access = result.value
+        val userPermissions = access.userAccess.get("employee1").value
+        val websiteDeveloperPermission = userPermissions.find(p => p.id == "website-developer").value
+        websiteDeveloperPermission should have(
+          "policy" as Some("""{"Version":"2012-10-17","Statement":[{"Sid":"1","Effect":"Allow","Action":["s3:*"],"Resource":["*"]}]}"""),
+          "managedPolicyArns" as None,
+          "shortTerm" as false,
+          "description" as "Developer access"
+        )
+      }
+
+      "properly extracts a policy with managed ARNs" in {
+        val accounts = Loader.loadAccounts(testConfig).value
+        val permissions = Loader.loadPermissions(testConfig, accounts).value
+        val result = Loader.loadAccess(testConfig, permissions)
+        val access = result.value
+        val userPermissions = access.userAccess.get("employee3").value
+        val websiteDeveloperPermission = userPermissions.find(p => p.id == "website-s3-manager").value
+        websiteDeveloperPermission should have(
+          "managedPolicyArns" as Some(List("""arn:aws:iam::aws:policy/AmazonS3FullAccess""")),
+          "policy" as None,
+          "shortTerm" as false,
+          "description" as "Read and write access to S3"
         )
       }
     }

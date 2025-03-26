@@ -15,7 +15,13 @@ object Validation {
       janusData.support.supportAccess
 
     val largePermissions = for {
-      largePermission <- allPermissions.filter(_.policy.length >= sizeLimit)
+      largePermission <- allPermissions.filter { perm =>
+        // session policy limit includes the managed ARNs and inline policy document
+        val totalLength =
+              perm.policy.map(_.length).getOrElse(0) + // the inline policy document's size
+                        perm.managedPolicyArns.map(_.length).sum // and the attached managed policy ARNs
+                totalLength >= sizeLimit
+      }
     } yield s"${largePermission.label} (${largePermission.description})"
 
     if (largePermissions.isEmpty) {

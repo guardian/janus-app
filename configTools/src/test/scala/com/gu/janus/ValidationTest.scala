@@ -2,6 +2,8 @@ package com.gu.janus
 
 import com.gu.janus.Validation.{isClean, noErrors}
 import com.gu.janus.model._
+import com.gu.janus.policy.Iam.Effect.Allow
+import com.gu.janus.policy.Iam.{Action, Policy, Resource, Statement}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
@@ -13,12 +15,42 @@ class ValidationTest extends AnyFreeSpec with Matchers {
   val emptyAcl = ACL(Map.empty, Set.empty)
   val emptySupportAcl =
     SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100))
+  val simpleStatement = Statement(
+    Allow,
+    Seq(Action("sts:GetCallerIdentity")),
+    Seq(Resource("*"))
+  )
+  val simplePolicy = Policy(Seq(simpleStatement))
+  val largeInlinePolicy = Policy(
+    Seq.fill(200)(simpleStatement)
+  )
 
   "policySizeChecks" - {
     val smallPermission =
-      Permission(account1, "perm1", "Test valid permission", "xxx", false)
+      Permission(
+        account1,
+        "perm1",
+        "Test valid permission",
+        simplePolicy,
+        false
+      )
     val largePermission =
-      Permission(account1, "perm2", "Test large permission", "x" * 2000, false)
+      Permission(
+        account1,
+        "perm2",
+        "Test large permission",
+        largeInlinePolicy,
+        false
+      )
+    val smallPermissionWithLargeManagedPolicyArns =
+      Permission.fromManagedPolicyArns(
+        account1,
+        "perm1",
+        "Test valid permission",
+        List.fill(2000)(""),
+        Some(simplePolicy),
+        false
+      )
 
     "returns nothing if the provided data contains no large policies" in {
       val janusData = JanusData(
@@ -82,12 +114,18 @@ class ValidationTest extends AnyFreeSpec with Matchers {
   "permissionIdUniqueness" - {
     "returns nothing for valid permissions" in {
       val permission1 =
-        Permission(account1, "perm1", "Test valid permission", "xxx", false)
+        Permission(
+          account1,
+          "perm1",
+          "Test valid permission",
+          simplePolicy,
+          false
+        )
       val permission2 = Permission(
         account1,
         "perm2",
         "Test large permission",
-        "x" * 2000,
+        largeInlinePolicy,
         false
       )
       val janusData = JanusData(
@@ -102,9 +140,21 @@ class ValidationTest extends AnyFreeSpec with Matchers {
 
     "returns nothing for duplicate permissions in separate accounts" in {
       val permission1 =
-        Permission(account1, "perm1", "Test valid permission", "xxx", false)
+        Permission(
+          account1,
+          "perm1",
+          "Test valid permission",
+          simplePolicy,
+          false
+        )
       val permission2 =
-        Permission(account2, "perm1", "Test valid permission", "xxx", false)
+        Permission(
+          account2,
+          "perm1",
+          "Test valid permission",
+          simplePolicy,
+          false
+        )
       val janusData = JanusData(
         Set(account1),
         ACL(Map("user1" -> Set(permission1, permission2))),
@@ -117,9 +167,21 @@ class ValidationTest extends AnyFreeSpec with Matchers {
 
     "returns a validation error for permissions with duplicate IDs (concatenation of account & label)" in {
       val permission1 =
-        Permission(account1, "perm1", "Test valid permission", "xxx", false)
+        Permission(
+          account1,
+          "perm1",
+          "Test valid permission",
+          simplePolicy,
+          false
+        )
       val permission2 =
-        Permission(account1, "perm1", "Another valid permission", "yyy", true)
+        Permission(
+          account1,
+          "perm1",
+          "Another valid permission",
+          simplePolicy,
+          true
+        )
       val janusData = JanusData(
         Set(account1),
         ACL(Map("user1" -> Set(permission1, permission2))),
@@ -132,9 +194,21 @@ class ValidationTest extends AnyFreeSpec with Matchers {
 
     "returns a validation error for duplicate permissions across multiple users" in {
       val permission1 =
-        Permission(account1, "perm1", "Test valid permission", "xxx", false)
+        Permission(
+          account1,
+          "perm1",
+          "Test valid permission",
+          simplePolicy,
+          false
+        )
       val permission2 =
-        Permission(account1, "perm1", "Another valid permission", "yyy", true)
+        Permission(
+          account1,
+          "perm1",
+          "Another valid permission",
+          simplePolicy,
+          true
+        )
       val janusData = JanusData(
         Set(account1),
         ACL(Map("user1" -> Set(permission1), "user2" -> Set(permission2))),

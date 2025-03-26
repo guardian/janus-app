@@ -16,7 +16,8 @@ case class ConfiguredPermission(
     account: String,
     label: String,
     description: String,
-    policy: String,
+    policy: Option[String],
+    managedPolicyArns: Option[List[String]],
     shortTerm: Boolean = false
 )
 

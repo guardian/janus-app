@@ -65,11 +65,12 @@ case class AwsAccountAccess(
     isFavourite: Boolean
 )
 
-case class Permission(
+case class Permission private (
     account: AwsAccount,
     label: String,
     description: String,
-    policy: String,
+    policy: Option[String],
+    managedPolicyArns: Option[List[String]],
     shortTerm: Boolean
 ) {
   val id = s"${account.authConfigKey}-$label"
@@ -84,7 +85,46 @@ object Permission {
       policy: Policy,
       shortTerm: Boolean = false
   ): Permission = {
-    Permission(account, label, description, policy.asJson.noSpaces, shortTerm)
+    Permission(
+      account,
+      label,
+      description,
+      Some(policy.asJson.noSpaces),
+      None,
+      shortTerm
+    )
+  }
+
+  /** Create a permission that's based on managed IAM policies instead of
+    * providing a policy document.
+    *
+    * These should usually be AWS-managed policies, and this gives us two useful
+    * features:
+    *   - set up service-specific permissions that are automatically kept up to
+    *     date with AWS changes
+    *   - bypass the size limit on inline policies for complex permissions (e.g.
+    *     global read access)
+    *
+    * We can also optionally provide an inline policy to further refine the
+    * resulting permission, by explicitly allowing or denying additional
+    * operations.
+    */
+  def fromManagedPolicyArns(
+      account: AwsAccount,
+      label: String,
+      description: String,
+      managedPolicyArns: List[String],
+      inlinePolicy: Option[Policy] = None,
+      shortTerm: Boolean = false
+  ): Permission = {
+    Permission(
+      account,
+      label,
+      description,
+      Some(inlinePolicy.asJson.noSpaces),
+      Some(managedPolicyArns),
+      shortTerm
+    )
   }
 }
 
