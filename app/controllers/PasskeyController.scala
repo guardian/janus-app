@@ -110,124 +110,91 @@ import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.server.ServerProperty
 import play.api.libs.json.{JsNumber, JsString, Json, Writes}
 import play.api.mvc._
+import play.api.{Logging, Mode}
 
-import java.nio.charset.StandardCharsets.UTF_8
-import java.util.Base64
-import scala.jdk.CollectionConverters._
+/** Controller for handling passkey registration and authentication. */
+class PasskeyController(
+                         controllerComponents: ControllerComponents,
+                         authAction: AuthAction[AnyContent],
+                         host: String,
+                         janusData: JanusData
+                       )(implicit mode: Mode, assetsFinder: AssetsFinder)
+  extends AbstractController(controllerComponents)
+    with Logging {
 
-class PasskeyController(controllerComponents: ControllerComponents)
-    extends AbstractController(controllerComponents) {
+  private val appName = "Janus"
 
-  implicit val publicKeyCredentialTypeWrites: Writes[PublicKeyCredentialType] =
-    Writes(`type` => JsString(`type`.getValue))
-
-  implicit val coseAlgorithmIdentifierWrites: Writes[COSEAlgorithmIdentifier] =
-    Writes(alg => JsNumber(alg.getValue()))
-
-  implicit val publicKeyCredentialParametersWrites
-      : Writes[PublicKeyCredentialParameters] =
-    Writes(params =>
-      Json.obj(
-        "type" -> params.getType,
-        "alg" -> params.getAlg
-      )
-    )
-
-  implicit val publicKeyCredentialRpEntityWrites
-      : Writes[PublicKeyCredentialRpEntity] =
-    Writes(rp =>
-      Json.obj(
-        "id" -> rp.getId,
-        "name" -> rp.getName
-      )
-    )
-
-  implicit val publicKeyCredentialUserEntityWrites
-      : Writes[PublicKeyCredentialUserEntity] =
-    Writes(user =>
-      Json.obj(
-        "id" -> Base64.getUrlEncoder.withoutPadding
-          .encodeToString(user.getId),
-        "name" -> user.getName,
-        "displayName" -> user.getDisplayName
-      )
-    )
-
-  implicit val challengeWrites: Writes[Challenge] =
-    Writes(challenge =>
-      JsString(
-        Base64.getUrlEncoder.withoutPadding
-          .encodeToString(challenge.getValue)
-      )
-    )
-
-  implicit val publicKeyCredentialCreationOptionsWrites
-      : Writes[PublicKeyCredentialCreationOptions] =
-    Writes(options =>
-      Json.obj(
-        "challenge" -> options.getChallenge,
-        "rp" -> options.getRp,
-        "user" -> options.getUser,
-        "pubKeyCredParams" -> options.getPubKeyCredParams.asScala
-      )
-    )
-
-  val alg = COSEAlgorithmIdentifier.ES256
-
-  val pubKeyCredParams = List(
-    new PublicKeyCredentialParameters(
-      PublicKeyCredentialType.PUBLIC_KEY,
-      alg
-    )
-  ).asJava
-
-  val appDomain = "example.com"
-  val appName = "Janus"
-
-  def registrationOptions: Action[AnyContent] = Action { request =>
-    val userId = "user-id"
-    val userName = "user-name"
-    val userDisplayName = "user-display-name"
-    val rp = new PublicKeyCredentialRpEntity(appDomain, appName)
-    val user = new PublicKeyCredentialUserEntity(
-      userId.getBytes(UTF_8),
-      userName,
-      userDisplayName
-    )
-    val challenge = new DefaultChallenge()
-    val options = new PublicKeyCredentialCreationOptions(
-      rp,
-      user,
-      challenge,
-      pubKeyCredParams
-    )
-
-    val challengeBase64 = Base64.getUrlEncoder.withoutPadding.encodeToString(challenge.getValue)
-
-    Ok(Json.toJson(options))
-      .withSession(request.session + ("passkey-challenge" -> challengeBase64))
+  def showRegistrationPage: Action[AnyContent] = authAction {
+    implicit request =>
+      Ok(views.html.passkeyRegistration(request.user, janusData))
   }
 
-  def register: Action[AnyContent] = Action { request =>
-    val webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager()
-    val regData = webAuthnManager.parseRegistrationResponseJSON("TODO")
-    val origin = Origin.create(appDomain)
-    val rpId = appDomain
+  // TODO persist instead of using session - store with TTL
+  private val challengeAttribName = "passkeyChallenge"
 
-    val challengeBase64 = request.session.get("passkey-challenge").get
+  def registrationOptions: Action[AnyContent] = authAction { request =>
+    Passkey.registrationOptions(appName, host, request.user) match {
 
-    val challengeBytes = Base64.getUrlDecoder.decode(challengeBase64)
-    val challenge = new DefaultChallenge(challengeBytes)
-    val serverProps = new ServerProperty(origin, rpId, challenge)
-    val userVerificationRequired = false
-    val userPresenceRequired = true
-    val regParams = new RegistrationParameters(serverProps, pubKeyCredParams, userVerificationRequired, userPresenceRequired)
-    webAuthnManager.verify(regData, regParams)
-    //    val credRecord = new CredentialRecordImpl()
-    //    save(credRecord)
-    Ok("TODO")
-      .withSession(request.session - "passkey-challenge")
+      case Left(failure) =>
+        logger.error(
+          s"Failed to create registration options for user ${request.user.username}: ${failure.details}",
+          failure.cause
+        )
+        BadRequest("Failed to create registration options")
+
+      case Right(options) =>
+        val challenge =
+          Base64UrlUtil.encodeToString(options.getChallenge.getValue)
+        logger.info(
+          s"Created registration options for user ${request.user.username}"
+        )
+        Ok(options.asJson.noSpaces)
+          .withSession(request.session + (challengeAttribName -> challenge))
+    }
   }
 
-  def save(credRecord: CredentialRecord): Unit = ???
+  def register: Action[AnyContent] = authAction { request =>
+    val result = for {
+      challenge <- request.session.get(challengeAttribName).toRight {
+        logger.error(
+          s"Missing challenge in session for user ${request.user.username}"
+        )
+        BadRequest("Registration session invalid")
+      }
+
+      body <- request.body.asText.toRight {
+        logger.error(
+          s"Missing body in registration request for user ${request.user.username}"
+        )
+        BadRequest("Invalid request format")
+      }
+
+      credRecord <- Passkey
+        .verifiedRegistration(host, challenge, body)
+        .left
+        .map { failure =>
+          logger.error(
+            s"Registration verification failed for user ${request.user.username}: ${failure.details}",
+            failure.cause
+          )
+          BadRequest("Registration verification failed")
+        }
+
+      _ <- Passkey.store(request.user, credRecord).left.map { failure =>
+        logger.error(
+          s"Failed to store credential for user ${request.user.username}: ${failure.details}",
+          failure.cause
+        )
+        InternalServerError("Failed to store credential")
+      }
+    } yield {
+      logger.info(
+        s"Successfully registered passkey for user ${request.user.username}"
+      )
+      Ok(Json.obj("success" -> true.asJson).noSpaces)
+        .withSession(request.session - challengeAttribName)
+    }
+
+    result.merge
+  }
 }
