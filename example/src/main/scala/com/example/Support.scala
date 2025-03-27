@@ -1,8 +1,9 @@
 package com.example
 
-import Policies.AccountExtensions
+import com.example.Policies.AccountExtensions
 import com.gu.janus.model.{Permission, SupportACL}
-import org.joda.time.{DateTime, DateTimeZone, Period}
+
+import java.time.{Duration, Instant, ZoneId, ZonedDateTime}
 
 object Support {
   import Accounts._
@@ -10,7 +11,7 @@ object Support {
   // helper for adding half a rota
   val tbd = ""
 
-  private val supportPeriod = Period.weeks(1)
+  private val supportPeriod = Duration.ofDays(7)
 
   /** Support rota entries.
     *
@@ -39,21 +40,23 @@ object Support {
     SupportACL.create(rota.toMap map convertRota, supportAccess, supportPeriod)
 
   /** Helper so the rota can be simply hand-written.
-    */
+   */
   private def convertRota(
       rotaEntry: ((Int, Int, Int), (String, String))
-  ): (DateTime, (String, String)) = {
+  ): (Instant, (String, String)) = {
     rotaEntry match {
       case ((year, month, day), users) =>
         // this rota changes over at 11am London time
-        new DateTime(
+        ZonedDateTime.of(
           year,
           month,
           day,
           11,
           0,
-          DateTimeZone.forID("Europe/London")
-        ) -> users
+          0,
+          0,
+          ZoneId.of("Europe/London")
+        ).toInstant -> users
     }
   }
 }
