@@ -24,20 +24,4 @@ object Policies {
       revokeAccess,
       true
     )
-
-  /** A policy that grants no permissions.
-    *
-    * This is used as the inline policy
-    */
-  val noOp = Policy(
-    Seq(
-      Statement(
-        Effect.Allow,
-        Seq(
-          Action("sts:GetCallerIdentity")
-        ),
-        Seq(Resource("*"))
-      )
-    )
-  )
 }
