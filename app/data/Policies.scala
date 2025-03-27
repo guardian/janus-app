@@ -25,11 +25,10 @@ object Policies {
       true
     )
 
-  /**
-   * A policy that grants no permissions.
-   *
-   * This is used as the inline policy
-   */
+  /** A policy that grants no permissions.
+    *
+    * This is used as the inline policy
+    */
   val noOp = Policy(
     Seq(
       Statement(
