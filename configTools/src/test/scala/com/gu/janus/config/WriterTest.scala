@@ -198,5 +198,45 @@ class WriterTest extends AnyFreeSpec with Matchers {
       )
       Writer.toConfig(janusData) should not include "permissionsRepo"
     }
+
+    "includes the inline policy for a permission" in {
+      val permission = Permission(
+        account1,
+        "perm1",
+        "Test permission",
+        simplePolicy,
+        false
+      )
+      val janusData = JanusData(
+        Set(account1),
+        access = ACL(Map("user1" -> Set(permission)), Set.empty),
+        admin = ACL(Map.empty, Set.empty),
+        SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
+        None
+      )
+      Writer.toConfig(janusData) should include(
+        """{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["sts:GetCallerIdentity"],"Resource":["*"]}]}"""
+      )
+    }
+
+    "includes the managed policy ARNs for a permission" in {
+      val permission = Permission.fromManagedPolicyArns(
+        account1,
+        "perm1",
+        "Test permission",
+        List("arn:aws:iam::aws:policy/ReadOnlyAccess"),
+        false
+      )
+      val janusData = JanusData(
+        Set(account1),
+        access = ACL(Map("user1" -> Set(permission)), Set.empty),
+        admin = ACL(Map.empty, Set.empty),
+        SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
+        None
+      )
+      Writer.toConfig(janusData) should include(
+        """arn:aws:iam::aws:policy/ReadOnlyAccess"""
+      )
+    }
   }
 }

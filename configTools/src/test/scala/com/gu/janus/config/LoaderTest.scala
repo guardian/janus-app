@@ -83,8 +83,13 @@ class LoaderTest
             AwsAccount("Testing account", "aws-test-account"),
             "default-test",
             "Default test access",
-            Some(""),
-            Some(List("""arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess""", """arn:aws:iam::aws:policy/EC2InstanceConnect""")),
+            None,
+            Some(
+              List(
+                """arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess""",
+                """arn:aws:iam::aws:policy/EC2InstanceConnect"""
+              )
+            ),
             false
           )
         )
@@ -110,27 +115,55 @@ class LoaderTest
         val result = Loader.loadAccess(testConfig, permissions)
         val access = result.value
         val userPermissions = access.userAccess.get("employee1").value
-        val websiteDeveloperPermission = userPermissions.find(p => p.id == "website-developer").value
+        val websiteDeveloperPermission =
+          userPermissions.find(p => p.id == "website-developer").value
         websiteDeveloperPermission should have(
-          "policy" as Some("""{"Version":"2012-10-17","Statement":[{"Sid":"1","Effect":"Allow","Action":["s3:*"],"Resource":["*"]}]}"""),
+          "description" as "Developer access",
+          "policy" as Some(
+            """{"Version":"2012-10-17","Statement":[{"Sid":"1","Effect":"Allow","Action":["s3:*"],"Resource":["*"]}]}"""
+          ),
           "managedPolicyArns" as None,
-          "shortTerm" as false,
-          "description" as "Developer access"
+          "shortTerm" as false
         )
       }
 
-      "properly extracts a policy with managed ARNs" in {
+      "properly extracts a permission with managed ARNs" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
         val result = Loader.loadAccess(testConfig, permissions)
         val access = result.value
         val userPermissions = access.userAccess.get("employee3").value
-        val websiteDeveloperPermission = userPermissions.find(p => p.id == "website-s3-manager").value
+        val websiteDeveloperPermission =
+          userPermissions.find(p => p.id == "website-s3-manager").value
         websiteDeveloperPermission should have(
-          "managedPolicyArns" as Some(List("""arn:aws:iam::aws:policy/AmazonS3FullAccess""")),
+          "description" as "Read and write access to S3",
+          "managedPolicyArns" as Some(
+            List("""arn:aws:iam::aws:policy/AmazonS3FullAccess""")
+          ),
           "policy" as None,
-          "shortTerm" as false,
-          "description" as "Read and write access to S3"
+          "shortTerm" as false
+        )
+      }
+
+      "properly extracts a permission with an inline policy document and managed policy ARNs" in {
+        val accounts = Loader.loadAccounts(testConfig).value
+        val permissions = Loader.loadPermissions(testConfig, accounts).value
+        val result = Loader.loadAccess(testConfig, permissions)
+        val access = result.value
+        val userPermissions = access.userAccess.get("employee3").value
+        val websiteDeveloperPermission =
+          userPermissions
+            .find(p => p.id == "aws-test-account-hybrid-permission")
+            .value
+        websiteDeveloperPermission should have(
+          "description" as "Managed and inline access control",
+          "managedPolicyArns" as Some(
+            List("""arn:aws:iam::aws:policy/ReadOnlyAccess""")
+          ),
+          "policy" as Some(
+            """{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["sts:GetCallerIdentity"],"Resource":["*"]}]}"""
+          ),
+          "shortTerm" as false
         )
       }
     }
