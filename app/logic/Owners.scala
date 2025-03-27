@@ -32,7 +32,11 @@ object Owners {
       .sortBy(_._1)
   }
 
-  def accountIdErrors(accountData: Seq[(AwsAccount, List[(String, Set[Permission])], Try[String])]): Seq[(AwsAccount, Throwable)] = {
+  def accountIdErrors(
+      accountData: Seq[
+        (AwsAccount, List[(String, Set[Permission])], Try[String])
+      ]
+  ): Seq[(AwsAccount, Throwable)] = {
     accountData
       .collect { case (account, _, Failure(err)) =>
         (account, err)
