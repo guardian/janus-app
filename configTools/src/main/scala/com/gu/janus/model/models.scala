@@ -108,14 +108,3 @@ case class AuditLog(
     accessType: JanusAccessType,
     external: Boolean
 )
-
-case class AccountOwners(
-    admins: List[String],
-    devs: List[String],
-    others: List[String]
-) {
-  val isEmpty = admins.isEmpty && devs.isEmpty && others.isEmpty
-}
-object AccountOwners {
-  def empty = AccountOwners(Nil, Nil, Nil)
-}
