@@ -18,9 +18,13 @@ object Validation {
       largePermission <- allPermissions.filter { perm =>
         // session policy limit includes the managed ARNs and inline policy document
         val totalLength =
-              perm.policy.map(_.length).getOrElse(0) + // the inline policy document's size
-                        perm.managedPolicyArns.map(_.length).sum // and the attached managed policy ARNs
-                totalLength >= sizeLimit
+          perm.policy // the inline policy document's size
+            .map(_.length)
+            .getOrElse(0) +
+            perm.managedPolicyArns // and the total size of the attached managed policy ARNs
+              .map(_.map(_.length).sum)
+              .getOrElse(0)
+        totalLength >= sizeLimit
       }
     } yield s"${largePermission.label} (${largePermission.description})"
 

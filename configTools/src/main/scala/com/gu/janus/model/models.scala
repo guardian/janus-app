@@ -65,7 +65,7 @@ case class AwsAccountAccess(
     isFavourite: Boolean
 )
 
-case class Permission private (
+case class Permission(
     account: AwsAccount,
     label: String,
     description: String,
@@ -78,6 +78,13 @@ case class Permission private (
   override def toString: String = s"Permission<$id>"
 }
 object Permission {
+
+  /** Creates a permission using an inline policy document.
+    *
+    * This is the normal way to define permissions in Janus, so we have an
+    * immutable record of exactly what access each user has, tied to the audit
+    * trail of approvals.
+    */
   def apply(
       account: AwsAccount,
       label: String,
@@ -114,7 +121,30 @@ object Permission {
       label: String,
       description: String,
       managedPolicyArns: List[String],
-      inlinePolicy: Option[Policy] = None,
+      shortTerm: Boolean = false
+  ): Permission = {
+    Permission(
+      account,
+      label,
+      description,
+      None,
+      Some(managedPolicyArns),
+      shortTerm
+    )
+  }
+
+  /** Creates a permission that combines managed policy ARNs with an inline
+    * policy document.
+    *
+    * More information on each of these options is above, this combination
+    * allows us to customise a managed policy.
+    */
+  def withManagedPolicyArns(
+      account: AwsAccount,
+      label: String,
+      description: String,
+      inlinePolicy: Policy,
+      managedPolicyArns: List[String],
       shortTerm: Boolean = false
   ): Permission = {
     Permission(

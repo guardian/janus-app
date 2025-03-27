@@ -43,12 +43,12 @@ class ValidationTest extends AnyFreeSpec with Matchers {
         false
       )
     val smallPermissionWithLargeManagedPolicyArns =
-      Permission.fromManagedPolicyArns(
+      Permission.withManagedPolicyArns(
         account1,
         "perm1",
         "Test valid permission",
-        List.fill(2000)(""),
-        Some(simplePolicy),
+        simplePolicy,
+        List.fill(200)("arn:aws:iam::aws:policy/ReadOnlyAccess"),
         false
       )
 
@@ -64,41 +64,89 @@ class ValidationTest extends AnyFreeSpec with Matchers {
     }
 
     "returns a warning if there is a large policy" - {
-      "in the access ACL" in {
-        val janusData = JanusData(
-          Set(account1),
-          access = ACL(Map("user1" -> Set(largePermission))),
-          emptyAcl,
-          emptySupportAcl,
-          None
-        )
-        Validation.policySizeChecks(janusData).warnings should not be empty
+      "in the access ACL" - {
+        "for a large inline policy" in {
+          val janusData = JanusData(
+            Set(account1),
+            access = ACL(Map("user1" -> Set(largePermission))),
+            emptyAcl,
+            emptySupportAcl,
+            None
+          )
+          Validation.policySizeChecks(janusData).warnings should not be empty
+        }
+
+        "for large managedPolicyArns" in {
+          val janusData = JanusData(
+            Set(account1),
+            access = ACL(
+              Map("user1" -> Set(smallPermissionWithLargeManagedPolicyArns))
+            ),
+            emptyAcl,
+            emptySupportAcl,
+            None
+          )
+          Validation.policySizeChecks(janusData).warnings should not be empty
+        }
       }
 
-      "in the admin ACL" in {
-        val janusData = JanusData(
-          Set(account1),
-          emptyAcl,
-          admin = ACL(Map("user1" -> Set(largePermission))),
-          emptySupportAcl,
-          None
-        )
-        Validation.policySizeChecks(janusData).warnings should not be empty
+      "in the admin ACL" - {
+        "for a large inline policy" in {
+          val janusData = JanusData(
+            Set(account1),
+            emptyAcl,
+            admin = ACL(Map("user1" -> Set(largePermission))),
+            emptySupportAcl,
+            None
+          )
+          Validation.policySizeChecks(janusData).warnings should not be empty
+        }
+
+        "for large managedPolicyArns" in {
+          val janusData = JanusData(
+            Set(account1),
+            emptyAcl,
+            admin = ACL(
+              Map("user1" -> Set(smallPermissionWithLargeManagedPolicyArns))
+            ),
+            emptySupportAcl,
+            None
+          )
+          Validation.policySizeChecks(janusData).warnings should not be empty
+        }
       }
 
-      "in the support ACL" in {
-        val janusData = JanusData(
-          Set(account1),
-          emptyAcl,
-          emptyAcl,
-          support = SupportACL
-            .create(Map.empty, Set(largePermission), Duration.ofSeconds(100)),
-          None
-        )
-        Validation.policySizeChecks(janusData).warnings should not be empty
+      "in the support ACL" - {
+        "for a large inline policy" in {
+          val janusData = JanusData(
+            Set(account1),
+            emptyAcl,
+            emptyAcl,
+            support = SupportACL
+              .create(Map.empty, Set(largePermission), Duration.ofSeconds(100)),
+            None
+          )
+          Validation.policySizeChecks(janusData).warnings should not be empty
+        }
+
+        "for large managedPolicyArns" in {
+          val janusData = JanusData(
+            Set(account1),
+            emptyAcl,
+            emptyAcl,
+            support = SupportACL
+              .create(
+                Map.empty,
+                Set(smallPermissionWithLargeManagedPolicyArns),
+                Duration.ofSeconds(100)
+              ),
+            None
+          )
+          Validation.policySizeChecks(janusData).warnings should not be empty
+        }
       }
 
-      "and returns an 'invalid' validation result if a warning is generated" in {
+      "returns an 'invalid' validation result if a warning is generated" in {
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map("user1" -> Set(largePermission))),
