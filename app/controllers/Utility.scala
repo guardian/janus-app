@@ -23,20 +23,14 @@ class Utility(
   }
 
   def accounts = authAction { implicit request =>
-    val sortedAccounts = janusData.accounts.toList.sortBy(_.name.toLowerCase)
-    val accountData =
-      sortedAccounts.map { awsAccount =>
-        (
-          awsAccount,
-          Owners.accountPermissions(awsAccount, janusData.access),
-          Config.accountNumber(awsAccount.authConfigKey, configuration)
-        )
-      }
+    val accountData = Owners.accountOwnerInformation(
+      janusData.accounts.toList,
+      janusData.access
+    )(account => Config.accountNumber(account.authConfigKey, configuration))
+
     // log any account number errors we accumulated
-    accountData
-      .collect { case (account, _, Failure(err)) =>
-        (account, err)
-      }
+    Owners
+      .accountIdErrors(accountData)
       .foreach { case (account, err) =>
         logger.warn(s"Couldn't lookup account number for ${account.name}", err)
       }
