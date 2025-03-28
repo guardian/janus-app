@@ -124,7 +124,7 @@ object Permission {
       label,
       description,
       None,
-      Some(managedPolicyArns),
+      if (managedPolicyArns.nonEmpty) Some(managedPolicyArns) else None,
       shortTerm
     )
   }
@@ -148,7 +148,7 @@ object Permission {
       label,
       description,
       Some(inlinePolicy.asJson.noSpaces),
-      Some(managedPolicyArns),
+      if (managedPolicyArns.nonEmpty) Some(managedPolicyArns) else None,
       shortTerm
     )
   }
