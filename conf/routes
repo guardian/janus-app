@@ -27,6 +27,9 @@ GET     /loginError                 controllers.AuthController.loginError
 GET     /oauthCallback              controllers.AuthController.oauthCallback
 GET     /logout                     controllers.AuthController.logout
 
+GET     /passkey/registration-options   controllers.PasskeyController.registrationOptions
+POST    /passkey/register               controllers.PasskeyController.register
+
 GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts
 
