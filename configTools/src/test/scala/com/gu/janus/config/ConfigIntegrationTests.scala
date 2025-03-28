@@ -70,6 +70,10 @@ class ConfigIntegrationTests
   }
 
   "development helpers" - {
+    // leave this ignored!
+    // it's useful to switch `ignore` to `in` temporarily when working on the config format
+    // run just this test with
+    //     testOnly com.gu.janus.config.ConfigIntegrationTests -- -z "print the generated config file to the console for manual inspection"
     "print the generated config file to the console for manual inspection" ignore {
       val testConfig = ConfigFactory.load("example.conf")
       val result = Loader.fromConfig(testConfig)

@@ -69,7 +69,8 @@ case class Permission(
     account: AwsAccount,
     label: String,
     description: String,
-    policy: String,
+    policy: Option[String],
+    managedPolicyArns: Option[List[String]],
     shortTerm: Boolean
 ) {
   val id = s"${account.authConfigKey}-$label"
@@ -77,6 +78,13 @@ case class Permission(
   override def toString: String = s"Permission<$id>"
 }
 object Permission {
+
+  /** Creates a permission using an inline policy document.
+    *
+    * This is the normal way to define permissions in Janus so that we have an
+    * immutable record of exactly what access each user has, tied to the audit
+    * trail of approvals.
+    */
   def apply(
       account: AwsAccount,
       label: String,
@@ -84,7 +92,65 @@ object Permission {
       policy: Policy,
       shortTerm: Boolean = false
   ): Permission = {
-    Permission(account, label, description, policy.asJson.noSpaces, shortTerm)
+    Permission(
+      account,
+      label,
+      description,
+      Some(policy.asJson.noSpaces),
+      None,
+      shortTerm
+    )
+  }
+
+  /** Create a permission that's based on managed IAM policies instead of
+    * providing a policy document.
+    *
+    * These should usually be AWS-managed policies, and this provides two useful
+    * features:
+    *   - set up service-specific permissions that are automatically kept up to
+    *     date with AWS changes
+    *   - bypass the size limit on inline policies for complex permissions (e.g.
+    *     global read access)
+    */
+  def fromManagedPolicyArns(
+      account: AwsAccount,
+      label: String,
+      description: String,
+      managedPolicyArns: List[String],
+      shortTerm: Boolean = false
+  ): Permission = {
+    Permission(
+      account,
+      label,
+      description,
+      None,
+      if (managedPolicyArns.nonEmpty) Some(managedPolicyArns) else None,
+      shortTerm
+    )
+  }
+
+  /** Creates a permission that combines managed policy ARNs with an inline
+    * policy document. More information on each of these options is above.
+    *
+    * This combination allows us to take managed policies as a baseline and
+    * customise the resulting permission with an inline policy document.
+    */
+  def withManagedPolicyArns(
+      account: AwsAccount,
+      label: String,
+      description: String,
+      inlinePolicy: Policy,
+      managedPolicyArns: List[String],
+      shortTerm: Boolean = false
+  ): Permission = {
+    Permission(
+      account,
+      label,
+      description,
+      Some(inlinePolicy.asJson.noSpaces),
+      if (managedPolicyArns.nonEmpty) Some(managedPolicyArns) else None,
+      shortTerm
+    )
   }
 }
 

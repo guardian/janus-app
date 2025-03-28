@@ -83,6 +83,7 @@ object Loader {
               label = configuredPermission.label,
               description = configuredPermission.description,
               policy = configuredPermission.policy,
+              managedPolicyArns = configuredPermission.managedPolicyArns,
               shortTerm = configuredPermission.shortTerm
             )
           }
