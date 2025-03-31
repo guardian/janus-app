@@ -12,12 +12,12 @@ import play.api.{Logging, Mode}
 
 /** Controller for handling passkey registration and authentication. */
 class PasskeyController(
-                         controllerComponents: ControllerComponents,
-                         authAction: AuthAction[AnyContent],
-                         host: String,
-                         janusData: JanusData
-                       )(implicit mode: Mode, assetsFinder: AssetsFinder)
-  extends AbstractController(controllerComponents)
+    controllerComponents: ControllerComponents,
+    authAction: AuthAction[AnyContent],
+    host: String,
+    janusData: JanusData
+)(implicit mode: Mode, assetsFinder: AssetsFinder)
+    extends AbstractController(controllerComponents)
     with Logging {
 
   private val appName = "Janus"
