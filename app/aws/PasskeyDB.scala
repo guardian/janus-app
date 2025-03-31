@@ -25,11 +25,17 @@ object PasskeyDB {
   )
 
   object UserCredentialRecord {
+
+    /** See
+      * [[https://webauthn4j.github.io/webauthn4j/en/#credentialrecord-serialization-and-deserialization]]
+      * for serialisation details.
+      */
     def toDynamoItem(
         userCredentialRecord: UserCredentialRecord
     ): Map[String, AttributeValue] = {
       Map(
         "userName" -> AttributeValue.fromS(userCredentialRecord.user.username),
+        // TODO: does this correspond to the type of passkey? What happens if you try to register the same passkey twice?
         "credentialId" -> AttributeValue.fromS(
           Base64UrlUtil.encodeToString(
             userCredentialRecord.credentialRecord.getAttestedCredentialData.getCredentialId

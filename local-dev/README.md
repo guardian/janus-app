@@ -17,8 +17,12 @@ To make this table available for testing auditing functionality:
 2. Populate the table with some test data by running [Insertion test](https://github.com/guardian/janus-app/blob/f522bca83d9d90657634b038c7734a9871974161/test/aws/AuditTrailDBTest.scala#L16-L46).
 
 
-## Setting up Passkeys table
+## Setting up Passkeys tables
 
-We also host a table that holds passkey public keys for authentication.  
-To make this table available for testing Passkeys functionality:  
-Create the passkey table schema by running [create table test](/test/aws/PasskeyDBTest.scala).
+To test registration of passkeys and their use in authentication, you will need to have the tables to hold passkey
+public key data and challenges in your local database.  
+To make these tables available for testing passkeys functionality:    
+1. Create the passkey credentials table schema by running [create table test](/test/aws/PasskeyDBTest.scala).
+2. Create the passkey challenges table schema by running [create table test](/test/aws/PasskeyChallengeDBTest.scala).
+
+These tests are ignored by default.  To run them, just change `ignore` to `in`.

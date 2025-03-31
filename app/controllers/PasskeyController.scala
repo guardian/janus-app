@@ -1,15 +1,19 @@
 package controllers
 
+import aws.PasskeyChallengeDB.UserChallenge
+import aws.PasskeyDB.UserCredentialRecord
+import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import com.webauthn4j.util.Base64UrlUtil
-import io.circe.Json
 import io.circe.syntax.EncoderOps
 import logic.Passkey
 import models.Passkey._
 import play.api.mvc._
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+
+import scala.util.{Failure, Success}
 
 /** Controller for handling passkey registration and authentication. */
 class PasskeyController(
@@ -21,45 +25,63 @@ class PasskeyController(
     extends AbstractController(controllerComponents)
     with Logging {
 
-  // TODO: Move to service config
-  private val appName = "Janus"
-
-  def showRegistrationPage: Action[AnyContent] = authAction {
-    implicit request =>
-      Ok(views.html.passkeyRegistration(request.user, janusData))
-  }
-
-  // TODO persist instead of using session - store with TTL
-  private val challengeAttribName = "passkeyChallenge"
-
+  /** See
+    * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
+    */
   def registrationOptions: Action[AnyContent] = authAction { request =>
-    Passkey.registrationOptions(appName, host, request.user) match {
+    val result = for {
+      options <- Passkey
+        .registrationOptions(host, request.user)
+        .toEither
+        .left
+        .map { exception =>
+          logger.error(
+            s"Failed to create registration options for user ${request.user.username}: ${exception.getMessage}",
+            exception
+          )
+          BadRequest("Failed to create registration options")
+        }
 
-      case Left(failure) =>
-        logger.error(
-          s"Failed to create registration options for user ${request.user.username}: ${failure.details}",
-          failure.cause
-        )
-        BadRequest("Failed to create registration options")
-
-      case Right(options) =>
-        val challenge =
-          Base64UrlUtil.encodeToString(options.getChallenge.getValue)
-        logger.info(
-          s"Created registration options for user ${request.user.username}"
-        )
-        Ok(options.asJson.noSpaces)
-          .withSession(request.session + (challengeAttribName -> challenge))
+      _ <- PasskeyChallengeDB
+        .insert(UserChallenge(request.user, options.getChallenge))
+        .toEither
+        .left
+        .map { exception =>
+          logger.error(
+            s"Failed to store challenge for user ${request.user.username}: ${exception.getMessage}",
+            exception
+          )
+          InternalServerError("Failed to store challenge")
+        }
+    } yield {
+      logger.info(
+        s"Created registration options for user ${request.user.username}"
+      )
+      Ok(options.asJson.noSpaces)
     }
+
+    result.merge
   }
 
+  /** See
+    * [[https://webauthn4j.github.io/webauthn4j/en/#registering-the-webauthn-public-key-credential-on-the-server]].
+    */
   def register: Action[AnyContent] = authAction { request =>
     val result = for {
-      challenge <- request.session.get(challengeAttribName).toRight {
-        logger.error(
-          s"Missing challenge in session for user ${request.user.username}"
-        )
-        BadRequest("Registration session invalid")
+      challenge <- PasskeyChallengeDB.load(request.user) match {
+        case Failure(exception) =>
+          logger.error(
+            s"Failed to load challenge for user ${request.user.username}: ${exception.getMessage}",
+            exception
+          )
+          Left(BadRequest("Registration session invalid"))
+        case Success(None) =>
+          logger.error(
+            s"Challenge not found for user ${request.user.username}"
+          )
+          Left(BadRequest("Registration session invalid"))
+        case Success(Some(challenge)) =>
+          Right(Base64UrlUtil.encodeToString(challenge.getValue))
       }
 
       body <- request.body.asText.toRight {
@@ -71,27 +93,41 @@ class PasskeyController(
 
       credRecord <- Passkey
         .verifiedRegistration(host, challenge, body)
+        .toEither
         .left
-        .map { failure =>
+        .map { exception =>
           logger.error(
-            s"Registration verification failed for user ${request.user.username}: ${failure.details}",
-            failure.cause
+            s"Registration verification failed for user ${request.user.username}: ${exception.getMessage}",
+            exception
           )
           BadRequest("Registration verification failed")
         }
 
-      _ <- Passkey.store(request.user, credRecord).left.map { failure =>
-        logger.error(
-          s"Failed to store credential for user ${request.user.username}: ${failure.details}",
-          failure.cause
-        )
-        InternalServerError("Failed to store credential")
+      _ <- PasskeyChallengeDB.delete(request.user).toEither.left.map {
+        exception =>
+          logger.error(
+            s"Failed to delete challenge for user ${request.user.username}: ${exception.getMessage}",
+            exception
+          )
+          InternalServerError("Failed to delete challenge")
       }
+
+      _ <- PasskeyDB
+        .insert(UserCredentialRecord(request.user, credRecord))
+        .toEither
+        .left
+        .map { exception =>
+          logger.error(
+            s"Failed to store credential for user ${request.user.username}: ${exception.getMessage}",
+            exception
+          )
+          InternalServerError("Failed to store credential")
+        }
     } yield {
       logger.info(
         s"Successfully registered passkey for user ${request.user.username}"
       )
-      NoContent.withSession(request.session - challengeAttribName)
+      NoContent
     }
 
     result.merge
