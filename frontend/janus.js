@@ -111,7 +111,8 @@ document.addEventListener('DOMContentLoaded', function() {
             updateLink = function(permissions) {
                 const link = document.querySelector(".multiple-credentials__link"),
                     hasPermissions = link.href.indexOf("permissionIds=") !== -1,
-                    permissionStr = permissions.join(",");
+                    permissionStr = permissions.map(encodeURIComponent).join(",");
+
                 if (hasPermissions) {
                     link.href = link.href.replace(/permissionIds=[^&]*/, "permissionIds=" + permissionStr);
                 } else {
