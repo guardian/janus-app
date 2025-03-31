@@ -1,4 +1,5 @@
 import 'materialize-css';
+import DOMPurify from 'dompurify';
 
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
@@ -122,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         return checkbox.checked;
                     }),
                     permissions = checked.map(function(checkbox) {
-                        return checkbox.getAttribute("data-permission-id");
+                        return DOMPurify.sanitize(checkbox.getAttribute("data-permission-id"));
                     }),
                     clicked = event ? event.target : null,
                     accountContainer = clicked ? clicked.closest(".aws-account-body") : null,
