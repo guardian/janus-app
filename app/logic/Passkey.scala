@@ -75,7 +75,7 @@ object Passkey {
     val userVerificationRequired = true
 
     val publicKeyCredentialParameters
-    : util.List[PublicKeyCredentialParameters] = List(
+        : util.List[PublicKeyCredentialParameters] = List(
       // ES256 is widely supported and efficient
       new PublicKeyCredentialParameters(
         PublicKeyCredentialType.PUBLIC_KEY,
@@ -101,34 +101,34 @@ object Passkey {
   }
 
   case class InvalidInputFailure(details: String, cause: Throwable)
-    extends PasskeyFailure
+      extends PasskeyFailure
 
   case class VerificationFailure(details: String, cause: Throwable)
-    extends PasskeyFailure
+      extends PasskeyFailure
 
   case class StorageFailure(details: String, cause: Throwable)
-    extends PasskeyFailure
+      extends PasskeyFailure
 
   // TODO: look into how this is configured
   private val webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager()
 
   /** Creates registration options for a new passkey. This is required by a
-   * browser to initiate the registration process.
-   *
-   * @param appName
-   * The name of the application the passkey will authenticate (the relying
-   * party).
-   * @param appHost
-   * The host of the application the passkey will authenticate (the relying
-   * party).
-   * @param user
-   * The user identity retrieved from Google auth.
-   * @param challenge
-   * The challenge to be used for registration.
-   * @return
-   * A PublicKeyCredentialCreationOptions object containing the registration
-   * options.
-   */
+    * browser to initiate the registration process.
+    *
+    * @param appName
+    *   The name of the application the passkey will authenticate (the relying
+    *   party).
+    * @param appHost
+    *   The host of the application the passkey will authenticate (the relying
+    *   party).
+    * @param user
+    *   The user identity retrieved from Google auth.
+    * @param challenge
+    *   The challenge to be used for registration.
+    * @return
+    *   A PublicKeyCredentialCreationOptions object containing the registration
+    *   options.
+    */
   def registrationOptions(
       appName: String,
       appHost: String,
@@ -227,6 +227,7 @@ object Passkey {
         )
     }
                          ): Either[InvalidInputFailure, PublicKeyCredentialCreationOptions] = {
+  ): Either[InvalidInputFailure, PublicKeyCredentialCreationOptions] = {
     for {
       appDomain <- domainOf(appHost)
 
@@ -260,25 +261,25 @@ object Passkey {
   }
 
   /** Verifies the registration response from the browser. This is called after
-   * the user has completed the registration process on the browser.
-   *
-   * @param appHost
-   * The host of the application the passkey will authenticate (the relying
-   * party).
-   * @param challenge
-   * Base 64 encoded challenge string used for registration (must correspond
-   * with the challenge passed in [[registrationOptions]]).
-   * @param jsonResponse
-   * The JSON response from the browser containing the registration data.
-   * @return
-   * A CredentialRecord object containing the verified credential data or an
-   * [[IllegalArgumentException]] if verification fails.
-   */
+    * the user has completed the registration process on the browser.
+    *
+    * @param appHost
+    *   The host of the application the passkey will authenticate (the relying
+    *   party).
+    * @param challenge
+    *   Base 64 encoded challenge string used for registration (must correspond
+    *   with the challenge passed in [[registrationOptions]]).
+    * @param jsonResponse
+    *   The JSON response from the browser containing the registration data.
+    * @return
+    *   A CredentialRecord object containing the verified credential data or an
+    *   [[IllegalArgumentException]] if verification fails.
+    */
   def verifiedRegistration(
       appHost: String,
       challenge: String,
       jsonResponse: String
-                          ): Either[PasskeyFailure, CredentialRecord] = {
+  ): Either[PasskeyFailure, CredentialRecord] = {
     for {
       regData <- Try(
         webAuthnManager.parseRegistrationResponseJSON(jsonResponse)
@@ -329,9 +330,9 @@ object Passkey {
 
   // TODO
   def store(
-             user: UserIdentity,
-             credentialRecord: CredentialRecord
-           ): Either[StorageFailure, Unit] = {
+      user: UserIdentity,
+      credentialRecord: CredentialRecord
+  ): Either[StorageFailure, Unit] = {
     println(
       s"TODO: Store credential record: ${user.username}: $credentialRecord"
     )
