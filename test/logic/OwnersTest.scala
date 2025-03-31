@@ -1,13 +1,22 @@
 package logic
 
-import com.gu.janus.model.{ACL, AccountOwners}
+import com.gu.janus.model.ACL
 import fixtures.Fixtures._
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-class OwnersTest extends AnyFreeSpec with Matchers {
+import scala.language.postfixOps
+import scala.util.{Failure, Success}
+
+class OwnersTest
+    extends AnyFreeSpec
+    with Matchers
+    with ScalaCheckDrivenPropertyChecks {
   import Owners._
 
+  val accounts = List(fooAct, barAct, bazAct, quxAct)
   val acl = ACL(
     Map(
       "test.user" -> Set(fooDev),
@@ -21,51 +30,74 @@ class OwnersTest extends AnyFreeSpec with Matchers {
     Set.empty
   )
 
-  "accountOwners" - {
+  "accountOwnerInformation" - {
+    "uses the provided lookup function to populate the role for each account" in {
+      forAll { (roleArn: String) =>
+        val result = accountOwnerInformation(accounts, acl)(account =>
+          Success(s"${account.authConfigKey}-$roleArn")
+        )
+        result.foreach { case (account, _, populatedRole) =>
+          populatedRole shouldEqual Success(
+            s"${account.authConfigKey}-$roleArn"
+          )
+        }
+      }
+    }
+
+    "sorts AWS accounts" in {
+      val shuffledAccounts1 = scala.util.Random.shuffle(accounts)
+      val shuffledAccounts2 = scala.util.Random.shuffle(accounts)
+      val result1 =
+        accountOwnerInformation(shuffledAccounts1, acl)(_ => Success("role"))
+      val result2 =
+        accountOwnerInformation(shuffledAccounts2, acl)(_ => Success("role"))
+      result1 shouldEqual result2
+    }
+  }
+
+  "accountPermissions" - {
     "returns empty account owners if there are no owners" in {
-      accountOwners(bazAct, acl) shouldEqual AccountOwners.empty
+      accountPermissions(bazAct, acl) shouldEqual Nil
     }
 
-    "fetches all the admins for an account" in {
-      accountOwners(fooAct, acl).admins.toSet shouldEqual Set(
-        "test.admin",
-        "test.all"
+    "fetches all the permissions for an account, ordered by username" in {
+      accountPermissions(fooAct, acl) shouldEqual List(
+        "test.admin" -> Set(fooCf),
+        "test.all" -> Set(fooDev, fooCf),
+        "test.other" -> Set(fooS3),
+        "test.user" -> Set(fooDev),
+        "test.yet-another-user" -> Set(fooDev),
+        "test.zzz-other" -> Set(fooS3)
       )
     }
 
-    "orders admins by username" in {
-      accountOwners(fooAct, acl).admins shouldEqual List(
-        "test.admin",
-        "test.all"
+    "fetches all the permissions for a different account" in {
+      accountPermissions(barAct, acl) shouldEqual List(
+        "test.different-account" -> Set(barDev)
       )
     }
+  }
 
-    "fetches developers and excludes those that are also admins" in {
-      accountOwners(fooAct, acl).devs.toSet shouldEqual Set(
-        "test.user",
-        "test.yet-another-user"
+  "accountIdErrors" - {
+    "returns an empty list if all accounts were successfully looked up" in {
+      val accountData = List(
+        (fooAct, List.empty, Success("foo-role")),
+        (barAct, List.empty, Success("bar-role")),
+        (bazAct, List.empty, Success("baz-role")),
+        (quxAct, List.empty, Success("qux-role"))
       )
+      accountIdErrors(accountData) shouldEqual Nil
     }
 
-    "orders developers by username" in {
-      accountOwners(fooAct, acl).devs shouldEqual List(
-        "test.user",
-        "test.yet-another-user"
+    "returns a list of accounts that failed their lookup" in {
+      val accountData = List(
+        (fooAct, List.empty, Success("foo-role")),
+        (barAct, List.empty, Success("bar-role")),
+        (bazAct, List.empty, Failure(new RuntimeException("baz-error"))),
+        (quxAct, List.empty, Failure(new RuntimeException("qux-error")))
       )
-    }
-
-    "fetches 'other users' and excludes those that are also admins and devs" in {
-      accountOwners(fooAct, acl).others.toSet shouldEqual Set(
-        "test.other",
-        "test.zzz-other"
-      )
-    }
-
-    "orders 'other users' by username" in {
-      accountOwners(fooAct, acl).others shouldEqual List(
-        "test.other",
-        "test.zzz-other"
-      )
+      val errorAccounts = accountIdErrors(accountData).map(_._1)
+      errorAccounts shouldEqual List(bazAct, quxAct)
     }
   }
 }

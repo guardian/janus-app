@@ -14,6 +14,7 @@ import java.net.{URI, URLEncoder}
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.{Clock, Duration, Instant, ZonedDateTime}
 import scala.io.Source
+import scala.jdk.CollectionConverters.SeqHasAsJava
 
 object Federation {
 
@@ -91,13 +92,22 @@ object Federation {
       sts: StsClient,
       duration: Duration
   ): Credentials = {
-    val request = AssumeRoleRequest
+    val requestBuilder = AssumeRoleRequest
       .builder()
       .roleArn(roleArn)
       .roleSessionName(username)
-      .policy(permission.policy)
       .durationSeconds(duration.getSeconds.toInt)
-      .build()
+    permission.policy.foreach { policy =>
+      requestBuilder.policy(policy)
+    }
+    permission.managedPolicyArns.foreach { managedPolicyArns =>
+      requestBuilder.policyArns(
+        managedPolicyArns.map { arn =>
+          PolicyDescriptorType.builder().arn(arn).build()
+        }.asJava
+      )
+    }
+    val request = requestBuilder.build()
     val response = sts.assumeRole(request)
     response.credentials()
   }

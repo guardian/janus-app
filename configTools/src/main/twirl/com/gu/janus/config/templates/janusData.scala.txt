@@ -69,7 +69,22 @@ janus {
                 label = "@permission.label"
                 description = "@permission.description"
                 shortTerm = @if(permission.shortTerm) {true} else {false}
-                policy = """@permission.policy"""
+                @permission.policy match {
+                    case Some(policy) => {
+                policy = """@policy"""
+                    }
+                    case None => {}
+                }
+                @permission.managedPolicyArns match {
+                    case Some(managedPolicyArns) => {
+                managedPolicyArns = [
+                    @for(arn <- managedPolicyArns) {
+                    """@arn""",
+                    }
+                ]
+                    }
+                    case None => {}
+                }
             },
         }
     ]

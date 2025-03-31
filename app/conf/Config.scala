@@ -13,11 +13,32 @@ import models._
 import play.api.Configuration
 
 import java.io.{File, FileInputStream}
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 object Config {
   def roleArn(awsAccountAuthConfigKey: String, config: Configuration): String =
     requiredString(config, s"federation.$awsAccountAuthConfigKey.aws.roleArn")
+
+  // extract aws account ID from Role ARN
+  private val AwsAccountId = """arn:aws:iam::(\d+):role/.+""".r
+  def accountNumber(
+      awsAccountAuthConfigKey: String,
+      config: Configuration
+  ): Try[String] = {
+    for {
+      role <- Try(roleArn(awsAccountAuthConfigKey, config))
+      accountNumber <- role match {
+        case AwsAccountId(accountId) => Success(accountId)
+        case _ =>
+          Failure(
+            new JanusConfigurationException(
+              s"Could not extract account number from role ARN $role",
+              s"federation.$awsAccountAuthConfigKey.aws.roleArn"
+            )
+          )
+      }
+    } yield accountNumber
+  }
 
   def validateAccountConfig(
       janusData: JanusData,
@@ -82,8 +103,9 @@ object Config {
       val jsonCertStream =
         Try(new FileInputStream(serviceAccountCertPath))
           .getOrElse(
-            throw new RuntimeException(
-              s"Could not load service account JSON from $serviceAccountCertPath"
+            throw new JanusConfigurationException(
+              s"Could not load service account JSON",
+              serviceAccountCertPath
             )
           )
       ServiceAccountCredentials.fromStream(jsonCertStream)
@@ -98,7 +120,15 @@ object Config {
 
   private def requiredString(config: Configuration, key: String): String = {
     config.getOptional[String](key).getOrElse {
-      throw new RuntimeException(s"Missing required config property $key")
+      throw new JanusConfigurationException(
+        s"Missing required config property",
+        key
+      )
     }
   }
+
+  class JanusConfigurationException(message: String, location: String)
+      extends Throwable(
+        s"$message at $location"
+      )
 }
