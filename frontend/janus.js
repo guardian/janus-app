@@ -1,5 +1,4 @@
 import 'materialize-css';
-import { Datepicker } from 'materialize-css';
 
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
