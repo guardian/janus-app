@@ -1,5 +1,7 @@
 package logic
 
+import aws.PasskeyDB
+import aws.PasskeyDB.UserCredentialRecord
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.WebAuthnManager
 import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
@@ -8,6 +10,7 @@ import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.server.ServerProperty
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
@@ -185,14 +188,15 @@ object Passkey {
       InvalidInputFailure(s"Invalid host: $host", exception)
     )
 
-  // TODO
-  def store(
-      user: UserIdentity,
-      credentialRecord: CredentialRecord
+  def store(user: UserIdentity, credentialRecord: CredentialRecord)(implicit
+      dynamoDb: DynamoDbClient
   ): Either[StorageFailure, Unit] = {
-    println(
-      s"TODO: Store credential record: ${user.username}: $credentialRecord"
-    )
-    Right(())
+    PasskeyDB
+      .insert(UserCredentialRecord(user, credentialRecord))
+      .toEither
+      .left
+      .map { exception =>
+        StorageFailure("Failed to store credential", exception)
+      }
   }
 }

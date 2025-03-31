@@ -137,6 +137,11 @@ automatically recompile and reload when changes are made.
 To get the audit endpoints to work and test audit logging locally, follow the instructions in this 
 [README](local-dev/README.md).
 
+#### Local Passkeys support
+
+To test passkey authentication, follow the instructions in this 
+[README](local-dev/README.md).
+
 
 ## Configuration
 
@@ -163,8 +168,7 @@ ecosystem makes it easy to (for example) run tests over your
 configuration.
 
 This repository includes an example project, full documentation of
-using `janus-config-tools` is included in [that project's
-README](configTools/README.md).
+using `janus-config-tools` is included in [that project's code](example).
 
 ### Application configuration
 

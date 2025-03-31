@@ -9,6 +9,7 @@ import logic.Passkey
 import models.Passkey._
 import play.api.mvc._
 import play.api.{Logging, Mode}
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 /** Controller for handling passkey registration and authentication. */
 class PasskeyController(
@@ -16,11 +17,17 @@ class PasskeyController(
     authAction: AuthAction[AnyContent],
     host: String,
     janusData: JanusData
-)(implicit mode: Mode, assetsFinder: AssetsFinder)
+)(implicit dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 
+  // TODO: Move to service config
   private val appName = "Janus"
+
+  def showRegistrationPage: Action[AnyContent] = authAction {
+    implicit request =>
+      Ok(views.html.passkeyRegistration(request.user, janusData))
+  }
 
   // TODO persist instead of using session - store with TTL
   private val challengeAttribName = "passkeyChallenge"

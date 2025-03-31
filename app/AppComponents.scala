@@ -114,6 +114,7 @@ class AppComponents(context: ApplicationLoader.Context)
       requiredGoogleGroups
     )(wsClient, executionContext, mode, assetsFinder),
     new PasskeyController(controllerComponents, authAction, host, janusData)(
+      dynamodDB,
       mode,
       assetsFinder
     ),
