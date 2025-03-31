@@ -9,9 +9,9 @@ import io.circe.{Encoder, Json}
 import scala.jdk.CollectionConverters._
 
 /** Encodings for the WebAuthn data types used in passkey registration and
- * authentication. These can't be auto-encoded by Circe because they aren't
- * case classes.
- */
+  * authentication. These can't be auto-encoded by Circe because they aren't
+  * case classes.
+  */
 object Passkey {
 
   implicit val relyingPartyEncoder: Encoder[PublicKeyCredentialRpEntity] =
@@ -27,7 +27,7 @@ object Passkey {
     )
 
   implicit val publicKeyCredentialParametersEncoder
-  : Encoder[PublicKeyCredentialParameters] =
+      : Encoder[PublicKeyCredentialParameters] =
     Encoder.forProduct2("type", "alg")(param =>
       (param.getType.getValue, param.getAlg.getValue)
     )
