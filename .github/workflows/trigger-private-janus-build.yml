@@ -27,7 +27,7 @@ jobs:
         uses: guardian/setup-scala@v1
 
       - name: Install Node
-        uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4.2.0
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
         with: 
           node-version-file: '.nvmrc'
           cache: 'npm'
@@ -70,7 +70,7 @@ jobs:
       run: echo START_TIME=$(date "+%Y-%m-%dT%H:%M:%S") >> $GITHUB_ENV
 
     - name: Exchange GitHub App for GitHub Token
-      uses: actions/create-github-app-token@21cfef2b496dd8ef5b904c159339626a10ad380e # v1.11.6
+      uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1.12.0
       id: app-token
       with:
         # These values are for the GitHub App guardian-janus-ci
@@ -122,7 +122,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
     - name: Exchange GitHub App for GitHub Token
-      uses: actions/create-github-app-token@21cfef2b496dd8ef5b904c159339626a10ad380e # v1.11.6
+      uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547 # v1.12.0
       id: app-token
       with:
         # These values are for the GitHub App guardian-janus-ci
