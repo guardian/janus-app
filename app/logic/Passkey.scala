@@ -76,7 +76,7 @@ object Passkey {
     val userVerificationRequired = true
 
     val publicKeyCredentialParameters
-    : util.List[PublicKeyCredentialParameters] = List(
+        : util.List[PublicKeyCredentialParameters] = List(
       // ES256 is widely supported and efficient
       new PublicKeyCredentialParameters(
         PublicKeyCredentialType.PUBLIC_KEY,
@@ -102,34 +102,34 @@ object Passkey {
   }
 
   case class InvalidInputFailure(details: String, cause: Throwable)
-    extends PasskeyFailure
+      extends PasskeyFailure
 
   case class VerificationFailure(details: String, cause: Throwable)
-    extends PasskeyFailure
+      extends PasskeyFailure
 
   case class StorageFailure(details: String, cause: Throwable)
-    extends PasskeyFailure
+      extends PasskeyFailure
 
   // TODO: look into how this is configured
   private val webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager()
 
   /** Creates registration options for a new passkey. This is required by a
-   * browser to initiate the registration process.
-   *
-   * @param appName
-   * The name of the application the passkey will authenticate (the relying
-   * party).
-   * @param appHost
-   * The host of the application the passkey will authenticate (the relying
-   * party).
-   * @param user
-   * The user identity retrieved from Google auth.
-   * @param challenge
-   * The challenge to be used for registration.
-   * @return
-   * A PublicKeyCredentialCreationOptions object containing the registration
-   * options.
-   */
+    * browser to initiate the registration process.
+    *
+    * @param appName
+    *   The name of the application the passkey will authenticate (the relying
+    *   party).
+    * @param appHost
+    *   The host of the application the passkey will authenticate (the relying
+    *   party).
+    * @param user
+    *   The user identity retrieved from Google auth.
+    * @param challenge
+    *   The challenge to be used for registration.
+    * @return
+    *   A PublicKeyCredentialCreationOptions object containing the registration
+    *   options.
+    */
   def registrationOptions(
       appName: String,
       appHost: String,
