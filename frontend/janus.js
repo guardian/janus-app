@@ -19,26 +19,28 @@ document.addEventListener('DOMContentLoaded', function() {
     // aws-profile-name
     if (document.querySelectorAll('.editable-aws-profile').length) {
         const profileIdContainers = document.querySelectorAll('.editable-aws-profile .aws-profile-id');
-
-        document.getElementById('aws-profile-id').addEventListener('keyup', function() {
-            const input = this;
-            profileIdContainers.forEach(function(el) {
-                let lines;
-                if (el.tagName === "TEXTAREA") {
-                    lines = el.value.split("\n");
-                } else {
-                    lines = el.innerText.split("\n");
-                }
-                const replaced = lines.map(function(line) {
-                    return line.replace(/--profile [a-zA-Z0-9\-]*/, "--profile " + input.value);
+        const singleProfileNameInput = document.getElementById('aws-profile-id');
+        if (singleProfileNameInput) {
+            singleProfileNameInput.addEventListener('keyup', function() {
+                const input = this;
+                profileIdContainers.forEach(function(el) {
+                    let lines;
+                    if (el.tagName === "TEXTAREA") {
+                        lines = el.value.split("\n");
+                    } else {
+                        lines = el.innerText.split("\n");
+                    }
+                    const replaced = lines.map(function(line) {
+                        return line.replace(/--profile [a-zA-Z0-9\-]*/, "--profile " + input.value);
+                    });
+                    if (el.tagName === "TEXTAREA") {
+                        el.value = replaced.join("\n");
+                    } else {
+                        el.innerText = replaced.join("\n");
+                    }
                 });
-                if (el.tagName === "TEXTAREA") {
-                    el.value = replaced.join("\n");
-                } else {
-                    el.innerText = replaced.join("\n");
-                }
             });
-        });
+        }
     }
 
     // copy-text
