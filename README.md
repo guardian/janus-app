@@ -114,7 +114,9 @@ Janus.
 
 #### Install Node
 
-The version is specified in `.nvmrc`. Dependencies will be installed as part of the sbt run command.
+The version is specified in `.nvmrc`. Dependencies will be installed as part of the sbt run command. 
+
+When developing locally, you can also run `npm --prefix frontend i` from the project root to install dependencies.
 
 #### Obtain configuration
 
@@ -133,11 +135,12 @@ This will likely involve DNS or a hosts entry as well as a webserver
 
 Use sbt to run Janus in development mode. 
 
-The Node bundle is built using a `PlayRunHook`.
-
-The server will automatically recompile and reload when changes are made.
-
     sbt -Dconfig.file=<PATH>/janus.local.conf run
+
+The Node bundle is built using a [`PlayRunHook`](https://github.com/guardian/janus-app/blob/d2b7553d26f2dc52706fb053a7e138fce745710b/project/RunClientHook.scala#L1) which is [configured in `build.sbt`](https://github.com/guardian/janus-app/blob/d2b7553d26f2dc52706fb053a7e138fce745710b/build.sbt#L80).
+
+The frontend dev-server will automatically recompile and reload when changes are made.
+
 
 #### Local audit log support
 
