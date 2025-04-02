@@ -4,7 +4,7 @@ import sbt._
 import scala.sys.process.Process
 
 /** Frontend build play run hook.
-  * https://www.playframework.com/documentation/2.8.x/SBTCookbook
+  * https://www.playframework.com/documentation/3.0.x/sbtCookbook#Hooking-into-Plays-dev-mode
   */
 object RunClientHook {
   def apply(base: File): PlayRunHook = {
