@@ -19,10 +19,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // aws-profile-name
     if (document.querySelectorAll('.editable-aws-profile').length) {
         const profileIdContainers = document.querySelectorAll('.editable-aws-profile .aws-profile-id');
-        const singleProfileNameInput = document.getElementById('aws-profile-id');
-        if (singleProfileNameInput) {
-            singleProfileNameInput.addEventListener('keyup', function() {
-                const input = this;
+        document.querySelectorAll("#aws-profile-id").forEach(function(input){
+            input.addEventListener('keyup', function() {
                 profileIdContainers.forEach(function(el) {
                     let lines;
                     if (el.tagName === "TEXTAREA") {
@@ -40,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 });
             });
-        }
+        });
     }
 
     // copy-text
