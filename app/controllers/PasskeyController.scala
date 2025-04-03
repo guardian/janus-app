@@ -5,6 +5,7 @@ import aws.PasskeyDB.UserCredentialRecord
 import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
+import com.webauthn4j.data.PublicKeyCredentialCreationOptions
 import com.webauthn4j.util.Base64UrlUtil
 import io.circe.syntax.EncoderOps
 import logic.Passkey
@@ -28,58 +29,64 @@ class PasskeyController(
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
     */
   def registrationOptions: Action[AnyContent] = authAction { request =>
-    val result = for {
+    val outcome = for {
       options <- Passkey.registrationOptions(host, request.user)
       _ <- PasskeyChallengeDB.insert(
         UserChallenge(request.user, options.getChallenge)
       )
     } yield options
-
-    result match {
-      case Left(exception) =>
-        logger.error(exception.engineerMessage, exception.getCause)
-        Status(exception.httpCode)(exception.userMessage)
-      case Right(options) =>
-        logger.info(
-          s"Created registration options for user ${request.user.username}"
-        )
+    handleErrors(
+      outcome,
+      successLogMessage =
+        s"Created registration options for user ${request.user.username}",
+      successResult = (options: PublicKeyCredentialCreationOptions) =>
         Ok(options.asJson.noSpaces)
-    }
+    )
   }
 
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#registering-the-webauthn-public-key-credential-on-the-server]].
     */
   def register: Action[AnyContent] = authAction { request =>
-    val result = for {
+    val outcome = for {
       challenge <- PasskeyChallengeDB.load(request.user)
       challengeStr = Base64UrlUtil.encodeToString(challenge.getValue)
-      body <- extractBody(request.body.asText, request.user)
+      body <- extractRequestBody(request.body.asText, request.user)
       credRecord <- Passkey.verifiedRegistration(host, challengeStr, body)
       _ <- PasskeyDB.insert(UserCredentialRecord(request.user, credRecord))
       _ <- PasskeyChallengeDB.delete(request.user)
     } yield ()
-
-    result match {
-      case Left(exception: JanusExceptionWithCause) =>
-        logger.error(exception.engineerMessage, exception.cause)
-        Status(exception.httpCode)(exception.userMessage)
-      case Left(exception: JanusException) =>
-        logger.error(exception.engineerMessage)
-        Status(exception.httpCode)(exception.userMessage)
-      case Right(_) =>
-        logger.info(
-          s"Successfully registered passkey for user ${request.user.username}"
-        )
-        NoContent
-    }
+    handleErrors(
+      outcome,
+      successLogMessage =
+        s"Registered passkey for user ${request.user.username}",
+      successResult = (_: Unit) => NoContent
+    )
   }
 
-  private def extractBody(body: Option[String], user: UserIdentity) =
+  private def extractRequestBody(body: Option[String], user: UserIdentity) =
     body.toRight(
       NotFoundException(
         "Missing body in registration request",
         s"Missing body in registration request for user ${user.username}"
       )
     )
+
+  private def handleErrors[A](
+      outcome: Either[JanusException, A],
+      successLogMessage: String,
+      successResult: A => Result
+  ): Result = {
+    outcome match {
+      case Left(exception: JanusExceptionWithCause) =>
+        logger.error(exception.engineerMessage, exception.cause)
+        Status(exception.httpCode)(exception.userMessage)
+      case Left(exception: JanusException) =>
+        logger.error(exception.engineerMessage)
+        Status(exception.httpCode)(exception.userMessage)
+      case Right(success) =>
+        logger.info(successLogMessage)
+        successResult(success)
+    }
+  }
 }
