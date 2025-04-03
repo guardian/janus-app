@@ -31,6 +31,8 @@ GET         /passkey/registration-options        controllers.PasskeyController.r
 GET         /passkey/register                    controllers.PasskeyController.showRegistrationPage
 POST        /passkey/register                    controllers.PasskeyController.register
 
+GET     /user-account                 controllers.PasskeyController.showUserAccountPage
+
 GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts
 

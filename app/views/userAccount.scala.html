@@ -1,0 +1,15 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+@import play.api.Mode
+@import play.filters.csrf.CSRF
+@(user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@main("User account", Some(user), janusData) {
+
+    <div class="container">
+
+        <h1 class="header orange-text">@user.firstName</h1>
+        <a href="/passkey/register" class="btn-large">Register a new passkey</a>
+
+    </div>
+}
