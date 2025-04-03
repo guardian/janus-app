@@ -96,6 +96,12 @@
             <script src="@assetsFinder.path("frontend/janus.js")"></script>
         }
 
+        @if(mode == Mode.Dev) {
+            <script src="http://localhost:1234/passkeys.js"></script>
+        } else {
+            <script src="@assetsFinder.path("frontend/passkeys.js")"></script>
+        }
+
         @if(displayMode == Festive) {
             @if(mode == Mode.Dev) {
                 <script src="https://janus-frontend.local.dev-gutools.co.uk/snow.js"></script>

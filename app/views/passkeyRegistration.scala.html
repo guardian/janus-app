@@ -11,10 +11,4 @@
         <h1 class="header orange-text">Registration Mash</h1>
 
     </div>
-
-    @if(mode == Mode.Dev) {
-        <script src="http://localhost:1234/passkeys.js"></script>
-    } else {
-        <script src="@assetsFinder.path("frontend/passkeys.js")"></script>
-    }
 }
