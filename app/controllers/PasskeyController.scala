@@ -116,6 +116,60 @@ class PasskeyController(
         _ = logger.info(
           s"Created authentication options for user ${request.user.username}"
         )
+        Ok(options.asJson.noSpaces)
+          .withSession(request.session + (challengeAttribName -> challenge))
+    }
+  }
+
+  def register: Action[AnyContent] = authAction { request =>
+    val result = for {
+      challenge <- request.session.get(challengeAttribName).toRight {
+        logger.error(
+          s"Missing challenge in session for user ${request.user.username}"
+        )
+        BadRequest("Registration session invalid")
+      }
+
+      body <- request.body.asText.toRight {
+        logger.error(
+          s"Missing body in registration request for user ${request.user.username}"
+        )
+        BadRequest("Invalid request format")
+      }
+
+      credRecord <- Passkey
+        .verifiedRegistration(host, challenge, body)
+        .left
+        .map { failure =>
+          logger.error(
+            s"Registration verification failed for user ${request.user.username}: ${failure.details}",
+            failure.cause
+          )
+          BadRequest("Registration verification failed")
+        }
+
+      _ <- Passkey.store(request.user, credRecord).left.map { failure =>
+        logger.error(
+          s"Failed to store credential for user ${request.user.username}: ${failure.details}",
+          failure.cause
+        )
+        InternalServerError("Failed to store credential")
+      }
+    } yield {
+      logger.info(
+        s"Successfully registered passkey for user ${request.user.username}"
+      )
+      Ok(Json.obj("success" -> true.asJson).noSpaces)
+        .withSession(request.session - challengeAttribName)
+    }
+
+    result.merge
+  }
+
+  def showUserAccountPage: Action[AnyContent] = authAction {
+    implicit request =>
+      Ok(views.html.userAccount(request.user, janusData))
+  }
       } yield options
     )
   }
@@ -173,3 +227,5 @@ class PasskeyController(
       authData <- Passkey.parsedAuthentication(body)
     } yield authData
 }
+
+

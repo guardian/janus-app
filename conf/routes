@@ -32,6 +32,8 @@ GET     /passkey/auth-options           controllers.PasskeyController.authentica
 POST    /passkey/register               controllers.PasskeyController.register
 POST    /passkey/authenticate           controllers.PasskeyController.authenticate
 
+GET     /user-account                 controllers.PasskeyController.showUserAccountPage
+
 GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts
 
