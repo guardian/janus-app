@@ -12,7 +12,6 @@ import software.amazon.awssdk.services.dynamodb.model._
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.ZoneOffset.UTC
 import java.time.{Clock, Instant}
-import scala.util.{Failure, Success}
 
 class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
 
@@ -37,28 +36,26 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
 
       "insertion succeeds" ignore {
         PasskeyChallengeDB.insert(userChallenge) match {
-          case Success(_) => succeed
-          case Failure(e) =>
+          case Left(e) =>
             fail(s"Failed to insert user challenge: ${e.getMessage}")
+          case Right(_) => succeed
         }
       }
 
       "load succeeds" ignore {
         PasskeyChallengeDB.load(userChallenge.user) match {
-          case Success(Some(challenge)) =>
-            challenge.getValue shouldBe userChallenge.challenge.getValue
-          case Success(None) =>
-            fail("No challenge found for user")
-          case Failure(e) =>
+          case Left(e) =>
             fail(s"Failed to load user challenge: ${e.getMessage}")
+          case Right(challenge) =>
+            challenge.getValue shouldBe userChallenge.challenge.getValue
         }
       }
 
       "deletion succeeds" ignore {
         PasskeyChallengeDB.delete(userChallenge.user) match {
-          case Success(_) => succeed
-          case Failure(e) =>
+          case Left(e) =>
             fail(s"Failed to delete user challenge: ${e.getMessage}")
+          case Right(_) => succeed
         }
       }
     }
@@ -81,21 +78,21 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
   private[aws] def createTable()(implicit
       dynamoDB: DynamoDbClient
   ): CreateTableResponse = {
-    val response = dynamoDB.createTable(
+    dynamoDB.createTable(
       CreateTableRequest
         .builder()
         .tableName(PasskeyChallengeDB.tableName)
         .keySchema(
           KeySchemaElement
             .builder()
-            .attributeName("userName")
+            .attributeName("username")
             .keyType(HASH)
             .build()
         )
         .attributeDefinitions(
           AttributeDefinition
             .builder()
-            .attributeName("userName")
+            .attributeName("username")
             .attributeType(S)
             .build()
         )
@@ -108,23 +105,6 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
         )
         .build()
     )
-
-    // Enable TTL on the table after creation
-    dynamoDB.updateTimeToLive(
-      UpdateTimeToLiveRequest
-        .builder()
-        .tableName(PasskeyChallengeDB.tableName)
-        .timeToLiveSpecification(
-          TimeToLiveSpecification
-            .builder()
-            .attributeName("expiresAt")
-            .enabled(true)
-            .build()
-        )
-        .build()
-    )
-
-    response
   }
 
   private[aws] def destroyTable()(implicit

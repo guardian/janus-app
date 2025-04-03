@@ -15,7 +15,6 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
 
   "registrationOptions" - {
     "creates valid registration options" in {
-      val appName = "Test App"
       val appHost = "https://test.example.com"
 
       val testUser = UserIdentity(
@@ -32,7 +31,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         testUser,
         challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
       )
-      options.toEither.value.asJson.spaces2 shouldBe
+      options.value.asJson.spaces2 shouldBe
         """{
         |  "challenge" : "Y2hhbGxlbmdl",
         |  "rp" : {
@@ -74,7 +73,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         invalidJson
       )
 
-      result.toEither.isLeft shouldBe true
+      result.isLeft shouldBe true
     }
   }
 }

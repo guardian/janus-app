@@ -8,10 +8,11 @@ import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.server.ServerProperty
+import com.webauthn4j.verifier.exception.VerificationException
+import models._
 
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
-import java.util
 import scala.jdk.CollectionConverters._
 import scala.util.Try
 
@@ -24,8 +25,7 @@ object Passkey {
    */
   private val userVerificationRequired = true
 
-  private val publicKeyCredentialParameters
-      : util.List[PublicKeyCredentialParameters] = List(
+  private val publicKeyCredentialParameters = List(
     // ES256 is widely supported and efficient
     new PublicKeyCredentialParameters(
       PublicKeyCredentialType.PUBLIC_KEY,
@@ -41,7 +41,7 @@ object Passkey {
       PublicKeyCredentialType.PUBLIC_KEY,
       COSEAlgorithmIdentifier.EdDSA
     )
-  ).asJava
+  )
 
   private val appName = "Janus"
 
@@ -68,30 +68,28 @@ object Passkey {
       appHost: String,
       user: UserIdentity,
       challenge: Challenge = new DefaultChallenge()
-  ): Try[PublicKeyCredentialCreationOptions] = {
-    for {
-      appDomain <- Try(URI.create(appHost).getHost)
-
-      relyingParty <- Try(new PublicKeyCredentialRpEntity(appDomain, appName))
-
-      userInfo <- Try(
-        new PublicKeyCredentialUserEntity(
-          user.username.getBytes(UTF_8),
-          user.username,
-          user.fullName
-        )
+  ): Either[BadArgumentException, PublicKeyCredentialCreationOptions] =
+    Try {
+      val appDomain = URI.create(appHost).getHost
+      val relyingParty = new PublicKeyCredentialRpEntity(appDomain, appName)
+      val userInfo = new PublicKeyCredentialUserEntity(
+        user.username.getBytes(UTF_8),
+        user.username,
+        user.fullName
       )
-
-      options <- Try(
-        new PublicKeyCredentialCreationOptions(
-          relyingParty,
-          userInfo,
-          challenge,
-          publicKeyCredentialParameters
-        )
+      new PublicKeyCredentialCreationOptions(
+        relyingParty,
+        userInfo,
+        challenge,
+        publicKeyCredentialParameters.asJava
       )
-    } yield options
-  }
+    }.toEither.left.map(exception =>
+      BadArgumentException(
+        "Failed to create registration options",
+        s"Failed to create registration options for user ${user.username}: ${exception.getMessage}",
+        exception
+      )
+    )
 
   /** Verifies the registration response from the browser. This is called after
     * the user has completed the passkey creation process on the browser.
@@ -115,36 +113,40 @@ object Passkey {
       appHost: String,
       challenge: String,
       jsonResponse: String
-  ): Try[CredentialRecord] = {
-    for {
-      regData <- Try(
-        webAuthnManager.parseRegistrationResponseJSON(jsonResponse)
+  ): Either[JanusExceptionWithCause, CredentialRecord] =
+    Try {
+      val regData = webAuthnManager.parseRegistrationResponseJSON(jsonResponse)
+      val origin = Origin.create(appHost)
+      val relyingPartyId = URI.create(appHost).getHost
+      val serverProps = new ServerProperty(
+        origin,
+        relyingPartyId,
+        new DefaultChallenge(challenge)
       )
-
-      origin <- Try(Origin.create(appHost))
-
-      relyingPartyId <- Try(URI.create(appHost).getHost)
-
-      serverProps <- Try(
-        new ServerProperty(
-          origin,
-          relyingPartyId,
-          new DefaultChallenge(challenge)
-        )
-      )
-
-      regParams = new RegistrationParameters(
+      val regParams = new RegistrationParameters(
         serverProps,
-        publicKeyCredentialParameters,
+        publicKeyCredentialParameters.asJava,
         userVerificationRequired
       )
-
-      _ <- Try(webAuthnManager.verify(regData, regParams))
-    } yield new CredentialRecordImpl(
-      regData.getAttestationObject,
-      regData.getCollectedClientData,
-      regData.getClientExtensions,
-      regData.getTransports
-    )
-  }
+      val verified = webAuthnManager.verify(regData, regParams)
+      new CredentialRecordImpl(
+        verified.getAttestationObject,
+        verified.getCollectedClientData,
+        verified.getClientExtensions,
+        verified.getTransports
+      )
+    }.toEither.left.map {
+      case exception: VerificationException =>
+        PasskeyVerificationException(
+          "Registration verification failed",
+          s"Registration verification failed: ${exception.getMessage}",
+          exception
+        )
+      case exception =>
+        BadArgumentException(
+          "Bad arguments for verification request",
+          s"Bad arguments for verification request: ${exception.getMessage}",
+          exception
+        )
+    }
 }

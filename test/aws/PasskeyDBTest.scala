@@ -37,7 +37,7 @@ class PasskeyDBTest extends AnyFreeSpec with Matchers {
         .keySchema(
           KeySchemaElement
             .builder()
-            .attributeName("userName")
+            .attributeName("username")
             .keyType(HASH)
             .build(),
           KeySchemaElement
@@ -49,7 +49,7 @@ class PasskeyDBTest extends AnyFreeSpec with Matchers {
         .attributeDefinitions(
           AttributeDefinition
             .builder()
-            .attributeName("userName")
+            .attributeName("username")
             .attributeType(S)
             .build(),
           AttributeDefinition
