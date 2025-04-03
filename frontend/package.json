@@ -9,7 +9,8 @@
   "source": [
     "janus.js",
     "snow.js",
-    "main.css"
+    "main.css",
+    "passkeys.js"
   ],
   "repository": {
     "type": "git",
