@@ -195,17 +195,4 @@ object Loader {
       }
     } yield SupportACL.create(rota.toMap, supportAccess.toSet, period)
   }
-
-  private implicit val decodeDateTime: Decoder[Instant] =
-    Decoder.decodeString.emap { s =>
-      try {
-        Right(
-          ZonedDateTime
-            .parse(s, format.DateTimeFormatter.ISO_DATE_TIME)
-            .toInstant
-        )
-      } catch {
-        case NonFatal(e) => Left(e.getMessage)
-      }
-    }
 }
