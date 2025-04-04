@@ -12,6 +12,7 @@ import software.amazon.awssdk.services.dynamodb.model._
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.ZoneOffset.UTC
 import java.time.{Clock, Instant}
+import scala.util.{Failure, Success}
 
 class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
 
@@ -36,26 +37,26 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
 
       "insertion succeeds" ignore {
         PasskeyChallengeDB.insert(userChallenge) match {
-          case Left(e) =>
+          case Failure(e) =>
             fail(s"Failed to insert user challenge: ${e.getMessage}")
-          case Right(_) => succeed
+          case Success(_) => succeed
         }
       }
 
       "load succeeds" ignore {
         PasskeyChallengeDB.load(userChallenge.user) match {
-          case Left(e) =>
+          case Failure(e) =>
             fail(s"Failed to load user challenge: ${e.getMessage}")
-          case Right(challenge) =>
+          case Success(challenge) =>
             challenge.getValue shouldBe userChallenge.challenge.getValue
         }
       }
 
       "deletion succeeds" ignore {
         PasskeyChallengeDB.delete(userChallenge.user) match {
-          case Left(e) =>
+          case Failure(e) =>
             fail(s"Failed to delete user challenge: ${e.getMessage}")
-          case Right(_) => succeed
+          case Success(_) => succeed
         }
       }
     }

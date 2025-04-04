@@ -4,7 +4,8 @@ import aws.PasskeyChallengeDB.UserChallenge.toDynamoItem
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.util.Base64UrlUtil
-import models.{AwsCallException, JanusException, NotFoundException}
+import models.JanusException
+import play.api.http.Status.INTERNAL_SERVER_ERROR
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model._
 
@@ -42,75 +43,79 @@ object PasskeyChallengeDB {
 
   def insert(
       userChallenge: UserChallenge
-  )(implicit dynamoDB: DynamoDbClient): Either[AwsCallException, Unit] = {
+  )(implicit dynamoDB: DynamoDbClient): Try[Unit] =
     Try {
       val item = toDynamoItem(userChallenge)
       val request =
         PutItemRequest.builder().tableName(tableName).item(item.asJava).build()
       dynamoDB.putItem(request)
-    } match {
-      case Failure(exception) =>
-        Left(
-          AwsCallException(
-            "Failed to store challenge",
+      ()
+    }.recoverWith(exception =>
+      Failure(
+        JanusException(
+          userMessage = "Failed to store challenge",
+          engineerMessage =
             s"Failed to store challenge for user ${userChallenge.user.username}: ${exception.getMessage}",
-            exception
-          )
+          httpCode = INTERNAL_SERVER_ERROR,
+          causedBy = Some(exception)
         )
-      case Success(_) => Right(())
-    }
-  }
+      )
+    )
 
   def load(
       user: UserIdentity
-  )(implicit dynamoDB: DynamoDbClient): Either[JanusException, Challenge] =
+  )(implicit dynamoDB: DynamoDbClient): Try[Challenge] =
     Try {
       val key = Map("username" -> AttributeValue.fromS(user.username))
       val request =
         GetItemRequest.builder().tableName(tableName).key(key.asJava).build()
       dynamoDB.getItem(request)
-    } match {
-      case Failure(exception) =>
-        Left(
-          AwsCallException(
-            "Failed to load challenge",
-            s"Failed to load challenge for user ${user.username}: ${exception.getMessage}",
-            exception
+    }.flatMap(response =>
+      if (response.hasItem) {
+        val item = response.item()
+        val challenge =
+          Base64UrlUtil.decode(item.get("challenge").s().getBytes(UTF_8))
+        Success(new DefaultChallenge(challenge))
+      } else {
+        Failure(
+          JanusException(
+            userMessage = "Challenge not found",
+            engineerMessage = s"Challenge not found for user ${user.username}",
+            httpCode = INTERNAL_SERVER_ERROR,
+            causedBy = None
           )
         )
-      case Success(response) =>
-        if (response.hasItem) {
-          val item = response.item()
-          val challenge =
-            Base64UrlUtil.decode(item.get("challenge").s().getBytes(UTF_8))
-          Right(new DefaultChallenge(challenge))
-        } else {
-          Left(
-            NotFoundException(
-              "Challenge not found",
-              s"Challenge not found for user ${user.username}"
-            )
-          )
-        }
-    }
+      }
+    ).recoverWith(exception =>
+      Failure(
+        JanusException(
+          userMessage = "Failed to load challenge",
+          engineerMessage =
+            s"Failed to load challenge for user ${user.username}: ${exception.getMessage}",
+          httpCode = INTERNAL_SERVER_ERROR,
+          causedBy = Some(exception)
+        )
+      )
+    )
 
   def delete(
       user: UserIdentity
-  )(implicit dynamoDB: DynamoDbClient): Either[AwsCallException, Unit] =
+  )(implicit dynamoDB: DynamoDbClient): Try[Unit] =
     Try {
       val key = Map("username" -> AttributeValue.fromS(user.username))
       val request =
         DeleteItemRequest.builder().tableName(tableName).key(key.asJava).build()
       dynamoDB.deleteItem(request)
-    } match {
-      case Failure(exception) =>
-        Left(
-          AwsCallException(
-            "Failed to store challenge",
+      ()
+    }.recoverWith(exception =>
+      Failure(
+        JanusException(
+          userMessage = "Failed to store challenge",
+          engineerMessage =
             s"Failed to delete challenge for user ${user.username}: ${exception.getMessage}",
-            exception
-          )
+          httpCode = INTERNAL_SERVER_ERROR,
+          causedBy = Some(exception)
         )
-      case Success(_) => Right(())
-    }
+      )
+    )
 }

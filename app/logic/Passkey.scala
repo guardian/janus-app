@@ -10,11 +10,12 @@ import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.server.ServerProperty
 import com.webauthn4j.verifier.exception.VerificationException
 import models._
+import play.api.http.Status.BAD_REQUEST
 
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.jdk.CollectionConverters._
-import scala.util.Try
+import scala.util.{Failure, Try}
 
 /** Logic for registration of passkeys and authentication using them. */
 object Passkey {
@@ -68,7 +69,7 @@ object Passkey {
       appHost: String,
       user: UserIdentity,
       challenge: Challenge = new DefaultChallenge()
-  ): Either[BadArgumentException, PublicKeyCredentialCreationOptions] =
+  ): Try[PublicKeyCredentialCreationOptions] =
     Try {
       val appDomain = URI.create(appHost).getHost
       val relyingParty = new PublicKeyCredentialRpEntity(appDomain, appName)
@@ -83,11 +84,15 @@ object Passkey {
         challenge,
         publicKeyCredentialParameters.asJava
       )
-    }.toEither.left.map(exception =>
-      BadArgumentException(
-        "Failed to create registration options",
-        s"Failed to create registration options for user ${user.username}: ${exception.getMessage}",
-        exception
+    }.recoverWith(exception =>
+      Failure(
+        JanusException(
+          userMessage = "Failed to create registration options",
+          engineerMessage =
+            s"Failed to create registration options for user ${user.username}: ${exception.getMessage}",
+          httpCode = BAD_REQUEST,
+          causedBy = Some(exception)
+        )
       )
     )
 
@@ -101,7 +106,7 @@ object Passkey {
     *   The host of the application the passkey will authenticate (the relying
     *   party).
     * @param challenge
-    *   Base 64 encoded challenge string used for registration (must correspond
+    *   Must correspond
     *   with the challenge passed in [[registrationOptions]]).
     * @param jsonResponse
     *   The JSON response from the browser containing the registration data.
@@ -111,9 +116,9 @@ object Passkey {
     */
   def verifiedRegistration(
       appHost: String,
-      challenge: String,
+      challenge: Challenge,
       jsonResponse: String
-  ): Either[JanusExceptionWithCause, CredentialRecord] =
+  ): Try[CredentialRecord] =
     Try {
       val regData = webAuthnManager.parseRegistrationResponseJSON(jsonResponse)
       val origin = Origin.create(appHost)
@@ -121,7 +126,7 @@ object Passkey {
       val serverProps = new ServerProperty(
         origin,
         relyingPartyId,
-        new DefaultChallenge(challenge)
+        challenge
       )
       val regParams = new RegistrationParameters(
         serverProps,
@@ -135,18 +140,26 @@ object Passkey {
         verified.getClientExtensions,
         verified.getTransports
       )
-    }.toEither.left.map {
+    } recoverWith {
       case exception: VerificationException =>
-        PasskeyVerificationException(
-          "Registration verification failed",
-          s"Registration verification failed: ${exception.getMessage}",
-          exception
+        Failure(
+          JanusException(
+            userMessage = "Registration verification failed",
+            engineerMessage =
+              s"Registration verification failed: ${exception.getMessage}",
+            httpCode = BAD_REQUEST,
+            causedBy = Some(exception)
+          )
         )
       case exception =>
-        BadArgumentException(
-          "Bad arguments for verification request",
-          s"Bad arguments for verification request: ${exception.getMessage}",
-          exception
+        Failure(
+          JanusException(
+            userMessage = "Bad arguments for verification request",
+            engineerMessage =
+              s"Bad arguments for verification request: ${exception.getMessage}",
+            httpCode = BAD_REQUEST,
+            causedBy = Some(exception)
+          )
         )
     }
 }
