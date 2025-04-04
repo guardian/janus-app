@@ -27,6 +27,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
       )
 
       val options = Passkey.registrationOptions(
+        appName = "Janus-Test",
         appHost,
         testUser,
         challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
@@ -36,7 +37,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         |  "challenge" : "Y2hhbGxlbmdl",
         |  "rp" : {
         |    "id" : "test.example.com",
-        |    "name" : "Janus"
+        |    "name" : "Janus-Test"
         |  },
         |  "user" : {
         |    "id" : "dGVzdC51c2Vy",

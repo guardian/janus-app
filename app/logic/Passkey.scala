@@ -44,8 +44,6 @@ object Passkey {
     )
   )
 
-  private val appName = "Janus"
-
   private val webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager()
 
   /** Creates registration options for a new passkey. This is required by a
@@ -54,6 +52,8 @@ object Passkey {
     * See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
     *
+    * @param appName
+    *   Name of the app the passkey will authenticate (the relying party).
     * @param appHost
     *   The host of the application the passkey will authenticate (the relying
     *   party).
@@ -66,6 +66,7 @@ object Passkey {
     *   options.
     */
   def registrationOptions(
+      appName: String,
       appHost: String,
       user: UserIdentity,
       challenge: Challenge = new DefaultChallenge()

@@ -24,12 +24,18 @@ class PasskeyController(
     extends AbstractController(controllerComponents)
     with Logging {
 
+  private val appName = mode match {
+    case Mode.Dev  => "Janus-Dev"
+    case Mode.Test => "Janus-Test"
+    case Mode.Prod => "Janus-Prod"
+  }
+
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
     */
   def registrationOptions: Action[AnyContent] = authAction { request =>
     (for {
-      options <- Passkey.registrationOptions(host, request.user)
+      options <- Passkey.registrationOptions(appName, host, request.user)
       _ <- PasskeyChallengeDB.insert(
         UserChallenge(request.user, options.getChallenge)
       )
