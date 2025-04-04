@@ -107,8 +107,7 @@ object Passkey {
     *   The host of the application the passkey will authenticate (the relying
     *   party).
     * @param challenge
-    *   Must correspond
-    *   with the challenge passed in [[registrationOptions]]).
+    *   Must correspond with the challenge passed in [[registrationOptions]]).
     * @param jsonResponse
     *   The JSON response from the browser containing the registration data.
     * @return
