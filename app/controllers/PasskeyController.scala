@@ -166,9 +166,8 @@ class PasskeyController(
     result.merge
   }
 
-  def showUserAccountPage: Action[AnyContent] = authAction {
-    implicit request =>
-      Ok(views.html.userAccount(request.user, janusData))
+  def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
+    Ok(views.html.userAccount(request.user, janusData))
   }
       } yield options
     )
@@ -227,5 +226,3 @@ class PasskeyController(
       authData <- Passkey.parsedAuthentication(body)
     } yield authData
 }
-
-
