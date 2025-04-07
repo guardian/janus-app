@@ -1,5 +1,6 @@
 package aws
 
+import aws.PasskeyChallengeDB._
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.data.client.challenge.DefaultChallenge
 import org.scalatest.freespec.AnyFreeSpec
@@ -14,6 +15,11 @@ import java.time.ZoneOffset.UTC
 import java.time.{Clock, Instant}
 import scala.util.{Failure, Success}
 
+/** Integration tests of PasskeyChallengeDB.
+  *
+  * These tests require a local Dynamo DB service to be available. See
+  * [[./local-dev/README.md#setting-up-passkeys-tables Setting up Passkeys tables]]
+  */
 class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
 
   "test db stuff - use this to test DynamoDB stuff locally during development" - {
@@ -22,7 +28,7 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
     "insertion and querying" - {
       val clock = Clock.fixed(Instant.parse("2025-03-31T01:00:00Z"), UTC)
 
-      val userChallenge = PasskeyChallengeDB.UserChallenge(
+      val userChallenge = UserChallenge(
         UserIdentity(
           sub = "",
           email = "test.user@example.com",
@@ -36,7 +42,7 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
       )
 
       "insertion succeeds" ignore {
-        PasskeyChallengeDB.insert(userChallenge) match {
+        insert(userChallenge) match {
           case Failure(e) =>
             fail(s"Failed to insert user challenge: ${e.getMessage}")
           case Success(_) => succeed
@@ -44,7 +50,10 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
       }
 
       "load succeeds" ignore {
-        PasskeyChallengeDB.load(userChallenge.user) match {
+        (for {
+          response <- loadChallenge(userChallenge.user)
+          challenge <- extractChallenge(response, userChallenge.user)
+        } yield challenge) match {
           case Failure(e) =>
             fail(s"Failed to load user challenge: ${e.getMessage}")
           case Success(challenge) =>
@@ -53,7 +62,7 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
       }
 
       "deletion succeeds" ignore {
-        PasskeyChallengeDB.delete(userChallenge.user) match {
+        delete(userChallenge.user) match {
           case Failure(e) =>
             fail(s"Failed to delete user challenge: ${e.getMessage}")
           case Success(_) => succeed
@@ -82,7 +91,7 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
     dynamoDB.createTable(
       CreateTableRequest
         .builder()
-        .tableName(PasskeyChallengeDB.tableName)
+        .tableName(tableName)
         .keySchema(
           KeySchemaElement
             .builder()
@@ -114,7 +123,7 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
     dynamoDb.deleteTable(
       DeleteTableRequest
         .builder()
-        .tableName(PasskeyChallengeDB.tableName)
+        .tableName(tableName)
         .build()
     )
 }

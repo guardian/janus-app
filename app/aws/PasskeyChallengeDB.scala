@@ -12,7 +12,7 @@ import software.amazon.awssdk.services.dynamodb.model._
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Instant
 import scala.jdk.CollectionConverters._
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Try}
 
 object PasskeyChallengeDB {
 
@@ -62,41 +62,49 @@ object PasskeyChallengeDB {
       )
     )
 
-  def load(
+  def loadChallenge(
       user: UserIdentity
-  )(implicit dynamoDB: DynamoDbClient): Try[Challenge] =
+  )(implicit dynamoDB: DynamoDbClient): Try[GetItemResponse] = {
     Try {
       val key = Map("username" -> AttributeValue.fromS(user.username))
       val request =
         GetItemRequest.builder().tableName(tableName).key(key.asJava).build()
       dynamoDB.getItem(request)
-    }.flatMap(response =>
-      if (response.hasItem) {
-        val item = response.item()
-        val challenge =
-          Base64UrlUtil.decode(item.get("challenge").s().getBytes(UTF_8))
-        Success(new DefaultChallenge(challenge))
-      } else {
-        Failure(
-          JanusException(
-            userMessage = "Challenge not found",
-            engineerMessage = s"Challenge not found for user ${user.username}",
-            httpCode = INTERNAL_SERVER_ERROR,
-            causedBy = None
-          )
-        )
-      }
-    ).recoverWith(exception =>
+    }.recoverWith(err =>
       Failure(
         JanusException(
           userMessage = "Failed to load challenge",
           engineerMessage =
-            s"Failed to load challenge for user ${user.username}: ${exception.getMessage}",
+            s"Failed to load challenge for user ${user.username}: ${err.getMessage}",
           httpCode = INTERNAL_SERVER_ERROR,
-          causedBy = Some(exception)
+          causedBy = Some(err)
         )
       )
     )
+  }
+
+  def extractChallenge(
+      response: GetItemResponse,
+      user: UserIdentity
+  ): Try[DefaultChallenge] = {
+    if (response.hasItem) {
+      Try {
+        val item = response.item()
+        val challenge =
+          Base64UrlUtil.decode(item.get("challenge").s().getBytes(UTF_8))
+        new DefaultChallenge(challenge)
+      }
+    } else {
+      Failure(
+        JanusException(
+          userMessage = "Challenge not found",
+          engineerMessage = s"Challenge not found for user ${user.username}",
+          httpCode = INTERNAL_SERVER_ERROR,
+          causedBy = None
+        )
+      )
+    }
+  }
 
   def delete(
       user: UserIdentity

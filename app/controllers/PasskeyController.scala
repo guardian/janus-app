@@ -13,8 +13,7 @@ import play.api.mvc._
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
-import scala.util.control.NonFatal
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
 class PasskeyController(
@@ -36,35 +35,36 @@ class PasskeyController(
       action: => Try[A]
   )(implicit encoder: Encoder[A]): Result =
     action match {
-      case Left(err: JanusException) =>
+      case Failure(err: JanusException) =>
         logger.error(err.engineerMessage, err.causedBy.orNull)
         val json = Json.obj(
           "status" -> Json.fromString("error"),
           "message" -> Json.fromString(err.userMessage)
         )
         Status(err.httpCode)(json.noSpaces)
-      case NonFatal(err) =>
+      case Failure(err) =>
         logger.error(err.getMessage, err)
         val json = Json.obj(
           "status" -> Json.fromString("error"),
           "message" -> Json.fromString(err.getClass.getSimpleName)
         )
         Status(INTERNAL_SERVER_ERROR)(json.noSpaces)
-      case Success(a) =>
-        Ok(a.asJson.noSpaces)
+      case Success(a) => Ok(a.asJson.noSpaces)
     }
 
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
     */
   def registrationOptions: Action[AnyContent] = authAction { request =>
-    apiResponse (
+    apiResponse(
       for {
         options <- Passkey.registrationOptions(appName, host, request.user)
         _ <- PasskeyChallengeDB.insert(
           UserChallenge(request.user, options.getChallenge)
         )
-        _ = logger.info(s"Created registration options for user ${request.user.username}")
+        _ = logger.info(
+          s"Created registration options for user ${request.user.username}"
+        )
       } yield options
     )
   }
@@ -73,9 +73,13 @@ class PasskeyController(
     * [[https://webauthn4j.github.io/webauthn4j/en/#registering-the-webauthn-public-key-credential-on-the-server]].
     */
   def register: Action[AnyContent] = authAction { request =>
-    apiResponse (
+    apiResponse(
       for {
-        challenge <- PasskeyChallengeDB.load(request.user)
+        challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
+        challenge <- PasskeyChallengeDB.extractChallenge(
+          challengeResponse,
+          request.user
+        )
         body <- extractRequestBody(request.body.asText, request.user)
         credRecord <- Passkey.verifiedRegistration(host, challenge, body)
         _ <- PasskeyDB.insert(request.user, credRecord)
