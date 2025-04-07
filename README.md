@@ -49,7 +49,7 @@ access to AWS resources.
 
 ## Running Janus
 
-Janus is a Scala application built on the Play Framework.
+Janus is a Scala application built on the Play Framework with a Node frontend build.
 
 Wherever you run Janus, you need to provide three configuration files:
 
@@ -112,6 +112,12 @@ Use Scala's build tool
 ([sbt](https://www.scala-sbt.org/download.html)) to build and run
 Janus.
 
+#### Install Node
+
+The version is specified in `.nvmrc`. Dependencies will be installed as part of the sbt run command. 
+
+When developing locally, you can also run `npm --prefix frontend i` from the project root to install dependencies.
+
 #### Obtain configuration
 
 The configuration section below explains the requirements in more
@@ -127,10 +133,14 @@ This will likely involve DNS or a hosts entry as well as a webserver
 
 #### Run Janus
 
-Use sbt to run Janus in development mode. The server will
-automatically recompile and reload when changes are made.
+Use sbt to run Janus in development mode. 
 
     sbt -Dconfig.file=<PATH>/janus.local.conf run
+
+The Node bundle is built using a [`PlayRunHook`](https://github.com/guardian/janus-app/blob/d2b7553d26f2dc52706fb053a7e138fce745710b/project/RunClientHook.scala#L1) which is [configured in `build.sbt`](https://github.com/guardian/janus-app/blob/d2b7553d26f2dc52706fb053a7e138fce745710b/build.sbt#L80).
+
+The frontend dev-server will automatically recompile and reload when changes are made.
+
 
 #### Local audit log support
 
