@@ -2,6 +2,7 @@
 @import com.gu.janus.model.JanusData
 @import play.api.Mode
 @(user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@import play.filters.csrf.CSRF
 
 @main("User account", Some(user), janusData) {
 
@@ -13,7 +14,7 @@
                 <div class="card-panel">          
                     <p>You can have up to two passkeys to log in to Janus. One should be on-device (e.g. Touch ID) and the other off-device (e.g. security key or authenticator app).
                     </p>
-                    <div><button id="register-passkey" class="btn">Register a new passkey</button></div>
+                    <div><button id="register-passkey" class="btn" csrf-token="@{CSRF.getToken.get.value}">Register a new passkey</button></div>
                 </div>
             </div>
             <div class="col s12 m12 l3">

@@ -15,7 +15,6 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
 
   "registrationOptions" - {
     "creates valid registration options" in {
-      val appName = "Test App"
       val appHost = "https://test.example.com"
 
       val testUser = UserIdentity(
@@ -29,7 +28,6 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
 
       val options = Passkey.registrationOptions(
         appName = "Janus-Test",
-        appName,
         appHost,
         testUser,
         challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
