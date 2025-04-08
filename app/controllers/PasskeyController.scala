@@ -31,9 +31,14 @@ class PasskeyController(
     case Mode.Prod => "Janus-Prod"
   }
 
+  def showRegistrationPage: Action[AnyContent] = authAction {
+    implicit request =>
+      Ok(views.html.passkeyRegistration(request.user, janusData))
+  }
+
   private def apiResponse[A](
-      action: => Try[A]
-  )(implicit encoder: Encoder[A]): Result =
+                              action: => Try[A]
+                            )(implicit encoder: Encoder[A]): Result =
     action match {
       case Failure(err: JanusException) =>
         logger.error(err.engineerMessage, err.causedBy.orNull)
@@ -101,104 +106,10 @@ class PasskeyController(
         )
       )
       .toTry
-import com.webauthn4j.WebAuthnManager
-import com.webauthn4j.credential.CredentialRecord
-import com.webauthn4j.data._
-import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
-import com.webauthn4j.data.client.Origin
-import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
-import com.webauthn4j.server.ServerProperty
-import play.api.libs.json.{JsNumber, JsString, Json, Writes}
-import play.api.mvc._
-import play.api.{Logging, Mode}
-
-/** Controller for handling passkey registration and authentication. */
-class PasskeyController(
-    controllerComponents: ControllerComponents,
-    authAction: AuthAction[AnyContent],
-    host: String,
-    janusData: JanusData
-)(implicit mode: Mode, assetsFinder: AssetsFinder)
-    extends AbstractController(controllerComponents)
-    with Logging {
-
-  private val appName = "Janus"
-
-  def showRegistrationPage: Action[AnyContent] = authAction {
-    implicit request =>
-      Ok(views.html.passkeyRegistration(request.user, janusData))
-  }
-
-  // TODO persist instead of using session - store with TTL
-  private val challengeAttribName = "passkeyChallenge"
-
-  def registrationOptions: Action[AnyContent] = authAction { request =>
-    Passkey.registrationOptions(appName, host, request.user) match {
-
-      case Left(failure) =>
-        logger.error(
-          s"Failed to create registration options for user ${request.user.username}: ${failure.details}",
-          failure.cause
-        )
-        BadRequest("Failed to create registration options")
-
-      case Right(options) =>
-        val challenge =
-          Base64UrlUtil.encodeToString(options.getChallenge.getValue)
-        logger.info(
-          s"Created registration options for user ${request.user.username}"
-        )
-        Ok(options.asJson.noSpaces)
-          .withSession(request.session + (challengeAttribName -> challenge))
-    }
-  }
-
-  def register: Action[AnyContent] = authAction { request =>
-    val result = for {
-      challenge <- request.session.get(challengeAttribName).toRight {
-        logger.error(
-          s"Missing challenge in session for user ${request.user.username}"
-        )
-        BadRequest("Registration session invalid")
-      }
-
-      body <- request.body.asText.toRight {
-        logger.error(
-          s"Missing body in registration request for user ${request.user.username}"
-        )
-        BadRequest("Invalid request format")
-      }
-
-      credRecord <- Passkey
-        .verifiedRegistration(host, challenge, body)
-        .left
-        .map { failure =>
-          logger.error(
-            s"Registration verification failed for user ${request.user.username}: ${failure.details}",
-            failure.cause
-          )
-          BadRequest("Registration verification failed")
-        }
-
-      _ <- Passkey.store(request.user, credRecord).left.map { failure =>
-        logger.error(
-          s"Failed to store credential for user ${request.user.username}: ${failure.details}",
-          failure.cause
-        )
-        InternalServerError("Failed to store credential")
-      }
-    } yield {
-      logger.info(
-        s"Successfully registered passkey for user ${request.user.username}"
-      )
-      Ok(Json.obj("success" -> true.asJson).noSpaces)
-        .withSession(request.session - challengeAttribName)
-    }
-
-    result.merge
-  }
 
   def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
     Ok(views.html.userAccount(request.user, janusData))
   }
 }
+
+ 
