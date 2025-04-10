@@ -2,6 +2,7 @@ package controllers
 
 import aws.PasskeyChallengeDB.UserChallenge
 import aws.{PasskeyChallengeDB, PasskeyDB}
+import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
 import io.circe.syntax.EncoderOps
@@ -52,6 +53,22 @@ class PasskeyController(
       case Success(a) => Ok(a.asJson.noSpaces)
     }
 
+  // TODO: tmp
+  def test: Action[AnyContent] = authAction { implicit request =>
+    Ok(views.html.passkeyTest(request.user, janusData))
+  }
+
+  // TODO: tmp: authenticated by passkey
+  def protectedResource: Action[AnyContent] = authAction { implicit request =>
+    Ok(views.html.passkeyAuthentication(request.user, janusData))
+  }
+
+  // TODO: tmp
+  def showRegistrationPage: Action[AnyContent] = authAction {
+    implicit request =>
+      Ok(views.html.passkeyRegistration(request.user, janusData))
+  }
+
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
     */
@@ -101,4 +118,74 @@ class PasskeyController(
         )
       )
       .toTry
+
+  /** See
+    * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-assertion]].
+    */
+  def authenticationOptions: Action[AnyContent] = authAction { request =>
+    apiResponse(
+      for {
+        options <- Passkey.authenticationOptions(request.user)
+        _ <- PasskeyChallengeDB.insert(
+          UserChallenge(request.user, options.getChallenge)
+        )
+        _ = logger.info(
+          s"Created authentication options for user ${request.user.username}"
+        )
+      } yield options
+    )
+  }
+
+  /** See
+    * [[https://webauthn4j.github.io/webauthn4j/en/#webauthn-assertion-verification-and-post-processing]].
+    */
+  def authenticate: Action[AnyContent] = authAction { request =>
+    apiResponse(
+      for {
+        challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
+        challenge <- PasskeyChallengeDB.extractChallenge(
+          challengeResponse,
+          request.user
+        )
+        authData <- extractAuthenticationData(request)
+        credentialResponse <- PasskeyDB.loadCredential(
+          request.user,
+          authData.getCredentialId
+        )
+        credential <- PasskeyDB.extractCredential(
+          credentialResponse,
+          request.user
+        )
+        verifiedAuthData <- Passkey.verifiedAuthentication(
+          host,
+          challenge,
+          authData,
+          credential
+        )
+        _ <- PasskeyChallengeDB.delete(request.user)
+        _ <- PasskeyDB.updateCounter(request.user, verifiedAuthData)
+        _ = logger.info(
+          s"Authenticated passkey for user ${request.user.username}"
+        )
+      } yield ()
+    )
+  }
+
+  private def extractAuthenticationData(
+      request: UserIdentityRequest[AnyContent]
+  ) =
+    for {
+      body <- request.body.asText
+        .toRight(
+          JanusException(
+            userMessage = "Missing body in authentication request",
+            engineerMessage =
+              s"Missing body in authentication request for user ${request.user.username}",
+            httpCode = BAD_REQUEST,
+            causedBy = None
+          )
+        )
+        .toTry
+      authData <- Passkey.parsedAuthentication(body)
+    } yield authData
 }
