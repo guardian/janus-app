@@ -32,11 +32,6 @@ GET     /passkey/auth-options           controllers.PasskeyController.authentica
 POST    /passkey/register               controllers.PasskeyController.register
 POST    /passkey/authenticate           controllers.PasskeyController.authenticate
 
-# TODO: remove
-GET         /passkey/register                    controllers.PasskeyController.showRegistrationPage
-GET /passkey/test controllers.PasskeyController.test
-GET /passkey/protected controllers.PasskeyController.protectedResource
-
 GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts
 

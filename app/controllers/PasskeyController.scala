@@ -53,22 +53,6 @@ class PasskeyController(
       case Success(a) => Ok(a.asJson.noSpaces)
     }
 
-  // TODO: tmp
-  def test: Action[AnyContent] = authAction { implicit request =>
-    Ok(views.html.passkeyTest(request.user, janusData))
-  }
-
-  // TODO: tmp: authenticated by passkey
-  def protectedResource: Action[AnyContent] = authAction { implicit request =>
-    Ok(views.html.passkeyAuthentication(request.user, janusData))
-  }
-
-  // TODO: tmp
-  def showRegistrationPage: Action[AnyContent] = authAction {
-    implicit request =>
-      Ok(views.html.passkeyRegistration(request.user, janusData))
-  }
-
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
     */
