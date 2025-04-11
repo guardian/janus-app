@@ -31,9 +31,14 @@ class PasskeyController(
     case Mode.Prod => "Janus-Prod"
   }
 
+  def showRegistrationPage: Action[AnyContent] = authAction {
+    implicit request =>
+      Ok(views.html.passkeyRegistration(request.user, janusData))
+  }
+
   private def apiResponse[A](
-      action: => Try[A]
-  )(implicit encoder: Encoder[A]): Result =
+                              action: => Try[A]
+                            )(implicit encoder: Encoder[A]): Result =
     action match {
       case Failure(err: JanusException) =>
         logger.error(err.engineerMessage, err.causedBy.orNull)
@@ -101,4 +106,10 @@ class PasskeyController(
         )
       )
       .toTry
+
+  def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
+    Ok(views.html.userAccount(request.user, janusData))
+  }
 }
+
+ 

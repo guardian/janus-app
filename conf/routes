@@ -29,6 +29,9 @@ GET     /logout                     controllers.AuthController.logout
 
 GET     /passkey/registration-options   controllers.PasskeyController.registrationOptions
 POST    /passkey/register               controllers.PasskeyController.register
+GET         /passkey/register                    controllers.PasskeyController.showRegistrationPage
+
+GET     /user-account                 controllers.PasskeyController.showUserAccountPage
 
 GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts
