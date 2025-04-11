@@ -43,7 +43,8 @@ object Passkey {
       Json.fromValues(paramsList.asScala.map(_.asJson))
     )
 
-  implicit val encoder: Encoder[PublicKeyCredentialCreationOptions] =
+  implicit val creationOptionsEncoder
+      : Encoder[PublicKeyCredentialCreationOptions] =
     Encoder.forProduct4("challenge", "rp", "user", "pubKeyCredParams")(
       options =>
         (
@@ -53,4 +54,8 @@ object Passkey {
           options.getPubKeyCredParams
         )
     )
+
+  implicit val requestOptionsEncoder
+      : Encoder[PublicKeyCredentialRequestOptions] =
+    Encoder.forProduct1("challenge")(_.getChallenge)
 }
