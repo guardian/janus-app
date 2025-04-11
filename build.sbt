@@ -10,7 +10,7 @@ import play.sbt.PlayImport.PlayKeys.playRunHooks
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.30.38"
+val awsSdkVersion = "2.31.5"
 val circeVersion = "0.14.12"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
