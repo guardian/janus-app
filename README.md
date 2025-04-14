@@ -141,12 +141,13 @@ Use sbt to run Janus in development mode.
 
     sbt -Dconfig.file=<PATH>/janus.local.conf run
 
-The Node bundle is built using a [PlayRunHook](https://www.playframework.com/documentation/3.0.x/sbtCookbook), [`RunClientHook`](https://github.com/guardian/janus-app/blob/d2b7553d26f2dc52706fb053a7e138fce745710b/project/RunClientHook.scala#L1).
+The dev server uses [PlayRunHooks](https://www.playframework.com/documentation/3.0.x/sbtCookbook#Hooking-into-Plays-dev-mode) to start and stop dependent services.
+These hooks are [configured in `build.sbt`](https://github.com/guardian/janus-app/blob/6ce4579bc49e15753bc8f4f3a61c91f90e785940/build.sbt#L80-L83), which makes sure that these dependencies are started and stopped automatically when Play's dev server starts and stops.
+
+The Node bundle is built and started by the [`RunClientHook`](https://github.com/guardian/janus-app/blob/d2b7553d26f2dc52706fb053a7e138fce745710b/project/RunClientHook.scala#L1).
 The frontend dev-server will automatically recompile and reload when changes are made.
 
-The application database is started using another Play run-hook, [DockerComposeHook](https://github.com/guardian/janus-app/blob/6ce4579bc49e15753bc8f4f3a61c91f90e785940/project/DockerComposeHook.scala)
-
-These hooks [configured in `build.sbt`](https://github.com/guardian/janus-app/blob/6ce4579bc49e15753bc8f4f3a61c91f90e785940/build.sbt#L80-L83), which makes sure that these dependencies are started and stopped automatically when Play's dev server starts and stops.
+The application's database is started by the [DockerComposeHook](https://github.com/guardian/janus-app/blob/6ce4579bc49e15753bc8f4f3a61c91f90e785940/project/DockerComposeHook.scala).
 
 #### Local audit log support
 

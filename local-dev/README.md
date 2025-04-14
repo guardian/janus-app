@@ -1,12 +1,12 @@
 # Setting up a local Dynamo DB service
 
-You will need to have Docker installed to run the local Dynamo DB service.  
-Then:  
-1. Start Docker
-2. Start up a local Dynamo DB container:
+You will need to have Docker installed and running to use the local Dynamo DB service.
+
+The local database container will be automatically started when Janus' webapp runs, but if you need to run it yourself you can use the following:
+
 ```shell
 cd local-dev
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Setting up Audit table
