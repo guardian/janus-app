@@ -5,12 +5,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     async function registerPasskey() {
-        const response = await fetch('/passkey/registration-options') //fetch PublicKeyCredentialCreationOptions as JSON string
-        const publicKeyCredentialCreationOptionsJSON = await response.json() // convert to JSONObject
-        const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(publicKeyCredentialCreationOptionsJSON); // convert to PublicKeyCredentialCreationOptions
-        const publicKeyCredential = await navigator.credentials.create({publicKey: credentialCreationOptions}); // create PublicKeyCredential
-        console.log('publicKeyCredential: ', publicKeyCredential);
-        const registrationResponseJSON = publicKeyCredential.toJSON(); // convert to JSONObject
+        const response = await fetch('/passkey/registration-options') 
+        const publicKeyCredentialCreationOptionsJSON = await response.json() 
+        const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(publicKeyCredentialCreationOptionsJSON); 
+        const publicKeyCredential = await navigator.credentials.create({publicKey: credentialCreationOptions}); 
+        const registrationResponseJSON = publicKeyCredential.toJSON(); 
         await fetch('/passkey/register', {
             method: 'POST',
             headers: {
