@@ -1,5 +1,7 @@
 import 'materialize-css';
 import DOMPurify from 'dompurify';
+import { setupRegisterPasskeyButton } from './passkeys.js';
+
 
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
@@ -287,5 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const COOKIE__AUTO_LOGOUT = "janus_auto_logout";
         document.cookie = `${COOKIE__AUTO_LOGOUT}=; expires=Thu, 01 Jan 1970 12:00:00 UTC; path=/`;
     }
+
+    setupRegisterPasskeyButton('#register-passkey');
 });
 
