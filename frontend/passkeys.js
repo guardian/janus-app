@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const registerPasskeyButton = document.querySelector('#register-passkey');
 
 
-    async function registerPasskey() {
+    async function registerPasskey(csrfToken) {
         const response = await fetch('/passkey/registration-options') 
         const publicKeyCredentialCreationOptionsJSON = await response.json() 
         const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(publicKeyCredentialCreationOptionsJSON); 
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'text/plain',
-                'Csrf-Token': `${registerPasskeyButton.getAttribute('csrf-token')}`
+                'Csrf-Token': csrfToken
             },
             body: JSON.stringify(registrationResponseJSON)
         });
@@ -22,10 +22,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     registerPasskeyButton?.addEventListener('click', function(e) {
             e.preventDefault();
-            registerPasskey().then(function() {
-                console.log('Registration successful');
-            }).catch(function(err) {
-                console.error('Error during registration:', err);
+            const csrfToken = this.getAttribute('csrf-token');
+            registerPasskey(csrfToken).catch(function(err) {
+                console.error(err);
             });
         });
 
