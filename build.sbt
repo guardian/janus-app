@@ -77,7 +77,10 @@ lazy val root: Project = (project in file("."))
       "-J-Xmx1g"
     ),
     // allows us to kick off the frontend dev-server when the API is run
-    playRunHooks += RunClientHook(root.base),
+    playRunHooks ++= Seq(
+      RunClientHook(root.base),
+      DockerComposeHook(root.base)
+    ),
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
