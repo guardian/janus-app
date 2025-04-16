@@ -1,5 +1,6 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
+@import logic.UserAccess.username
 @import play.api.Mode
 @(user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 @import play.filters.csrf.CSRF
@@ -19,7 +20,7 @@
             </div>
             <div class="col s12 m12 l3">
                 <div class="card-panel">
-                        <p>You are logged in as @user.firstName @user.lastName.</p><div><a href="/logout"><button class="btn">Log out</button></a></div>
+                        <p>You are logged in as @username(user).</p><div><a href="/logout"><button class="btn">Log out</button></a></div>
                 </div>  
             </div>
         </div>               
