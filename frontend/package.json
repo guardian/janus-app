@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Use Google Authentication to provide audited temporary access to AWS resources",
   "scripts": {
-    "start": "parcel --port 1234 --hmr-host localhost:1234",
+    "start": "parcel --port 1234 --no-hmr",
     "build": "parcel build --dist-dir ../public/frontend"
   },
   "source": [
