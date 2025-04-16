@@ -36,11 +36,7 @@
                             <li><a href="/support">Support</a></li>
                             @if(hasAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
-                            @if(mode == Mode.Dev) {
-                                <li><a href="/user-account">@user.firstName @user.lastName's account <i class="material-icons right">account_box</i></a></li>
-                            } else {
-                                <li><a href="/logout">@user.firstName @user.lastName</a></li>
-                            }
+                            <li><a href="/logout">@user.firstName @user.lastName</a></li>
                         </ul>
 
                         <ul id="nav-mobile" class="sidenav">
@@ -49,11 +45,7 @@
                             @if(isSupportUser(username(user), Instant.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
                             @if(hasAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
-                            @if(mode == Mode.Dev) {
-                                <li><a href="/user-account">@user.firstName @user.lastName's account <i class="material-icons right">account_box</i></a></li>
-                            } else {
-                                <li><a href="/logout">@user.firstName @user.lastName  <i class="material-icons right">power_settings_new</i></a></li>
-                            }
+                            <li><a href="/logout">@user.firstName @user.lastName <i class="material-icons right">power_settings_new</i></a></li>
                         </ul>
                     }
 
