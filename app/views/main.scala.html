@@ -15,7 +15,7 @@
         <title>@title - Janus</title>
 
          @if(mode == Mode.Dev) {
-            <link href="http://localhost:1234/main.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+            <link href="https://janus-frontend.local.dev-gutools.co.uk/main.css" type="text/css" rel="stylesheet" media="screen,projection"/>
         } else {
             <link href="@assetsFinder.path("frontend/main.css")" type="text/css" rel="stylesheet" media="screen,projection"/>
         }
@@ -83,14 +83,14 @@
         </footer>
 
         @if(mode == Mode.Dev) {
-            <script src="http://localhost:1234/janus.js"></script>
+            <script src="https://janus-frontend.local.dev-gutools.co.uk/janus.js"></script>
         } else {
             <script src="@assetsFinder.path("frontend/janus.js")"></script>
         }
 
         @if(displayMode == Festive) {
             @if(mode == Mode.Dev) {
-                <script src="http://localhost:1234/snow.js"></script>
+                <script src="https://janus-frontend.local.dev-gutools.co.uk/snow.js"></script>
             } else {
                 <script src="@assetsFinder.path("frontend/snow.js")"></script>
             }
