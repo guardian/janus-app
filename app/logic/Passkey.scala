@@ -119,9 +119,9 @@ object Passkey {
     }.recoverWith(exception =>
       Failure(
         JanusException(
-          userMessage = "Failed to create registration options",
+          userMessage = "Failed to create authentication options",
           engineerMessage =
-            s"Failed to create registration options for user ${user.username}: ${exception.getMessage}",
+            s"Failed to create authentication options for user ${user.username}: ${exception.getMessage}",
           httpCode = BAD_REQUEST,
           causedBy = Some(exception)
         )
