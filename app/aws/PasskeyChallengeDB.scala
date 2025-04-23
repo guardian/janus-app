@@ -86,7 +86,7 @@ object PasskeyChallengeDB {
   def extractChallenge(
       response: GetItemResponse,
       user: UserIdentity
-  ): Try[DefaultChallenge] = {
+  ): Try[Challenge] = {
     if (response.hasItem) {
       Try {
         val item = response.item()
