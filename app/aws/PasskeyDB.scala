@@ -174,7 +174,12 @@ object PasskeyDB {
     }
   }
 
-  /** See https://www.w3.org/TR/webauthn-1/#sign-counter */
+  /** The device hosting the passkey keeps a count of how many times the passkey
+    * has been requested. As part of the verification process, this count is
+    * compared with the request count stored in the DB.
+    *
+    * See https://www.w3.org/TR/webauthn-1/#sign-counter
+    */
   def updateCounter(user: UserIdentity, authData: AuthenticationData)(implicit
       dynamoDB: DynamoDbClient
   ): Try[Unit] = Try {
