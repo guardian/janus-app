@@ -10,7 +10,7 @@ import play.sbt.PlayImport.PlayKeys.playRunHooks
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.31.20"
+val awsSdkVersion = "2.31.21"
 val circeVersion = "0.14.12"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
@@ -77,7 +77,10 @@ lazy val root: Project = (project in file("."))
       "-J-Xmx1g"
     ),
     // allows us to kick off the frontend dev-server when the API is run
-    playRunHooks += RunClientHook(root.base),
+    playRunHooks ++= Seq(
+      RunClientHook(root.base),
+      DockerComposeHook(root.base)
+    ),
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
