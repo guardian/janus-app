@@ -107,7 +107,7 @@ object Passkey {
       user: UserIdentity,
       challenge: Challenge = new DefaultChallenge()
   ): Try[PublicKeyCredentialRequestOptions] =
-    Try {
+    Try(
       new PublicKeyCredentialRequestOptions(
         challenge,
         null,
@@ -116,7 +116,7 @@ object Passkey {
         null,
         null
       )
-    }.recoverWith(exception =>
+    ).recoverWith(exception =>
       Failure(
         JanusException(
           userMessage = "Failed to create authentication options",
@@ -152,15 +152,12 @@ object Passkey {
   ): Try[CredentialRecord] =
     Try {
       val regData = webAuthnManager.parseRegistrationResponseJSON(jsonResponse)
-      val origin = Origin.create(appHost)
-      val relyingPartyId = URI.create(appHost).getHost
-      val serverProps = new ServerProperty(
-        origin,
-        relyingPartyId,
-        challenge
-      )
       val regParams = new RegistrationParameters(
-        serverProps,
+        new ServerProperty(
+          Origin.create(appHost),
+          URI.create(appHost).getHost,
+          challenge
+        ),
         publicKeyCredentialParameters.asJava,
         userVerificationRequired
       )
@@ -171,7 +168,7 @@ object Passkey {
         verified.getClientExtensions,
         verified.getTransports
       )
-    } recoverWith {
+    }.recoverWith {
       case exception: VerificationException =>
         Failure(
           JanusException(
@@ -206,30 +203,29 @@ object Passkey {
   def parsedAuthentication(
       jsonResponse: String
   ): Try[AuthenticationData] =
-    Try {
-      webAuthnManager.parseAuthenticationResponseJSON(jsonResponse)
-    } recoverWith {
-      case err: DataConversionException =>
-        Failure(
-          JanusException(
-            userMessage = "Authentication parsing failed",
-            engineerMessage =
-              s"Authentication parsing failed: ${err.getMessage}",
-            httpCode = BAD_REQUEST,
-            causedBy = Some(err)
+    Try(webAuthnManager.parseAuthenticationResponseJSON(jsonResponse))
+      .recoverWith {
+        case err: DataConversionException =>
+          Failure(
+            JanusException(
+              userMessage = "Authentication parsing failed",
+              engineerMessage =
+                s"Authentication parsing failed: ${err.getMessage}",
+              httpCode = BAD_REQUEST,
+              causedBy = Some(err)
+            )
           )
-        )
-      case err =>
-        Failure(
-          JanusException(
-            userMessage = "Bad authentication object",
-            engineerMessage =
-              s"Bad authentication object submitted: ${err.getMessage}",
-            httpCode = BAD_REQUEST,
-            causedBy = Some(err)
+        case err =>
+          Failure(
+            JanusException(
+              userMessage = "Bad authentication object",
+              engineerMessage =
+                s"Bad authentication object submitted: ${err.getMessage}",
+              httpCode = BAD_REQUEST,
+              causedBy = Some(err)
+            )
           )
-        )
-    }
+      }
 
   /** Verifies the authentication response from the browser. Call this when the
     * user has authenticated to the browser using a passkey.
@@ -249,21 +245,18 @@ object Passkey {
       credentialRecord: CredentialRecord
   ): Try[AuthenticationData] =
     Try {
-      val origin = Origin.create(appHost)
-      val relyingPartyId = URI.create(appHost).getHost
-      val serverProps = new ServerProperty(
-        origin,
-        relyingPartyId,
-        challenge
-      )
       val authParams = new AuthenticationParameters(
-        serverProps,
+        new ServerProperty(
+          Origin.create(appHost),
+          URI.create(appHost).getHost,
+          challenge
+        ),
         credentialRecord,
         List(authenticationData.getCredentialId).asJava,
         userVerificationRequired
       )
       webAuthnManager.verify(authenticationData, authParams)
-    } recoverWith {
+    }.recoverWith {
       case err: VerificationException =>
         Failure(
           JanusException(
