@@ -291,6 +291,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     setupRegisterPasskeyButton('#register-passkey');
-    setupAuthButtons('.auth-button');
+    // setupAuthButtons('.auth-button');
+    const authButtons = document.querySelectorAll('.auth-button');
+    setupAuthButtons(authButtons);
 });
 

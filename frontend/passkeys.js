@@ -45,31 +45,16 @@ export async function authenticatePasskey(targetHref, csrfToken)  {
     });
 }
 
-export function setupAuthButtons(buttonSelector) {
-    const requestAuthButtons = document.querySelector(buttonSelector);
-    console.log(requestAuthButtons.length);
-    requestAuthButtons.addEventListener('click', function (e) {
-        e.preventDefault();
-        console.log('clicked');
-
-        const csrfToken = this.getAttribute('csrf-token');
-        const targetHref = this.href;
-        authenticatePasskey(targetHref, csrfToken).catch(function (err) {
-            console.error(err);
+export function setupAuthButtons(requestAuthButtons) {
+    requestAuthButtons.forEach((button) => {
+        button.addEventListener('click', function (e) {
+            e.preventDefault();
+            console.log('clicked');
+            const csrfToken = button.getAttribute('csrf-token');
+            const targetHref = button.href;
+            authenticatePasskey(targetHref, csrfToken).catch(function (err) {
+                console.error(err);
+                });
         });
     });
-
-    // requestAuthButtons.forEach((button) => {
-    //     // console.log('button',button);
-    //     addEventListener('click', function (e) {
-    //         e.preventDefault();
-    //         console.log('clicked');
-    //
-    //         const csrfToken = button.getAttribute('csrf-token');
-    //         const targetHref = button.href;
-    //         authenticatePasskey(targetHref, csrfToken).catch(function (err) {
-    //             console.error(err);
-    //             });
-    //     });
-    // });
 }
