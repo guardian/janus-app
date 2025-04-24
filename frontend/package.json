@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "start": "parcel --port 1234 --no-hmr",
-    "build": "parcel build --dist-dir ../public/frontend"
+    "build": "parcel build --dist-dir ../public/frontend",
+    "lint": "eslint"
   },
   "source": [
     "janus.js",
@@ -28,5 +29,9 @@
     "material-icons": "^1.13.13",
     "materialize-css": "^1.0.0",
     "parcel": "^2.13.3"
+  },
+  "devDependencies": {
+    "@guardian/eslint-config": "^11.0.0",
+    "eslint": "^9.25.1"
   }
 }
