@@ -31,7 +31,7 @@ GET     /passkey/registration-options   controllers.PasskeyController.registrati
 GET     /passkey/auth-options           controllers.PasskeyController.authenticationOptions
 POST    /passkey/register               controllers.PasskeyController.register
 POST    /passkey/authenticate           controllers.PasskeyController.authenticate
-GET     /passkey/protected-test         controllers.PasskeyController.passkeyProtectedTest
+POST    /passkey/protected-test         controllers.PasskeyController.passkeyProtectedTest
 GET     /passkey/mock-home              controllers.PasskeyController.mockHome
 
 GET     /user-account                 controllers.PasskeyController.showUserAccountPage

@@ -2,7 +2,9 @@
 @import logic.Customisation.displayColour
 @import models.DisplayMode
 
-@(accountAccesses: List[AwsAccountAccess], allowFavs: Boolean, displayMode: DisplayMode = Normal)
+@import play.filters.csrf.CSRF
+@(accountAccesses: List[AwsAccountAccess], allowFavs: Boolean, displayMode: DisplayMode = Normal)(implicit request: RequestHeader)
+
 
 <div class="row">
     @for((accountAccess, i) <- accountAccesses.zipWithIndex) {
@@ -38,18 +40,18 @@
                     <div class="card-action card-action--permission">
                         <div class="card-action-group__row row">
                             <div class="card-action-group col m6 s12">
-                                <a href="/passkey/protected-test?"
-                                    class="waves-effect waves-light btn federation__link federation__link--cta federation__link--@if(permission.shortTerm) {short} else {standard} card-action-link--spaced">
+                                <a csrf-token="@{CSRF.getToken.get.value}" href="/passkey/protected-test?"
+                                    class="auth-button waves-effect waves-light btn federation__link federation__link--cta federation__link--@if(permission.shortTerm) {short} else {standard} card-action-link--spaced">
                                     <i class="material-icons">cloud</i>
                                 </a>
-                                <a href="/passkey/protected-test?"
-                                    class="right waves-effect waves-light btn-flat federation__link janus-btn--flat card-action-link--tight federation__link--@if(permission.shortTerm) {short} else {standard}">
+                                <a csrf-token="@{CSRF.getToken.get.value}" href="/passkey/protected-test?"
+                                    class="auth-button right waves-effect waves-light btn-flat federation__link janus-btn--flat card-action-link--tight federation__link--@if(permission.shortTerm) {short} else {standard}">
                                     <i class="material-icons black-text">link</i>
                                 </a>
                             </div>
                             <div class="card-action-group card-action-group--divider col m6 s12">
-                                <a href="/passkey/protected-test?"
-                                    class="waves-effect waves-light btn federation__link federation__link--cta federation__link--credentials federation__link--@if(permission.shortTerm) {short} else {standard}">
+                                <a csrf-token="@{CSRF.getToken.get.value}" href="/passkey/protected-test?"
+                                    class="auth-button waves-effect waves-light btn federation__link federation__link--cta federation__link--credentials federation__link--@if(permission.shortTerm) {short} else {standard}">
                                     <i class="material-icons">vpn_key</i>
                                 </a>
                                 @if(!permission.shortTerm) {
