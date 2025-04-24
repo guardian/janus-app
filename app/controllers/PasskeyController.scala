@@ -7,13 +7,16 @@ import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
 import io.circe.syntax.EncoderOps
 import io.circe.{Encoder, Json}
-import logic.Passkey
+import logic.AccountOrdering.orderedAccountAccess
+import logic.UserAccess.{userAccess, username}
+import logic.{Date, Favourites, Passkey}
 import models.JanusException
 import models.Passkey._
-import play.api.mvc._
+import play.api.mvc.{Action, _}
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
+import java.time.{ZoneId, ZonedDateTime}
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
@@ -172,6 +175,22 @@ class PasskeyController(
         .toTry
       authData <- Passkey.parsedAuthentication(body)
     } yield authData
+
+  def passkeyProtectedTest = TODO
+
+  def mockHome = authAction { implicit request =>
+    val displayMode =
+      Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
+    (for {
+      permissions <- userAccess(username(request.user), janusData.access)
+      favourites = Favourites.fromCookie(request.cookies.get("favourites"))
+      awsAccountAccess = orderedAccountAccess(permissions, favourites)
+    } yield {
+      Ok(
+        views.html.passkeysMockIndex(awsAccountAccess, request.user, janusData, displayMode)
+      )
+    }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
+  }
 
   def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
     Ok(views.html.userAccount(request.user, janusData))
