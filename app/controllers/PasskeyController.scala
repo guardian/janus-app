@@ -176,7 +176,17 @@ class PasskeyController(
       authData <- Passkey.parsedAuthentication(body)
     } yield authData
 
-  def passkeyProtectedTest = TODO
+  def protectedTest: Action[AnyContent] = Action {
+    Ok("This is the protected page you're authorised to see.")
+  }
+
+  def pretendAwsConsole: Action[AnyContent] = Action {
+    Ok("This is the pretend AWS console.")
+  }
+
+  def protectedRedirect: Action[AnyContent] = Action {
+    Redirect("/passkey/pretend-aws-console")
+  }
 
   def mockHome = authAction { implicit request =>
     val displayMode =
@@ -187,7 +197,12 @@ class PasskeyController(
       awsAccountAccess = orderedAccountAccess(permissions, favourites)
     } yield {
       Ok(
-        views.html.passkeysMockIndex(awsAccountAccess, request.user, janusData, displayMode)
+        views.html.passkeysMockIndex(
+          awsAccountAccess,
+          request.user,
+          janusData,
+          displayMode
+        )
       )
     }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
   }

@@ -27,31 +27,37 @@ export function setupRegisterPasskeyButton(buttonSelector) {
 
 export async function authenticatePasskey(targetHref, csrfToken)  {
     console.log("starting authentication");
-    const response = await fetch("/passkey/auth-options");
-    const publicKeyCredentialRequestOptionsJSON = await response.json();
+    const authOptionsResponse = await fetch("/passkey/auth-options");
+    const publicKeyCredentialRequestOptionsJSON = await authOptionsResponse.json();
     const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(publicKeyCredentialRequestOptionsJSON);
     const publicKeyCredential = await navigator.credentials.get({ publicKey: credentialGetOptions});
     console.log("publicKeyCredential: ", publicKeyCredential);
 
-    const authResponseJSON = publicKeyCredential.toJSON();
-    await fetch(targetHref, {
+    const response = await fetch(targetHref, {
         method: 'POST',
         headers: {
             // 'Content-Type': 'application/json',
             'Content-Type': 'text/plain',
             'Csrf-Token': csrfToken
         },
-        body: JSON.stringify(authResponseJSON)
+        body: JSON.stringify(publicKeyCredential.toJSON())
     });
+
+    if (response.ok) {
+        // Replace content of page with content of response
+        document.body.innerHTML = await response.text();
+        // Update current browser URL with target URL
+        history.pushState({}, '', response.url);
+    }
 }
 
-export function setupAuthButtons(requestAuthButtons) {
-    requestAuthButtons.forEach((button) => {
-        button.addEventListener('click', function (e) {
+export function setUpProtectedLinks(links) {
+    links.forEach((link) => {
+        link.addEventListener('click', function (e) {
             e.preventDefault();
             console.log('clicked');
-            const csrfToken = button.getAttribute('csrf-token');
-            const targetHref = button.href;
+            const csrfToken = link.getAttribute('csrf-token');
+            const targetHref = link.href;
             authenticatePasskey(targetHref, csrfToken).catch(function (err) {
                 console.error(err);
                 });
