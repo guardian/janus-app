@@ -116,7 +116,8 @@ class AppComponents(context: ApplicationLoader.Context)
     new PasskeyController(controllerComponents, authAction, host, janusData)(
       dynamodDB,
       mode,
-      assetsFinder
+      assetsFinder,
+      executionContext
     ),
     new Utility(janusData, controllerComponents, authAction, configuration)(
       mode,

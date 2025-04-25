@@ -32,7 +32,6 @@ GET     /passkey/auth-options           controllers.PasskeyController.authentica
 POST    /passkey/register               controllers.PasskeyController.register
 
 # Temporary endpoints for testing passkey auth
-POST    /passkey/authenticate           controllers.PasskeyController.authenticate
 POST    /passkey/protected-test         controllers.PasskeyController.protectedTest
 GET     /passkey/pretend-aws-console    controllers.PasskeyController.pretendAwsConsole
 POST    /passkey/protected-redirect     controllers.PasskeyController.protectedRedirect

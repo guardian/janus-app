@@ -12,11 +12,12 @@ import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
 import models.JanusException
 import models.Passkey._
-import play.api.mvc.{Action, _}
+import play.api.mvc._
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.time.{ZoneId, ZonedDateTime}
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
@@ -25,9 +26,17 @@ class PasskeyController(
     authAction: AuthAction[AnyContent],
     host: String,
     janusData: JanusData
-)(implicit dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
-    extends AbstractController(controllerComponents)
+)(implicit
+    dynamoDb: DynamoDbClient,
+    mode: Mode,
+    assetsFinder: AssetsFinder,
+    ec: ExecutionContext
+) extends AbstractController(controllerComponents)
     with Logging {
+
+  private def passkeyAuthAction
+      : ActionBuilder[UserIdentityRequest, AnyContent] =
+    authAction.andThen(new PasskeyAuthFilter(host))
 
   private val appName = mode match {
     case Mode.Dev  => "Janus-Dev"
@@ -123,72 +132,23 @@ class PasskeyController(
     )
   }
 
-  /** See
-    * [[https://webauthn4j.github.io/webauthn4j/en/#webauthn-assertion-verification-and-post-processing]].
-    */
-  def authenticate: Action[AnyContent] = authAction { request =>
-    apiResponse(
-      for {
-        challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
-        challenge <- PasskeyChallengeDB.extractChallenge(
-          challengeResponse,
-          request.user
-        )
-        authData <- extractAuthenticationData(request)
-        credentialResponse <- PasskeyDB.loadCredential(
-          request.user,
-          authData.getCredentialId
-        )
-        credential <- PasskeyDB.extractCredential(
-          credentialResponse,
-          request.user
-        )
-        verifiedAuthData <- Passkey.verifiedAuthentication(
-          host,
-          challenge,
-          authData,
-          credential
-        )
-        _ <- PasskeyChallengeDB.delete(request.user)
-        _ <- PasskeyDB.updateCounter(request.user, verifiedAuthData)
-        _ = logger.info(
-          s"Authenticated passkey for user ${request.user.username}"
-        )
-      } yield ()
-    )
-  }
-
-  private def extractAuthenticationData(
-      request: UserIdentityRequest[AnyContent]
-  ) =
-    for {
-      body <- request.body.asText
-        .toRight(
-          JanusException(
-            userMessage = "Missing body in authentication request",
-            engineerMessage =
-              s"Missing body in authentication request for user ${request.user.username}",
-            httpCode = BAD_REQUEST,
-            causedBy = None
-          )
-        )
-        .toTry
-      authData <- Passkey.parsedAuthentication(body)
-    } yield authData
-
-  def protectedTest: Action[AnyContent] = Action {
+  // To be removed when passkeyAuthAction has been applied to real endpoints
+  def protectedTest: Action[AnyContent] = passkeyAuthAction { _ =>
     Ok("This is the protected page you're authorised to see.")
   }
 
+  // To be removed when passkeyAuthAction has been applied to real endpoints
   def pretendAwsConsole: Action[AnyContent] = Action {
     Ok("This is the pretend AWS console.")
   }
 
+  // To be removed when passkeyAuthAction has been applied to real endpoints
   def protectedRedirect: Action[AnyContent] = Action {
     Redirect("/passkey/pretend-aws-console")
   }
 
-  def mockHome = authAction { implicit request =>
+  // To be removed when passkeyAuthAction has been applied to real endpoints
+  def mockHome: Action[AnyContent] = authAction { implicit request =>
     val displayMode =
       Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
     (for {
