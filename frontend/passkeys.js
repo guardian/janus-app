@@ -38,7 +38,7 @@ export async function authenticatePasskey(targetHref, csrfToken)  {
     const response = await fetch(targetHref, {
         method: 'POST',
         headers: {
-            // 'Content-Type': 'application/json',
+            // TODO: modify server-side to accept instead: 'Content-Type': 'application/json',
             'Content-Type': 'text/plain',
             'Csrf-Token': csrfToken
         },
