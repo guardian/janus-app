@@ -143,7 +143,7 @@ class PasskeyController(
   }
 
   // To be removed when passkeyAuthAction has been applied to real endpoints
-  def protectedRedirect: Action[AnyContent] = Action {
+  def protectedRedirect: Action[AnyContent] = passkeyAuthAction { _ =>
     Redirect("/passkey/pretend-aws-console")
   }
 
