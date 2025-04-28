@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify';
+
 export async function registerPasskey(csrfToken) {
     const response = await fetch('/passkey/registration-options');
     const publicKeyCredentialCreationOptionsJSON = await response.json();
@@ -45,7 +47,7 @@ export async function authenticatePasskey(targetHref, csrfToken)  {
 
     if (response.ok) {
         // Replace content of page with content of response
-        document.body.innerHTML = await response.text();
+        document.body.innerHTML = DOMPurify.sanitize(await response.text());
         // Update current browser URL with target URL
         history.pushState({}, '', response.url);
     }
