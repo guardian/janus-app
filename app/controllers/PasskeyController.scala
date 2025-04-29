@@ -164,7 +164,7 @@ class PasskeyController(
           displayMode
         )
       )
-    }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
+    }).getOrElse(Ok(views.html.noPermissions(request.user, janusData)))
   }
 
   def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
