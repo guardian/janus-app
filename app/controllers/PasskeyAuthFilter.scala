@@ -26,6 +26,7 @@ class PasskeyAuthFilter(host: String)(implicit
 ) extends ActionFilter[UserIdentityRequest]
     with Logging {
 
+  // TODO: Consider a separate EC for passkey processing
   def executionContext: ExecutionContext = ec
 
   def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] =
