@@ -8,7 +8,7 @@ import models.JanusException
 import play.api.Logging
 import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR}
 import play.api.mvc.Results.Status
-import play.api.mvc.{ActionFilter, AnyContent, Result}
+import play.api.mvc.{ActionFilter, AnyContentAsFormUrlEncoded, Result}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -82,10 +82,14 @@ class PasskeyAuthFilter(host: String)(implicit
 
   private def extractAuthenticationData[A](request: UserIdentityRequest[A]) =
     for {
-      // TODO: work out types properly
-      body <- request.body
-        .asInstanceOf[AnyContent]
-        .asText
+      body <- (request.body match {
+        case AnyContentAsFormUrlEncoded(data) =>
+          data.get("credentials") match {
+            case Some(credentials) => credentials.headOption
+            case None     => None
+          }
+        case _ => None
+      })
         .toRight(
           JanusException(
             userMessage = "Missing body in authentication request",

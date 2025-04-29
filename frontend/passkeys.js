@@ -1,5 +1,3 @@
-import DOMPurify from 'dompurify';
-
 export async function registerPasskey(csrfToken) {
     const response = await fetch('/passkey/registration-options');
     const publicKeyCredentialCreationOptionsJSON = await response.json();
@@ -35,22 +33,22 @@ export async function authenticatePasskey(targetHref, csrfToken)  {
     const publicKeyCredential = await navigator.credentials.get({ publicKey: credentialGetOptions});
     console.log("publicKeyCredential: ", publicKeyCredential);
 
-    const response = await fetch(targetHref, {
-        method: 'POST',
-        headers: {
-            // TODO: modify server-side to accept instead: 'Content-Type': 'application/json',
-            'Content-Type': 'text/plain',
-            'Csrf-Token': csrfToken
-        },
-        body: JSON.stringify(publicKeyCredential.toJSON())
-    });
-
-    if (response.ok) {
-        // Replace content of page with content of response
-        document.body.innerHTML = DOMPurify.sanitize(await response.text());
-        // Update current browser URL with target URL
-        history.pushState({}, '', response.url);
-    }
+    // Add a form to the DOM so that it can be submitted at page level
+    const form = document.createElement('form');
+    form.setAttribute('method', 'post');
+    form.setAttribute('action', targetHref);
+    const credsInput = document.createElement('input');
+    credsInput.setAttribute('type','hidden');
+    credsInput.setAttribute('name','credentials');
+    credsInput.setAttribute('value', JSON.stringify(publicKeyCredential.toJSON()));
+    const csrfTokenInput = document.createElement('input');
+    csrfTokenInput.setAttribute('type','hidden');
+    csrfTokenInput.setAttribute('name','csrfToken');
+    csrfTokenInput.setAttribute('value', csrfToken);
+    form.appendChild(credsInput);
+    form.appendChild(csrfTokenInput);
+    document.getElementsByTagName('body')[0].appendChild(form);
+    form.submit();
 }
 
 export function setUpProtectedLinks(links) {
