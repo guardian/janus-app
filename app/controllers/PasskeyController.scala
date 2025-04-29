@@ -157,7 +157,7 @@ class PasskeyController(
       awsAccountAccess = orderedAccountAccess(permissions, favourites)
     } yield {
       Ok(
-        views.html.passkeysMockIndex(
+        views.html.passkeymock.index(
           awsAccountAccess,
           request.user,
           janusData,

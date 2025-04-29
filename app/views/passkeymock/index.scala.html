@@ -1,7 +1,5 @@
 @import com.gu.googleauth.UserIdentity
 @import helper._
-@import aws.Federation.{maxLongTime, maxShortTime, defaultLongTime, defaultShortTime}
-@import logic.Date.formatDuration
 @import com.gu.janus.model.{AwsAccountAccess, JanusData}
 @import models.DisplayMode
 @import play.api.Mode
@@ -14,7 +12,7 @@
         <div class="index-main__container">
             @form(routes.Janus.favourite()) {
                 @CSRF.formField
-                @fragments.passkeyMockAwsAccounts(accountAccesses, allowFavs = true, displayMode)
+                @passkeymock.awsAccounts(accountAccesses, allowFavs = true, displayMode)
             }
         </div>
         <div class="row">
