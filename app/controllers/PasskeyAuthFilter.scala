@@ -81,26 +81,27 @@ class PasskeyAuthFilter(host: String)(implicit
       case Success(_) => None
     }
 
-  private def extractAuthenticationData[A](request: UserIdentityRequest[A]) =
+  private def extractAuthenticationData[A](request: UserIdentityRequest[A]) = {
+    def createMissingBodyError(username: String): JanusException =
+      JanusException(
+        userMessage = "Missing authentication credentials",
+        engineerMessage =
+          s"Authentication request for user '$username' is missing required credentials",
+        httpCode = BAD_REQUEST,
+        causedBy = None
+      )
+
     for {
-      body <- (request.body match {
+      body <- request.body match {
         case AnyContentAsFormUrlEncoded(data) =>
-          data.get("credentials") match {
-            case Some(credentials) => credentials.headOption
-            case None     => None
-          }
-        case _ => None
-      })
-        .toRight(
-          JanusException(
-            userMessage = "Missing body in authentication request",
-            engineerMessage =
-              s"Missing body in authentication request for user ${request.user.username}",
-            httpCode = BAD_REQUEST,
-            causedBy = None
-          )
-        )
-        .toTry
+          data
+            .get("credentials")
+            .flatMap(_.headOption)
+            .toRight(createMissingBodyError(request.user.username))
+            .toTry
+        case _ => Failure(createMissingBodyError(request.user.username))
+      }
       authData <- Passkey.parsedAuthentication(body)
     } yield authData
+  }
 }
