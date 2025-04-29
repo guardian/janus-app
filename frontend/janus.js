@@ -1,6 +1,6 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
-import {setUpProtectedLinks, setupRegisterPasskeyButton} from './passkeys.js';
+import {setUpProtectedLinks, setUpRegisterPasskeyButton} from './passkeys.js';
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.cookie = `${COOKIE__AUTO_LOGOUT}=; expires=Thu, 01 Jan 1970 12:00:00 UTC; path=/`;
     }
 
-    setupRegisterPasskeyButton('#register-passkey');
+    setUpRegisterPasskeyButton('#register-passkey');
     // setupAuthButtons('.auth-button');
     const protectedLinks = document.querySelectorAll('.passkey-protected');
     setUpProtectedLinks(protectedLinks);

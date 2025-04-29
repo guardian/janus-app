@@ -14,7 +14,7 @@ export async function registerPasskey(csrfToken) {
     });
 }
 
-export function setupRegisterPasskeyButton(buttonSelector) {
+export function setUpRegisterPasskeyButton(buttonSelector) {
     const registerPasskeyButton = document.querySelector(buttonSelector);
     registerPasskeyButton?.addEventListener('click', function (e) {
         e.preventDefault();
