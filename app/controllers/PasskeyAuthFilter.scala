@@ -30,7 +30,7 @@ class PasskeyAuthFilter(host: String)(implicit
   def executionContext: ExecutionContext = ec
 
   def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] =
-    Future.successful(
+    Future(
       apiResponse(
         for {
           challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
