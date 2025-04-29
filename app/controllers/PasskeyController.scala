@@ -133,7 +133,7 @@ class PasskeyController(
   }
 
   // To be removed when passkeyAuthAction has been applied to real endpoints
-  def protectedTest: Action[AnyContent] = passkeyAuthAction { _ =>
+  def protectedCredentialsPage: Action[AnyContent] = passkeyAuthAction { _ =>
     Ok("This is the protected page you're authorised to see.")
   }
 
