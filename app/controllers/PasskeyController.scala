@@ -7,13 +7,17 @@ import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
 import io.circe.syntax.EncoderOps
 import io.circe.{Encoder, Json}
-import logic.Passkey
+import logic.AccountOrdering.orderedAccountAccess
+import logic.UserAccess.{userAccess, username}
+import logic.{Date, Favourites, Passkey}
 import models.JanusException
 import models.Passkey._
 import play.api.mvc._
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
+import java.time.{ZoneId, ZonedDateTime}
+import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
@@ -22,9 +26,17 @@ class PasskeyController(
     authAction: AuthAction[AnyContent],
     host: String,
     janusData: JanusData
-)(implicit dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
-    extends AbstractController(controllerComponents)
+)(implicit
+    dynamoDb: DynamoDbClient,
+    mode: Mode,
+    assetsFinder: AssetsFinder,
+    ec: ExecutionContext
+) extends AbstractController(controllerComponents)
     with Logging {
+
+  private def passkeyAuthAction
+      : ActionBuilder[UserIdentityRequest, AnyContent] =
+    authAction.andThen(new PasskeyAuthFilter(host))
 
   private val appName = mode match {
     case Mode.Dev  => "Janus-Dev"
@@ -120,58 +132,40 @@ class PasskeyController(
     )
   }
 
-  /** See
-    * [[https://webauthn4j.github.io/webauthn4j/en/#webauthn-assertion-verification-and-post-processing]].
-    */
-  def authenticate: Action[AnyContent] = authAction { request =>
-    apiResponse(
-      for {
-        challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
-        challenge <- PasskeyChallengeDB.extractChallenge(
-          challengeResponse,
-          request.user
-        )
-        authData <- extractAuthenticationData(request)
-        credentialResponse <- PasskeyDB.loadCredential(
-          request.user,
-          authData.getCredentialId
-        )
-        credential <- PasskeyDB.extractCredential(
-          credentialResponse,
-          request.user
-        )
-        verifiedAuthData <- Passkey.verifiedAuthentication(
-          host,
-          challenge,
-          authData,
-          credential
-        )
-        _ <- PasskeyChallengeDB.delete(request.user)
-        _ <- PasskeyDB.updateCounter(request.user, verifiedAuthData)
-        _ = logger.info(
-          s"Authenticated passkey for user ${request.user.username}"
-        )
-      } yield ()
-    )
+  // To be removed when passkeyAuthAction has been applied to real endpoints
+  def protectedCredentialsPage: Action[AnyContent] = passkeyAuthAction { _ =>
+    Ok("This is the protected page you're authorised to see.")
   }
 
-  private def extractAuthenticationData(
-      request: UserIdentityRequest[AnyContent]
-  ) =
-    for {
-      body <- request.body.asText
-        .toRight(
-          JanusException(
-            userMessage = "Missing body in authentication request",
-            engineerMessage =
-              s"Missing body in authentication request for user ${request.user.username}",
-            httpCode = BAD_REQUEST,
-            causedBy = None
-          )
+  // To be removed when passkeyAuthAction has been applied to real endpoints
+  def pretendAwsConsole: Action[AnyContent] = Action {
+    Ok("This is the pretend AWS console.")
+  }
+
+  // To be removed when passkeyAuthAction has been applied to real endpoints
+  def protectedRedirect: Action[AnyContent] = passkeyAuthAction { _ =>
+    Redirect("/passkey/pretend-aws-console")
+  }
+
+  // To be removed when passkeyAuthAction has been applied to real endpoints
+  def mockHome: Action[AnyContent] = authAction { implicit request =>
+    val displayMode =
+      Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
+    (for {
+      permissions <- userAccess(username(request.user), janusData.access)
+      favourites = Favourites.fromCookie(request.cookies.get("favourites"))
+      awsAccountAccess = orderedAccountAccess(permissions, favourites)
+    } yield {
+      Ok(
+        views.html.passkeymock.index(
+          awsAccountAccess,
+          request.user,
+          janusData,
+          displayMode
         )
-        .toTry
-      authData <- Passkey.parsedAuthentication(body)
-    } yield authData
+      )
+    }).getOrElse(Ok(views.html.noPermissions(request.user, janusData)))
+  }
 
   def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
     Ok(views.html.userAccount(request.user, janusData))

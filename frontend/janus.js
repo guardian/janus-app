@@ -1,6 +1,6 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
-import { setupRegisterPasskeyButton } from './passkeys.js';
+import {setUpProtectedLinks, setUpRegisterPasskeyButton} from './passkeys.js';
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const collapsibleInstances = M.Collapsible.init(collapsibleElems);
     const dropdownElems = document.querySelectorAll('.dropdown-trigger');
     // eslint-disable-next-line no-unused-vars -- required by Materialize
-    const dropdownInstances = M.Dropdown.init(dropdownElems);  
+    const dropdownInstances = M.Dropdown.init(dropdownElems);
     const tooltipElems = document.querySelectorAll('.tooltipped');
     // eslint-disable-next-line no-unused-vars -- required by Materialize
     const instances = M.Tooltip.init(tooltipElems);
@@ -295,5 +295,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.cookie = `${COOKIE__AUTO_LOGOUT}=; expires=Thu, 01 Jan 1970 12:00:00 UTC; path=/`;
     }
 
-    setupRegisterPasskeyButton('#register-passkey');
+    setUpRegisterPasskeyButton('#register-passkey');
+    // setupAuthButtons('.auth-button');
+    const protectedLinks = document.querySelectorAll('.passkey-protected');
+    setUpProtectedLinks(protectedLinks);
 });
