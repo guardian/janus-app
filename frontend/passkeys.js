@@ -101,11 +101,11 @@ function getPasskeyNameFromUser() {
                 <a href="#!" id="submit-button" class="waves-effect waves-light btn orange">Save</a>
             </div>
         </div>`;
-        
+
         document.body.insertAdjacentHTML('beforeend', modalHtml);
-        
+
         const modalElement = document.getElementById(modalId);
-        
+
         // Initialize Materialize modal
         const modalInstance = M.Modal.init(modalElement, {
             dismissible: false, // User must use buttons to close
@@ -114,17 +114,17 @@ function getPasskeyNameFromUser() {
                 modalElement.remove();
             }
         });
-        
+
         // Set up event listeners
         const submitButton = modalElement.querySelector('#submit-button');
         const cancelButton = modalElement.querySelector('#cancel-button');
         const input = modalElement.querySelector('#passkey-name');
         const errorMessage = modalElement.querySelector('#passkey-name-error');
-        
+
         // Focus the input when modal opens
         modalInstance.open();
         setTimeout(() => input.focus(), 100); // Small delay to ensure modal is visible
-        
+
         // Clear error when typing
         input.addEventListener('input', () => {
             if (input.value.trim()) {
@@ -132,31 +132,31 @@ function getPasskeyNameFromUser() {
                 errorMessage.style.display = 'none';
             }
         });
-        
+
         // Handle form submission
         submitButton.addEventListener('click', (e) => {
             e.preventDefault();
             const passkeyName = input.value.trim();
-            
+
             if (!passkeyName) {
                 // Show validation error
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
                 return;
             }
-            
+
             // Close modal and resolve with the passkey name
             modalInstance.close();
             resolve(passkeyName);
         });
-        
+
         // Handle cancel button
         cancelButton.addEventListener('click', (e) => {
             e.preventDefault();
             modalInstance.close();
             reject(new Error('Passkey registration cancelled'));
         });
-        
+
         // Handle Enter key for form submission
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {

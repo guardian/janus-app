@@ -5,13 +5,16 @@ import com.webauthn4j.data.client.challenge.Challenge
 import com.webauthn4j.util.Base64UrlUtil
 import play.api.libs.json._
 
+import java.time.Instant
 import scala.jdk.CollectionConverters._
+
+case class Passkey(id: String, name: String, registrationTime: Instant)
 
 /** Encodings for the WebAuthn data types used in passkey registration and
   * authentication. These can't be auto-encoded because they aren't case
   * classes.
   */
-object Passkey {
+object PasskeyEncodings {
 
   implicit val relyingPartyWrites: Writes[PublicKeyCredentialRpEntity] =
     Writes { rp =>

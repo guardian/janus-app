@@ -11,11 +11,12 @@ import com.webauthn4j.data.extension.authenticator.{
   RegistrationExtensionAuthenticatorOutput
 }
 import com.webauthn4j.util.Base64UrlUtil
-import models.JanusException
+import models.{JanusException, Passkey}
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model._
 
+import java.time.Instant
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Try}
 
@@ -36,7 +37,8 @@ object PasskeyDB {
   def toDynamoItem(
       user: UserIdentity,
       credentialRecord: CredentialRecord,
-      passkeyName: String
+      passkeyName: String,
+      registrationTime: Instant
   ): Map[String, AttributeValue] =
     Map(
       "username" -> AttributeValue.fromS(user.username),
@@ -68,15 +70,18 @@ object PasskeyDB {
       ),
       // see https://www.w3.org/TR/webauthn-1/#sign-counter
       "authCounter" -> AttributeValue.fromN("0"),
-      "passkeyName" -> AttributeValue.fromS(passkeyName)
+      "passkeyName" -> AttributeValue.fromS(passkeyName),
+      "registrationTime" -> AttributeValue.fromS(registrationTime.toString)
     )
 
   def insert(
       user: UserIdentity,
       credentialRecord: CredentialRecord,
-      passkeyName: String
+      passkeyName: String,
+      registrationTime: Instant = Instant.now()
   )(implicit dynamoDB: DynamoDbClient): Try[Unit] = Try {
-    val item = toDynamoItem(user, credentialRecord, passkeyName)
+    val item =
+      toDynamoItem(user, credentialRecord, passkeyName, registrationTime)
     val request =
       PutItemRequest.builder().tableName(tableName).item(item.asJava).build()
     dynamoDB.putItem(request)
@@ -170,12 +175,19 @@ object PasskeyDB {
       Failure(JanusException.failedToLoadDbItem(user, tableName, err))
     )
 
-  def extractCredentials(response: QueryResponse): Seq[String] =
+  def extractCredentials(response: QueryResponse): Seq[Passkey] =
     if (response.hasItems && !response.items().isEmpty) {
       response
         .items()
         .asScala
-        .map(_.get("passkeyName").s())
+        .map(attribs =>
+          Passkey(
+            id = attribs.get("credentialId").s(),
+            name = attribs.get("passkeyName").s(),
+            registrationTime =
+              Instant.parse(attribs.get("registrationTime").s())
+          )
+        )
         .toSeq
     } else Nil
 
