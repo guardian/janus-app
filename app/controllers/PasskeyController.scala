@@ -91,8 +91,11 @@ class PasskeyController(
           request.user
         )
         body = request.body.toString()
+        // TODO: parse request.body.asText to JSON
+        // part goes to verifiedRegistration
+        // and part goes to passkeyName
         credRecord <- Passkey.verifiedRegistration(host, challenge, body)
-        _ <- PasskeyDB.insert(request.user, credRecord)
+        _ <- PasskeyDB.insert(request.user, credRecord, "TODO")
         _ <- PasskeyChallengeDB.delete(request.user)
         _ = logger.info(s"Registered passkey for user ${request.user.username}")
       } yield ()

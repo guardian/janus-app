@@ -10,7 +10,9 @@ export async function registerPasskey(csrfToken) {
             'Content-Type': 'application/json',
             'Csrf-Token': csrfToken
         },
-        body: JSON.stringify(registrationResponseJSON)
+        body: {
+            "passkeyName": "TODO",
+            "passkey": JSON.stringify(registrationResponseJSON)}
     });
 }
 

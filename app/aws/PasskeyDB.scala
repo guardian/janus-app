@@ -35,7 +35,8 @@ object PasskeyDB {
     */
   def toDynamoItem(
       user: UserIdentity,
-      credentialRecord: CredentialRecord
+      credentialRecord: CredentialRecord,
+      passkeyName: String
   ): Map[String, AttributeValue] =
     Map(
       "username" -> AttributeValue.fromS(user.username),
@@ -66,14 +67,16 @@ object PasskeyDB {
         )
       ),
       // see https://www.w3.org/TR/webauthn-1/#sign-counter
-      "authCounter" -> AttributeValue.fromN("0")
+      "authCounter" -> AttributeValue.fromN("0"),
+      "passkeyName" -> AttributeValue.fromS(passkeyName)
     )
 
   def insert(
       user: UserIdentity,
-      credentialRecord: CredentialRecord
+      credentialRecord: CredentialRecord,
+      passkeyName: String
   )(implicit dynamoDB: DynamoDbClient): Try[Unit] = Try {
-    val item = toDynamoItem(user, credentialRecord)
+    val item = toDynamoItem(user, credentialRecord, passkeyName)
     val request =
       PutItemRequest.builder().tableName(tableName).item(item.asJava).build()
     dynamoDB.putItem(request)
