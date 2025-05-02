@@ -3,6 +3,8 @@ package aws
 import com.gu.janus.model.{AwsAccount, Permission}
 import data.Policies
 import logic.Date
+import play.api.Mode
+import play.api.Mode.Prod
 import play.api.libs.json.Json
 import software.amazon.awssdk.auth.credentials._
 import software.amazon.awssdk.services.iam.IamClient
@@ -147,12 +149,17 @@ object Federation {
       after: Instant,
       roleArn: String,
       stsClient: StsClient
-  ): Unit = {
+  )(implicit mode: Mode): Unit = {
     val revocationPolicyDocument = denyOlderSessionsPolicyDocument(after)
+
+    val username = mode match {
+      case Prod => "janus"
+      case _    => "janus-dev"
+    }
 
     // assume role in the target account to authenticate the revocation
     val creds = Federation.assumeRole(
-      "janus",
+      username,
       roleArn,
       Policies.revokeAccessPermission(account),
       stsClient,
