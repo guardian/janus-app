@@ -8,8 +8,8 @@ import play.api.libs.json._
 import scala.jdk.CollectionConverters._
 
 /** Encodings for the WebAuthn data types used in passkey registration and
-  * authentication. These can't be auto-encoded because they aren't
-  * case classes.
+  * authentication. These can't be auto-encoded because they aren't case
+  * classes.
   */
 object Passkey {
 
@@ -30,7 +30,8 @@ object Passkey {
       )
     }
 
-  implicit val publicKeyCredentialParametersWrites: Writes[PublicKeyCredentialParameters] =
+  implicit val publicKeyCredentialParametersWrites
+      : Writes[PublicKeyCredentialParameters] =
     Writes { param =>
       Json.obj(
         "type" -> param.getType.getValue,
@@ -43,12 +44,14 @@ object Passkey {
       JsString(Base64UrlUtil.encodeToString(challenge.getValue))
     }
 
-  implicit val publicKeyCredentialParametersListWrites: Writes[java.util.List[PublicKeyCredentialParameters]] =
+  implicit val publicKeyCredentialParametersListWrites
+      : Writes[java.util.List[PublicKeyCredentialParameters]] =
     Writes { paramsList =>
       JsArray(paramsList.asScala.map(Json.toJson(_)).toSeq)
     }
 
-  implicit val creationOptionsWrites: Writes[PublicKeyCredentialCreationOptions] =
+  implicit val creationOptionsWrites
+      : Writes[PublicKeyCredentialCreationOptions] =
     Writes { options =>
       Json.obj(
         "challenge" -> options.getChallenge,
