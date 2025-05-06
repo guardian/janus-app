@@ -92,7 +92,8 @@ lazy val root: Project = (project in file("."))
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
       "com.webauthn4j" % "webauthn4j-core" % "0.29.0.RELEASE",
-      "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
+      "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test,
+      "com.microsoft.playwright" % "playwright" % "1.51.0" % Test
     ) ++ jacksonDatabindOverrides
       ++ jacksonOverrides
       ++ pekkoSerializationJacksonOverrides,
