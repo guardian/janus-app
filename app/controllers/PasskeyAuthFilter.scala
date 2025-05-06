@@ -2,11 +2,12 @@ package controllers
 
 import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction.UserIdentityRequest
-import io.circe.Json
 import logic.Passkey
 import models.JanusException
+import models.JanusException.throwableWrites
 import play.api.Logging
 import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR}
+import play.api.libs.json.Json.toJson
 import play.api.mvc.Results.Status
 import play.api.mvc.{ActionFilter, AnyContentAsFormUrlEncoded, Result}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -66,18 +67,10 @@ class PasskeyAuthFilter(host: String)(implicit
     auth match {
       case Failure(err: JanusException) =>
         logger.error(err.engineerMessage, err.causedBy.orNull)
-        val json = Json.obj(
-          "status" -> Json.fromString("error"),
-          "message" -> Json.fromString(err.userMessage)
-        )
-        Some(Status(err.httpCode)(json.noSpaces))
+        Some(Status(err.httpCode)(toJson(err)))
       case Failure(err) =>
         logger.error(err.getMessage, err)
-        val json = Json.obj(
-          "status" -> Json.fromString("error"),
-          "message" -> Json.fromString(err.getClass.getSimpleName)
-        )
-        Some(Status(INTERNAL_SERVER_ERROR)(json.noSpaces))
+        Some(Status(INTERNAL_SERVER_ERROR)(toJson(err)))
       case Success(_) => None
     }
 

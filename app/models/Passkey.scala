@@ -3,59 +3,65 @@ package models
 import com.webauthn4j.data._
 import com.webauthn4j.data.client.challenge.Challenge
 import com.webauthn4j.util.Base64UrlUtil
-import io.circe.syntax._
-import io.circe.{Encoder, Json}
+import play.api.libs.json._
 
 import scala.jdk.CollectionConverters._
 
 /** Encodings for the WebAuthn data types used in passkey registration and
-  * authentication. These can't be auto-encoded by Circe because they aren't
+  * authentication. These can't be auto-encoded because they aren't
   * case classes.
   */
 object Passkey {
 
-  implicit val relyingPartyEncoder: Encoder[PublicKeyCredentialRpEntity] =
-    Encoder.forProduct2("id", "name")(rp => (rp.getId, rp.getName))
-
-  implicit val userInfoEncoder: Encoder[PublicKeyCredentialUserEntity] =
-    Encoder.forProduct3("id", "name", "displayName")(user =>
-      (
-        Base64UrlUtil.encodeToString(user.getId),
-        user.getName,
-        user.getDisplayName
+  implicit val relyingPartyWrites: Writes[PublicKeyCredentialRpEntity] =
+    Writes { rp =>
+      Json.obj(
+        "id" -> rp.getId,
+        "name" -> rp.getName
       )
-    )
+    }
 
-  implicit val publicKeyCredentialParametersEncoder
-      : Encoder[PublicKeyCredentialParameters] =
-    Encoder.forProduct2("type", "alg")(param =>
-      (param.getType.getValue, param.getAlg.getValue)
-    )
+  implicit val userInfoWrites: Writes[PublicKeyCredentialUserEntity] =
+    Writes { user =>
+      Json.obj(
+        "id" -> Base64UrlUtil.encodeToString(user.getId),
+        "name" -> user.getName,
+        "displayName" -> user.getDisplayName
+      )
+    }
 
-  implicit val challengeEncoder: Encoder[Challenge] =
-    Encoder.instance(challenge =>
-      Json.fromString(Base64UrlUtil.encodeToString(challenge.getValue))
-    )
+  implicit val publicKeyCredentialParametersWrites: Writes[PublicKeyCredentialParameters] =
+    Writes { param =>
+      Json.obj(
+        "type" -> param.getType.getValue,
+        "alg" -> param.getAlg.getValue
+      )
+    }
 
-  implicit val publicKeyCredentialParametersListEncoder
-      : Encoder[java.util.List[PublicKeyCredentialParameters]] =
-    Encoder.instance(paramsList =>
-      Json.fromValues(paramsList.asScala.map(_.asJson))
-    )
+  implicit val challengeWrites: Writes[Challenge] =
+    Writes { challenge =>
+      JsString(Base64UrlUtil.encodeToString(challenge.getValue))
+    }
 
-  implicit val creationOptionsEncoder
-      : Encoder[PublicKeyCredentialCreationOptions] =
-    Encoder.forProduct4("challenge", "rp", "user", "pubKeyCredParams")(
-      options =>
-        (
-          options.getChallenge,
-          options.getRp,
-          options.getUser,
-          options.getPubKeyCredParams
-        )
-    )
+  implicit val publicKeyCredentialParametersListWrites: Writes[java.util.List[PublicKeyCredentialParameters]] =
+    Writes { paramsList =>
+      JsArray(paramsList.asScala.map(Json.toJson(_)).toSeq)
+    }
 
-  implicit val requestOptionsEncoder
-      : Encoder[PublicKeyCredentialRequestOptions] =
-    Encoder.forProduct1("challenge")(_.getChallenge)
+  implicit val creationOptionsWrites: Writes[PublicKeyCredentialCreationOptions] =
+    Writes { options =>
+      Json.obj(
+        "challenge" -> options.getChallenge,
+        "rp" -> options.getRp,
+        "user" -> options.getUser,
+        "pubKeyCredParams" -> options.getPubKeyCredParams
+      )
+    }
+
+  implicit val requestOptionsWrites: Writes[PublicKeyCredentialRequestOptions] =
+    Writes { options =>
+      Json.obj(
+        "challenge" -> options.getChallenge
+      )
+    }
 }

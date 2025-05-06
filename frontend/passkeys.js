@@ -7,7 +7,7 @@ export async function registerPasskey(csrfToken) {
     await fetch('/passkey/register', {
         method: 'POST',
         headers: {
-            'Content-Type': 'text/plain',
+            'Content-Type': 'application/json',
             'Csrf-Token': csrfToken
         },
         body: JSON.stringify(registrationResponseJSON)
