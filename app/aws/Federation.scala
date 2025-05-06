@@ -7,6 +7,7 @@ import play.api.Mode
 import play.api.Mode.Prod
 import play.api.libs.json.Json
 import software.amazon.awssdk.auth.credentials._
+import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.iam.IamClient
 import software.amazon.awssdk.services.iam.model.PutRolePolicyRequest
 import software.amazon.awssdk.services.sts.StsClient
@@ -171,7 +172,7 @@ object Federation {
       creds.sessionToken
     )
     val provider = StaticCredentialsProvider.create(sessionCredentials)
-    val iamClient = IamClient.builder().credentialsProvider(provider).build()
+    val iamClient = IamClient.builder().region(EU_WEST_1).credentialsProvider(provider).build()
 
     // remove access from assumed role
     val roleName = getRoleName(roleArn)
