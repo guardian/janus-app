@@ -172,7 +172,11 @@ object Federation {
       creds.sessionToken
     )
     val provider = StaticCredentialsProvider.create(sessionCredentials)
-    val iamClient = IamClient.builder().region(EU_WEST_1).credentialsProvider(provider).build()
+    val iamClient = IamClient
+      .builder()
+      .region(EU_WEST_1)
+      .credentialsProvider(provider)
+      .build()
 
     // remove access from assumed role
     val roleName = getRoleName(roleArn)
