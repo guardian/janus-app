@@ -177,6 +177,41 @@ object PasskeyDB {
     }
   }
 
+  def loadCredentials(
+      user: UserIdentity
+  )(implicit dynamoDB: DynamoDbClient): Try[QueryResponse] =
+    Try {
+      val expressionValues = Map(
+        ":username" -> AttributeValue.fromS(user.username)
+      )
+      val request = QueryRequest
+        .builder()
+        .tableName(tableName)
+        .keyConditionExpression("username = :username")
+        .expressionAttributeValues(expressionValues.asJava)
+        .build()
+      dynamoDB.query(request)
+    }.recoverWith(err =>
+      Failure(
+        JanusException(
+          userMessage = "Failed to load passkeys",
+          engineerMessage =
+            s"Failed to load passkeys for ${user.username}: ${err.getMessage}",
+          httpCode = INTERNAL_SERVER_ERROR,
+          causedBy = Some(err)
+        )
+      )
+    )
+
+  def extractCredentials(response: QueryResponse): Seq[String] =
+    if (response.hasItems && !response.items().isEmpty) {
+      response
+        .items()
+        .asScala
+        .map(_.get("passkeyName").s())
+        .toSeq
+    } else Nil
+
   /** The device hosting the passkey keeps a count of how many times the passkey
     * has been requested. As part of the verification process, this count is
     * compared with the request count stored in the DB.
@@ -217,44 +252,4 @@ object PasskeyDB {
       )
     )
   )
-
-  def fetchByUser(user: UserIdentity)(implicit dynamoDB: DynamoDbClient): Try[GetItemResponse] = {
-    Try {
-      val key = Map("username" -> AttributeValue.fromS(user.username))
-      val request =
-        GetItemRequest.builder().tableName(tableName).key(key.asJava).build()
-      dynamoDB.getItem(request)
-    }.recoverWith(err =>
-      Failure(
-        JanusException(
-          userMessage = "Failed to load user passkeys",
-          engineerMessage =
-            s"Failed to load user passkeys for ${user.username}: ${err.getMessage}",
-          httpCode = INTERNAL_SERVER_ERROR,
-          causedBy = Some(err)
-        )
-      )
-    )
-  }
-
-}
-
-def extractPasskeys(response: GetRecordsResponse): Try[Seq[String]] = {
-  if (response.hasItem) {
-    Try {
-      val item = response.
-      val passkeys =
-        Base64UrlUtil.decode(item.get("passkey").s().getBytes(UTF_8))
-      new DefaultChallenge(challenge)
-    }
-  } else {
-    Failure(
-      JanusException(
-        userMessage = "Challenge not found",
-        engineerMessage = s"Challenge not found for user ${user.username}",
-        httpCode = INTERNAL_SERVER_ERROR,
-        causedBy = None
-      )
-    )
-  }
 }

@@ -177,7 +177,20 @@ class PasskeyController(
   }
 
   def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
-    val passkeysForUser = PasskeyDB.fetchByUser(request.user)
-    Ok(views.html.userAccount(request.user, janusData, passkeysForUser))
+    val passkeysResult = for {
+      queryResponse <- PasskeyDB.loadCredentials(request.user)
+      passkeys = PasskeyDB.extractCredentials(queryResponse)
+    } yield passkeys
+
+    passkeysResult match {
+      case Success(passkeys) =>
+        Ok(views.html.userAccount(request.user, janusData, passkeys))
+      case Failure(e) =>
+        logger.error(
+          s"Failed to load passkeys for user ${request.user.username}",
+          e
+        )
+        Ok(views.html.userAccount(request.user, janusData, Nil))
+    }
   }
 }

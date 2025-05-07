@@ -12,7 +12,7 @@ export async function registerPasskey(csrfToken) {
     const credsInput = document.createElement('input');
     credsInput.setAttribute('type','hidden');
     credsInput.setAttribute('name','passkey');
-    credsInput.setAttribute('value', registrationResponseJSON);
+    credsInput.setAttribute('value', JSON.stringify(registrationResponseJSON));
     const csrfTokenInput = document.createElement('input');
     csrfTokenInput.setAttribute('type','hidden');
     csrfTokenInput.setAttribute('name','csrfToken');
