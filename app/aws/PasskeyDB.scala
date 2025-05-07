@@ -82,15 +82,7 @@ object PasskeyDB {
     dynamoDB.putItem(request)
     ()
   }.recoverWith(exception =>
-    Failure(
-      JanusException(
-        userMessage = "Failed to store passkey",
-        engineerMessage =
-          s"Failed to store credential for user ${user.username}: ${exception.getMessage}",
-        httpCode = INTERNAL_SERVER_ERROR,
-        causedBy = Some(exception)
-      )
-    )
+    Failure(JanusException.failedToCreateDbItem(user, tableName, exception))
   )
 
   def loadCredential(
@@ -108,15 +100,7 @@ object PasskeyDB {
         GetItemRequest.builder().tableName(tableName).key(key.asJava).build()
       dynamoDB.getItem(request)
     }.recoverWith(err =>
-      Failure(
-        JanusException(
-          userMessage = "Failed to find registered passkey",
-          engineerMessage =
-            s"Failed to load credential for user ${user.username}: ${err.getMessage}",
-          httpCode = INTERNAL_SERVER_ERROR,
-          causedBy = Some(err)
-        )
-      )
+      Failure(JanusException.failedToLoadDbItem(user, tableName, err))
     )
   }
 
@@ -164,17 +148,8 @@ object PasskeyDB {
           )
         )
       )
-    } else {
-      Failure(
-        JanusException(
-          userMessage = "Failed to find registered passkey",
-          engineerMessage =
-            s"Credential data not found for user ${user.username}: GetItem response: $response",
-          httpCode = INTERNAL_SERVER_ERROR,
-          causedBy = None
-        )
-      )
-    }
+    } else
+      Failure(JanusException.missingItemInDb(user, tableName))
   }
 
   def loadCredentials(
@@ -192,15 +167,7 @@ object PasskeyDB {
         .build()
       dynamoDB.query(request)
     }.recoverWith(err =>
-      Failure(
-        JanusException(
-          userMessage = "Failed to load passkeys",
-          engineerMessage =
-            s"Failed to load passkeys for ${user.username}: ${err.getMessage}",
-          httpCode = INTERNAL_SERVER_ERROR,
-          causedBy = Some(err)
-        )
-      )
+      Failure(JanusException.failedToLoadDbItem(user, tableName, err))
     )
 
   def extractCredentials(response: QueryResponse): Seq[String] =
@@ -243,12 +210,11 @@ object PasskeyDB {
     ()
   }.recoverWith(err =>
     Failure(
-      JanusException(
-        userMessage = "Failed to update authentication counter",
-        engineerMessage =
-          s"Failed to update authentication counter for user ${user.username}: ${err.getMessage}",
-        httpCode = INTERNAL_SERVER_ERROR,
-        causedBy = Some(err)
+      JanusException.failedToUpdateDbItem(
+        user,
+        tableName,
+        "authenticationCounter",
+        err
       )
     )
   )

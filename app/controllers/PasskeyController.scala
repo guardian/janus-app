@@ -11,6 +11,7 @@ import logic.{Date, Favourites, Passkey}
 import models.JanusException
 import models.JanusException.throwableWrites
 import models.Passkey._
+import play.api.http.Writeable
 import play.api.libs.json.Json.toJson
 import play.api.libs.json._
 import play.api.mvc._
@@ -19,6 +20,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.time.{ZoneId, ZonedDateTime}
 import scala.concurrent.ExecutionContext
+import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
@@ -35,10 +37,6 @@ class PasskeyController(
 ) extends AbstractController(controllerComponents)
     with Logging {
 
-  // To handle API responses with no return value
-  implicit val unitWrites: Writes[Unit] =
-    Writes(_ => Json.obj("status" -> "success"))
-
   private def passkeyAuthAction
       : ActionBuilder[UserIdentityRequest, AnyContent] =
     authAction.andThen(new PasskeyAuthFilter(host))
@@ -51,7 +49,7 @@ class PasskeyController(
 
   private def apiResponse[A](
       action: => Try[A]
-  )(implicit writes: Writes[A]): Result =
+  )(implicit resultConverter: A => Result): Result =
     action match {
       case Failure(err: JanusException) =>
         logger.error(err.engineerMessage, err.causedBy.orNull)
@@ -59,8 +57,17 @@ class PasskeyController(
       case Failure(err) =>
         logger.error(err.getMessage, err)
         Status(INTERNAL_SERVER_ERROR)(toJson(err))
-      case Success(a) => Ok(toJson(a))
+      case Success(a) => resultConverter(a)
     }
+
+  implicit def jsonToResult[A](a: A)(implicit writes: Writes[A]): Result = Ok(
+    toJson(a)
+  )
+
+  implicit def htmlToResult[A](a: A)(implicit writeable: Writeable[A]): Result =
+    Ok(a)
+
+  implicit def resultToResult(r: Result): Result = r
 
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
@@ -93,34 +100,29 @@ class PasskeyController(
           request.user
         )
         passkey <- request.body.get("passkey") match {
-          case Some(a) => Success(a.head)
+          case Some(values) => Success(values.head)
           case None =>
             Failure(
-              JanusException(
-                "Missing passkey",
-                "Missing passkey in request body",
-                400,
-                None
-              )
+              JanusException.missingFieldInRequest(request.user, "passkey")
             )
         }
         passkeyName <- request.body.get("passkeyName") match {
-          case Some(a) => Success(a.head)
+          case Some(values) => Success(values.head)
           case None =>
             Failure(
-              JanusException(
-                "Missing passkey name",
-                "Missing passkey name in request body",
-                400,
-                None
-              )
+              JanusException.missingFieldInRequest(request.user, "passkeyName")
             )
         }
-        credRecord <- Passkey.verifiedRegistration(host, challenge, passkey)
+        credRecord <- Passkey.verifiedRegistration(
+          host,
+          request.user,
+          challenge,
+          passkey
+        )
         _ <- PasskeyDB.insert(request.user, credRecord, passkeyName)
         _ <- PasskeyChallengeDB.delete(request.user)
         _ = logger.info(s"Registered passkey for user ${request.user.username}")
-      } yield ()
+      } yield Redirect("/user-account")
     )
   }
 
@@ -176,21 +178,11 @@ class PasskeyController(
     }).getOrElse(Ok(views.html.noPermissions(request.user, janusData)))
   }
 
+  // TODO: move to Janus or account controller
   def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
-    val passkeysResult = for {
+    apiResponse(for {
       queryResponse <- PasskeyDB.loadCredentials(request.user)
       passkeys = PasskeyDB.extractCredentials(queryResponse)
-    } yield passkeys
-
-    passkeysResult match {
-      case Success(passkeys) =>
-        Ok(views.html.userAccount(request.user, janusData, passkeys))
-      case Failure(e) =>
-        logger.error(
-          s"Failed to load passkeys for user ${request.user.username}",
-          e
-        )
-        Ok(views.html.userAccount(request.user, janusData, Nil))
-    }
+    } yield views.html.userAccount(request.user, janusData, passkeys))
   }
 }
