@@ -177,6 +177,7 @@ class PasskeyController(
   }
 
   def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
-    Ok(views.html.userAccount(request.user, janusData))
+    val passkeysForUser = PasskeyDB.fetchByUser(request.user)
+    Ok(views.html.userAccount(request.user, janusData, passkeysForUser))
   }
 }

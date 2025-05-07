@@ -217,4 +217,44 @@ object PasskeyDB {
       )
     )
   )
+
+  def fetchByUser(user: UserIdentity)(implicit dynamoDB: DynamoDbClient): Try[GetItemResponse] = {
+    Try {
+      val key = Map("username" -> AttributeValue.fromS(user.username))
+      val request =
+        GetItemRequest.builder().tableName(tableName).key(key.asJava).build()
+      dynamoDB.getItem(request)
+    }.recoverWith(err =>
+      Failure(
+        JanusException(
+          userMessage = "Failed to load user passkeys",
+          engineerMessage =
+            s"Failed to load user passkeys for ${user.username}: ${err.getMessage}",
+          httpCode = INTERNAL_SERVER_ERROR,
+          causedBy = Some(err)
+        )
+      )
+    )
+  }
+
+}
+
+def extractPasskeys(response: GetRecordsResponse): Try[Seq[String]] = {
+  if (response.hasItem) {
+    Try {
+      val item = response.
+      val passkeys =
+        Base64UrlUtil.decode(item.get("passkey").s().getBytes(UTF_8))
+      new DefaultChallenge(challenge)
+    }
+  } else {
+    Failure(
+      JanusException(
+        userMessage = "Challenge not found",
+        engineerMessage = s"Challenge not found for user ${user.username}",
+        httpCode = INTERNAL_SERVER_ERROR,
+        causedBy = None
+      )
+    )
+  }
 }
