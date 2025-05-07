@@ -2,16 +2,17 @@ package controllers
 
 import aws.PasskeyChallengeDB.UserChallenge
 import aws.{PasskeyChallengeDB, PasskeyDB}
+import com.gu.googleauth.AuthAction
 import com.gu.googleauth.AuthAction.UserIdentityRequest
-import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
-import io.circe.syntax.EncoderOps
-import io.circe.{Encoder, Json}
 import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
 import models.JanusException
+import models.JanusException.throwableWrites
 import models.Passkey._
+import play.api.libs.json.Json.toJson
+import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -34,6 +35,10 @@ class PasskeyController(
 ) extends AbstractController(controllerComponents)
     with Logging {
 
+  // To handle API responses with no return value
+  implicit val unitWrites: Writes[Unit] =
+    Writes(_ => Json.obj("status" -> "success"))
+
   private def passkeyAuthAction
       : ActionBuilder[UserIdentityRequest, AnyContent] =
     authAction.andThen(new PasskeyAuthFilter(host))
@@ -46,29 +51,21 @@ class PasskeyController(
 
   private def apiResponse[A](
       action: => Try[A]
-  )(implicit encoder: Encoder[A]): Result =
+  )(implicit writes: Writes[A]): Result =
     action match {
       case Failure(err: JanusException) =>
         logger.error(err.engineerMessage, err.causedBy.orNull)
-        val json = Json.obj(
-          "status" -> Json.fromString("error"),
-          "message" -> Json.fromString(err.userMessage)
-        )
-        Status(err.httpCode)(json.noSpaces)
+        Status(err.httpCode)(toJson(err))
       case Failure(err) =>
         logger.error(err.getMessage, err)
-        val json = Json.obj(
-          "status" -> Json.fromString("error"),
-          "message" -> Json.fromString(err.getClass.getSimpleName)
-        )
-        Status(INTERNAL_SERVER_ERROR)(json.noSpaces)
-      case Success(a) => Ok(a.asJson.noSpaces)
+        Status(INTERNAL_SERVER_ERROR)(toJson(err))
+      case Success(a) => Ok(toJson(a))
     }
 
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
     */
-  def registrationOptions: Action[AnyContent] = authAction { request =>
+  def registrationOptions: Action[Unit] = authAction(parse.empty) { request =>
     apiResponse(
       for {
         options <- Passkey.registrationOptions(appName, host, request.user)
@@ -85,7 +82,7 @@ class PasskeyController(
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#registering-the-webauthn-public-key-credential-on-the-server]].
     */
-  def register: Action[AnyContent] = authAction { request =>
+  def register: Action[JsValue] = authAction(parse.json) { request =>
     apiResponse(
       for {
         challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
@@ -93,7 +90,7 @@ class PasskeyController(
           challengeResponse,
           request.user
         )
-        body <- extractRequestBody(request.body.asText, request.user)
+        body = request.body.toString()
         credRecord <- Passkey.verifiedRegistration(host, challenge, body)
         _ <- PasskeyDB.insert(request.user, credRecord)
         _ <- PasskeyChallengeDB.delete(request.user)
@@ -102,23 +99,10 @@ class PasskeyController(
     )
   }
 
-  private def extractRequestBody(body: Option[String], user: UserIdentity) =
-    body
-      .toRight(
-        JanusException(
-          userMessage = "Missing body in registration request",
-          engineerMessage =
-            s"Missing body in registration request for user ${user.username}",
-          httpCode = BAD_REQUEST,
-          causedBy = None
-        )
-      )
-      .toTry
-
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-assertion]].
     */
-  def authenticationOptions: Action[AnyContent] = authAction { request =>
+  def authenticationOptions: Action[Unit] = authAction(parse.empty) { request =>
     apiResponse(
       for {
         options <- Passkey.authenticationOptions(request.user)
