@@ -82,7 +82,9 @@ class PasskeyController(
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#registering-the-webauthn-public-key-credential-on-the-server]].
     */
-  def register: Action[JsValue] = authAction(parse.json) { request =>
+  def register: Action[Map[String, Seq[String]]] = authAction(
+    parse.formUrlEncoded
+  ) { request =>
     apiResponse(
       for {
         challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
@@ -90,12 +92,32 @@ class PasskeyController(
           challengeResponse,
           request.user
         )
-        body = request.body.toString()
-        // TODO: parse request.body.asText to JSON
-        // part goes to verifiedRegistration
-        // and part goes to passkeyName
-        credRecord <- Passkey.verifiedRegistration(host, challenge, body)
-        _ <- PasskeyDB.insert(request.user, credRecord, "TODO")
+        passkey <- request.body.get("passkey") match {
+          case Some(a) => Success(a.head)
+          case None =>
+            Failure(
+              JanusException(
+                "Missing passkey",
+                "Missing passkey in request body",
+                400,
+                None
+              )
+            )
+        }
+        passkeyName <- request.body.get("passkeyName") match {
+          case Some(a) => Success(a.head)
+          case None =>
+            Failure(
+              JanusException(
+                "Missing passkey name",
+                "Missing passkey name in request body",
+                400,
+                None
+              )
+            )
+        }
+        credRecord <- Passkey.verifiedRegistration(host, challenge, passkey)
+        _ <- PasskeyDB.insert(request.user, credRecord, passkeyName)
         _ <- PasskeyChallengeDB.delete(request.user)
         _ = logger.info(s"Registered passkey for user ${request.user.username}")
       } yield ()

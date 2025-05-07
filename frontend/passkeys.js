@@ -4,16 +4,28 @@ export async function registerPasskey(csrfToken) {
     const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(publicKeyCredentialCreationOptionsJSON);
     const publicKeyCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
     const registrationResponseJSON = publicKeyCredential.toJSON();
-    await fetch('/passkey/register', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Csrf-Token': csrfToken
-        },
-        body: {
-            "passkeyName": "TODO",
-            "passkey": JSON.stringify(registrationResponseJSON)}
-    });
+    // Add a form to the DOM so that it can be submitted at page level
+    const targetHref = '/passkey/register';
+    const form = document.createElement('form');
+    form.setAttribute('method', 'post');
+    form.setAttribute('action', targetHref);
+    const credsInput = document.createElement('input');
+    credsInput.setAttribute('type','hidden');
+    credsInput.setAttribute('name','passkey');
+    credsInput.setAttribute('value', registrationResponseJSON);
+    const csrfTokenInput = document.createElement('input');
+    csrfTokenInput.setAttribute('type','hidden');
+    csrfTokenInput.setAttribute('name','csrfToken');
+    csrfTokenInput.setAttribute('value', csrfToken);
+    const passkeyNameInput = document.createElement('input');
+    passkeyNameInput.setAttribute('type','hidden');
+    passkeyNameInput.setAttribute('name','passkeyName');
+    passkeyNameInput.setAttribute('value', 'hello again passkeyName');
+    form.appendChild(credsInput);
+    form.appendChild(passkeyNameInput);
+    form.appendChild(csrfTokenInput);
+    document.getElementsByTagName('body')[0].appendChild(form);
+    form.submit();
 }
 
 export function setUpRegisterPasskeyButton(buttonSelector) {
