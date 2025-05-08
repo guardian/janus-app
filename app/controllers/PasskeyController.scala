@@ -10,7 +10,7 @@ import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
 import models.JanusException
 import models.JanusException.throwableWrites
-import models.Passkey._
+import models.PasskeyEncodings._
 import play.api.http.Writeable
 import play.api.libs.json.Json.toJson
 import play.api.libs.json._
@@ -18,7 +18,8 @@ import play.api.mvc._
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
-import java.time.{ZoneId, ZonedDateTime}
+import java.time.format.DateTimeFormatter
+import java.time.{Instant, ZoneId, ZonedDateTime}
 import scala.concurrent.ExecutionContext
 import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
@@ -180,9 +181,19 @@ class PasskeyController(
 
   // TODO: move to Janus or account controller
   def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
-    apiResponse(for {
-      queryResponse <- PasskeyDB.loadCredentials(request.user)
-      passkeys = PasskeyDB.extractCredentials(queryResponse)
-    } yield views.html.userAccount(request.user, janusData, passkeys))
+    apiResponse {
+      val dateFormatter = DateTimeFormatter.ofPattern("d MMM yyyy")
+      def dateFormat(instant: Instant) =
+        instant.atZone(ZoneId.of("Europe/London")).format(dateFormatter)
+      for {
+        queryResponse <- PasskeyDB.loadCredentials(request.user)
+        passkeys = PasskeyDB.extractCredentials(queryResponse)
+      } yield views.html.userAccount(
+        request.user,
+        janusData,
+        passkeys,
+        dateFormat
+      )
+    }
   }
 }
