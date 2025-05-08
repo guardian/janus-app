@@ -1,31 +1,14 @@
 export async function registerPasskey(csrfToken) {
-    const response = await fetch('/passkey/registration-options');
-    const publicKeyCredentialCreationOptionsJSON = await response.json();
-    const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(publicKeyCredentialCreationOptionsJSON);
+    const regOptionsResponse = await fetch('/passkey/registration-options');
+    const regOptionsResponseJson = await regOptionsResponse.json();
+    const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsResponseJson);
     const publicKeyCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
-    const registrationResponseJSON = publicKeyCredential.toJSON();
-    // Add a form to the DOM so that it can be submitted at page level
-    const targetHref = '/passkey/register';
-    const form = document.createElement('form');
-    form.setAttribute('method', 'post');
-    form.setAttribute('action', targetHref);
-    const credsInput = document.createElement('input');
-    credsInput.setAttribute('type','hidden');
-    credsInput.setAttribute('name','passkey');
-    credsInput.setAttribute('value', JSON.stringify(registrationResponseJSON));
-    const csrfTokenInput = document.createElement('input');
-    csrfTokenInput.setAttribute('type','hidden');
-    csrfTokenInput.setAttribute('name','csrfToken');
-    csrfTokenInput.setAttribute('value', csrfToken);
-    const passkeyNameInput = document.createElement('input');
-    passkeyNameInput.setAttribute('type','hidden');
-    passkeyNameInput.setAttribute('name','passkeyName');
-    passkeyNameInput.setAttribute('value', 'hello again passkeyName');
-    form.appendChild(credsInput);
-    form.appendChild(passkeyNameInput);
-    form.appendChild(csrfTokenInput);
-    document.getElementsByTagName('body')[0].appendChild(form);
-    form.submit();
+
+    createAndSubmitForm('/passkey/register', {
+        passkey: JSON.stringify(publicKeyCredential.toJSON()),
+        csrfToken: csrfToken,
+        passkeyName: 'hello again passkeyName'
+    });
 }
 
 export function setUpRegisterPasskeyButton(buttonSelector) {
@@ -40,27 +23,30 @@ export function setUpRegisterPasskeyButton(buttonSelector) {
 }
 
 export async function authenticatePasskey(targetHref, csrfToken)  {
-    console.log("starting authentication");
     const authOptionsResponse = await fetch("/passkey/auth-options");
-    const publicKeyCredentialRequestOptionsJSON = await authOptionsResponse.json();
-    const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(publicKeyCredentialRequestOptionsJSON);
+    const authOptionsResponseJson = await authOptionsResponse.json();
+    const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
     const publicKeyCredential = await navigator.credentials.get({ publicKey: credentialGetOptions});
-    console.log("publicKeyCredential: ", publicKeyCredential);
 
-    // Add a form to the DOM so that it can be submitted at page level
+    createAndSubmitForm(targetHref, {
+        credentials: JSON.stringify(publicKeyCredential.toJSON()),
+        csrfToken: csrfToken
+    });
+}
+
+function createAndSubmitForm(targetHref, formData) {
     const form = document.createElement('form');
     form.setAttribute('method', 'post');
     form.setAttribute('action', targetHref);
-    const credsInput = document.createElement('input');
-    credsInput.setAttribute('type','hidden');
-    credsInput.setAttribute('name','credentials');
-    credsInput.setAttribute('value', JSON.stringify(publicKeyCredential.toJSON()));
-    const csrfTokenInput = document.createElement('input');
-    csrfTokenInput.setAttribute('type','hidden');
-    csrfTokenInput.setAttribute('name','csrfToken');
-    csrfTokenInput.setAttribute('value', csrfToken);
-    form.appendChild(credsInput);
-    form.appendChild(csrfTokenInput);
+
+    Object.entries(formData).forEach(([name, value]) => {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'hidden');
+        input.setAttribute('name', name);
+        input.setAttribute('value', value);
+        form.appendChild(input);
+    });
+
     document.getElementsByTagName('body')[0].appendChild(form);
     form.submit();
 }
