@@ -2,6 +2,7 @@ package controllers
 
 import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction.UserIdentityRequest
+import com.gu.googleauth.UserIdentity
 import logic.Passkey
 import models.JanusException
 import models.JanusException.throwableWrites
@@ -9,7 +10,7 @@ import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.Json.toJson
 import play.api.mvc.Results.Status
-import play.api.mvc.{ActionFilter, AnyContentAsFormUrlEncoded, Result}
+import play.api.mvc._
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -33,37 +34,58 @@ class PasskeyAuthFilter(host: String)(implicit
   def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] =
     Future(
       apiResponse(
-        for {
-          challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
-          challenge <- PasskeyChallengeDB.extractChallenge(
-            challengeResponse,
-            request.user
-          )
-          authData <- extractAuthenticationData(request)
-          credentialResponse <- PasskeyDB.loadCredential(
-            request.user,
-            authData.getCredentialId
-          )
-          credential <- PasskeyDB.extractCredential(
-            credentialResponse,
-            request.user
-          )
-          verifiedAuthData <- Passkey.verifiedAuthentication(
-            host,
-            request.user,
-            challenge,
-            authData,
-            credential
-          )
-          _ <- PasskeyChallengeDB.delete(request.user)
-          _ <- PasskeyDB.updateCounter(request.user, verifiedAuthData)
-          _ <- PasskeyDB.updateLastUsedTime(request.user, verifiedAuthData)
-          _ = logger.info(
-            s"Authenticated passkey for user ${request.user.username}"
-          )
-        } yield ()
+        request.body match {
+          case AnyContentAsFormUrlEncoded(formData) =>
+            filterByFormData(request.user, formData)
+          case body: AnyContent =>
+            Failure(
+              JanusException.missingFormInRequestBody(
+                request.user,
+                body.getClass.getSimpleName
+              )
+            )
+        }
       )
     )
+
+  private def filterByFormData(
+      user: UserIdentity,
+      formData: Map[String, Seq[String]]
+  ): Try[Unit] =
+    for {
+      jsonCredentials <- formData
+        .get("credentials")
+        .flatMap(_.headOption)
+        .toRight(JanusException.missingFieldInRequest(user, "credentials"))
+        .toTry
+      _ <- authenticateWithPasskey(user, jsonCredentials)
+    } yield ()
+
+  private def authenticateWithPasskey(
+      user: UserIdentity,
+      jsonCredentials: String
+  ): Try[Unit] =
+    for {
+      challengeLoad <- PasskeyChallengeDB.loadChallenge(user)
+      challenge <- PasskeyChallengeDB.extractChallenge(challengeLoad, user)
+      authData <- Passkey.parsedAuthentication(user, jsonCredentials)
+      credentialLoad <- PasskeyDB.loadCredential(
+        user,
+        authData.getCredentialId
+      )
+      credential <- PasskeyDB.extractCredential(credentialLoad, user)
+      verifiedAuthData <- Passkey.verifiedAuthentication(
+        host,
+        user,
+        challenge,
+        authData,
+        credential
+      )
+      _ <- PasskeyChallengeDB.delete(user)
+      _ <- PasskeyDB.updateCounter(user, verifiedAuthData)
+      _ <- PasskeyDB.updateLastUsedTime(user, verifiedAuthData)
+      _ = logger.info(s"Authenticated passkey for user ${user.username}")
+    } yield ()
 
   private def apiResponse(auth: => Try[Unit]): Option[Result] =
     auth match {
@@ -75,23 +97,4 @@ class PasskeyAuthFilter(host: String)(implicit
         Some(Status(INTERNAL_SERVER_ERROR)(toJson(err)))
       case Success(_) => None
     }
-
-  private def extractAuthenticationData[A](request: UserIdentityRequest[A]) =
-    for {
-      body <- request.body match {
-        case AnyContentAsFormUrlEncoded(data) =>
-          data
-            .get("credentials")
-            .flatMap(_.headOption)
-            .toRight(
-              JanusException.missingFieldInRequest(request.user, "credentials")
-            )
-            .toTry
-        case _ =>
-          Failure(
-            JanusException.missingFieldInRequest(request.user, "credentials")
-          )
-      }
-      authData <- Passkey.parsedAuthentication(request.user, body)
-    } yield authData
 }

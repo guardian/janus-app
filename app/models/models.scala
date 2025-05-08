@@ -1,7 +1,7 @@
 package models
 
 import com.gu.googleauth.UserIdentity
-import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, UNAUTHORIZED}
+import play.api.http.Status._
 import play.api.libs.json.{Json, Writes}
 
 sealed trait AccountConfigStatus
@@ -40,6 +40,17 @@ object JanusException {
       "message" -> throwable.getClass.getSimpleName
     )
   }
+
+  def missingFormInRequestBody(
+      user: UserIdentity,
+      bodyType: String
+  ): JanusException = JanusException(
+    userMessage = "Request body is expected to be a form",
+    engineerMessage =
+      s"Authentication request has body type $bodyType instead of form for user ${user.username}",
+    httpCode = UNSUPPORTED_MEDIA_TYPE,
+    causedBy = None
+  )
 
   def missingFieldInRequest(
       user: UserIdentity,
