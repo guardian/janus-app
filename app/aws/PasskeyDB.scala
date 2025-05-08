@@ -5,13 +5,11 @@ import com.webauthn4j.converter.AttestedCredentialDataConverter
 import com.webauthn4j.converter.util.ObjectConverter
 import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
 import com.webauthn4j.data.AuthenticationData
+import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.attestation.statement.NoneAttestationStatement
-import com.webauthn4j.data.extension.authenticator.{
-  AuthenticationExtensionsAuthenticatorOutputs,
-  RegistrationExtensionAuthenticatorOutput
-}
+import com.webauthn4j.data.extension.authenticator.{AuthenticationExtensionsAuthenticatorOutputs, RegistrationExtensionAuthenticatorOutput}
 import com.webauthn4j.util.Base64UrlUtil
-import models.{JanusException, Passkey}
+import models.{JanusException, PasskeyMetadata}
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model._
@@ -71,7 +69,8 @@ object PasskeyDB {
       // see https://www.w3.org/TR/webauthn-1/#sign-counter
       "authCounter" -> AttributeValue.fromN("0"),
       "passkeyName" -> AttributeValue.fromS(passkeyName),
-      "registrationTime" -> AttributeValue.fromS(registrationTime.toString)
+      "registrationTime" -> AttributeValue.fromS(registrationTime.toString),
+      "aaguid" -> AttributeValue.fromS(credentialRecord.getAttestedCredentialData.getAaguid.toString)
     )
 
   def insert(
@@ -80,10 +79,8 @@ object PasskeyDB {
       passkeyName: String,
       registrationTime: Instant = Instant.now()
   )(implicit dynamoDB: DynamoDbClient): Try[Unit] = Try {
-    val item =
-      toDynamoItem(user, credentialRecord, passkeyName, registrationTime)
-    val request =
-      PutItemRequest.builder().tableName(tableName).item(item.asJava).build()
+    val item = toDynamoItem(user, credentialRecord, passkeyName, registrationTime)
+    val request = PutItemRequest.builder().tableName(tableName).item(item.asJava).build()
     dynamoDB.putItem(request)
     ()
   }.recoverWith(exception =>
@@ -175,17 +172,18 @@ object PasskeyDB {
       Failure(JanusException.failedToLoadDbItem(user, tableName, err))
     )
 
-  def extractCredentials(response: QueryResponse): Seq[Passkey] =
+  def extractMetadata(response: QueryResponse): Seq[PasskeyMetadata] =
     if (response.hasItems && !response.items().isEmpty) {
       response
         .items()
         .asScala
         .map(attribs =>
-          Passkey(
+          PasskeyMetadata(
             id = attribs.get("credentialId").s(),
             name = attribs.get("passkeyName").s(),
             registrationTime =
-              Instant.parse(attribs.get("registrationTime").s())
+              Instant.parse(attribs.get("registrationTime").s()),
+            aaguid = new AAGUID(attribs.get("aaguid").s())
           )
         )
         .toSeq
