@@ -15,6 +15,7 @@ export async function registerPasskey(csrfToken) {
         });
     } catch (err) {
         console.error(err);
+        M.toast({html: err.message, classes: 'rounded red'});
     }
 }
 
@@ -42,6 +43,7 @@ export async function authenticatePasskey(targetHref, csrfToken)  {
         });
     } catch (err) {
         console.error(err);
+        M.toast({html: err.message, classes: 'rounded red'});
     }
 }
 
@@ -91,6 +93,7 @@ function getPasskeyNameFromUser() {
                 <p>Give this passkey a name to help you recognize it later.</p>
                 <div class="input-field">
                     <input type="text" id="passkey-name" class="validate" placeholder="e.g. Macbook, Phone" required>
+                    <div id="passkey-name-error" class="error-message red-text" style="display: none;">Please enter a name for your passkey</div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -116,10 +119,19 @@ function getPasskeyNameFromUser() {
         const submitButton = modalElement.querySelector('#submit-button');
         const cancelButton = modalElement.querySelector('#cancel-button');
         const input = modalElement.querySelector('#passkey-name');
+        const errorMessage = modalElement.querySelector('#passkey-name-error');
         
         // Focus the input when modal opens
         modalInstance.open();
         setTimeout(() => input.focus(), 100); // Small delay to ensure modal is visible
+        
+        // Clear error when typing
+        input.addEventListener('input', () => {
+            if (input.value.trim()) {
+                input.classList.remove('invalid');
+                errorMessage.style.display = 'none';
+            }
+        });
         
         // Handle form submission
         submitButton.addEventListener('click', (e) => {
@@ -129,6 +141,7 @@ function getPasskeyNameFromUser() {
             if (!passkeyName) {
                 // Show validation error
                 input.classList.add('invalid');
+                errorMessage.style.display = 'block';
                 return;
             }
             
@@ -141,7 +154,7 @@ function getPasskeyNameFromUser() {
         cancelButton.addEventListener('click', (e) => {
             e.preventDefault();
             modalInstance.close();
-            reject(new Error('User cancelled passkey naming'));
+            reject(new Error('Passkey registration cancelled'));
         });
         
         // Handle Enter key for form submission
