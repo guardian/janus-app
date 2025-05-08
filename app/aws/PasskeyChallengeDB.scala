@@ -5,7 +5,6 @@ import com.gu.googleauth.UserIdentity
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.util.Base64UrlUtil
 import models.JanusException
-import play.api.http.Status.INTERNAL_SERVER_ERROR
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model._
 
@@ -52,12 +51,10 @@ object PasskeyChallengeDB {
       ()
     }.recoverWith(exception =>
       Failure(
-        JanusException(
-          userMessage = "Failed to store challenge",
-          engineerMessage =
-            s"Failed to store challenge for user ${userChallenge.user.username}: ${exception.getMessage}",
-          httpCode = INTERNAL_SERVER_ERROR,
-          causedBy = Some(exception)
+        JanusException.failedToCreateDbItem(
+          userChallenge.user,
+          tableName,
+          exception
         )
       )
     )
@@ -71,15 +68,7 @@ object PasskeyChallengeDB {
         GetItemRequest.builder().tableName(tableName).key(key.asJava).build()
       dynamoDB.getItem(request)
     }.recoverWith(err =>
-      Failure(
-        JanusException(
-          userMessage = "Failed to load challenge",
-          engineerMessage =
-            s"Failed to load challenge for user ${user.username}: ${err.getMessage}",
-          httpCode = INTERNAL_SERVER_ERROR,
-          causedBy = Some(err)
-        )
-      )
+      Failure(JanusException.failedToLoadDbItem(user, tableName, err))
     )
   }
 
@@ -94,16 +83,8 @@ object PasskeyChallengeDB {
           Base64UrlUtil.decode(item.get("challenge").s().getBytes(UTF_8))
         new DefaultChallenge(challenge)
       }
-    } else {
-      Failure(
-        JanusException(
-          userMessage = "Challenge not found",
-          engineerMessage = s"Challenge not found for user ${user.username}",
-          httpCode = INTERNAL_SERVER_ERROR,
-          causedBy = None
-        )
-      )
-    }
+    } else
+      Failure(JanusException.missingItemInDb(user, tableName))
   }
 
   def delete(
@@ -116,14 +97,6 @@ object PasskeyChallengeDB {
       dynamoDB.deleteItem(request)
       ()
     }.recoverWith(exception =>
-      Failure(
-        JanusException(
-          userMessage = "Failed to store challenge",
-          engineerMessage =
-            s"Failed to delete challenge for user ${user.username}: ${exception.getMessage}",
-          httpCode = INTERNAL_SERVER_ERROR,
-          causedBy = Some(exception)
-        )
-      )
+      Failure(JanusException.failedToDeleteDbItem(user, tableName, exception))
     )
 }

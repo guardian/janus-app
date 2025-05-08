@@ -35,7 +35,8 @@ object PasskeyDB {
     */
   def toDynamoItem(
       user: UserIdentity,
-      credentialRecord: CredentialRecord
+      credentialRecord: CredentialRecord,
+      passkeyName: String
   ): Map[String, AttributeValue] =
     Map(
       "username" -> AttributeValue.fromS(user.username),
@@ -66,28 +67,22 @@ object PasskeyDB {
         )
       ),
       // see https://www.w3.org/TR/webauthn-1/#sign-counter
-      "authCounter" -> AttributeValue.fromN("0")
+      "authCounter" -> AttributeValue.fromN("0"),
+      "passkeyName" -> AttributeValue.fromS(passkeyName)
     )
 
   def insert(
       user: UserIdentity,
-      credentialRecord: CredentialRecord
+      credentialRecord: CredentialRecord,
+      passkeyName: String
   )(implicit dynamoDB: DynamoDbClient): Try[Unit] = Try {
-    val item = toDynamoItem(user, credentialRecord)
+    val item = toDynamoItem(user, credentialRecord, passkeyName)
     val request =
       PutItemRequest.builder().tableName(tableName).item(item.asJava).build()
     dynamoDB.putItem(request)
     ()
   }.recoverWith(exception =>
-    Failure(
-      JanusException(
-        userMessage = "Failed to store passkey",
-        engineerMessage =
-          s"Failed to store credential for user ${user.username}: ${exception.getMessage}",
-        httpCode = INTERNAL_SERVER_ERROR,
-        causedBy = Some(exception)
-      )
-    )
+    Failure(JanusException.failedToCreateDbItem(user, tableName, exception))
   )
 
   def loadCredential(
@@ -105,15 +100,7 @@ object PasskeyDB {
         GetItemRequest.builder().tableName(tableName).key(key.asJava).build()
       dynamoDB.getItem(request)
     }.recoverWith(err =>
-      Failure(
-        JanusException(
-          userMessage = "Failed to find registered passkey",
-          engineerMessage =
-            s"Failed to load credential for user ${user.username}: ${err.getMessage}",
-          httpCode = INTERNAL_SERVER_ERROR,
-          causedBy = Some(err)
-        )
-      )
+      Failure(JanusException.failedToLoadDbItem(user, tableName, err))
     )
   }
 
@@ -161,18 +148,36 @@ object PasskeyDB {
           )
         )
       )
-    } else {
-      Failure(
-        JanusException(
-          userMessage = "Failed to find registered passkey",
-          engineerMessage =
-            s"Credential data not found for user ${user.username}: GetItem response: $response",
-          httpCode = INTERNAL_SERVER_ERROR,
-          causedBy = None
-        )
-      )
-    }
+    } else
+      Failure(JanusException.missingItemInDb(user, tableName))
   }
+
+  def loadCredentials(
+      user: UserIdentity
+  )(implicit dynamoDB: DynamoDbClient): Try[QueryResponse] =
+    Try {
+      val expressionValues = Map(
+        ":username" -> AttributeValue.fromS(user.username)
+      )
+      val request = QueryRequest
+        .builder()
+        .tableName(tableName)
+        .keyConditionExpression("username = :username")
+        .expressionAttributeValues(expressionValues.asJava)
+        .build()
+      dynamoDB.query(request)
+    }.recoverWith(err =>
+      Failure(JanusException.failedToLoadDbItem(user, tableName, err))
+    )
+
+  def extractCredentials(response: QueryResponse): Seq[String] =
+    if (response.hasItems && !response.items().isEmpty) {
+      response
+        .items()
+        .asScala
+        .map(_.get("passkeyName").s())
+        .toSeq
+    } else Nil
 
   /** The device hosting the passkey keeps a count of how many times the passkey
     * has been requested. As part of the verification process, this count is
@@ -205,12 +210,11 @@ object PasskeyDB {
     ()
   }.recoverWith(err =>
     Failure(
-      JanusException(
-        userMessage = "Failed to update authentication counter",
-        engineerMessage =
-          s"Failed to update authentication counter for user ${user.username}: ${err.getMessage}",
-        httpCode = INTERNAL_SERVER_ERROR,
-        causedBy = Some(err)
+      JanusException.failedToUpdateDbItem(
+        user,
+        tableName,
+        "authenticationCounter",
+        err
       )
     )
   )

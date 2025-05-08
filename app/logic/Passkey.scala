@@ -11,7 +11,6 @@ import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.server.ServerProperty
 import com.webauthn4j.verifier.exception.VerificationException
 import models._
-import play.api.http.Status.{BAD_REQUEST, UNAUTHORIZED}
 
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
@@ -88,12 +87,10 @@ object Passkey {
       )
     }.recoverWith(exception =>
       Failure(
-        JanusException(
-          userMessage = "Failed to create registration options",
-          engineerMessage =
-            s"Failed to create registration options for user ${user.username}: ${exception.getMessage}",
-          httpCode = BAD_REQUEST,
-          causedBy = Some(exception)
+        JanusException.invalidFieldInRequest(
+          user,
+          "registration options",
+          exception
         )
       )
     )
@@ -118,12 +115,10 @@ object Passkey {
       )
     ).recoverWith(exception =>
       Failure(
-        JanusException(
-          userMessage = "Failed to create authentication options",
-          engineerMessage =
-            s"Failed to create authentication options for user ${user.username}: ${exception.getMessage}",
-          httpCode = BAD_REQUEST,
-          causedBy = Some(exception)
+        JanusException.invalidFieldInRequest(
+          user,
+          "authentication options",
+          exception
         )
       )
     )
@@ -147,6 +142,7 @@ object Passkey {
     */
   def verifiedRegistration(
       appHost: String,
+      user: UserIdentity,
       challenge: Challenge,
       jsonResponse: String
   ): Try[CredentialRecord] =
@@ -171,23 +167,11 @@ object Passkey {
     }.recoverWith {
       case exception: VerificationException =>
         Failure(
-          JanusException(
-            userMessage = "Registration verification failed",
-            engineerMessage =
-              s"Registration verification failed: ${exception.getMessage}",
-            httpCode = BAD_REQUEST,
-            causedBy = Some(exception)
-          )
+          JanusException.invalidFieldInRequest(user, "passkey", exception)
         )
       case exception =>
         Failure(
-          JanusException(
-            userMessage = "Bad arguments for registration verification request",
-            engineerMessage =
-              s"Bad arguments for registration verification request: ${exception.getMessage}",
-            httpCode = BAD_REQUEST,
-            causedBy = Some(exception)
-          )
+          JanusException.invalidFieldInRequest(user, "passkey", exception)
         )
     }
 
@@ -201,30 +185,15 @@ object Passkey {
     *   Json response from browser containing authentication data.
     */
   def parsedAuthentication(
+      user: UserIdentity,
       jsonResponse: String
   ): Try[AuthenticationData] =
     Try(webAuthnManager.parseAuthenticationResponseJSON(jsonResponse))
       .recoverWith {
         case err: DataConversionException =>
-          Failure(
-            JanusException(
-              userMessage = "Authentication parsing failed",
-              engineerMessage =
-                s"Authentication parsing failed: ${err.getMessage}",
-              httpCode = BAD_REQUEST,
-              causedBy = Some(err)
-            )
-          )
+          Failure(JanusException.invalidFieldInRequest(user, "passkey", err))
         case err =>
-          Failure(
-            JanusException(
-              userMessage = "Bad authentication object",
-              engineerMessage =
-                s"Bad authentication object submitted: ${err.getMessage}",
-              httpCode = BAD_REQUEST,
-              causedBy = Some(err)
-            )
-          )
+          Failure(JanusException.invalidFieldInRequest(user, "passkey", err))
       }
 
   /** Verifies the authentication response from the browser. Call this when the
@@ -240,6 +209,7 @@ object Passkey {
     */
   def verifiedAuthentication(
       appHost: String,
+      user: UserIdentity,
       challenge: Challenge,
       authenticationData: AuthenticationData,
       credentialRecord: CredentialRecord
@@ -258,24 +228,8 @@ object Passkey {
       webAuthnManager.verify(authenticationData, authParams)
     }.recoverWith {
       case err: VerificationException =>
-        Failure(
-          JanusException(
-            userMessage = "Authentication verification failed",
-            engineerMessage =
-              s"Authentication verification failed: ${err.getMessage}",
-            httpCode = UNAUTHORIZED,
-            causedBy = Some(err)
-          )
-        )
+        Failure(JanusException.authenticationFailure(user, err))
       case err =>
-        Failure(
-          JanusException(
-            userMessage = "Bad arguments for authentication verification",
-            engineerMessage =
-              s"Bad arguments for authentication verification: ${err.getMessage}",
-            httpCode = BAD_REQUEST,
-            causedBy = Some(err)
-          )
-        )
+        Failure(JanusException.invalidFieldInRequest(user, "passkey", err))
     }
 }
