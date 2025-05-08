@@ -2,7 +2,7 @@
 @import com.gu.janus.model.JanusData
 @import logic.UserAccess.username
 @import play.api.Mode
-@(user: UserIdentity, janusData: JanusData, passkeysForUser: Seq[String])(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(user: UserIdentity, janusData: JanusData, passkeys: Seq[String])(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 @import play.filters.csrf.CSRF
 
 @main("User account", Some(user), janusData) {
@@ -25,13 +25,14 @@
             </div>
         </div>
         <div class="row">
-            @for(passkey <- passkeysForUser) {
+            @for(passkey <- passkeys) {
                 <div class="col s12 m12 l6">
-                    <div class="card-panel>">
+                    <div class="card-panel">
                         <p>Passkey: @{passkey}</p>
                         <div><button id="delete-passkey" class="btn" csrf-token="@{CSRF.getToken.get.value}" data-passkey="@passkey">Delete</button></div>
+                    </div>
+                </div>
             }
         </div>
     </div>
-
 }
