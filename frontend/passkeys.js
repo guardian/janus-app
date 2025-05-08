@@ -1,15 +1,21 @@
-export async function registerPasskey(csrfToken) {
-    const regOptionsResponse = await fetch('/passkey/registration-options');
-    const regOptionsResponseJson = await regOptionsResponse.json();
-    const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsResponseJson);
-    const publicKeyCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
-    const passkeyName = await getPasskeyNameFromUser();
+import M from 'materialize-css';
 
-    createAndSubmitForm('/passkey/register', {
-        passkey: JSON.stringify(publicKeyCredential.toJSON()),
-        csrfToken: csrfToken,
-        passkeyName: passkeyName
-    });
+export async function registerPasskey(csrfToken) {
+    try {
+        const regOptionsResponse = await fetch('/passkey/registration-options');
+        const regOptionsResponseJson = await regOptionsResponse.json();
+        const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsResponseJson);
+        const publicKeyCredential = await navigator.credentials.create({publicKey: credentialCreationOptions});
+        const passkeyName = await getPasskeyNameFromUser();
+
+        createAndSubmitForm('/passkey/register', {
+            passkey: JSON.stringify(publicKeyCredential.toJSON()),
+            csrfToken: csrfToken,
+            passkeyName: passkeyName
+        });
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 export function setUpRegisterPasskeyButton(buttonSelector) {
@@ -24,15 +30,19 @@ export function setUpRegisterPasskeyButton(buttonSelector) {
 }
 
 export async function authenticatePasskey(targetHref, csrfToken)  {
-    const authOptionsResponse = await fetch("/passkey/auth-options");
-    const authOptionsResponseJson = await authOptionsResponse.json();
-    const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
-    const publicKeyCredential = await navigator.credentials.get({ publicKey: credentialGetOptions});
+    try {
+        const authOptionsResponse = await fetch('/passkey/auth-options');
+        const authOptionsResponseJson = await authOptionsResponse.json();
+        const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
+        const publicKeyCredential = await navigator.credentials.get({publicKey: credentialGetOptions});
 
-    createAndSubmitForm(targetHref, {
-        credentials: JSON.stringify(publicKeyCredential.toJSON()),
-        csrfToken: csrfToken
-    });
+        createAndSubmitForm(targetHref, {
+            credentials: JSON.stringify(publicKeyCredential.toJSON()),
+            csrfToken: csrfToken
+        });
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 function createAndSubmitForm(targetHref, formData) {
@@ -48,7 +58,7 @@ function createAndSubmitForm(targetHref, formData) {
         form.appendChild(input);
     });
 
-    document.getElementsByTagName('body')[0].appendChild(form);
+    document.body.append(form);
     form.submit();
 }
 
@@ -77,11 +87,10 @@ function getPasskeyNameFromUser() {
         const modalHtml = `
         <div id="${modalId}" class="modal">
             <div class="modal-content">
-                <h4 class="orange-text">Name Your Passkey</h4>
+                <h4 class="orange-text">Passkey Name</h4>
                 <p>Give this passkey a name to help you recognize it later.</p>
                 <div class="input-field">
                     <input type="text" id="passkey-name" class="validate" placeholder="e.g. Macbook, Phone" required>
-                    <label for="passkey-name">Passkey Name</label>
                 </div>
             </div>
             <div class="modal-footer">
@@ -90,7 +99,6 @@ function getPasskeyNameFromUser() {
             </div>
         </div>`;
         
-        // Add modal to document
         document.body.insertAdjacentHTML('beforeend', modalHtml);
         
         const modalElement = document.getElementById(modalId);
