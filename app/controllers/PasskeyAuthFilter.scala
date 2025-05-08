@@ -57,6 +57,7 @@ class PasskeyAuthFilter(host: String)(implicit
           )
           _ <- PasskeyChallengeDB.delete(request.user)
           _ <- PasskeyDB.updateCounter(request.user, verifiedAuthData)
+          _ <- PasskeyDB.updateLastUsedTime(request.user, verifiedAuthData)
           _ = logger.info(
             s"Authenticated passkey for user ${request.user.username}"
           )

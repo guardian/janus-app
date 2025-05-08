@@ -7,7 +7,10 @@ import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
 import com.webauthn4j.data.AuthenticationData
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.attestation.statement.NoneAttestationStatement
-import com.webauthn4j.data.extension.authenticator.{AuthenticationExtensionsAuthenticatorOutputs, RegistrationExtensionAuthenticatorOutput}
+import com.webauthn4j.data.extension.authenticator.{
+  AuthenticationExtensionsAuthenticatorOutputs,
+  RegistrationExtensionAuthenticatorOutput
+}
 import com.webauthn4j.util.Base64UrlUtil
 import models.{JanusException, PasskeyMetadata}
 import play.api.http.Status.INTERNAL_SERVER_ERROR
@@ -70,7 +73,9 @@ object PasskeyDB {
       "authCounter" -> AttributeValue.fromN("0"),
       "passkeyName" -> AttributeValue.fromS(passkeyName),
       "registrationTime" -> AttributeValue.fromS(registrationTime.toString),
-      "aaguid" -> AttributeValue.fromS(credentialRecord.getAttestedCredentialData.getAaguid.toString)
+      "aaguid" -> AttributeValue.fromS(
+        credentialRecord.getAttestedCredentialData.getAaguid.toString
+      )
     )
 
   def insert(
@@ -79,8 +84,10 @@ object PasskeyDB {
       passkeyName: String,
       registrationTime: Instant = Instant.now()
   )(implicit dynamoDB: DynamoDbClient): Try[Unit] = Try {
-    val item = toDynamoItem(user, credentialRecord, passkeyName, registrationTime)
-    val request = PutItemRequest.builder().tableName(tableName).item(item.asJava).build()
+    val item =
+      toDynamoItem(user, credentialRecord, passkeyName, registrationTime)
+    val request =
+      PutItemRequest.builder().tableName(tableName).item(item.asJava).build()
     dynamoDB.putItem(request)
     ()
   }.recoverWith(exception =>
@@ -183,7 +190,11 @@ object PasskeyDB {
             name = attribs.get("passkeyName").s(),
             registrationTime =
               Instant.parse(attribs.get("registrationTime").s()),
-            aaguid = new AAGUID(attribs.get("aaguid").s())
+            aaguid = new AAGUID(attribs.get("aaguid").s()),
+            lastUsedTime =
+              if (attribs.containsKey("lastUsedTime"))
+                Some(Instant.parse(attribs.get("lastUsedTime").s()))
+              else None
           )
         )
         .toSeq
@@ -197,6 +208,35 @@ object PasskeyDB {
     */
   def updateCounter(user: UserIdentity, authData: AuthenticationData)(implicit
       dynamoDB: DynamoDbClient
+  ): Try[Unit] =
+    updateAttribute(
+      user,
+      authData,
+      "authCounter",
+      AttributeValue.fromN(
+        String.valueOf(authData.getAuthenticatorData.getSignCount)
+      )
+    )
+
+  def updateLastUsedTime(
+      user: UserIdentity,
+      authData: AuthenticationData,
+      lastUsedTime: Instant = Instant.now()
+  )(implicit dynamoDB: DynamoDbClient): Try[Unit] =
+    updateAttribute(
+      user,
+      authData,
+      "lastUsedTime",
+      AttributeValue.fromS(lastUsedTime.toString)
+    )
+
+  private def updateAttribute(
+      user: UserIdentity,
+      authData: AuthenticationData,
+      attribName: String,
+      attribValue: AttributeValue
+  )(implicit
+      dynamoDB: DynamoDbClient
   ): Try[Unit] = Try {
     val key = Map(
       "username" -> AttributeValue.fromS(user.username),
@@ -204,16 +244,11 @@ object PasskeyDB {
         Base64UrlUtil.encodeToString(authData.getCredentialId)
       )
     )
-    val update =
-      Map(
-        ":counterValue" -> AttributeValue.fromN(
-          String.valueOf(authData.getAuthenticatorData.getSignCount)
-        )
-      )
+    val update = Map(s":${attribName}Value" -> attribValue)
     val request = UpdateItemRequest.builder
       .tableName(tableName)
       .key(key.asJava)
-      .updateExpression("SET authCounter = :counterValue")
+      .updateExpression(s"SET $attribName = :${attribName}Value")
       .expressionAttributeValues(update.asJava)
       .build()
     dynamoDB.updateItem(request)
@@ -223,7 +258,7 @@ object PasskeyDB {
       JanusException.failedToUpdateDbItem(
         user,
         tableName,
-        "authenticationCounter",
+        attribName,
         err
       )
     )
