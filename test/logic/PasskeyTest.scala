@@ -2,12 +2,12 @@ package logic
 
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.data.client.challenge.DefaultChallenge
-import com.webauthn4j.util.Base64UrlUtil
-import io.circe.syntax.EncoderOps
 import models.Passkey._
 import org.scalatest.EitherValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should
+import play.api.libs.json.Json.toJson
+import play.api.libs.json._
 
 import java.nio.charset.StandardCharsets.UTF_8
 
@@ -32,7 +32,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         testUser,
         challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
       )
-      options.toEither.value.asJson.spaces2 shouldBe
+      Json.prettyPrint(toJson(options.toEither.value)) shouldBe
         """{
         |  "challenge" : "Y2hhbGxlbmdl",
         |  "rp" : {
@@ -44,20 +44,16 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         |    "name" : "test.user",
         |    "displayName" : "Test User"
         |  },
-        |  "pubKeyCredParams" : [
-        |    {
-        |      "type" : "public-key",
-        |      "alg" : -7
-        |    },
-        |    {
-        |      "type" : "public-key",
-        |      "alg" : -257
-        |    },
-        |    {
-        |      "type" : "public-key",
-        |      "alg" : -8
-        |    }
-        |  ]
+        |  "pubKeyCredParams" : [ {
+        |    "type" : "public-key",
+        |    "alg" : -7
+        |  }, {
+        |    "type" : "public-key",
+        |    "alg" : -257
+        |  }, {
+        |    "type" : "public-key",
+        |    "alg" : -8
+        |  } ]
         |}""".stripMargin
     }
   }

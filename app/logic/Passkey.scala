@@ -11,7 +11,7 @@ import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.server.ServerProperty
 import com.webauthn4j.verifier.exception.VerificationException
 import models._
-import play.api.http.Status.BAD_REQUEST
+import play.api.http.Status.{BAD_REQUEST, UNAUTHORIZED}
 
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
@@ -263,7 +263,7 @@ object Passkey {
             userMessage = "Authentication verification failed",
             engineerMessage =
               s"Authentication verification failed: ${err.getMessage}",
-            httpCode = BAD_REQUEST,
+            httpCode = UNAUTHORIZED,
             causedBy = Some(err)
           )
         )

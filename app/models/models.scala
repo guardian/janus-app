@@ -1,6 +1,5 @@
 package models
-
-import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR}
+import play.api.libs.json.{Json, Writes}
 
 sealed trait AccountConfigStatus
 case class FederationConfigError(causedBy: Throwable)
@@ -20,3 +19,21 @@ case class JanusException(
     httpCode: Int,
     causedBy: Option[Throwable]
 ) extends Exception(engineerMessage, causedBy.orNull)
+
+object JanusException {
+  implicit val janusExceptionWrites: Writes[JanusException] = Writes {
+    exception =>
+      Json.obj(
+        "status" -> "error",
+        "message" -> exception.userMessage,
+        "httpCode" -> exception.httpCode
+      )
+  }
+
+  implicit val throwableWrites: Writes[Throwable] = Writes { throwable =>
+    Json.obj(
+      "status" -> "error",
+      "message" -> throwable.getClass.getSimpleName
+    )
+  }
+}
