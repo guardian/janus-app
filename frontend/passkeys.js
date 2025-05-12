@@ -14,9 +14,7 @@ export async function registerPasskey(csrfToken) {
             passkeyName: passkeyName
         });
     } catch (err) {
-        console.error(err);
-        M.toast({html: err.message, classes: 'rounded red'});
-    }
+        console.error(err);    }
 }
 
 export function setUpRegisterPasskeyButton(buttonSelector) {
