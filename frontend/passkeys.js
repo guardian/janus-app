@@ -118,6 +118,9 @@ function getPasskeyNameFromUser() {
         const cancelButton = modalElement.querySelector('#cancel-button');
         const input = modalElement.querySelector('#passkey-name');
         const errorMessage = modalElement.querySelector('#passkey-name-error');
+        // Regex to allow only alphanumeric characters and spaces
+        const alphanumericRegex = /^[a-zA-Z0-9 ]*$/;
+
         
         // Focus the input when modal opens
         modalInstance.open();
@@ -125,9 +128,13 @@ function getPasskeyNameFromUser() {
         
         // Clear error when typing
         input.addEventListener('input', () => {
-            if (input.value.trim()) {
+            if (input.value.trim() && alphanumericRegex.test(input.value)) {
                 input.classList.remove('invalid');
                 errorMessage.style.display = 'none';
+            } else {
+                input.classList.add('invalid');
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Use only letters, numbers and spaces';
             }
         });
         
@@ -135,11 +142,12 @@ function getPasskeyNameFromUser() {
         submitButton.addEventListener('click', (e) => {
             e.preventDefault();
             const passkeyName = input.value.trim();
-            
-            if (!passkeyName) {
+
+            if (!passkeyName || !alphanumericRegex.test(passkeyName)) {
                 // Show validation error
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Cannot save passkey name: only letters, numbers and spaces are allowed';
                 return;
             }
             
