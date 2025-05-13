@@ -1,21 +1,26 @@
-import 'materialize-css';
 import DOMPurify from 'dompurify';
-import { setupRegisterPasskeyButton } from './passkeys.js';
+import M from 'materialize-css';
+import {setUpProtectedLinks, setUpRegisterPasskeyButton} from './passkeys.js';
 
 
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
     //Initialise Materialize elements
     const sidenavElems = document.querySelectorAll('.sidenav');
+    // eslint-disable-next-line no-unused-vars -- required by Materialize
     const sidenavInstances = M.Sidenav.init(sidenavElems);
     const modalElems = document.querySelectorAll('.modal');
+    // eslint-disable-next-line no-unused-vars -- required by Materialize
     const modalInstances = M.Modal.init(modalElems);
     M.updateTextFields();
     const collapsibleElems = document.querySelectorAll('.collapsible');
+    // eslint-disable-next-line no-unused-vars -- required by Materialize
     const collapsibleInstances = M.Collapsible.init(collapsibleElems);
     const dropdownElems = document.querySelectorAll('.dropdown-trigger');
-    const dropdownInstances = M.Dropdown.init(dropdownElems);  
+    // eslint-disable-next-line no-unused-vars -- required by Materialize
+    const dropdownInstances = M.Dropdown.init(dropdownElems);
     const tooltipElems = document.querySelectorAll('.tooltipped');
+    // eslint-disable-next-line no-unused-vars -- required by Materialize
     const instances = M.Tooltip.init(tooltipElems);
 
     // aws-profile-name
@@ -31,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         lines = el.innerText.split("\n");
                     }
                     const replaced = lines.map(function(line) {
-                        return line.replace(/--profile [a-zA-Z0-9\-]*/, "--profile " + input.value);
+                        return line.replace(/--profile [a-zA-Z0-9-]*/, "--profile " + input.value);
                     });
                     if (el.tagName === "TEXTAREA") {
                         el.value = replaced.join("\n");
@@ -77,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // index page controls are fixed until user scrolls to footer
-    document.querySelectorAll('.controls__hero').forEach(function(container) {
+    document.querySelectorAll('.controls__hero').forEach(function() {
         const win = window,
             controlContainer = document.querySelector('.controls__hero'),
             footer = document.querySelector('footer'),
@@ -290,6 +295,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.cookie = `${COOKIE__AUTO_LOGOUT}=; expires=Thu, 01 Jan 1970 12:00:00 UTC; path=/`;
     }
 
-    setupRegisterPasskeyButton('#register-passkey');
+    setUpRegisterPasskeyButton('#register-passkey');
+    // setupAuthButtons('.auth-button');
+    const protectedLinks = document.querySelectorAll('.passkey-protected');
+    setUpProtectedLinks(protectedLinks);
 });
-
