@@ -102,6 +102,11 @@ function getPasskeyNameFromUser() {
             onCloseEnd: () => {
                 // Hide the modal from the UI when closed
                 modalElement.style.visibility = "hidden";
+                // Clean up event listeners to prevent memory leaks
+                submitButton.removeEventListener('click', handleSubmit);
+                cancelButton.removeEventListener('click', handleCancel);
+                input.removeEventListener('input', handleInput);
+                input.removeEventListener('keypress', handleKeyPress);
             }
         });
 
