@@ -61,11 +61,20 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
   "verifiedRegistration" - {
     "rejects invalid registration response" in {
       val appHost = "https://test.example.com"
+      val testUser = UserIdentity(
+        sub = "sub",
+        email = "test.user@example.com",
+        firstName = "Test",
+        lastName = "User",
+        exp = 0,
+        avatarUrl = None
+      )
       val challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
       val invalidJson = """{"type": "public-key", "id": "invalid"}"""
 
       val result = Passkey.verifiedRegistration(
         appHost,
+        testUser,
         challenge,
         invalidJson
       )
