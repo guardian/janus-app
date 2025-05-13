@@ -187,7 +187,7 @@ class PasskeyController(
         instant.atZone(ZoneId.of("Europe/London")).format(dateFormatter)
       for {
         queryResponse <- PasskeyDB.loadCredentials(request.user)
-        passkeys = PasskeyDB.extractCredentials(queryResponse)
+        passkeys = PasskeyDB.extractMetadata(queryResponse)
       } yield views.html.userAccount(
         request.user,
         janusData,
