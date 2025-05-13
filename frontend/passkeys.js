@@ -58,6 +58,34 @@ export async function authenticatePasskey(targetHref, csrfToken) {
     }
 }
 
+export function deletePasskey(passkeyName, csrfToken) {
+    try {
+        if (confirm(`Are you sure you want to delete the passkey "${passkeyName}"?`)) {
+            createAndSubmitForm('/passkey/delete', {
+                passkeyName: passkeyName,
+                csrfToken: csrfToken
+            });
+        }
+    } catch (err) {
+        console.error('Error during passkey deletion:', err);
+        M.toast({ html: 'Failed to delete passkey. Please try again.', classes: 'rounded red' });
+    }
+}
+
+export function setUpDeletePasskeyButtons(buttonSelector) {
+    const deleteButtons = document.querySelectorAll(buttonSelector);
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const csrfToken = this.getAttribute('csrf-token');
+            const passkeyName = this.getAttribute('data-passkey');
+            deletePasskey(passkeyName, csrfToken).catch(function(err) {
+                console.error('Error setting up delete passkey button:', err);
+            });
+        });
+    });
+}
+
 function createAndSubmitForm(targetHref, formData) {
     const form = document.createElement('form');
     form.setAttribute('method', 'post');

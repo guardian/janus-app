@@ -144,6 +144,25 @@ class PasskeyController(
     )
   }
 
+  /** Deletes a passkey for a user */
+  def deletePasskey: Action[Map[String, Seq[String]]] = authAction(
+    parse.formUrlEncoded
+  ) { implicit request =>
+    apiResponse(
+      for {
+        passkeyName <- request.body.get("passkeyName") match {
+          case Some(values) => Success(values.head)
+          case None =>
+            Failure(
+              JanusException.missingFieldInRequest(request.user, "passkeyName")
+            )
+        }
+        _ <- PasskeyDB.delete(request.user, passkeyName)
+        _ = logger.info(s"Deleted passkey for user ${request.user.username}")
+      } yield Redirect("/user-account")
+    )
+  }
+
   // To be removed when passkeyAuthAction has been applied to real endpoints
   def protectedCredentialsPage: Action[AnyContent] = passkeyAuthAction { _ =>
     Ok("This is the protected page you're authorised to see.")

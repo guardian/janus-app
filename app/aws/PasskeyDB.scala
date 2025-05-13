@@ -263,4 +263,54 @@ object PasskeyDB {
       )
     )
   )
+
+  def loadCredentialByName(
+      user: UserIdentity,
+      passkeyName: String
+  )(implicit dynamoDB: DynamoDbClient): Try[QueryResponse] =
+    Try {
+      val expressionValues = Map(
+        ":username" -> AttributeValue.fromS(user.username),
+        ":passkeyName" -> AttributeValue.fromS(passkeyName)
+      )
+      val request = QueryRequest
+        .builder()
+        .tableName(tableName)
+        .keyConditionExpression("username = :username")
+        .filterExpression("passkeyName = :passkeyName")
+        .expressionAttributeValues(expressionValues.asJava)
+        .build()
+      dynamoDB.query(request)
+    }.recoverWith(err =>
+      Failure(JanusException.failedToLoadDbItem(user, tableName, err))
+    )
+
+  def delete(
+      user: UserIdentity,
+      passkeyName: String
+  )(implicit dynamoDB: DynamoDbClient): Try[Unit] =
+    for {
+      queryResponse <- loadCredentialByName(user, passkeyName)
+      _ <-
+        if (queryResponse.hasItems && !queryResponse.items().isEmpty) {
+          Try {
+            val item = queryResponse.items().get(0)
+            val key = Map(
+              "username" -> item.get("username"),
+              "credentialId" -> item.get("credentialId")
+            )
+            val request = DeleteItemRequest
+              .builder()
+              .tableName(tableName)
+              .key(key.asJava)
+              .build()
+            dynamoDB.deleteItem(request)
+            ()
+          }.recoverWith(err =>
+            Failure(JanusException.failedToDeleteDbItem(user, tableName, err))
+          )
+        } else {
+          Failure(JanusException.missingItemInDb(user, tableName))
+        }
+    } yield ()
 }

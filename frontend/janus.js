@@ -1,6 +1,6 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
-import {setUpProtectedLinks, setUpRegisterPasskeyButton} from './passkeys.js';
+import {setUpDeletePasskeyButtons, setUpProtectedLinks, setUpRegisterPasskeyButton} from './passkeys.js';
 
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -296,6 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     setUpRegisterPasskeyButton('#register-passkey');
+    setUpDeletePasskeyButtons('#delete-passkey');
     // setupAuthButtons('.auth-button');
     const protectedLinks = document.querySelectorAll('.passkey-protected');
     setUpProtectedLinks(protectedLinks);
