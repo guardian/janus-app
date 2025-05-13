@@ -1,11 +1,17 @@
+import DOMPurify from 'dompurify';
 import M from 'materialize-css';
 
 export async function registerPasskey(csrfToken) {
     try {
-        const regOptionsResponse = await fetch('/passkey/registration-options');
+        const regOptionsResponse = await fetch('/passkey/registration-options', {
+            method: 'GET',
+            headers: {
+                'X-CSRF-Token': csrfToken // Securely include CSRF token in headers
+            }
+        });
         const regOptionsResponseJson = await regOptionsResponse.json();
         const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsResponseJson);
-        const publicKeyCredential = await navigator.credentials.create({publicKey: credentialCreationOptions});
+        const publicKeyCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
         const passkeyName = await getPasskeyNameFromUser();
 
         createAndSubmitForm('/passkey/register', {
@@ -14,8 +20,8 @@ export async function registerPasskey(csrfToken) {
             passkeyName: passkeyName
         });
     } catch (err) {
-        console.error(err);
-        M.toast({html: err.message, classes: 'rounded red'});
+        console.error('Error during passkey registration:', err);
+        M.toast({ html: 'Failed to register passkey. Please try again.', classes: 'rounded red' });
     }
 }
 
@@ -25,25 +31,30 @@ export function setUpRegisterPasskeyButton(buttonSelector) {
         e.preventDefault();
         const csrfToken = this.getAttribute('csrf-token');
         registerPasskey(csrfToken).catch(function (err) {
-            console.error(err);
+            console.error('Error setting up register passkey button:', err);
         });
     });
 }
 
-export async function authenticatePasskey(targetHref, csrfToken)  {
+export async function authenticatePasskey(targetHref, csrfToken) {
     try {
-        const authOptionsResponse = await fetch('/passkey/auth-options');
+        const authOptionsResponse = await fetch('/passkey/auth-options', {
+            method: 'GET',
+            headers: {
+                'X-CSRF-Token': csrfToken // Securely include CSRF token in headers
+            }
+        });
         const authOptionsResponseJson = await authOptionsResponse.json();
         const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
-        const publicKeyCredential = await navigator.credentials.get({publicKey: credentialGetOptions});
+        const publicKeyCredential = await navigator.credentials.get({ publicKey: credentialGetOptions });
 
         createAndSubmitForm(targetHref, {
             credentials: JSON.stringify(publicKeyCredential.toJSON()),
             csrfToken: csrfToken
         });
     } catch (err) {
-        console.error(err);
-        M.toast({html: err.message, classes: 'rounded red'});
+        console.error('Error during passkey authentication:', err);
+        M.toast({ html: 'Authentication failed. Please try again.', classes: 'rounded red' });
     }
 }
 
@@ -56,7 +67,7 @@ function createAndSubmitForm(targetHref, formData) {
         const input = document.createElement('input');
         input.setAttribute('type', 'hidden');
         input.setAttribute('name', name);
-        input.setAttribute('value', value);
+        input.setAttribute('value', DOMPurify.sanitize(value));
         form.appendChild(input);
     });
 
@@ -68,12 +79,11 @@ export function setUpProtectedLinks(links) {
     links.forEach((link) => {
         link.addEventListener('click', function (e) {
             e.preventDefault();
-            console.log('clicked');
             const csrfToken = link.getAttribute('csrf-token');
             const targetHref = link.href;
             authenticatePasskey(targetHref, csrfToken).catch(function (err) {
-                console.error(err);
-                });
+                console.error('Error setting up protected link:', err);
+            });
         });
     });
 }
@@ -101,9 +111,9 @@ function getPasskeyNameFromUser() {
                 <a href="#!" id="submit-button" class="waves-effect waves-light btn orange">Save</a>
             </div>
         </div>`;
-
-        document.body.insertAdjacentHTML('beforeend', modalHtml);
-
+        
+        document.body.insertAdjacentHTML('beforeend', DOMPurify.sanitize(modalHtml));
+        
         const modalElement = document.getElementById(modalId);
 
         // Initialize Materialize modal
@@ -120,16 +130,23 @@ function getPasskeyNameFromUser() {
         const cancelButton = modalElement.querySelector('#cancel-button');
         const input = modalElement.querySelector('#passkey-name');
         const errorMessage = modalElement.querySelector('#passkey-name-error');
+        // Regex to allow only alphanumeric characters and spaces
+        const alphanumericRegex = /^[a-zA-Z0-9 ]*$/;
 
+        
         // Focus the input when modal opens
         modalInstance.open();
         setTimeout(() => input.focus(), 100); // Small delay to ensure modal is visible
 
         // Clear error when typing
         input.addEventListener('input', () => {
-            if (input.value.trim()) {
+            if (input.value.trim() && alphanumericRegex.test(input.value)) {
                 input.classList.remove('invalid');
                 errorMessage.style.display = 'none';
+            } else {
+                input.classList.add('invalid');
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Use only letters, numbers and spaces';
             }
         });
 
@@ -138,16 +155,17 @@ function getPasskeyNameFromUser() {
             e.preventDefault();
             const passkeyName = input.value.trim();
 
-            if (!passkeyName) {
+            if (!passkeyName || !alphanumericRegex.test(passkeyName)) {
                 // Show validation error
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Cannot save passkey name: only letters, numbers and spaces are allowed';
                 return;
             }
 
             // Close modal and resolve with the passkey name
             modalInstance.close();
-            resolve(passkeyName);
+            resolve(DOMPurify.sanitize(passkeyName)); // Sanitize passkey name
         });
 
         // Handle cancel button
