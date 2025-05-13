@@ -93,35 +93,15 @@ export function setUpProtectedLinks(links) {
  * @returns {Promise<string>} A promise that resolves with the passkey name
  */
 function getPasskeyNameFromUser() {
-    return new Promise((resolve, reject) => {
-        // Create Materialize modal structure
-        const modalId = 'passkey-name-modal';
-        const modalHtml = `
-        <div id="${modalId}" class="modal">
-            <div class="modal-content">
-                <h4 class="orange-text">Passkey Name</h4>
-                <p>Give this passkey a name to help you recognize it later.</p>
-                <div class="input-field">
-                    <input type="text" id="passkey-name" class="validate" placeholder="e.g. Macbook, Phone" required>
-                    <div id="passkey-name-error" class="error-message red-text" style="display: none;">Please enter a name for your passkey</div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <a href="#!" id="cancel-button" class="modal-close waves-effect waves-light btn-flat">Cancel</a>
-                <a href="#!" id="submit-button" class="waves-effect waves-light btn orange">Save</a>
-            </div>
-        </div>`;
-        
-        document.body.insertAdjacentHTML('beforeend', DOMPurify.sanitize(modalHtml));
-        
-        const modalElement = document.getElementById(modalId);
-
+    return new Promise((resolve, reject) => {        
+        const modalElement = document.getElementById("passkey-name-modal");
+        modalElement.style.visibility = "visible";
         // Initialize Materialize modal
         const modalInstance = M.Modal.init(modalElement, {
             dismissible: false, // User must use buttons to close
             onCloseEnd: () => {
-                // Clean up the modal from the DOM when closed
-                modalElement.remove();
+                // Hide the modal from the UI when closed
+                modalElement.style.visibility = "hidden";
             }
         });
 
@@ -165,7 +145,7 @@ function getPasskeyNameFromUser() {
 
             // Close modal and resolve with the passkey name
             modalInstance.close();
-            resolve(DOMPurify.sanitize(passkeyName)); // Sanitize passkey name
+            resolve(DOMPurify.sanitize(passkeyName));
         });
 
         // Handle cancel button
