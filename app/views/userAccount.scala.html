@@ -51,24 +51,5 @@
                 </div>
             }
         </div>
-
-        <div class="row">
-            @if(passkeys.nonEmpty) {
-                @for(passkey <- passkeys) {
-                    <div class="col s12 m12 l6">
-                        <div class="card-panel">
-                            <p>Passkey: @{passkey}</p>
-                            <div><button id="delete-passkey" class="btn" csrf-token="@{CSRF.getToken.get.value}" data-passkey="@passkey">Delete</button></div>
-                        </div>
-                    </div>
-                }
-            } else {
-                <div class="col s12">
-                    <div class="card-panel">
-                        <p>You haven't registered any passkeys yet.</p>
-                    </div>
-                </div>
-            }
-        </div>
     </div>
 }
