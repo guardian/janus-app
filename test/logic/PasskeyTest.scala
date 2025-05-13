@@ -2,7 +2,7 @@ package logic
 
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.data.client.challenge.DefaultChallenge
-import models.Passkey._
+import models.PasskeyEncodings._
 import org.scalatest.EitherValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should

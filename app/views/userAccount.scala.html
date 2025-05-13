@@ -2,8 +2,10 @@
 @import com.gu.janus.model.JanusData
 @import logic.UserAccess.username
 @import play.api.Mode
-@(user: UserIdentity, janusData: JanusData, passkeys: Seq[String])(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 @import play.filters.csrf.CSRF
+@import java.time.Instant
+
+@(user: UserIdentity, janusData: JanusData, passkeys: Seq[models.Passkey], dateFormat: Instant => String)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("User account", Some(user), janusData) {
 
@@ -14,10 +16,10 @@
             <div class="col s12 m12 l3">
                 <div class="card-panel">
                         <p>You are logged in as @username(user).</p><div><a href="/logout"><button class="btn">Log out</button></a></div>
-                </div>  
+                </div>
             </div>
         </div>
-        
+
         <h3 class="header orange-text">Passkeys</h3>
 
         <div class="row">
@@ -35,8 +37,9 @@
                 @for(passkey <- passkeys) {
                     <div class="col s12 m12 l6">
                         <div class="card-panel">
-                            <p>Passkey: @{passkey}</p>
-                            <div><button id="delete-passkey" class="btn" csrf-token="@{CSRF.getToken.get.value}" data-passkey="@passkey">Delete</button></div>
+                            <p>Passkey: @{passkey.name}</p>
+                            <p>Added: @{dateFormat(passkey.registrationTime)}</p>
+                            <div><button id="delete-passkey" class="btn" csrf-token="@{CSRF.getToken.get.value}" data-passkey="@{passkey.id}">Delete</button></div>
                         </div>
                     </div>
                 }
