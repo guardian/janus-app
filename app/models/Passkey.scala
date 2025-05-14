@@ -14,7 +14,8 @@ case class PasskeyMetadata(
     name: String,
     registrationTime: Instant,
     // Identifies the model of the authenticator device that created the passkey
-    aaguid: AAGUID
+    aaguid: AAGUID,
+    lastUsedTime: Option[Instant]
 )
 
 /** Encodings for the WebAuthn data types used in passkey registration and
