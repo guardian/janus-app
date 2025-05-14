@@ -1,6 +1,7 @@
 package models
 
 import com.webauthn4j.data._
+import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.Challenge
 import com.webauthn4j.util.Base64UrlUtil
 import play.api.libs.json._
@@ -8,7 +9,13 @@ import play.api.libs.json._
 import java.time.Instant
 import scala.jdk.CollectionConverters._
 
-case class Passkey(id: String, name: String, registrationTime: Instant)
+case class PasskeyMetadata(
+    id: String,
+    name: String,
+    registrationTime: Instant,
+    // Identifies the model of the authenticator device that created the passkey
+    aaguid: AAGUID
+)
 
 /** Encodings for the WebAuthn data types used in passkey registration and
   * authentication. These can't be auto-encoded because they aren't case
