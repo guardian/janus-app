@@ -102,11 +102,6 @@ function getPasskeyNameFromUser() {
             onCloseEnd: () => {
                 // Hide the modal from the UI when closed
                 modalElement.style.visibility = "hidden";
-                // Clean up event listeners to prevent memory leaks
-                submitButton.removeEventListener('click', handleSubmit);
-                cancelButton.removeEventListener('click', handleCancel);
-                input.removeEventListener('input', handleInput);
-                input.removeEventListener('keypress', handleKeyPress);
             }
         });
 
@@ -115,57 +110,87 @@ function getPasskeyNameFromUser() {
         const cancelButton = modalElement.querySelector('#cancel-button');
         const input = modalElement.querySelector('#passkey-name');
         const errorMessage = modalElement.querySelector('#passkey-name-error');
-        // Regex to allow only alphanumeric characters and spaces
-        const alphanumericRegex = /^[a-zA-Z0-9 ]*$/;
+        // Regex to allow letters, numbers, spaces, underscores and hyphens
+        const alphanumericRegex = /^[a-zA-Z0-9 _-]*$/;
+        const maxLength = 50; // Maximum character limit
 
-        
         // Focus the input when modal opens
         modalInstance.open();
         setTimeout(() => input.focus(), 100); // Small delay to ensure modal is visible
 
-        // Clear error when typing
-        input.addEventListener('input', () => {
-            if (input.value.trim() && alphanumericRegex.test(input.value)) {
+        // Define named handler functions so they can be properly removed later
+        const handleInput = () => {
+            const input_value = input.value;
+            
+            // Check if input is approaching the limit
+            if (input_value.length > maxLength) {
+                input.classList.add('invalid');
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = `Name is too long: ${input_value.length}/${maxLength} characters`;
+            } else if (input_value.trim() && alphanumericRegex.test(input_value)) {
                 input.classList.remove('invalid');
                 errorMessage.style.display = 'none';
             } else {
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
-                errorMessage.textContent = 'Use only letters, numbers and spaces';
+                errorMessage.textContent = `Use only letters, numbers, spaces, underscores and hyphens (max ${maxLength} characters)`;
             }
-        });
+        };
 
-        // Handle form submission
-        submitButton.addEventListener('click', (e) => {
+        const handleSubmit = (e) => {
             e.preventDefault();
             const passkeyName = input.value.trim();
 
-            if (!passkeyName || !alphanumericRegex.test(passkeyName)) {
+            if (!passkeyName || !alphanumericRegex.test(passkeyName) || passkeyName.length > maxLength) {
                 // Show validation error
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
-                errorMessage.textContent = 'Cannot save passkey name: only letters, numbers and spaces are allowed';
+                
+                if (passkeyName.length > maxLength) {
+                    errorMessage.textContent = `Passkey name too long: maximum ${maxLength} characters allowed`;
+                } else {
+                    errorMessage.textContent = 'Cannot save passkey name: only letters, numbers, spaces, underscores and hyphens are allowed';
+                }
                 return;
             }
 
             // Close modal and resolve with the passkey name
             modalInstance.close();
             resolve(DOMPurify.sanitize(passkeyName));
-        });
+        };
 
-        // Handle cancel button
-        cancelButton.addEventListener('click', (e) => {
+        const handleCancel = (e) => {
             e.preventDefault();
             modalInstance.close();
             reject(new Error('Passkey registration cancelled'));
-        });
+        };
 
-        // Handle Enter key for form submission
-        input.addEventListener('keypress', (e) => {
+        const handleKeyPress = (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 submitButton.click();
             }
-        });
+        };
+
+        // Add event listeners using the named functions
+        input.addEventListener('input', handleInput);
+        submitButton.addEventListener('click', handleSubmit);
+        cancelButton.addEventListener('click', handleCancel);
+        input.addEventListener('keypress', handleKeyPress);
+
+        // Set maxlength attribute but make it slightly higher than our logical limit
+        // so our validation can show the error message before browser truncation
+        input.setAttribute('maxlength', maxLength + 1);
+
+        // Update the onCloseEnd callback to use the named function references
+        modalInstance.options.onCloseEnd = () => {
+            // Hide the modal from the UI when closed
+            modalElement.style.visibility = "hidden";
+            // Clean up event listeners to prevent memory leaks
+            submitButton.removeEventListener('click', handleSubmit);
+            cancelButton.removeEventListener('click', handleCancel);
+            input.removeEventListener('input', handleInput);
+            input.removeEventListener('keypress', handleKeyPress);
+        };
     });
 }
