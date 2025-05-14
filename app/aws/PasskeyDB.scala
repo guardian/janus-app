@@ -285,32 +285,22 @@ object PasskeyDB {
       Failure(JanusException.failedToLoadDbItem(user, tableName, err))
     )
 
-  def delete(
+  def deleteById(
       user: UserIdentity,
-      passkeyName: String
-  )(implicit dynamoDB: DynamoDbClient): Try[Unit] =
-    for {
-      queryResponse <- loadCredentialByName(user, passkeyName)
-      _ <-
-        if (queryResponse.hasItems && !queryResponse.items().isEmpty) {
-          Try {
-            val item = queryResponse.items().get(0)
-            val key = Map(
-              "username" -> item.get("username"),
-              "credentialId" -> item.get("credentialId")
-            )
-            val request = DeleteItemRequest
-              .builder()
-              .tableName(tableName)
-              .key(key.asJava)
-              .build()
-            dynamoDB.deleteItem(request)
-            ()
-          }.recoverWith(err =>
-            Failure(JanusException.failedToDeleteDbItem(user, tableName, err))
-          )
-        } else {
-          Failure(JanusException.missingItemInDb(user, tableName))
-        }
-    } yield ()
+      credentialId: String
+  )(implicit dynamoDB: DynamoDbClient): Try[Unit] = Try {
+    val key = Map(
+      "username" -> AttributeValue.fromS(user.username),
+      "credentialId" -> AttributeValue.fromS(credentialId)
+    )
+    val request = DeleteItemRequest
+      .builder()
+      .tableName(tableName)
+      .key(key.asJava)
+      .build()
+    dynamoDB.deleteItem(request)
+    ()
+  }.recoverWith(err =>
+    Failure(JanusException.failedToDeleteDbItem(user, tableName, err))
+  )
 }

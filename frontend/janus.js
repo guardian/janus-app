@@ -296,7 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     setUpRegisterPasskeyButton('#register-passkey');
-    setUpDeletePasskeyButtons('#delete-passkey');
+    setUpDeletePasskeyButtons('.delete-passkey-btn');
     // setupAuthButtons('.auth-button');
     const protectedLinks = document.querySelectorAll('.passkey-protected');
     setUpProtectedLinks(protectedLinks);
