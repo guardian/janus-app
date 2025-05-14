@@ -5,7 +5,7 @@
 @import play.filters.csrf.CSRF
 @import java.time.Instant
 
-@(user: UserIdentity, janusData: JanusData, passkeys: Seq[models.Passkey], dateFormat: Instant => String)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(user: UserIdentity, janusData: JanusData, passkeys: Seq[models.PasskeyMetadata], dateFormat: Instant => String)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("User account", Some(user), janusData) {
 
@@ -39,6 +39,7 @@
                         <div class="card-panel">
                             <p>Passkey: @{passkey.name}</p>
                             <p>Added: @{dateFormat(passkey.registrationTime)}</p>
+                            <p>Type: @{passkey.aaguid}</p>
                             <div><button id="delete-passkey" class="btn" csrf-token="@{CSRF.getToken.get.value}" data-passkey="@{passkey.id}">Delete</button></div>
                         </div>
                     </div>
