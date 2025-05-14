@@ -114,6 +114,11 @@ function getPasskeyNameFromUser() {
         const alphanumericRegex = /^[a-zA-Z0-9 _-]*$/;
         const maxLength = 50; // Maximum character limit
 
+        // Reset the input field and error message when opening the modal
+        input.value = '';
+        input.classList.remove('invalid');
+        errorMessage.style.display = 'none';
+
         // Focus the input when modal opens
         modalInstance.open();
         setTimeout(() => input.focus(), 100); // Small delay to ensure modal is visible
@@ -161,6 +166,10 @@ function getPasskeyNameFromUser() {
 
         const handleCancel = (e) => {
             e.preventDefault();
+            // Clear the input field when cancelling
+            input.value = '';
+            input.classList.remove('invalid');
+            errorMessage.style.display = 'none';
             modalInstance.close();
             reject(new Error('Passkey registration cancelled'));
         };
@@ -186,6 +195,10 @@ function getPasskeyNameFromUser() {
         modalInstance.options.onCloseEnd = () => {
             // Hide the modal from the UI when closed
             modalElement.style.visibility = "hidden";
+            // Clear input field data for privacy/security
+            input.value = '';
+            input.classList.remove('invalid');
+            errorMessage.style.display = 'none';
             // Clean up event listeners to prevent memory leaks
             submitButton.removeEventListener('click', handleSubmit);
             cancelButton.removeEventListener('click', handleCancel);
