@@ -92,7 +92,7 @@ jobs:
             ref: 'main'
           })
 
-    - run: sleep 5 # wait for event to register within github system
+    - run: sleep 10 # wait for event to register within github system
 
     - name: fetch workflow id
       id: fetch
@@ -109,7 +109,10 @@ jobs:
             created: '>=${{ env.START_TIME }}'
           });
           console.log(result);
-          return result["data"]["workflow_runs"][0].id
+          if (!result.data.workflow_runs || result.data.workflow_runs.length === 0) {
+            throw new Error('No janus build workflow run found. Try increasing the wait in the previous step.');
+          }
+          return result.data.workflow_runs[0].id;
 
     # wait 6 minutes for job to run
     # This is the observed upper limit for builds that invalidate the sbt cache
