@@ -150,14 +150,14 @@ class PasskeyController(
   ) { implicit request =>
     apiResponse(
       for {
-        passkeyName <- request.body.get("passkeyName") match {
+        passkeyId <- request.body.get("passkeyId") match {
           case Some(values) => Success(values.head)
           case None =>
             Failure(
-              JanusException.missingFieldInRequest(request.user, "passkeyName")
+              JanusException.missingFieldInRequest(request.user, "passkeyId")
             )
         }
-        _ <- PasskeyDB.delete(request.user, passkeyName)
+        _ <- PasskeyDB.deleteById(request.user, passkeyId)
         _ = logger.info(s"Deleted passkey for user ${request.user.username}")
       } yield Redirect("/user-account")
     )
