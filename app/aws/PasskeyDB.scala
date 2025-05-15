@@ -264,27 +264,6 @@ object PasskeyDB {
     )
   )
 
-  def loadCredentialByName(
-      user: UserIdentity,
-      passkeyName: String
-  )(implicit dynamoDB: DynamoDbClient): Try[QueryResponse] =
-    Try {
-      val expressionValues = Map(
-        ":username" -> AttributeValue.fromS(user.username),
-        ":passkeyName" -> AttributeValue.fromS(passkeyName)
-      )
-      val request = QueryRequest
-        .builder()
-        .tableName(tableName)
-        .keyConditionExpression("username = :username")
-        .filterExpression("passkeyName = :passkeyName")
-        .expressionAttributeValues(expressionValues.asJava)
-        .build()
-      dynamoDB.query(request)
-    }.recoverWith(err =>
-      Failure(JanusException.failedToLoadDbItem(user, tableName, err))
-    )
-
   def deleteById(
       user: UserIdentity,
       credentialId: String
