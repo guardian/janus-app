@@ -76,7 +76,9 @@ export function deletePasskey(passkeyName, csrfToken) {
 
 export function setUpDeletePasskeyButtons(selector) {
     const deleteButtons = document.querySelectorAll(selector);
-    if (!deleteButtons.length) return;
+    if (!deleteButtons.length) {
+        return;
+    }
 
     deleteButtons.forEach(button => {
         button.addEventListener('click', async () => {
@@ -85,7 +87,7 @@ export function setUpDeletePasskeyButtons(selector) {
             
             if (!passkeyId) {
                 console.error('No passkey ID found');
-                alert('Error: Passkey ID not found');
+                M.toast({ html: 'Error: Passkey ID not found', classes: 'rounded red' });
                 return;
             }
             
@@ -100,7 +102,7 @@ export function setUpDeletePasskeyButtons(selector) {
                     });
                 } catch (error) {
                     console.error('Error deleting passkey:', error);
-                    alert('An error occurred while deleting the passkey');
+                    M.toast({ html: 'An error occurred while deleting the passkey', classes: 'rounded red' });
                 }
             }
         });
@@ -125,7 +127,9 @@ function createAndSubmitForm(targetHref, formData) {
 }
 
 export function setUpProtectedLinks(links) {
-    if (!links.length) return;
+    if (!links.length) {
+        return;
+    }
 
     links.forEach((link) => {
         link.addEventListener('click', function (e) {
