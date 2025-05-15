@@ -60,19 +60,17 @@ export async function authenticatePasskey(targetHref, csrfToken) {
     }
 }
 
-export function deletePasskey(passkeyName, csrfToken) {
-    try {
-        if (confirm(`Are you sure you want to delete the passkey "${passkeyName}"?`)) {
-            createAndSubmitForm('/passkey/delete', {
-                passkeyName: passkeyName,
-                csrfToken: csrfToken
-            });
-        }
-    } catch (err) {
-        console.error('Error during passkey deletion:', err);
-        M.toast({ html: 'Failed to delete passkey. Please try again.', classes: 'rounded red' });
+export function deletePasskey(passkeyId, csrfToken) {
+    try {   
+        createAndSubmitForm('/passkey/delete', {
+            passkeyId,
+            csrfToken
+        }); 
+    } catch (error) {
+        console.error('Error deleting passkey:', error);
+        M.toast({ html: 'An error occurred while deleting the passkey', classes: 'rounded red' });
     }
-}
+}   
 
 export function setUpDeletePasskeyButtons(selector) {
     const deleteButtons = document.querySelectorAll(selector);
@@ -84,6 +82,7 @@ export function setUpDeletePasskeyButtons(selector) {
         button.addEventListener('click', async () => {
             const passkeyName = button.getAttribute('data-passkey-name');
             const passkeyId = button.getAttribute('data-passkey-id');
+            const csrfToken = button.getAttribute('csrf-token');
             
             if (!passkeyId) {
                 console.error('No passkey ID found');
@@ -92,18 +91,8 @@ export function setUpDeletePasskeyButtons(selector) {
             }
             
             if (confirm(`Are you sure you want to delete the passkey "${passkeyName}"?`)) {
-                try {
-                    const csrfToken = button.getAttribute('csrf-token');
-                    
-                    // Use the createAndSubmitForm function with passkeyId
-                    createAndSubmitForm('/passkey/delete', {
-                        passkeyId: passkeyId,
-                        csrfToken: csrfToken
-                    });
-                } catch (error) {
-                    console.error('Error deleting passkey:', error);
-                    M.toast({ html: 'An error occurred while deleting the passkey', classes: 'rounded red' });
-                }
+                deletePasskey(passkeyId, csrfToken);
+                
             }
         });
     });
