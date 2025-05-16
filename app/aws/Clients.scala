@@ -13,7 +13,7 @@ object Clients {
   /** This profile is specifically to give access to the assumeRole permission
     * in the Dev stage
     */
-  private val janusProfileName = "janus"
+  private val janusProfileName = "developerPlayground"
 
   /** In the Dev stage, the security profile is used to access the Play secret
     * stored in parameter store
