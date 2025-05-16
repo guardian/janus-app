@@ -263,4 +263,23 @@ object PasskeyDB {
       )
     )
   )
+
+  def deleteById(
+      user: UserIdentity,
+      credentialId: String
+  )(implicit dynamoDB: DynamoDbClient): Try[Unit] = Try {
+    val key = Map(
+      "username" -> AttributeValue.fromS(user.username),
+      "credentialId" -> AttributeValue.fromS(credentialId)
+    )
+    val request = DeleteItemRequest
+      .builder()
+      .tableName(tableName)
+      .key(key.asJava)
+      .build()
+    dynamoDB.deleteItem(request)
+    ()
+  }.recoverWith(err =>
+    Failure(JanusException.failedToDeleteDbItem(user, tableName, err))
+  )
 }
