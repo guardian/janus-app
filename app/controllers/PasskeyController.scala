@@ -182,9 +182,15 @@ class PasskeyController(
   // TODO: move to Janus or account controller
   def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
     apiResponse {
-      val dateFormatter = DateTimeFormatter.ofPattern("d MMM yyyy")
+      def dateTimeFormat(instant: Instant, formatter: DateTimeFormatter) =
+        instant.atZone(ZoneId.of("Europe/London")).format(formatter)
       def dateFormat(instant: Instant) =
-        instant.atZone(ZoneId.of("Europe/London")).format(dateFormatter)
+        dateTimeFormat(instant, DateTimeFormatter.ofPattern("d MMM yyyy"))
+      def timeFormat(instant: Instant) =
+        dateTimeFormat(
+          instant,
+          DateTimeFormatter.ofPattern("d MMM yyyy HH:mm:ss XXXXX")
+        )
       for {
         queryResponse <- PasskeyDB.loadCredentials(request.user)
         passkeys = PasskeyDB.extractMetadata(queryResponse)
@@ -192,7 +198,8 @@ class PasskeyController(
         request.user,
         janusData,
         passkeys,
-        dateFormat
+        dateFormat,
+        timeFormat
       )
     }
   }

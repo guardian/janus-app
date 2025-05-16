@@ -5,7 +5,7 @@
 @import play.filters.csrf.CSRF
 @import java.time.Instant
 
-@(user: UserIdentity, janusData: JanusData, passkeys: Seq[models.PasskeyMetadata], dateFormat: Instant => String)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(user: UserIdentity, janusData: JanusData, passkeys: Seq[models.PasskeyMetadata], dateFormat: Instant => String, timeFormat: Instant => String)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("User account", Some(user), janusData) {
 
@@ -38,8 +38,9 @@
                     <div class="col s12 m12 l6">
                         <div class="card-panel">
                             <p>Passkey: @{passkey.name}</p>
-                            <p>Added: @{dateFormat(passkey.registrationTime)}</p>
                             <p>Type: @{passkey.aaguid}</p>
+                            <p>Added: @{dateFormat(passkey.registrationTime)}</p>
+                            <p>Last used: @{passkey.lastUsedTime.map(timeFormat).getOrElse("Never")}</p>
                             <div><button id="delete-passkey" class="btn" csrf-token="@{CSRF.getToken.get.value}" data-passkey="@{passkey.id}">Delete</button></div>
                         </div>
                     </div>
@@ -51,6 +52,20 @@
                     </div>
                 </div>
             }
+        </div>
+    </div>
+    <div id="passkey-name-modal" class="modal">
+        <div class="modal-content">
+            <h4 class="orange-text">Passkey name</h4>
+            <p>Give this passkey a name to help you recognise it later.</p>
+            <div class="input-field">
+                <input type="text" id="passkey-name" class="validate" placeholder="e.g. Macbook, Phone" required>
+                <div id="passkey-name-error" class="error-message red-text" style="display: none;">Please enter a name for your passkey</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" id="cancel-button" class="modal-close waves-effect waves-light btn-flat">Cancel</a>
+            <a href="#!" id="submit-button" class="waves-effect waves-light btn orange">Save</a>
         </div>
     </div>
 }
