@@ -4,16 +4,20 @@ import com.gu.googleauth.UserIdentity
 import com.webauthn4j.WebAuthnManager
 import com.webauthn4j.converter.exception.DataConversionException
 import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
+import com.webauthn4j.data.AttestationConveyancePreference.NONE
+import com.webauthn4j.data.UserVerificationRequirement.REQUIRED
 import com.webauthn4j.data._
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
+import com.webauthn4j.data.extension.client._
 import com.webauthn4j.server.ServerProperty
 import com.webauthn4j.verifier.exception.VerificationException
 import models._
 
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
+import scala.concurrent.duration.{Duration, SECONDS}
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Try}
 
@@ -26,7 +30,13 @@ object Passkey {
    */
   private val userVerificationRequired = true
 
+  // In order of algorithms we prefer
   private val publicKeyCredentialParameters = List(
+    // EdDSA for better security/performance in newer authenticators
+    new PublicKeyCredentialParameters(
+      PublicKeyCredentialType.PUBLIC_KEY,
+      COSEAlgorithmIdentifier.EdDSA
+    ),
     // ES256 is widely supported and efficient
     new PublicKeyCredentialParameters(
       PublicKeyCredentialType.PUBLIC_KEY,
@@ -36,11 +46,6 @@ object Passkey {
     new PublicKeyCredentialParameters(
       PublicKeyCredentialType.PUBLIC_KEY,
       COSEAlgorithmIdentifier.RS256
-    ),
-    // EdDSA for better security/performance in newer authenticators
-    new PublicKeyCredentialParameters(
-      PublicKeyCredentialType.PUBLIC_KEY,
-      COSEAlgorithmIdentifier.EdDSA
     )
   )
 
@@ -79,11 +84,25 @@ object Passkey {
         user.username,
         user.fullName
       )
+      val timeout = Duration(10, SECONDS)
+      val excludeCredentials: Seq[PublicKeyCredentialDescriptor] = Nil
+      val authenticatorSelection: AuthenticatorSelectionCriteria = null
+      val hints: Seq[PublicKeyCredentialHints] = Nil
+      val attestation: AttestationConveyancePreference = NONE
+      val extensions: AuthenticationExtensionsClientInputs[
+        RegistrationExtensionClientInput
+      ] = null
       new PublicKeyCredentialCreationOptions(
         relyingParty,
         userInfo,
         challenge,
-        publicKeyCredentialParameters.asJava
+        publicKeyCredentialParameters.asJava,
+        timeout.toMillis,
+        excludeCredentials.asJava,
+        authenticatorSelection,
+        hints.asJava,
+        attestation,
+        extensions
       )
     }.recoverWith(exception =>
       Failure(
@@ -101,19 +120,29 @@ object Passkey {
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-assertion]].
     */
   def authenticationOptions(
+      appHost: String,
       user: UserIdentity,
       challenge: Challenge = new DefaultChallenge()
   ): Try[PublicKeyCredentialRequestOptions] =
-    Try(
+    Try {
+      val timeout = Duration(10, SECONDS)
+      val rpId = URI.create(appHost).getHost
+      val allowCredentials = Nil
+      val userVerification = REQUIRED
+      val hints = Nil
+      val extensions: AuthenticationExtensionsClientInputs[
+        AuthenticationExtensionClientInput
+      ] = null
       new PublicKeyCredentialRequestOptions(
         challenge,
-        null,
-        null,
-        null,
-        null,
-        null
+        timeout.toMillis,
+        rpId,
+        allowCredentials.asJava,
+        userVerification,
+        hints.asJava,
+        extensions
       )
-    ).recoverWith(exception =>
+    }.recoverWith(exception =>
       Failure(
         JanusException.invalidFieldInRequest(
           user,
