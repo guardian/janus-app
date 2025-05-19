@@ -41,7 +41,6 @@
                             <p>Type: @{passkey.aaguid}</p>
                             <p>Added: @{dateFormat(passkey.registrationTime)}</p>
                             <p>Last used: @{passkey.lastUsedTime.map(timeFormat).getOrElse("Never")}</p>
-                            <p>Type: @{passkey.aaguid}</p>
                             <div><button class="btn delete-passkey-btn" csrf-token="@{CSRF.getToken.get.value}" data-passkey-id="@{passkey.id}" data-passkey-name="@{passkey.name}">Delete</button></div>
                         </div>
                     </div>

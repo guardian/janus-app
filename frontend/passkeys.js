@@ -20,14 +20,19 @@ export async function registerPasskey(csrfToken) {
             passkeyName: passkeyName
         });
     } catch (err) {
-        console.error('Error during passkey registration:', err);
-        M.toast({ html: 'Failed to register passkey. Please try again.', classes: 'rounded red' });
+        if (err.name === 'InvalidStateError') {
+            console.warn('Passkey already registered:', err);
+            M.toast({html: 'This passkey has already been registered.', classes: 'rounded orange'});
+        } else {
+            console.error('Error during passkey registration:', err);
+            M.toast({html: 'Failed to register passkey. Please try again.', classes: 'rounded red'});
+        }
     }
 }
 
 export function setUpRegisterPasskeyButton(selector) {
     const registerButton = document.querySelector(selector);
-    if (!registerButton) { return };
+    if (!registerButton) { return }
 
     registerButton?.addEventListener('click', function (e) {
         e.preventDefault();

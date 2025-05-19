@@ -3,6 +3,7 @@ package models
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.databind.module.SimpleModule
+import com.webauthn4j.data.PublicKeyCredentialDescriptor
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.DefaultChallenge
 import com.webauthn4j.util.Base64UrlUtil
@@ -34,11 +35,44 @@ object PasskeyEncodings {
      */
     module.addSerializer(
       classOf[DefaultChallenge],
-      (
-          challenge: DefaultChallenge,
-          gen: JsonGenerator,
-          _: SerializerProvider
-      ) => gen.writeString(Base64UrlUtil.encodeToString(challenge.getValue))
+      new JsonSerializer[DefaultChallenge] {
+        def serialize(
+            challenge: DefaultChallenge,
+            gen: JsonGenerator,
+            serializers: SerializerProvider
+        ): Unit = {
+          gen.writeString(Base64UrlUtil.encodeToString(challenge.getValue))
+        }
+      }
+    )
+    /*
+     * We have to have our own decoder because otherwise the id field isn't base64url encoded,
+     * which is necessary to meet the webauthn spec.
+     */
+    module.addSerializer(
+      classOf[PublicKeyCredentialDescriptor],
+      new JsonSerializer[PublicKeyCredentialDescriptor] {
+        override def serialize(
+            descriptor: PublicKeyCredentialDescriptor,
+            gen: JsonGenerator,
+            serializers: SerializerProvider
+        ): Unit = {
+          gen.writeStartObject()
+          gen.writeStringField("type", descriptor.getType.getValue)
+          gen.writeStringField(
+            "id",
+            Base64UrlUtil.encodeToString(descriptor.getId)
+          )
+          if (descriptor.getTransports != null) {
+            gen.writeArrayFieldStart("transports")
+            descriptor.getTransports.forEach(transport =>
+              gen.writeString(transport.getValue)
+            )
+            gen.writeEndArray()
+          }
+          gen.writeEndObject()
+        }
+      }
     )
     mapper.registerModule(module)
     mapper

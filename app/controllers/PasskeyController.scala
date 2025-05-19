@@ -5,6 +5,7 @@ import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.janus.model.JanusData
+import com.webauthn4j.data.client.challenge.DefaultChallenge
 import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
@@ -68,7 +69,14 @@ class PasskeyController(
   def registrationOptions: Action[Unit] = authAction(parse.empty) { request =>
     apiResponse(
       for {
-        options <- Passkey.registrationOptions(appName, host, request.user)
+        loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
+        options <- Passkey.registrationOptions(
+          appName,
+          appHost = host,
+          user = request.user,
+          challenge = new DefaultChallenge(),
+          existingPasskeys = PasskeyDB.extractMetadata(loadCredentialsResponse)
+        )
         _ <- PasskeyChallengeDB.insert(
           UserChallenge(request.user, options.getChallenge)
         )
