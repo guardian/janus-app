@@ -90,9 +90,14 @@ export function setUpDeletePasskeyButtons(selector) {
                 return;
             }
             
+            if (!csrfToken) {
+                console.error('No CSRF token found');
+                M.toast({ html: 'Error: Security token not found', classes: 'rounded red' });
+                return;
+            }
+            
             if (confirm(`Are you sure you want to delete the passkey "${passkeyName}"?`)) {
                 deletePasskey(passkeyId, csrfToken);
-                
             }
         });
     });
