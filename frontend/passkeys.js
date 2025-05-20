@@ -14,11 +14,20 @@ export async function registerPasskey(csrfToken) {
         const publicKeyCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
         const passkeyName = await getPasskeyNameFromUser();
 
-        createAndSubmitForm('/passkey/register', {
-            passkey: JSON.stringify(publicKeyCredential.toJSON()),
-            csrfToken: csrfToken,
-            passkeyName: passkeyName
+        // Show success toast before submitting form
+        M.toast({ 
+            html: `Passkey "${passkeyName}" registered successfully`, 
+            classes: 'rounded green'
         });
+        
+        // Delay form submission to allow toast to be visible
+        setTimeout(() => {
+            createAndSubmitForm('/passkey/register', {
+                passkey: JSON.stringify(publicKeyCredential.toJSON()),
+                csrfToken: csrfToken,
+                passkeyName: passkeyName
+            });
+        }, 2000);
     } catch (err) {
         console.error('Error during passkey registration:', err);
         M.toast({ html: 'Failed to register passkey. Please try again.', classes: 'rounded red' });
@@ -60,17 +69,40 @@ export async function authenticatePasskey(targetHref, csrfToken) {
     }
 }
 
-export function deletePasskey(passkeyId, csrfToken) {
-    try {   
-        createAndSubmitForm('/passkey/delete', {
-            passkeyId,
-            csrfToken
-        }); 
+export function deletePasskey(passkeyId, passkeyName, csrfToken) {
+    try {
+        // Use fetch API instead of form submission to prevent immediate page refresh
+        fetch('/passkey/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRF-Token': csrfToken
+            },
+            // Format data as form data instead of JSON to match server expectations
+            body: `passkeyId=${encodeURIComponent(passkeyId)}&csrfToken=${encodeURIComponent(csrfToken)}`
+        }).then(response => {
+            if (response.ok) {
+                M.toast({ 
+                    html: `Passkey "${passkeyName}" deleted successfully`, 
+                    classes: 'rounded green',
+                });
+                
+                // Refresh the page after the toast has been shown
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                throw new Error('Server returned error ' + response.status);
+            }
+        }).catch(error => {
+            console.error('Error deleting passkey:', error);
+            M.toast({ html: 'An error occurred while deleting the passkey', classes: 'rounded red' });
+        });
     } catch (error) {
-        console.error('Error deleting passkey:', error);
+        console.error('Error setting up passkey deletion:', error);
         M.toast({ html: 'An error occurred while deleting the passkey', classes: 'rounded red' });
     }
-}   
+}
 
 export function setUpDeletePasskeyButtons(selector) {
     const deleteButtons = document.querySelectorAll(selector);
@@ -97,7 +129,9 @@ export function setUpDeletePasskeyButtons(selector) {
             }
             
             if (confirm(`Are you sure you want to delete the passkey "${passkeyName}"?`)) {
-                deletePasskey(passkeyId, csrfToken);
+                deletePasskey(passkeyId, passkeyName, csrfToken);
+            } else {
+                M.toast({ html: 'Passkey deletion cancelled', classes: 'rounded blue' });
             }
         });
     });
@@ -220,6 +254,11 @@ function getPasskeyNameFromUser() {
             input.classList.remove('invalid');
             errorMessage.style.display = 'none';
             modalInstance.close();
+            M.toast({ 
+                html: 'Passkey registration cancelled', 
+                classes: 'rounded blue',
+                displayLength: 3000 // Display for 3 seconds
+            });
             reject(new Error('Passkey registration cancelled'));
         };
 
