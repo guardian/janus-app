@@ -16,7 +16,7 @@ export async function registerPasskey(csrfToken) {
 
         // Show success toast before submitting form
         M.toast({ 
-            html: `Passkey "${passkeyName}" registered successfully`, 
+            html: DOMPurify.sanitize(`Passkey "${passkeyName}" registered successfully`), 
             classes: 'rounded green'
         });
         
@@ -30,7 +30,7 @@ export async function registerPasskey(csrfToken) {
         }, 2000);
     } catch (err) {
         console.error('Error during passkey registration:', err);
-        M.toast({ html: 'Failed to register passkey. Please try again.', classes: 'rounded red' });
+        M.toast({ html: DOMPurify.sanitize('Failed to register passkey. Please try again.'), classes: 'rounded red' });
     }
 }
 
@@ -65,25 +65,46 @@ export async function authenticatePasskey(targetHref, csrfToken) {
         });
     } catch (err) {
         console.error('Error during passkey authentication:', err);
-        M.toast({ html: 'Authentication failed. Please try again.', classes: 'rounded red' });
+        M.toast({ html: DOMPurify.sanitize('Authentication failed. Please try again.'), classes: 'rounded red' });
     }
 }
 
 export function deletePasskey(passkeyId, passkeyName, csrfToken) {
     try {
+        // Validate inputs before making the request
+        if (!passkeyId || typeof passkeyId !== 'string' || !csrfToken || typeof csrfToken !== 'string') {
+            throw new Error('Invalid parameters for passkey deletion');
+        }
+
         // Use fetch API instead of form submission to prevent immediate page refresh
         fetch('/passkey/delete', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
-                'X-CSRF-Token': csrfToken
+                'X-CSRF-Token': csrfToken,
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
             },
+            credentials: 'same-origin', // Include cookies in the request
             // Format data as form data instead of JSON to match server expectations
             body: `passkeyId=${encodeURIComponent(passkeyId)}&csrfToken=${encodeURIComponent(csrfToken)}`
         }).then(response => {
-            if (response.ok) {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    throw new Error(`Server error: ${response.status} ${text || 'Unknown error'}`);
+                });
+            }
+            return response.json().catch(() => {
+                // If JSON parsing fails, the response might be empty or plain text
+                return { success: true };
+            });
+        }).then(data => {
+            if (data && data.success === false) {
+                throw new Error(data.message || 'Unknown error occurred');
+            }
+            
                 M.toast({ 
-                    html: `Passkey "${passkeyName}" deleted successfully`, 
+                html: DOMPurify.sanitize(`Passkey "${passkeyName}" deleted successfully`), 
                     classes: 'rounded green',
                 });
                 
@@ -96,11 +117,17 @@ export function deletePasskey(passkeyId, passkeyName, csrfToken) {
             }
         }).catch(error => {
             console.error('Error deleting passkey:', error);
-            M.toast({ html: 'An error occurred while deleting the passkey', classes: 'rounded red' });
+            M.toast({ 
+                html: DOMPurify.sanitize('An error occurred while deleting the passkey'), 
+                classes: 'rounded red' 
+            });
         });
     } catch (error) {
         console.error('Error setting up passkey deletion:', error);
-        M.toast({ html: 'An error occurred while deleting the passkey', classes: 'rounded red' });
+        M.toast({ 
+            html: DOMPurify.sanitize('An error occurred while deleting the passkey'), 
+            classes: 'rounded red' 
+        });
     }
 }
 
@@ -118,20 +145,20 @@ export function setUpDeletePasskeyButtons(selector) {
             
             if (!passkeyId) {
                 console.error('No passkey ID found');
-                M.toast({ html: 'Error: Passkey ID not found', classes: 'rounded red' });
+                M.toast({ html: DOMPurify.sanitize('Error: Passkey ID not found'), classes: 'rounded red' });
                 return;
             }
             
             if (!csrfToken) {
                 console.error('No CSRF token found');
-                M.toast({ html: 'Error: Security token not found', classes: 'rounded red' });
+                M.toast({ html: DOMPurify.sanitize('Error: Security token not found'), classes: 'rounded red' });
                 return;
             }
             
             if (confirm(`Are you sure you want to delete the passkey "${passkeyName}"?`)) {
                 deletePasskey(passkeyId, passkeyName, csrfToken);
             } else {
-                M.toast({ html: 'Passkey deletion cancelled', classes: 'rounded blue' });
+                M.toast({ html: DOMPurify.sanitize('Passkey deletion cancelled'), classes: 'rounded blue' });
             }
         });
     });
