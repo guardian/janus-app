@@ -61,7 +61,8 @@
                         <div class="section">
                             <button id="register-passkey" 
                                     class="btn" 
-                                    csrf-token="@{CSRF.getToken.get.value}">
+                                    csrf-token="@{CSRF.getToken.get.value}"
+                                    data-existing-names="@{passkeys.map(_.name).mkString("|")}">
                                 Register a new passkey
                             </button>
                         </div>

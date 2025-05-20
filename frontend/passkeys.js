@@ -9,7 +9,7 @@ class UserCancellationError extends Error {
     }
 }
 
-export async function registerPasskey(csrfToken) {
+export async function registerPasskey(csrfToken, existingNames = []) {
     try {
         const regOptionsResponse = await fetch('/passkey/registration-options', {
             method: 'GET',
@@ -20,7 +20,8 @@ export async function registerPasskey(csrfToken) {
         const regOptionsResponseJson = await regOptionsResponse.json();
         const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsResponseJson);
         const publicKeyCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
-        const passkeyName = await getPasskeyNameFromUser();
+        // Pass existing names to the modal for duplicate checking
+        const passkeyName = await getPasskeyNameFromUser(existingNames);
 
         // Show success toast before submitting form
         M.toast({ 
@@ -55,7 +56,12 @@ export function setUpRegisterPasskeyButton(selector) {
     registerButton?.addEventListener('click', function (e) {
         e.preventDefault();
         const csrfToken = this.getAttribute('csrf-token');
-        registerPasskey(csrfToken).catch(function (err) {
+        // Get existing passkey names from data attribute
+        const existingNamesAttribute = this.getAttribute('data-existing-names') || '';
+        const existingNames = existingNamesAttribute ? existingNamesAttribute.split('|') : [];
+        
+        // Pass existing names to registerPasskey
+        registerPasskey(csrfToken, existingNames).catch(function (err) {
             console.error('Error setting up register passkey button:', err);
         });
     });
@@ -210,9 +216,10 @@ export function setUpProtectedLinks(links) {
 
 /**
  * Prompts the user to name a passkey via a modal dialog
+ * @param {string[]} existingNames - List of existing passkey names to check for duplicates
  * @returns {Promise<string>} A promise that resolves with the passkey name
  */
-function getPasskeyNameFromUser() {
+function getPasskeyNameFromUser(existingNames = []) {
     return new Promise((resolve, reject) => {        
         const modalElement = document.getElementById("passkey-name-modal");
         modalElement.style.visibility = "visible";
@@ -230,9 +237,9 @@ function getPasskeyNameFromUser() {
         const cancelButton = modalElement.querySelector('#cancel-button');
         const input = modalElement.querySelector('#passkey-name');
         const errorMessage = modalElement.querySelector('#passkey-name-error');
-        // Regex to allow letters, numbers, spaces, underscores and hyphens
-        const alphanumericRegex = /^[a-zA-Z0-9 _-]*$/;
-        const maxLength = 50; // Maximum character limit
+        // Use constants from window
+        const alphanumericRegex = new RegExp(window.ValidationConstants.PASSKEY_NAME.REGEX_PATTERN);
+        const maxLength = window.ValidationConstants.PASSKEY_NAME.MAX_LENGTH;
 
         // Reset the input field and error message when opening the modal
         input.value = '';
@@ -243,39 +250,106 @@ function getPasskeyNameFromUser() {
         modalInstance.open();
         setTimeout(() => input.focus(), 100); // Small delay to ensure modal is visible
 
-        // Define named handler functions so they can be properly removed later
-        const handleInput = () => {
-            const input_value = input.value;
+        /**
+         * Validates the passkey name format
+         * @param {string} name - The passkey name to validate
+         * @returns {object} - Validation result with isValid and message properties
+         */
+        const validateNameFormat = (name) => {
+            const trimmedName = name.trim();
             
-            // Check if input is approaching the limit
-            if (input_value.length > maxLength) {
-                input.classList.add('invalid');
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = `Name is too long: ${input_value.length}/${maxLength} characters`;
-            } else if (input_value.trim() && alphanumericRegex.test(input_value)) {
+            if (!trimmedName) {
+                return { isValid: false, message: 'Passkey name cannot be empty' };
+            }
+            
+            if (trimmedName.length > maxLength) {
+                return { 
+                    isValid: false, 
+                    message: `Passkey name too long: maximum ${maxLength} characters allowed`
+                };
+            }
+            
+            if (!alphanumericRegex.test(trimmedName)) {
+                return { 
+                    isValid: false, 
+                    message: 'Cannot save passkey name: only letters, numbers, spaces, underscores and hyphens are allowed'
+                };
+            }
+            
+            return { isValid: true };
+        };
+
+        /**
+         * Checks if the name is a duplicate
+         * @param {string} name - The passkey name to check
+         * @returns {object} - Validation result with isDuplicate and message properties
+         */
+        const checkForDuplicate = (name) => {
+            const trimmedName = name.trim();
+            
+            if (existingNames.some(existingName => existingName.toLowerCase() === trimmedName.toLowerCase())) {
+                return { 
+                    isDuplicate: true, 
+                    message: `A passkey with the name "${trimmedName}" already exists` 
+                };
+            }
+            
+            return { isDuplicate: false };
+        };
+
+        /**
+         * Updates validation UI elements
+         * @param {boolean} isValid - Whether the input is valid
+         * @param {string} message - Error message to display if invalid
+         */
+        const updateValidationUI = (isValid, message = '') => {
+            if (isValid) {
                 input.classList.remove('invalid');
                 errorMessage.style.display = 'none';
             } else {
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
-                errorMessage.textContent = `Use only letters, numbers, spaces, underscores and hyphens (max ${maxLength} characters)`;
+                errorMessage.textContent = message;
             }
+        };
+
+        // Define named handler functions so they can be properly removed later
+        const handleInput = () => {
+            const inputValue = input.value;
+            
+            // First check format
+            const formatValidation = validateNameFormat(inputValue);
+            if (!formatValidation.isValid) {
+                updateValidationUI(false, formatValidation.message);
+                return;
+            }
+            
+            // Then check for duplicates
+            const duplicationCheck = checkForDuplicate(inputValue);
+            if (duplicationCheck.isDuplicate) {
+                updateValidationUI(false, duplicationCheck.message);
+                return;
+            }
+            
+            // All checks passed
+            updateValidationUI(true);
         };
 
         const handleSubmit = (e) => {
             e.preventDefault();
             const passkeyName = input.value.trim();
-
-            if (!passkeyName || !alphanumericRegex.test(passkeyName) || passkeyName.length > maxLength) {
-                // Show validation error
-                input.classList.add('invalid');
-                errorMessage.style.display = 'block';
-                
-                if (passkeyName.length > maxLength) {
-                    errorMessage.textContent = `Passkey name too long: maximum ${maxLength} characters allowed`;
-                } else {
-                    errorMessage.textContent = 'Cannot save passkey name: only letters, numbers, spaces, underscores and hyphens are allowed';
-                }
+            
+            // Perform validation
+            const formatValidation = validateNameFormat(passkeyName);
+            if (!formatValidation.isValid) {
+                updateValidationUI(false, formatValidation.message);
+                return;
+            }
+            
+            // Check for duplicate names
+            const duplicationCheck = checkForDuplicate(passkeyName);
+            if (duplicationCheck.isDuplicate) {
+                updateValidationUI(false, duplicationCheck.message);
                 return;
             }
 

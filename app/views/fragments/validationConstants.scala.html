@@ -1,0 +1,12 @@
+@import constants.ValidationConstants
+
+@()
+
+<script type="text/javascript">
+window.ValidationConstants = {
+  PASSKEY_NAME: {
+    REGEX_PATTERN: "@{ValidationConstants.PasskeyName.REGEX_PATTERN}",
+    MAX_LENGTH: "@{ValidationConstants.PasskeyName.MAX_LENGTH}"
+  }
+};
+</script>
