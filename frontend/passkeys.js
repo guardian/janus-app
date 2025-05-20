@@ -1,6 +1,14 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
 
+// Custom error class for user cancellation
+class UserCancellationError extends Error {
+    constructor(message = 'Operation cancelled by user') {
+        super(message);
+        this.name = 'UserCancellationError';
+    }
+}
+
 export async function registerPasskey(csrfToken) {
     try {
         const regOptionsResponse = await fetch('/passkey/registration-options', {
@@ -29,6 +37,12 @@ export async function registerPasskey(csrfToken) {
             });
         }, 2000);
     } catch (err) {
+        // Check for cancellation using error type instead of message string
+        if (err instanceof UserCancellationError) {
+            // User cancellation is already handled in getPasskeyNameFromUser()
+            return;
+        }
+        
         console.error('Error during passkey registration:', err);
         M.toast({ html: DOMPurify.sanitize('Failed to register passkey. Please try again.'), classes: 'rounded red' });
     }
@@ -101,20 +115,16 @@ export function deletePasskey(passkeyId, passkeyName, csrfToken) {
         }).then(data => {
             if (data && data.success === false) {
                 throw new Error(data.message || 'Unknown error occurred');
-            }
-            
-                M.toast({ 
+            }            
+            M.toast({ 
                 html: DOMPurify.sanitize(`Passkey "${passkeyName}" deleted successfully`), 
-                    classes: 'rounded green',
-                });
-                
-                // Refresh the page after the toast has been shown
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
-            } else {
-                throw new Error('Server returned error ' + response.status);
-            }
+                classes: 'rounded green',
+            });
+            
+            // Refresh the page after the toast has been shown
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
         }).catch(error => {
             console.error('Error deleting passkey:', error);
             M.toast({ 
@@ -282,11 +292,11 @@ function getPasskeyNameFromUser() {
             errorMessage.style.display = 'none';
             modalInstance.close();
             M.toast({ 
-                html: 'Passkey registration cancelled', 
+                html: DOMPurify.sanitize('Passkey registration cancelled'), 
                 classes: 'rounded blue',
-                displayLength: 3000 // Display for 3 seconds
             });
-            reject(new Error('Passkey registration cancelled'));
+            // Use custom error class instead of generic Error
+            reject(new UserCancellationError('Passkey registration cancelled'));
         };
 
         const handleKeyPress = (e) => {
