@@ -40,17 +40,19 @@ class PasskeyController(
     with Logging {
 
   // Use the constants directly from Scala
-  private val validPasskeyNameRegex = ValidationConstants.PasskeyName.REGEX_PATTERN.r
+  private val validPasskeyNameRegex =
+    ValidationConstants.PasskeyName.REGEX_PATTERN.r
   private val maxPasskeyNameLength = ValidationConstants.PasskeyName.MAX_LENGTH
 
-  /**
-   * Validates a passkey name against format and length requirements
-   * @param name The passkey name to validate
-   * @return True if the name is valid, false otherwise
-   */
+  /** Validates a passkey name against format and length requirements
+    * @param name
+    *   The passkey name to validate
+    * @return
+    *   True if the name is valid, false otherwise
+    */
   private def isValidPasskeyName(name: String): Boolean = {
-    name.nonEmpty && 
-    name.length <= maxPasskeyNameLength && 
+    name.nonEmpty &&
+    name.length <= maxPasskeyNameLength &&
     validPasskeyNameRegex.matches(name)
   }
 
@@ -130,26 +132,40 @@ class PasskeyController(
               JanusException.missingFieldInRequest(request.user, "passkeyName")
             )
         }
-        
+
         // Validate the passkey name format
-        _ <- if (!isValidPasskeyName(passkeyName)) {
-          Failure(JanusException.invalidFieldInRequest(
-            request.user,
-            "passkeyName",
-            new IllegalArgumentException("Passkey name must contain only letters, numbers, spaces, underscores, and hyphens, and be under 50 characters")
-          ))
-        } else Success(())
-        
+        _ <-
+          if (!isValidPasskeyName(passkeyName)) {
+            Failure(
+              JanusException.invalidFieldInRequest(
+                request.user,
+                "passkeyName",
+                new IllegalArgumentException(
+                  "Passkey name must contain only letters, numbers, spaces, underscores, and hyphens, and be under 50 characters"
+                )
+              )
+            )
+          } else Success(())
+
         // Check for duplicate passkey names
         existingPasskeys <- PasskeyDB.loadCredentials(request.user)
-        _ <- if (PasskeyDB.extractMetadata(existingPasskeys).exists(_.name.equalsIgnoreCase(passkeyName))) {
-          Failure(JanusException.invalidFieldInRequest(
-            request.user,
-            "passkeyName",
-            new IllegalArgumentException(s"A passkey with name '$passkeyName' already exists for this user")
-          ))
-        } else Success(())
-        
+        _ <-
+          if (
+            PasskeyDB
+              .extractMetadata(existingPasskeys)
+              .exists(_.name.equalsIgnoreCase(passkeyName))
+          ) {
+            Failure(
+              JanusException.invalidFieldInRequest(
+                request.user,
+                "passkeyName",
+                new IllegalArgumentException(
+                  s"A passkey with name '$passkeyName' already exists for this user"
+                )
+              )
+            )
+          } else Success(())
+
         credRecord <- Passkey.verifiedRegistration(
           host,
           request.user,
@@ -158,7 +174,9 @@ class PasskeyController(
         )
         _ <- PasskeyDB.insert(request.user, credRecord, passkeyName)
         _ <- PasskeyChallengeDB.delete(request.user)
-        _ = logger.info(s"Registered passkey '$passkeyName' for user ${request.user.username}")
+        _ = logger.info(
+          s"Registered passkey '$passkeyName' for user ${request.user.username}"
+        )
       } yield Redirect("/user-account")
     )
   }
