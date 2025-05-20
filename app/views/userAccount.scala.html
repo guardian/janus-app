@@ -16,58 +16,58 @@
 
         <h3 class="header orange-text">Passkeys</h3>
 
-        <div class="row">
+        <p>Passkeys are a secure way to log in without a password. They are stored on your device and are used to authenticate you when you access Janus credentials or the AWS console.</p>
+        <p>You can register up to two passkeys. One should be on-device (e.g. Touch ID) and the other off-device (e.g. security key or authenticator app).</p>
+
+        <div class="row">           
+            <h4 class="header orange-text">Registered passkeys</h4>
             <div class="col s12">
                 <div class="card-panel">
-                    <p>You can have up to two passkeys to log in to Janus. One should be on-device (e.g. Touch ID) and the other off-device (e.g. security key or authenticator app).
-                    </p>
-                    <div><button id="register-passkey" class="btn" csrf-token="@{CSRF.getToken.get.value}">Register a new passkey</button></div>
+                    @if(passkeys.nonEmpty) {
+                        <table class="striped responsive-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Added</th>
+                                    <th>Last used</th>
+                                    <th>Delete</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for(passkey <- passkeys) {
+                                    <tr>
+                                        <td>@{passkey.name}</td>
+                                        <td>@{passkey.aaguid}</td>
+                                        <td>@{dateFormat(passkey.registrationTime)}</td>
+                                        <td>@{passkey.lastUsedTime.map(timeFormat).getOrElse("Never")}</td>
+                                        <td>
+                                            <button class="btn delete-passkey-btn" 
+                                                    csrf-token="@{CSRF.getToken.get.value}" 
+                                                    data-passkey-id="@{passkey.id}" 
+                                                    data-passkey-name="@{passkey.name}">
+                                                <i class="material-icons">delete</i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    } else {                                 
+                        <p>You haven't registered any passkeys yet.</p>
+                    }                    
+                    
+                    @if(passkeys.size < 2) {
+                        <div class="section">
+                            <button id="register-passkey" 
+                                    class="btn" 
+                                    csrf-token="@{CSRF.getToken.get.value}">
+                                Register a new passkey
+                            </button>
+                        </div>
+                    }
                 </div>
             </div>
-        </div>
-
-        <div class="row">
-            @if(passkeys.nonEmpty) {
-                    <h4 class="header orange-text">Your passkeys</h4>
-                    <div class="col s12">
-                        <div class="card-panel">
-                            <table class="striped responsive-table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Type</th>
-                                        <th>Added</th>
-                                        <th>Last used</th>
-                                        <th>Delete</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @for(passkey <- passkeys) {
-                                        <tr>
-                                            <td>@{passkey.name}</td>
-                                            <td>@{passkey.aaguid}</td>
-                                            <td>@{dateFormat(passkey.registrationTime)}</td>
-                                            <td>@{passkey.lastUsedTime.map(timeFormat).getOrElse("Never")}</td>
-                                            <td>
-                                                <button class="btn delete-passkey-btn" csrf-token="@{CSRF.getToken.get.value}" 
-                                                        data-passkey-id="@{passkey.id}" 
-                                                        data-passkey-name="@{passkey.name}">
-                                                    <i class="material-icons">delete</i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-            } else {
-                <div class="col s12">
-                    <div class="card-panel">
-                        <p>You haven't registered any passkeys yet.</p>
-                    </div>
-                </div>
-            }
         </div>
     </div>
     <div id="passkey-name-modal" class="modal">
