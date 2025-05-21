@@ -19,9 +19,9 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
 
       val testUser = UserIdentity(
         sub = "sub",
-        email = "test.user@example.com",
-        firstName = "Test",
-        lastName = "User",
+        email = "a.solver@example.com",
+        firstName = "A",
+        lastName = "Solver",
         exp = 0,
         avatarUrl = None
       )
@@ -51,9 +51,9 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         |    "name" : "Janus-Test"
         |  },
         |  "user" : {
-        |    "id" : "dGVzdC51c2Vy",
-        |    "name" : "test.user",
-        |    "displayName" : "Test User"
+        |    "id" : "YS5zb2x2ZXI",
+        |    "name" : "a.solver",
+        |    "displayName" : "A Solver"
         |  },
         |  "challenge" : "Y2hhbGxlbmdl",
         |  "pubKeyCredParams" : [ {
