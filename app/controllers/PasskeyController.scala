@@ -20,7 +20,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneId, ZonedDateTime}
 import scala.concurrent.ExecutionContext
-import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
