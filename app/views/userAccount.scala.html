@@ -56,16 +56,13 @@
                     } else {                                 
                         <p>You haven't registered any passkeys yet.</p>
                     }                    
-                    
-                    @if(passkeys.size < 2) {
-                        <div class="section">
-                            <button id="register-passkey" 
-                                    class="btn" 
-                                    csrf-token="@{CSRF.getToken.get.value}">
-                                Register a new passkey
-                            </button>
-                        </div>
-                    }
+                    <div class="section">
+                        <button id="register-passkey" 
+                                class="btn" 
+                                csrf-token="@{CSRF.getToken.get.value}">
+                            Register a new passkey
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
