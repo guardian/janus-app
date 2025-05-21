@@ -8,14 +8,13 @@ import com.gu.janus.model.JanusData
 import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
-import models.JanusException
 import models.JanusException.throwableWrites
-import models.PasskeyEncodings._
-import play.api.http.Writeable
+import models.{JanusException, PasskeyEncodings}
+import play.api.http.MimeTypes
 import play.api.libs.json.Json.toJson
-import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Logging, Mode}
+import play.twirl.api.Html
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.time.format.DateTimeFormatter
@@ -48,9 +47,7 @@ class PasskeyController(
     case Mode.Prod => "Janus-Prod"
   }
 
-  private def apiResponse[A](
-      action: => Try[A]
-  )(implicit resultConverter: A => Result): Result =
+  private def apiResponse[A](action: => Try[A]): Result =
     action match {
       case Failure(err: JanusException) =>
         logger.error(err.engineerMessage, err.causedBy.orNull)
@@ -58,17 +55,12 @@ class PasskeyController(
       case Failure(err) =>
         logger.error(err.getMessage, err)
         Status(INTERNAL_SERVER_ERROR)(toJson(err))
-      case Success(a) => resultConverter(a)
+      case Success(result: Result) => result
+      case Success(html: Html)     => Ok(html)
+      case Success(a) =>
+        val json = PasskeyEncodings.mapper.writeValueAsString(a)
+        Ok(json).as(MimeTypes.JSON)
     }
-
-  implicit def jsonToResult[A](a: A)(implicit writes: Writes[A]): Result = Ok(
-    toJson(a)
-  )
-
-  implicit def htmlToResult[A](a: A)(implicit writeable: Writeable[A]): Result =
-    Ok(a)
-
-  implicit def resultToResult(r: Result): Result = r
 
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
@@ -133,7 +125,7 @@ class PasskeyController(
   def authenticationOptions: Action[Unit] = authAction(parse.empty) { request =>
     apiResponse(
       for {
-        options <- Passkey.authenticationOptions(request.user)
+        options <- Passkey.authenticationOptions(host, request.user)
         _ <- PasskeyChallengeDB.insert(
           UserChallenge(request.user, options.getChallenge)
         )
