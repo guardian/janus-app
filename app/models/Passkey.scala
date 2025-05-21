@@ -3,6 +3,7 @@ package models
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.databind.module.SimpleModule
+import com.webauthn4j.data.PublicKeyCredentialUserEntity
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.DefaultChallenge
 import com.webauthn4j.util.Base64UrlUtil
@@ -34,11 +35,33 @@ object PasskeyEncodings {
      */
     module.addSerializer(
       classOf[DefaultChallenge],
-      (
-          challenge: DefaultChallenge,
-          gen: JsonGenerator,
-          _: SerializerProvider
-      ) => gen.writeString(Base64UrlUtil.encodeToString(challenge.getValue))
+      new JsonSerializer[DefaultChallenge] {
+        override def serialize(
+            challenge: DefaultChallenge,
+            gen: JsonGenerator,
+            serializers: SerializerProvider
+        ): Unit =
+          gen.writeString(Base64UrlUtil.encodeToString(challenge.getValue))
+      }
+    )
+    /*
+     * Serialize so that id is base64url encoded, as the webauthn spec demands.
+     */
+    module.addSerializer(
+      classOf[PublicKeyCredentialUserEntity],
+      new JsonSerializer[PublicKeyCredentialUserEntity] {
+        override def serialize(
+            user: PublicKeyCredentialUserEntity,
+            gen: JsonGenerator,
+            serializers: SerializerProvider
+        ): Unit = {
+          gen.writeStartObject()
+          gen.writeStringField("id", Base64UrlUtil.encodeToString(user.getId))
+          gen.writeStringField("name", user.getName)
+          gen.writeStringField("displayName", user.getDisplayName)
+          gen.writeEndObject()
+        }
+      }
     )
     mapper.registerModule(module)
     mapper
