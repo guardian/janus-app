@@ -81,4 +81,12 @@
             <a href="#!" id="submit-button" class="waves-effect waves-light btn orange">Save</a>
         </div>
     </div>
+    
+    <!-- Flash messages passed via data attributes to be handled by JavaScript -->
+    <div id="flash-message" 
+         style="display: none;"
+         data-success="@request.flash.get("success").getOrElse("")"
+         data-info="@request.flash.get("info").getOrElse("")"
+         data-error="@request.flash.get("error").getOrElse("")">
+    </div>
 }

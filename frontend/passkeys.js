@@ -1,6 +1,11 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
 
+/**
+ * Registers a new passkey for the current user
+ * @param {string} csrfToken - CSRF token for security verification
+ * @returns {Promise<void>} A promise that resolves when registration completes
+ */
 export async function registerPasskey(csrfToken) {
     try {
         const regOptionsResponse = await fetch('/passkey/registration-options', {
@@ -30,6 +35,10 @@ export async function registerPasskey(csrfToken) {
     }
 }
 
+/**
+ * Sets up click event listener for the passkey registration button
+ * @param {string} selector - CSS selector for the register button
+ */
 export function setUpRegisterPasskeyButton(selector) {
     const registerButton = document.querySelector(selector);
     if (!registerButton) { return }
@@ -43,6 +52,12 @@ export function setUpRegisterPasskeyButton(selector) {
     });
 }
 
+/**
+ * Authenticates a user with a passkey and redirects to the target URL
+ * @param {string} targetHref - URL to redirect to after successful authentication
+ * @param {string} csrfToken - CSRF token for security verification
+ * @returns {Promise<void>} A promise that resolves when authentication completes
+ */
 export async function authenticatePasskey(targetHref, csrfToken) {
     try {
         const authOptionsResponse = await fetch('/passkey/auth-options', {
@@ -65,6 +80,11 @@ export async function authenticatePasskey(targetHref, csrfToken) {
     }
 }
 
+/**
+ * Deletes a passkey from the user's account
+ * @param {string} passkeyId - ID of the passkey to delete
+ * @param {string} csrfToken - CSRF token for security verification
+ */
 export function deletePasskey(passkeyId, csrfToken) {
     try {   
         createAndSubmitForm('/passkey/delete', {
@@ -77,6 +97,10 @@ export function deletePasskey(passkeyId, csrfToken) {
     }
 }   
 
+/**
+ * Sets up click event listeners for passkey deletion buttons
+ * @param {string} selector - CSS selector for delete buttons
+ */
 export function setUpDeletePasskeyButtons(selector) {
     const deleteButtons = document.querySelectorAll(selector);
     if (!deleteButtons.length) {
@@ -103,11 +127,18 @@ export function setUpDeletePasskeyButtons(selector) {
             
             if (confirm(`Are you sure you want to delete the passkey "${passkeyName}"?`)) {
                 deletePasskey(passkeyId, csrfToken);
+            } else {
+                M.toast({ html: 'Passkey deletion cancelled', classes: 'rounded orange' });
             }
         });
     });
 }
 
+/**
+ * Creates and submits a form with the provided data
+ * @param {string} targetHref - Form submission URL
+ * @param {Object} formData - Data to include in the form
+ */
 function createAndSubmitForm(targetHref, formData) {
     const form = document.createElement('form');
     form.setAttribute('method', 'post');
@@ -125,6 +156,10 @@ function createAndSubmitForm(targetHref, formData) {
     form.submit();
 }
 
+/**
+ * Sets up protected links that require passkey authentication
+ * @param {NodeList|HTMLElement[]} links - Collection of link elements to protect
+ */
 export function setUpProtectedLinks(links) {
     if (!links.length) {
         return;
@@ -140,6 +175,34 @@ export function setUpProtectedLinks(links) {
             });
         });
     });
+}
+
+/**
+ * Displays flash messages from the server as toasts
+ * @param {Object} flashMessages Object containing flash messages by type
+ */
+export function displayFlashMessages(flashMessages) {
+    if (!flashMessages) { 
+        return 
+    }
+    if (flashMessages.success) {
+        M.toast({
+            html: flashMessages.success,
+            classes: 'green lighten-1 rounded',
+        });
+    }
+    if (flashMessages.info) {
+        M.toast({
+            html: flashMessages.info,
+            classes: 'blue lighten-1 rounded',
+        });
+    }
+    if (flashMessages.error) {
+        M.toast({
+            html: flashMessages.error,
+            classes: 'red lighten-1 rounded',
+        });
+    }
 }
 
 /**
@@ -225,7 +288,9 @@ function getPasskeyNameFromUser() {
             input.classList.remove('invalid');
             errorMessage.style.display = 'none';
             modalInstance.close();
+            M.toast({html: 'Passkey registration cancelled', classes: 'rounded orange'});
             reject(new Error('Passkey registration cancelled'));
+
         };
 
         const handleKeyPress = (e) => {
