@@ -5,6 +5,7 @@ import com.webauthn4j.WebAuthnManager
 import com.webauthn4j.converter.exception.DataConversionException
 import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
 import com.webauthn4j.data.AttestationConveyancePreference.NONE
+import com.webauthn4j.data.PublicKeyCredentialType.PUBLIC_KEY
 import com.webauthn4j.data.UserVerificationRequirement.REQUIRED
 import com.webauthn4j.data._
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
@@ -12,6 +13,7 @@ import com.webauthn4j.data.client.Origin
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.data.extension.client._
 import com.webauthn4j.server.ServerProperty
+import com.webauthn4j.util.Base64UrlUtil
 import com.webauthn4j.verifier.exception.VerificationException
 import models._
 
@@ -66,6 +68,9 @@ object Passkey {
     *   The user identity retrieved from Google auth.
     * @param challenge
     *   The challenge to be used for registration.
+    * @param existingPasskeys
+    *   The credentials that the user already has, to avoid duplicate
+    *   registration.
     * @return
     *   A PublicKeyCredentialCreationOptions object containing the registration
     *   options.
@@ -74,7 +79,8 @@ object Passkey {
       appName: String,
       appHost: String,
       user: UserIdentity,
-      challenge: Challenge = new DefaultChallenge()
+      challenge: Challenge,
+      existingPasskeys: Seq[PasskeyMetadata]
   ): Try[PublicKeyCredentialCreationOptions] =
     Try {
       val appDomain = URI.create(appHost).getHost
@@ -85,7 +91,13 @@ object Passkey {
         user.fullName
       )
       val timeout = Duration(10, SECONDS)
-      val excludeCredentials: Seq[PublicKeyCredentialDescriptor] = Nil
+      val excludeCredentials = existingPasskeys
+        .map { passkey =>
+          val credType = PUBLIC_KEY
+          val id = Base64UrlUtil.decode(passkey.id)
+          val transports: Set[AuthenticatorTransport] = Set.empty
+          new PublicKeyCredentialDescriptor(credType, id, transports.asJava)
+        }
       val authenticatorSelection: AuthenticatorSelectionCriteria = null
       val hints: Seq[PublicKeyCredentialHints] = Nil
       val attestation: AttestationConveyancePreference = NONE
