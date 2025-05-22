@@ -25,7 +25,7 @@ export async function registerPasskey(csrfToken) {
             M.toast({html: 'This passkey has already been registered.', classes: 'rounded orange'});
         } else {
             console.error('Error during passkey registration:', err);
-            M.toast({html: 'Failed to register passkey. Please try again.', classes: 'rounded red'});
+            M.toast({html: 'Failed to register passkey. This may be because this passkey has already been registered or it could be a transient issue, in which case please try again.', classes: 'rounded red'});
         }
     }
 }
