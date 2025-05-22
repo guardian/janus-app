@@ -1,13 +1,15 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
+import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.DefaultChallenge
-import models.PasskeyEncodings
+import models.{PasskeyEncodings, PasskeyMetadata}
 import org.scalatest.EitherValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should
 
 import java.nio.charset.StandardCharsets.UTF_8
+import java.time.Instant
 
 class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
 
@@ -28,7 +30,16 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         appName = "Janus-Test",
         appHost,
         testUser,
-        challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
+        challenge = new DefaultChallenge("challenge".getBytes(UTF_8)),
+        existingPasskeys = Seq(
+          PasskeyMetadata(
+            id = "K9iphQ03JmTBqf-1pPGBXvpzfvt96ZAy51_BrKjibn0",
+            name = "Test",
+            registrationTime = Instant.parse("2025-05-21T09:30:00.000000Z"),
+            aaguid = new AAGUID("adce0002-35bc-c60a-648b-0b25f1f05503"),
+            lastUsedTime = None
+          )
+        )
       )
       val json = PasskeyEncodings.mapper
         .writerWithDefaultPrettyPrinter()
@@ -56,7 +67,11 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         |    "alg" : -257
         |  } ],
         |  "timeout" : 10000,
-        |  "excludeCredentials" : [ ],
+        |  "excludeCredentials" : [ {
+        |    "type" : "public-key",
+        |    "id" : "K9iphQ03JmTBqf-1pPGBXvpzfvt96ZAy51_BrKjibn0",
+        |    "transports" : [ ]
+        |  } ],
         |  "authenticatorSelection" : null,
         |  "hints" : [ ],
         |  "attestation" : "none",

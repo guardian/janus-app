@@ -3,7 +3,7 @@ package models
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind._
 import com.fasterxml.jackson.databind.module.SimpleModule
-import com.webauthn4j.data.PublicKeyCredentialUserEntity
+import com.webauthn4j.data._
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.DefaultChallenge
 import com.webauthn4j.util.Base64UrlUtil
@@ -59,6 +59,34 @@ object PasskeyEncodings {
           gen.writeStringField("id", Base64UrlUtil.encodeToString(user.getId))
           gen.writeStringField("name", user.getName)
           gen.writeStringField("displayName", user.getDisplayName)
+          gen.writeEndObject()
+        }
+      }
+    )
+    /*
+     * Again, serialize so that id is base64url encoded, as the webauthn spec demands.
+     */
+    module.addSerializer(
+      classOf[PublicKeyCredentialDescriptor],
+      new JsonSerializer[PublicKeyCredentialDescriptor] {
+        override def serialize(
+            descriptor: PublicKeyCredentialDescriptor,
+            gen: JsonGenerator,
+            serializers: SerializerProvider
+        ): Unit = {
+          gen.writeStartObject()
+          gen.writeStringField("type", descriptor.getType.getValue)
+          gen.writeStringField(
+            "id",
+            Base64UrlUtil.encodeToString(descriptor.getId)
+          )
+          if (descriptor.getTransports != null) {
+            gen.writeArrayFieldStart("transports")
+            descriptor.getTransports.forEach(transport =>
+              gen.writeString(transport.getValue)
+            )
+            gen.writeEndArray()
+          }
           gen.writeEndObject()
         }
       }
