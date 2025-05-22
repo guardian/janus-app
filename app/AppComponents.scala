@@ -1,5 +1,6 @@
 import aws.Clients
 import com.gu.googleauth.AuthAction
+import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.play.secretrotation._
 import com.gu.play.secretrotation.aws.parameterstore
 import com.typesafe.config.ConfigException
@@ -8,7 +9,7 @@ import controllers._
 import filters.HstsFilter
 import models._
 import play.api.libs.ws.ahc.AhcWSComponents
-import play.api.mvc.{AnyContent, EssentialFilter}
+import play.api.mvc.{ActionBuilder, AnyContent, EssentialFilter}
 import play.api.routing.Router
 import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
@@ -84,6 +85,19 @@ class AppComponents(context: ApplicationLoader.Context)
     controllerComponents.parsers.default
   )(executionContext)
 
+  private val passkeysEnabled: Boolean =
+    configuration.get[Boolean]("passkeys.enabled")
+  private val passkeysEnablingCookieName: String =
+    configuration.get[String]("passkeys.enablingCookieName")
+
+  val passkeyAuthAction: ActionBuilder[UserIdentityRequest, AnyContent] =
+    authAction.andThen(
+      new PasskeyAuthFilter(host, passkeysEnabled, passkeysEnablingCookieName)(
+        dynamodDB,
+        executionContext
+      )
+    )
+
   override def router: Router = new Routes(
     httpErrorHandler,
     new Janus(
@@ -113,12 +127,15 @@ class AppComponents(context: ApplicationLoader.Context)
       googleGroupChecker,
       requiredGoogleGroups
     )(wsClient, executionContext, mode, assetsFinder),
-    new PasskeyController(controllerComponents, authAction, host, janusData)(
-      dynamodDB,
-      mode,
-      assetsFinder,
-      executionContext
-    ),
+    new PasskeyController(
+      controllerComponents,
+      authAction,
+      passkeyAuthAction,
+      host,
+      janusData,
+      passkeysEnabled,
+      passkeysEnablingCookieName
+    )(dynamodDB, mode, assetsFinder),
     new Utility(janusData, controllerComponents, authAction, configuration)(
       mode,
       assetsFinder
