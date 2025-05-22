@@ -20,26 +20,20 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneId, ZonedDateTime}
-import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
 class PasskeyController(
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
+    passkeyAuthAction: ActionBuilder[UserIdentityRequest, AnyContent],
     host: String,
-    janusData: JanusData
-)(implicit
-    dynamoDb: DynamoDbClient,
-    mode: Mode,
-    assetsFinder: AssetsFinder,
-    ec: ExecutionContext
-) extends AbstractController(controllerComponents)
+    janusData: JanusData,
+    passkeysEnabled: Boolean,
+    enablingCookieName: String
+)(implicit dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
+    extends AbstractController(controllerComponents)
     with Logging {
-
-  private def passkeyAuthAction
-      : ActionBuilder[UserIdentityRequest, AnyContent] =
-    authAction.andThen(new PasskeyAuthFilter(host))
 
   private val appName = mode match {
     case Mode.Dev  => "Janus-Dev"
@@ -185,13 +179,17 @@ class PasskeyController(
       permissions <- userAccess(username(request.user), janusData.access)
       favourites = Favourites.fromCookie(request.cookies.get("favourites"))
       awsAccountAccess = orderedAccountAccess(permissions, favourites)
+      enablingCookieIsPresent = request.cookies
+        .get(enablingCookieName)
+        .isDefined
     } yield {
       Ok(
         views.html.passkeymock.index(
           awsAccountAccess,
           request.user,
           janusData,
-          displayMode
+          displayMode,
+          passkeysEnabled && enablingCookieIsPresent
         )
       )
     }).getOrElse(Ok(views.html.noPermissions(request.user, janusData)))

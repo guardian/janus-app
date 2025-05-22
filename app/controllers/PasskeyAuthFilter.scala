@@ -21,7 +21,11 @@ import scala.util.{Failure, Success, Try}
   * See
   * [[https://webauthn4j.github.io/webauthn4j/en/#webauthn-assertion-verification-and-post-processing]].
   */
-class PasskeyAuthFilter(host: String)(implicit
+class PasskeyAuthFilter(
+    host: String,
+    passkeysEnabled: Boolean,
+    enablingCookieName: String
+)(implicit
     dynamoDb: DynamoDbClient,
     ec: ExecutionContext
 ) extends ActionFilter[UserIdentityRequest]
@@ -30,7 +34,20 @@ class PasskeyAuthFilter(host: String)(implicit
   // TODO: Consider a separate EC for passkey processing
   def executionContext: ExecutionContext = ec
 
-  def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] =
+  def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] = {
+    val enablingCookieIsPresent =
+      request.cookies.get(enablingCookieName).isDefined
+    if (passkeysEnabled && enablingCookieIsPresent) {
+      logger.info(
+        s"Authenticating passkey for user ${request.user.username} ..."
+      )
+      doFilter(request)
+    } else Future.successful(None)
+  }
+
+  private def doFilter[A](
+      request: UserIdentityRequest[A]
+  ): Future[Option[Result]] =
     Future(
       apiResponse(
         for {
