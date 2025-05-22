@@ -1,7 +1,6 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
-import {setUpDeletePasskeyButtons, setUpProtectedLinks, setUpRegisterPasskeyButton} from './passkeys.js';
-
+import {displayFlashMessages, setUpDeletePasskeyButtons, setUpProtectedLinks, setUpRegisterPasskeyButton} from './passkeys.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
@@ -300,4 +299,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // setupAuthButtons('.auth-button');
     const protectedLinks = document.querySelectorAll('.passkey-protected');
     setUpProtectedLinks(protectedLinks);
+    
+    const flashMessage = document.getElementById('flash-message');
+    if (flashMessage) {
+        const flashMessages = {
+            success: flashMessage.dataset.success,
+            info: flashMessage.dataset.info,
+            error: flashMessage.dataset.error
+        };
+        displayFlashMessages(flashMessages);
+    }
 });
