@@ -5,23 +5,22 @@ import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.janus.model.JanusData
+import com.webauthn4j.data.client.challenge.DefaultChallenge
 import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
-import models.JanusException
 import models.JanusException.throwableWrites
-import models.PasskeyEncodings._
-import play.api.http.Writeable
+import models.{JanusException, PasskeyEncodings}
+import play.api.http.MimeTypes
 import play.api.libs.json.Json.toJson
-import play.api.libs.json._
 import play.api.mvc._
 import play.api.{Logging, Mode}
+import play.twirl.api.Html
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneId, ZonedDateTime}
 import scala.concurrent.ExecutionContext
-import scala.language.implicitConversions
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
@@ -48,9 +47,7 @@ class PasskeyController(
     case Mode.Prod => "Janus-Prod"
   }
 
-  private def apiResponse[A](
-      action: => Try[A]
-  )(implicit resultConverter: A => Result): Result =
+  private def apiResponse[A](action: => Try[A]): Result =
     action match {
       case Failure(err: JanusException) =>
         logger.error(err.engineerMessage, err.causedBy.orNull)
@@ -58,17 +55,12 @@ class PasskeyController(
       case Failure(err) =>
         logger.error(err.getMessage, err)
         Status(INTERNAL_SERVER_ERROR)(toJson(err))
-      case Success(a) => resultConverter(a)
+      case Success(result: Result) => result
+      case Success(html: Html)     => Ok(html)
+      case Success(a) =>
+        val json = PasskeyEncodings.mapper.writeValueAsString(a)
+        Ok(json).as(MimeTypes.JSON)
     }
-
-  implicit def jsonToResult[A](a: A)(implicit writes: Writes[A]): Result = Ok(
-    toJson(a)
-  )
-
-  implicit def htmlToResult[A](a: A)(implicit writeable: Writeable[A]): Result =
-    Ok(a)
-
-  implicit def resultToResult(r: Result): Result = r
 
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
@@ -76,7 +68,14 @@ class PasskeyController(
   def registrationOptions: Action[Unit] = authAction(parse.empty) { request =>
     apiResponse(
       for {
-        options <- Passkey.registrationOptions(appName, host, request.user)
+        loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
+        options <- Passkey.registrationOptions(
+          appName,
+          appHost = host,
+          user = request.user,
+          challenge = new DefaultChallenge(),
+          existingPasskeys = PasskeyDB.extractMetadata(loadCredentialsResponse)
+        )
         _ <- PasskeyChallengeDB.insert(
           UserChallenge(request.user, options.getChallenge)
         )
@@ -133,7 +132,7 @@ class PasskeyController(
   def authenticationOptions: Action[Unit] = authAction(parse.empty) { request =>
     apiResponse(
       for {
-        options <- Passkey.authenticationOptions(request.user)
+        options <- Passkey.authenticationOptions(host, request.user)
         _ <- PasskeyChallengeDB.insert(
           UserChallenge(request.user, options.getChallenge)
         )
@@ -141,6 +140,25 @@ class PasskeyController(
           s"Created authentication options for user ${request.user.username}"
         )
       } yield options
+    )
+  }
+
+  /** Deletes a passkey for a user */
+  def deletePasskey: Action[Map[String, Seq[String]]] = authAction(
+    parse.formUrlEncoded
+  ) { implicit request =>
+    apiResponse(
+      for {
+        passkeyId <- request.body.get("passkeyId") match {
+          case Some(values) => Success(values.head)
+          case None =>
+            Failure(
+              JanusException.missingFieldInRequest(request.user, "passkeyId")
+            )
+        }
+        _ <- PasskeyDB.deleteById(request.user, passkeyId)
+        _ = logger.info(s"Deleted passkey for user ${request.user.username}")
+      } yield Redirect("/user-account")
     )
   }
 

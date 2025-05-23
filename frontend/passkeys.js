@@ -20,14 +20,21 @@ export async function registerPasskey(csrfToken) {
             passkeyName: passkeyName
         });
     } catch (err) {
-        console.error('Error during passkey registration:', err);
-        M.toast({ html: 'Failed to register passkey. Please try again.', classes: 'rounded red' });
+        if (err.name === 'InvalidStateError') {
+            console.warn('Passkey already registered:', err);
+            M.toast({html: 'This passkey has already been registered.', classes: 'rounded orange'});
+        } else {
+            console.error('Error during passkey registration:', err);
+            M.toast({html: 'Registration failed: this passkey may have already been registered, or it could be a transient issue in which case please try again.', classes: 'rounded red'});
+        }
     }
 }
 
-export function setUpRegisterPasskeyButton(buttonSelector) {
-    const registerPasskeyButton = document.querySelector(buttonSelector);
-    registerPasskeyButton?.addEventListener('click', function (e) {
+export function setUpRegisterPasskeyButton(selector) {
+    const registerButton = document.querySelector(selector);
+    if (!registerButton) { return }
+
+    registerButton?.addEventListener('click', function (e) {
         e.preventDefault();
         const csrfToken = this.getAttribute('csrf-token');
         registerPasskey(csrfToken).catch(function (err) {
@@ -58,6 +65,49 @@ export async function authenticatePasskey(targetHref, csrfToken) {
     }
 }
 
+export function deletePasskey(passkeyId, csrfToken) {
+    try {   
+        createAndSubmitForm('/passkey/delete', {
+            passkeyId,
+            csrfToken
+        }); 
+    } catch (error) {
+        console.error('Error deleting passkey:', error);
+        M.toast({ html: 'An error occurred while deleting the passkey', classes: 'rounded red' });
+    }
+}   
+
+export function setUpDeletePasskeyButtons(selector) {
+    const deleteButtons = document.querySelectorAll(selector);
+    if (!deleteButtons.length) {
+        return;
+    }
+
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', async () => {
+            const passkeyName = button.getAttribute('data-passkey-name');
+            const passkeyId = button.getAttribute('data-passkey-id');
+            const csrfToken = button.getAttribute('csrf-token');
+            
+            if (!passkeyId) {
+                console.error('No passkey ID found');
+                M.toast({ html: 'Error: Passkey ID not found', classes: 'rounded red' });
+                return;
+            }
+            
+            if (!csrfToken) {
+                console.error('No CSRF token found');
+                M.toast({ html: 'Error: Security token not found', classes: 'rounded red' });
+                return;
+            }
+            
+            if (confirm(`Are you sure you want to delete the passkey "${passkeyName}"?`)) {
+                deletePasskey(passkeyId, csrfToken);
+            }
+        });
+    });
+}
+
 function createAndSubmitForm(targetHref, formData) {
     const form = document.createElement('form');
     form.setAttribute('method', 'post');
@@ -76,6 +126,10 @@ function createAndSubmitForm(targetHref, formData) {
 }
 
 export function setUpProtectedLinks(links) {
+    if (!links.length) {
+        return;
+    }
+
     links.forEach((link) => {
         link.addEventListener('click', function (e) {
             e.preventDefault();
