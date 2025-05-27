@@ -142,12 +142,12 @@ export function setUpDeletePasskeyButtons(selector) {
 function createAndSubmitForm(targetHref, formData) {
     const form = document.createElement('form');
     form.setAttribute('method', 'post');
-    form.setAttribute('action', targetHref);
+    form.setAttribute('action', DOMPurify.sanitize(targetHref));
 
     Object.entries(formData).forEach(([name, value]) => {
         const input = document.createElement('input');
         input.setAttribute('type', 'hidden');
-        input.setAttribute('name', name);
+        input.setAttribute('name', DOMPurify.sanitize(name));
         input.setAttribute('value', DOMPurify.sanitize(value));
         form.appendChild(input);
     });
