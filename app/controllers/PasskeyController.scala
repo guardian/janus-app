@@ -123,7 +123,10 @@ class PasskeyController(
         _ <- PasskeyChallengeDB.delete(request.user)
         _ = logger.info(s"Registered passkey for user ${request.user.username}")
       } yield {
-        val message = if (passkeyName.nonEmpty) s"Passkey '$passkeyName' was registered successfully" else "Passkey was registered successfully"
+        val message =
+          if (passkeyName.nonEmpty)
+            s"Passkey '$passkeyName' was registered successfully"
+          else "Passkey was registered successfully"
         Redirect("/user-account").flashing("success" -> message)
       }
     )
@@ -159,11 +162,17 @@ class PasskeyController(
               JanusException.missingFieldInRequest(request.user, "passkeyId")
             )
         }
-        passkeyName <- request.body.get("passkeyName").map(values => Success(values.head)).getOrElse(Success(""))
+        passkeyName <- request.body
+          .get("passkeyName")
+          .map(values => Success(values.head))
+          .getOrElse(Success(""))
         _ <- PasskeyDB.deleteById(request.user, passkeyId)
         _ = logger.info(s"Deleted passkey for user ${request.user.username}")
       } yield {
-        val message = if (passkeyName.nonEmpty) s"Passkey '$passkeyName' was successfully deleted" else "Passkey was successfully deleted"
+        val message =
+          if (passkeyName.nonEmpty)
+            s"Passkey '$passkeyName' was successfully deleted"
+          else "Passkey was successfully deleted"
         Redirect("/user-account").flashing("success" -> message)
       }
     )
