@@ -6,12 +6,14 @@ import com.gu.googleauth.AuthAction
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.janus.model.JanusData
 import com.webauthn4j.data.client.challenge.DefaultChallenge
+import com.webauthn4j.util.Base64UrlUtil
 import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
 import models.JanusException.throwableWrites
 import models.{JanusException, PasskeyEncodings}
 import play.api.http.MimeTypes
+import play.api.libs.json.{Json, JsObject}
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import play.api.{Logging, Mode}
@@ -143,33 +145,38 @@ class PasskeyController(
     )
   }
 
-  /** Deletes a passkey for a user */
-  def deletePasskey: Action[Map[String, Seq[String]]] = authAction(
-    parse.formUrlEncoded
-  ) { implicit request =>
-    apiResponse(
-      for {
-        passkeyId <- request.body.get("passkeyId") match {
-          case Some(values) => Success(values.head)
-          case None =>
-            Failure(
-              JanusException.missingFieldInRequest(request.user, "passkeyId")
+  /** Deletes a passkey from the user's account */
+  def deletePasskey(passkeyId: String): Action[AnyContent] = authAction {
+    implicit request =>
+      apiResponse(
+        for {
+          // Look up the passkey before deleting to include the name in the success message
+          passkeyData <- Try {
+            val queryResponse = PasskeyDB.loadCredentials(request.user).get
+            PasskeyDB
+              .extractMetadata(queryResponse)
+              .find(_.id == passkeyId)
+              .map(_.name)
+          }
+          _ <- PasskeyDB.deleteById(request.user, passkeyId)
+          _ = logger.info(
+            s"Deleted passkey for user ${request.user.username} with ID $passkeyId"
+          )
+        } yield {
+          val message = passkeyData
+            .map(name => s"Passkey '$name' was successfully deleted")
+            .getOrElse("Passkey was successfully deleted")
+
+          // Return JSON response with flash session info for the toast
+          Ok(
+            Json.obj(
+              "success" -> true,
+              "message" -> message,
+              "redirect" -> "/user-account"
             )
+          ).flashing("success" -> message)
         }
-        passkeyName <- request.body
-          .get("passkeyName")
-          .map(values => Success(values.head))
-          .getOrElse(Success(""))
-        _ <- PasskeyDB.deleteById(request.user, passkeyId)
-        _ = logger.info(s"Deleted passkey for user ${request.user.username}")
-      } yield {
-        val message =
-          if (passkeyName.nonEmpty)
-            s"Passkey '$passkeyName' was successfully deleted"
-          else "Passkey was successfully deleted"
-        Redirect("/user-account").flashing("success" -> message)
-      }
-    )
+      )
   }
 
   // To be removed when passkeyAuthAction has been applied to real endpoints
