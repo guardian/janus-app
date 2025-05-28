@@ -247,6 +247,22 @@ function getPasskeyNameFromUser() {
         const alphanumericRegex = /^[a-zA-Z0-9 _-]*$/;
         const maxLength = 50; // Maximum character limit
 
+        // Get existing passkey names
+        let existingPasskeyNames = [];
+        try {
+            const passkeysTable = document.querySelector('.card-panel table');
+            if (passkeysTable) {
+                const nameElements = passkeysTable.querySelectorAll('td[data-passkey-name="true"]');
+                nameElements.forEach(nameCell => {
+                    if (nameCell && nameCell.textContent) {
+                        existingPasskeyNames.push(nameCell.textContent.trim().toLowerCase());
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching existing passkey names:', err);
+        }
+
         // Reset the input field and error message when opening the modal
         input.value = '';
         input.classList.remove('invalid');
@@ -266,8 +282,15 @@ function getPasskeyNameFromUser() {
                 errorMessage.style.display = 'block';
                 errorMessage.textContent = `Name is too long: ${input_value.length}/${maxLength} characters`;
             } else if (input_value.trim() && alphanumericRegex.test(input_value)) {
-                input.classList.remove('invalid');
-                errorMessage.style.display = 'none';
+                // Check for duplicate names (case-insensitive)
+                if (existingPasskeyNames.includes(input_value.trim().toLowerCase())) {
+                    input.classList.add('invalid');
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = `A passkey with the name "${input_value.trim()}" already exists. Please use a different name.`;
+                } else {
+                    input.classList.remove('invalid');
+                    errorMessage.style.display = 'none';
+                }
             } else {
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
@@ -279,16 +302,20 @@ function getPasskeyNameFromUser() {
             e.preventDefault();
             const passkeyName = input.value.trim();
 
-            if (!passkeyName || !alphanumericRegex.test(passkeyName) || passkeyName.length > maxLength) {
-                // Show validation error
+            if (!passkeyName || !alphanumericRegex.test(passkeyName)) {
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
-                
-                if (passkeyName.length > maxLength) {
-                    errorMessage.textContent = `Passkey name too long: maximum ${maxLength} characters allowed`;
-                } else {
-                    errorMessage.textContent = 'Cannot save passkey name: only letters, numbers, spaces, underscores and hyphens are allowed';
-                }
+                errorMessage.textContent = 'Cannot save passkey name: only letters, numbers, spaces, underscores and hyphens are allowed';
+                return;
+            } else if (passkeyName.length > maxLength) {
+                input.classList.add('invalid');
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = `Passkey name too long: maximum ${maxLength} characters allowed`;
+                return;
+            } else if (existingPasskeyNames.includes(passkeyName.toLowerCase())) {
+                input.classList.add('invalid');
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = `A passkey with the name "${passkeyName}" already exists. Please use a different name.`;
                 return;
             }
 
