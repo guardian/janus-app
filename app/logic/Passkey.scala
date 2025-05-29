@@ -10,7 +10,7 @@ import com.webauthn4j.data.UserVerificationRequirement.REQUIRED
 import com.webauthn4j.data._
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
-import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
+import com.webauthn4j.data.client.challenge.Challenge
 import com.webauthn4j.data.extension.client._
 import com.webauthn4j.server.ServerProperty
 import com.webauthn4j.util.Base64UrlUtil
@@ -134,35 +134,41 @@ object Passkey {
   def authenticationOptions(
       appHost: String,
       user: UserIdentity,
-      challenge: Challenge = new DefaultChallenge()
-  ): Try[PublicKeyCredentialRequestOptions] =
-    Try {
-      val timeout = Duration(10, SECONDS)
-      val rpId = URI.create(appHost).getHost
-      val allowCredentials = Nil
-      val userVerification = REQUIRED
-      val hints = Nil
-      val extensions: AuthenticationExtensionsClientInputs[
-        AuthenticationExtensionClientInput
-      ] = null
-      new PublicKeyCredentialRequestOptions(
-        challenge,
-        timeout.toMillis,
-        rpId,
-        allowCredentials.asJava,
-        userVerification,
-        hints.asJava,
-        extensions
-      )
-    }.recoverWith(exception =>
-      Failure(
-        JanusException.invalidFieldInRequest(
-          user,
-          "authentication options",
-          exception
+      challenge: Challenge,
+      existingPasskeys: Seq[PasskeyMetadata]
+  ): Try[PublicKeyCredentialRequestOptions] = {
+    if (existingPasskeys.isEmpty) {
+      Failure(JanusException.noPasskeysRegistered(user))
+    } else {
+      Try {
+        val timeout = Duration(10, SECONDS)
+        val rpId = URI.create(appHost).getHost
+        val allowCredentials = Nil
+        val userVerification = REQUIRED
+        val hints = Nil
+        val extensions: AuthenticationExtensionsClientInputs[
+          AuthenticationExtensionClientInput
+        ] = null
+        new PublicKeyCredentialRequestOptions(
+          challenge,
+          timeout.toMillis,
+          rpId,
+          allowCredentials.asJava,
+          userVerification,
+          hints.asJava,
+          extensions
+        )
+      }.recoverWith(exception =>
+        Failure(
+          JanusException.invalidFieldInRequest(
+            user,
+            "authentication options",
+            exception
+          )
         )
       )
-    )
+    }
+  }
 
   /** Verifies the registration response from the browser. This is called after
     * the user has completed the passkey creation process on the browser.
