@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Define paths
-JWT_FILE="/Users/thalia_silver/code/janus-app/blob.jwt"
-OUTPUT_FILE="/Users/thalia_silver/code/janus-app/decoded_jwt.json"
+JWT_FILE="blob.jwt"
+OUTPUT_FILE="decoded_jwt.json"
 
 # Check if the JWT file exists
 if [ ! -f "$JWT_FILE" ]; then
