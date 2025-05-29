@@ -146,8 +146,8 @@ class PasskeyController(
   }
 
   /** Deletes a passkey from the user's account */
-  def deletePasskey(passkeyId: String): Action[AnyContent] = authAction {
-    implicit request =>
+  def deletePasskey(passkeyId: String): Action[Unit] = authAction(parse.empty) {
+    implicit request: UserIdentityRequest[Unit] =>
       apiResponse(
         for {
           // Look up the passkey before deleting to include the name in the success message
