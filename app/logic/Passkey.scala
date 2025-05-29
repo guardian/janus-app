@@ -6,11 +6,10 @@ import com.webauthn4j.converter.exception.DataConversionException
 import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
 import com.webauthn4j.data.AttestationConveyancePreference.NONE
 import com.webauthn4j.data.PublicKeyCredentialType.PUBLIC_KEY
-import com.webauthn4j.data.UserVerificationRequirement.REQUIRED
 import com.webauthn4j.data._
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
-import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
+import com.webauthn4j.data.client.challenge.Challenge
 import com.webauthn4j.data.extension.client._
 import com.webauthn4j.server.ServerProperty
 import com.webauthn4j.util.Base64UrlUtil
@@ -36,22 +35,31 @@ object Passkey {
   private val publicKeyCredentialParameters = List(
     // EdDSA for better security/performance in newer authenticators
     new PublicKeyCredentialParameters(
-      PublicKeyCredentialType.PUBLIC_KEY,
+      PUBLIC_KEY,
       COSEAlgorithmIdentifier.EdDSA
     ),
     // ES256 is widely supported and efficient
     new PublicKeyCredentialParameters(
-      PublicKeyCredentialType.PUBLIC_KEY,
+      PUBLIC_KEY,
       COSEAlgorithmIdentifier.ES256
     ),
     // RS256 for broader compatibility
     new PublicKeyCredentialParameters(
-      PublicKeyCredentialType.PUBLIC_KEY,
+      PUBLIC_KEY,
       COSEAlgorithmIdentifier.RS256
     )
   )
 
   private val webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager()
+
+  private def toDescriptor(
+      passkey: PasskeyMetadata
+  ): PublicKeyCredentialDescriptor = {
+    val credType = PUBLIC_KEY
+    val id = Base64UrlUtil.decode(passkey.id)
+    val transports: Set[AuthenticatorTransport] = Set.empty
+    new PublicKeyCredentialDescriptor(credType, id, transports.asJava)
+  }
 
   /** Creates registration options for a new passkey. This is required by a
     * browser to initiate the registration process.
@@ -91,14 +99,17 @@ object Passkey {
         user.fullName
       )
       val timeout = Duration(10, SECONDS)
-      val excludeCredentials = existingPasskeys
-        .map { passkey =>
-          val credType = PUBLIC_KEY
-          val id = Base64UrlUtil.decode(passkey.id)
-          val transports: Set[AuthenticatorTransport] = Set.empty
-          new PublicKeyCredentialDescriptor(credType, id, transports.asJava)
-        }
-      val authenticatorSelection: AuthenticatorSelectionCriteria = null
+      val excludeCredentials = existingPasskeys.map(toDescriptor)
+      val authenticatorSelection = {
+        val authenticatorAttachment: AuthenticatorAttachment = null
+        val residentKey = ResidentKeyRequirement.DISCOURAGED
+        val userVerification = UserVerificationRequirement.REQUIRED
+        new AuthenticatorSelectionCriteria(
+          authenticatorAttachment,
+          residentKey,
+          userVerification
+        )
+      }
       val hints: Seq[PublicKeyCredentialHints] = Nil
       val attestation: AttestationConveyancePreference = NONE
       val extensions: AuthenticationExtensionsClientInputs[
@@ -134,13 +145,14 @@ object Passkey {
   def authenticationOptions(
       appHost: String,
       user: UserIdentity,
-      challenge: Challenge = new DefaultChallenge()
+      challenge: Challenge,
+      existingPasskeys: Seq[PasskeyMetadata]
   ): Try[PublicKeyCredentialRequestOptions] =
     Try {
       val timeout = Duration(10, SECONDS)
       val rpId = URI.create(appHost).getHost
-      val allowCredentials = Nil
-      val userVerification = REQUIRED
+      val allowCredentials = existingPasskeys.map(toDescriptor)
+      val userVerification = UserVerificationRequirement.REQUIRED
       val hints = Nil
       val extensions: AuthenticationExtensionsClientInputs[
         AuthenticationExtensionClientInput
