@@ -296,8 +296,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setUpRegisterPasskeyButton('#register-passkey');
     setUpDeletePasskeyButtons('.delete-passkey-btn');
-    // setupAuthButtons('.auth-button');
-    const protectedLinks = document.querySelectorAll('.passkey-protected');
+    const protectedLinks = document.querySelectorAll('[data-passkey-protected]');
     setUpProtectedLinks(protectedLinks);
     
     const flashMessage = document.getElementById('flash-message');

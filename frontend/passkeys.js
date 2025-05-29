@@ -80,6 +80,16 @@ export async function authenticatePasskey(targetHref, csrfToken) {
     }
 }
 
+export async function bypassPasskeyAuthentication(targetHref, csrfToken) {
+    try {
+        createAndSubmitForm(targetHref, {
+            csrfToken: csrfToken
+        });
+    } catch (err) {
+        console.error('Error during bypass of passkey authentication:', err);
+    }
+}
+
 /**
  * Deletes a passkey from the user's account
  * @param {string} passkeyId - ID of the passkey to delete
@@ -170,9 +180,15 @@ export function setUpProtectedLinks(links) {
             e.preventDefault();
             const csrfToken = link.getAttribute('csrf-token');
             const targetHref = link.href;
-            authenticatePasskey(targetHref, csrfToken).catch(function (err) {
-                console.error('Error setting up protected link:', err);
-            });
+            if (link.dataset.passkeyBypassed) {
+                bypassPasskeyAuthentication(targetHref, csrfToken).catch(function (err) {
+                    console.error('Error setting up bypass of protected link:', err);
+                });
+            } else {
+                authenticatePasskey(targetHref, csrfToken).catch(function (err) {
+                    console.error('Error setting up protected link:', err);
+                });
+            }
         });
     });
 }
