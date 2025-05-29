@@ -38,17 +38,17 @@ echo "Processing files..."
 cd "$TEMP_DIR"
 
 # Copy decode_jwt.sh to temp directory and run it
-cp "$SCRIPT_DIR/../script/decode_jwt.sh" .
+cp "$SCRIPT_DIR/../scripts/decode_jwt.sh" .
 chmod +x decode_jwt.sh
 ./decode_jwt.sh
 
-# Copy gen_mappings.sh and its dependencies to temp directory
-cp "$SCRIPT_DIR/gen_mappings.sh" .
-cp "$SCRIPT_DIR/merge_aaguids.jq" .
-chmod +x gen_mappings.sh
+# Copy aaguid_map_data.sh and its dependencies to temp directory
+cp "$SCRIPT_DIR/aaguid_map_data.sh" .
+cp "$SCRIPT_DIR/aaguid_map_data.jq" .
+chmod +x aaguid_map_data.sh
 
 # Run the mapping generation
-./gen_mappings.sh
+./aaguid_map_data.sh
 
 # Copy output back to conf directory
 cp aaguid_descriptions.json "$CONF_DIR/"

@@ -8,7 +8,7 @@ set -e
 INPUT_FILE_1="combined_aaguid.json"
 INPUT_FILE_2="decoded_jwt.json"
 OUTPUT_FILE="aaguid_descriptions.json"
-JQ_SCRIPT="merge_aaguids.jq"
+JQ_SCRIPT="aaguid_map_data.jq"
 
 # Check if input files exist
 if [[ ! -f "$INPUT_FILE_1" ]]; then
