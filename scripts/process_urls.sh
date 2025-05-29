@@ -12,6 +12,7 @@ TEMP_DIR=$(mktemp -d)
 JWT_FILE="$TEMP_DIR/blob.jwt"
 JSON_FILE="$TEMP_DIR/combined_aaguid.json"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONF_DIR="$SCRIPT_DIR/../conf"
 
 echo "Downloading files..."
 
@@ -49,11 +50,11 @@ chmod +x gen_mappings.sh
 # Run the mapping generation
 ./gen_mappings.sh
 
-# Copy output back to original directory
-cp aaguid_descriptions.json "$SCRIPT_DIR/"
+# Copy output back to conf directory
+cp aaguid_descriptions.json "$CONF_DIR/"
 
 echo "Process completed successfully!"
-echo "Output file: $SCRIPT_DIR/aaguid_descriptions.json"
+echo "Output file: $CONF_DIR/aaguid_descriptions.json"
 
 # Clean up
 cd "$SCRIPT_DIR"
