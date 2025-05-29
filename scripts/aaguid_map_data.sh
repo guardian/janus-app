@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script to merge combined_aaguid.json and decoded_jwt.json into a single output file
-# with aaguid to description mappings
+# with aaguid to description and icon mappings
 
 set -e
 
@@ -31,3 +31,4 @@ jq -s -f "$JQ_SCRIPT" "$INPUT_FILE_1" "$INPUT_FILE_2" > "$OUTPUT_FILE"
 
 echo "Successfully merged $INPUT_FILE_1 and $INPUT_FILE_2 into $OUTPUT_FILE"
 echo "Total mappings created: $(jq 'length' "$OUTPUT_FILE")"
+echo "Each mapping contains 'description' and 'icon' fields where available"
