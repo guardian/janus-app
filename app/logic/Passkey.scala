@@ -6,7 +6,6 @@ import com.webauthn4j.converter.exception.DataConversionException
 import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
 import com.webauthn4j.data.AttestationConveyancePreference.{DIRECT, NONE}
 import com.webauthn4j.data.PublicKeyCredentialType.PUBLIC_KEY
-import com.webauthn4j.data.UserVerificationRequirement.REQUIRED
 import com.webauthn4j.data.*
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
@@ -36,22 +35,31 @@ object Passkey {
   private val publicKeyCredentialParameters = List(
     // EdDSA for better security/performance in newer authenticators
     new PublicKeyCredentialParameters(
-      PublicKeyCredentialType.PUBLIC_KEY,
+      PUBLIC_KEY,
       COSEAlgorithmIdentifier.EdDSA
     ),
     // ES256 is widely supported and efficient
     new PublicKeyCredentialParameters(
-      PublicKeyCredentialType.PUBLIC_KEY,
+      PUBLIC_KEY,
       COSEAlgorithmIdentifier.ES256
     ),
     // RS256 for broader compatibility
     new PublicKeyCredentialParameters(
-      PublicKeyCredentialType.PUBLIC_KEY,
+      PUBLIC_KEY,
       COSEAlgorithmIdentifier.RS256
     )
   )
 
   private val webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager()
+
+  private def toDescriptor(
+      passkey: PasskeyMetadata
+  ): PublicKeyCredentialDescriptor = {
+    val credType = PUBLIC_KEY
+    val id = Base64UrlUtil.decode(passkey.id)
+    val transports: Set[AuthenticatorTransport] = Set.empty
+    new PublicKeyCredentialDescriptor(credType, id, transports.asJava)
+  }
 
   /** Creates registration options for a new passkey. This is required by a
     * browser to initiate the registration process.
@@ -91,13 +99,7 @@ object Passkey {
         user.fullName
       )
       val timeout = Duration(10, SECONDS)
-      val excludeCredentials = existingPasskeys
-        .map { passkey =>
-          val credType = PUBLIC_KEY
-          val id = Base64UrlUtil.decode(passkey.id)
-          val transports: Set[AuthenticatorTransport] = Set.empty
-          new PublicKeyCredentialDescriptor(credType, id, transports.asJava)
-        }
+      val excludeCredentials = existingPasskeys.map(toDescriptor)
       val authenticatorSelection: AuthenticatorSelectionCriteria = null
       val hints: Seq[PublicKeyCredentialHints] = Nil
       val attestation = DIRECT
@@ -143,8 +145,8 @@ object Passkey {
       Try {
         val timeout = Duration(10, SECONDS)
         val rpId = URI.create(appHost).getHost
-        val allowCredentials = Nil
-        val userVerification = REQUIRED
+        val allowCredentials = existingPasskeys.map(toDescriptor)
+        val userVerification = UserVerificationRequirement.REQUIRED
         val hints = Nil
         val extensions: AuthenticationExtensionsClientInputs[
           AuthenticationExtensionClientInput

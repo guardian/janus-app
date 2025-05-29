@@ -3,7 +3,7 @@ package logic
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.DefaultChallenge
-import models.{PasskeyEncodings, PasskeyMetadata}
+import models.{JanusException, PasskeyEncodings, PasskeyMetadata}
 import org.scalatest.EitherValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should
@@ -81,7 +81,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
   }
 
   "verifiedRegistration" - {
-    "rejects invalid registration response" in {
+    "rejects invalid registration response" - {
       val appHost = "https://test.example.com"
       val testUser = UserIdentity(
         sub = "sub",
@@ -101,7 +101,103 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         invalidJson
       )
 
-      result.isFailure shouldBe true
+      val exception = result.failed.get.asInstanceOf[JanusException]
+
+      "returns failure" in {
+        result.isFailure shouldBe true
+      }
+
+      "returns expected HTTP code" in {
+        exception.httpCode shouldBe 400
+      }
+
+      "returns expected error message" in {
+        exception.userMessage should include("Invalid passkey field")
+      }
+    }
+  }
+
+  "authenticationOptions" - {
+    "returns failure when user has no registered passkeys" - {
+      val appHost = "https://test.example.com"
+      val testUser = UserIdentity(
+        sub = "sub",
+        email = "test.user@example.com",
+        firstName = "Test",
+        lastName = "User",
+        exp = 0,
+        avatarUrl = None
+      )
+      val challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
+      val emptyPasskeys = Seq.empty[PasskeyMetadata]
+
+      val result = Passkey.authenticationOptions(
+        appHost,
+        testUser,
+        challenge,
+        emptyPasskeys
+      )
+
+      val exception = result.failed.get.asInstanceOf[JanusException]
+
+      "returns failure" in {
+        result.isFailure shouldBe true
+      }
+
+      "returns expected HTTP code" in {
+        exception.httpCode shouldBe 400
+      }
+
+      "returns expected error message" in {
+        exception.userMessage should include("No passkeys registered")
+      }
+    }
+
+    "creates valid authentication options when passkeys exist" - {
+      val appHost = "https://test.example.com"
+      val testUser = UserIdentity(
+        sub = "sub",
+        email = "test.user@example.com",
+        firstName = "Test",
+        lastName = "User",
+        exp = 0,
+        avatarUrl = None
+      )
+      val challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
+      val existingPasskeys = Seq(
+        PasskeyMetadata(
+          id = "K9iphQ03JmTBqf-1pPGBXvpzfvt96ZAy51_BrKjibn0",
+          name = "Test",
+          registrationTime = Instant.parse("2025-05-21T09:30:00.000000Z"),
+          aaguid = new AAGUID("adce0002-35bc-c60a-648b-0b25f1f05503"),
+          lastUsedTime = None
+        )
+      )
+
+      val result = Passkey.authenticationOptions(
+        appHost,
+        testUser,
+        challenge,
+        existingPasskeys
+      )
+
+      val options = result.get
+
+      "returns success" in {
+        result.isSuccess shouldBe true
+      }
+
+      "sets the correct challenge" in {
+        options.getChallenge shouldBe challenge
+      }
+
+      "sets the correct RP ID" in {
+        options.getRpId shouldBe "test.example.com"
+      }
+
+      "includes all credentials" in {
+        options.getAllowCredentials.size() shouldBe 1
+      }
     }
   }
 }
