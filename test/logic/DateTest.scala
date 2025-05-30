@@ -114,11 +114,11 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
     "returns the week before and after the given date" in {
       val date =
         ZonedDateTime.of(2015, 11, 10, 0, 0, 0, 0, UTC).toInstant
-      val (Some(before), Some(after)) = Date.prevNextAuditWeeks(date)
-      before shouldEqual ZonedDateTime
+      val (before, after) = Date.prevNextAuditWeeks(date)
+      before.value shouldEqual ZonedDateTime
         .of(2015, 11, 2, 0, 0, 0, 0, UTC)
         .toInstant
-      after shouldEqual ZonedDateTime
+      after.value shouldEqual ZonedDateTime
         .of(2015, 11, 16, 0, 0, 0, 0, UTC)
         .toInstant
     }

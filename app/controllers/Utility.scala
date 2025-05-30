@@ -18,11 +18,11 @@ class Utility(
     extends AbstractController(controllerComponents)
     with Logging {
 
-  def healthcheck = Action {
+  def healthcheck: Action[AnyContent] = Action {
     Ok("ok")
   }
 
-  def accounts = authAction { implicit request =>
+  def accounts: Action[AnyContent] = authAction { implicit request =>
     val accountData = Owners.accountOwnerInformation(
       janusData.accounts.toList,
       janusData.access
@@ -32,7 +32,8 @@ class Utility(
     Owners
       .accountIdErrors(accountData)
       .foreach { case (account, err) =>
-        logger.warn(s"Couldn't lookup account number for ${account.name}", err)
+        logger
+          .warn(s"Couldn't lookup account number for ${account.name}", err)
       }
     Ok(views.html.accounts(accountData, request.user, janusData))
   }
