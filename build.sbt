@@ -25,10 +25,9 @@ lazy val commonSettings = Seq(
       "-release:11"
     )
     CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((3, _)) => commonOptions :+ "-Werror"
-      case Some((2, 13)) =>
-        commonOptions :+ "-Xfatal-warnings"
-      case _ => commonOptions
+      case Some((2, 13)) => commonOptions :+ "-Xfatal-warnings"
+      case Some((3, _))  => commonOptions :+ "-Werror"
+      case _             => commonOptions
     }
   },
   Test / testOptions ++= Seq(
@@ -67,6 +66,8 @@ lazy val root: Project = (project in file("."))
   .aggregate(configTools)
   .settings(
     commonSettings,
+    // Root project stays on Scala 3.3 only
+    crossScalaVersions := Seq("3.3.6"),
     name := """janus""",
     // The version is concatenated with the name to generate the filename for the deb file when building this project.
     // The result must match the URL in the cloudformation userdata in another repository, so the version is hard-coded.
@@ -139,6 +140,14 @@ lazy val configTools = (project in file("configTools"))
   .enablePlugins(SbtTwirl)
   .settings(
     commonSettings,
+    crossScalaVersions := Seq("2.13.16", "3.3.6"),
+    mimaPreviousArtifacts := {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 13)) => Set(organization.value %% name.value % "4.0.0")
+        case Some((3, _))  => Set.empty // No previous Scala 3 version yet
+        case _             => Set.empty
+      }
+    },
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.3",
       "io.circe" %% "circe-core" % circeVersion,
