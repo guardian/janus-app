@@ -1,11 +1,9 @@
 import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 import play.sbt.PlayImport.PlayKeys.*
+import sbt.*
 import sbt.Keys.*
-import sbt.{addCompilerPlugin, *}
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations.*
 import sbtversionpolicy.withsbtrelease.ReleaseVersion
-
-import play.sbt.PlayImport.PlayKeys.playRunHooks
 
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
@@ -20,14 +18,19 @@ val commonDependencies = Seq(
   "ch.qos.logback" % "logback-classic" % "1.5.18"
 )
 lazy val commonSettings = Seq(
-  scalaVersion := "2.13.16",
-  scalacOptions ++= Seq(
-    "-deprecation",
-    "-feature",
-    "-unchecked",
-    "-release:11",
-    "-Xfatal-warnings"
-  ),
+  scalaVersion := "3.3.6",
+  scalacOptions ++= {
+    val commonOptions = Seq(
+      "-feature",
+      "-release:11"
+    )
+    CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((3, _)) => commonOptions :+ "-Werror"
+      case Some((2, 13)) =>
+        commonOptions :+ "-Xfatal-warnings"
+      case _ => commonOptions
+    }
+  },
   Test / testOptions ++= Seq(
     Tests.Argument(TestFrameworks.ScalaTest, "-o"),
     Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports")
@@ -135,9 +138,6 @@ lazy val root: Project = (project in file("."))
 lazy val configTools = (project in file("configTools"))
   .enablePlugins(SbtTwirl)
   .settings(
-    addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full
-    ),
     commonSettings,
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.3",

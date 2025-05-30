@@ -177,7 +177,7 @@ class FederationTest
       }
 
       "calculate the same duration in any arbitrary timezone" in {
-        forAll { zone: ZoneId =>
+        forAll { (zone: ZoneId) =>
           val clock = makeClock(
             hour = 15,
             minute = 30,
