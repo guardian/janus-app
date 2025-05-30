@@ -1,84 +1,131 @@
 package controllers
 
-import com.gu.googleauth.{AuthAction, UserIdentity}
-import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.freespec.AnyFreeSpec
+import com.gu.googleauth.UserIdentity
+import com.webauthn4j.data.client.challenge.DefaultChallenge
+import logic.Passkey
+import models.JanusException
 import org.scalatest.matchers.should.Matchers
-import play.api.mvc.{AnyContentAsFormUrlEncoded, Cookie, Results}
-import play.api.test.{FakeHeaders, FakeRequest}
+import org.scalatest.wordspec.AnyWordSpec
+import play.api.Logger
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import java.nio.charset.StandardCharsets.UTF_8
+import scala.util.{Failure, Success, Try}
 
-class PasskeyAuthFilterSpec
-    extends AnyFreeSpec
-    with Matchers
-    with ScalaFutures
-    with Results {
+class PasskeyAuthFilterSpec extends AnyWordSpec with Matchers {
 
-  private val testHost = "test.example.com"
-  private val testCookieName = "test-cookie"
-  private val testUser = UserIdentity(
-    sub = "test-sub-id",
-    email = "test@example.com",
-    firstName = "Test",
-    lastName = "User",
-    exp = Long.MaxValue,
-    avatarUrl = None
-  )
+  class PasskeyAuthFilterSpec extends AnyWordSpec with Matchers {
 
-  private def createRequestWithCookie[A](body: A) = {
-    val cookie = Cookie(testCookieName, "present")
-    new AuthAction.UserIdentityRequest(
-      testUser,
-      FakeRequest("POST", "/test")
-        .withHeaders(FakeHeaders())
-        .withBody(body)
-        .withCookies(cookie)
+    val testUser = UserIdentity(
+      "test@example.com",
+      "Test User",
+      "firstName",
+      "lastName",
+      12345L,
+      None
     )
-  }
+    val testHost = "example.com"
 
-  private def createRequestWithoutCookie[A](body: A) = {
-    new AuthAction.UserIdentityRequest(
-      testUser,
-      FakeRequest("POST", "/test")
-        .withHeaders(FakeHeaders())
-        .withBody(body)
-    )
-  }
+    "handleApiResponse" should {
+      implicit val mockLogger: Logger = Logger("test")
 
-  private val validFormBody = AnyContentAsFormUrlEncoded(
-    Map(
-      "credentials" -> Seq(
-        """{"id":"ABCDEFGHIJKLMNOPQRSTUVWXYZ","rawId":"ABCDEFGHIJKLMNOPQRSTUVWXYZ","response":{"authenticatorData":"data","clientDataJSON":"json","signature":"sig"}}"""
-      )
-    )
-  )
+      "return None for successful operation" in {
+        val operation = Success(())
 
-  "PasskeyAuthFilter" - {
-    "bypass authentication when disabled" in {
-      val filter = new PasskeyAuthFilter(
-        passkeysEnabled = false,
-        enablingCookieName = testCookieName,
-        host = testHost
-      )(null, global)
+        PasskeyAuthFilter.handleApiResponse(
+          operation,
+          testUser.username
+        ) shouldBe None
+      }
 
-      val request = createRequestWithCookie(validFormBody)
-      val result = filter.filter(request).futureValue
+      "return Some(Result) with correct status for JanusException" in {
+        val exception = JanusException.missingFieldInRequest(testUser, "field")
+        val operation = Failure(exception)
 
-      result shouldBe None
+        val result =
+          PasskeyAuthFilter.handleApiResponse(operation, testUser.username)
+        result shouldBe defined
+      }
+
+      "return Some(Result) with INTERNAL_SERVER_ERROR for other exceptions" in {
+        val exception = new RuntimeException("Test error")
+        val operation = Failure(exception)
+
+        val result =
+          PasskeyAuthFilter.handleApiResponse(operation, testUser.username)
+        result shouldBe defined
+      }
     }
 
-    "bypass authentication when enabling cookie is not present" in {
-      val filter = new PasskeyAuthFilter(
-        passkeysEnabled = true,
-        enablingCookieName = testCookieName,
-        host = testHost
-      )(null, global)
+    "Passkey logic integration with UserIdentity" should {
+      "generate valid registration options" in {
+        val appHost = "https://test.example.com"
+        val appName = "Janus-Test"
+        val challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
 
-      val request = createRequestWithoutCookie(validFormBody)
-      val result = filter.filter(request).futureValue
+        val result = Passkey.registrationOptions(
+          appName,
+          appHost,
+          testUser,
+          challenge,
+          existingPasskeys = Seq.empty
+        )
 
-      result shouldBe None
+        result.isSuccess shouldBe true
+        result.get.getUser.getName shouldBe testUser.username
+      }
+
+      "generate valid authentication options" in {
+        val appHost = "https://test.example.com"
+
+        val result = Passkey.authenticationOptions(appHost, testUser)
+
+        result.isSuccess shouldBe true
+      }
+
+      "reject invalid registration JSON" in {
+        val appHost = "https://test.example.com"
+        val challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
+        val invalidJson = """{"type": "public-key", "id": "invalid"}"""
+
+        val result = Passkey.verifiedRegistration(
+          appHost,
+          testUser,
+          challenge,
+          invalidJson
+        )
+
+        result.isFailure shouldBe true
+        result.failed.get shouldBe a[JanusException]
+      }
+
+      "reject invalid authentication JSON" in {
+        val invalidJson = """{"type": "public-key", "response": "invalid"}"""
+
+        val result = Passkey.parsedAuthentication(testUser, invalidJson)
+
+        result.isFailure shouldBe true
+        result.failed.get shouldBe a[JanusException]
+      }
+    }
+
+    "JanusException creation with UserIdentity" should {
+      "create appropriate exceptions for missing fields" in {
+        val exception =
+          JanusException.missingFieldInRequest(testUser, "credentials")
+
+        exception.userMessage should include("credentials")
+        exception.engineerMessage should include(testUser.username)
+      }
+
+      "create appropriate exceptions for invalid fields" in {
+        val cause = new RuntimeException("Test cause")
+        val exception =
+          JanusException.invalidFieldInRequest(testUser, "passkey", cause)
+
+        exception.userMessage should include("passkey")
+        exception.engineerMessage should include(testUser.username)
+        exception.causedBy shouldBe Some(cause)
+      }
     }
   }
 }

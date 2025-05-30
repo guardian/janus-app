@@ -92,10 +92,12 @@ class AppComponents(context: ApplicationLoader.Context)
 
   val passkeyAuthAction: ActionBuilder[UserIdentityRequest, AnyContent] =
     authAction.andThen(
-      new PasskeyAuthFilter(host, passkeysEnabled, passkeysEnablingCookieName)(
-        dynamodDB,
-        executionContext
-      )
+      new PasskeyAuthFilter(
+        host,
+        passkeysEnabled,
+        passkeysEnablingCookieName,
+        actorSystem
+      )(dynamodDB)
     )
 
   override def router: Router = new Routes(
