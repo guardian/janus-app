@@ -27,8 +27,8 @@ GET     /loginError                 controllers.AuthController.loginError
 GET     /oauthCallback              controllers.AuthController.oauthCallback
 GET     /logout                     controllers.AuthController.logout
 
-GET     /passkey/registration-options   controllers.PasskeyController.registrationOptions
-GET     /passkey/auth-options           controllers.PasskeyController.authenticationOptions
+POST    /passkey/registration-options   controllers.PasskeyController.registrationOptions
+POST    /passkey/auth-options           controllers.PasskeyController.authenticationOptions
 POST    /passkey/register               controllers.PasskeyController.register
 POST    /passkey/delete                 controllers.PasskeyController.deletePasskey
 
