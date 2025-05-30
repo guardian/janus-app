@@ -138,13 +138,10 @@ lazy val configTools = (project in file("configTools"))
   .settings(
     commonSettings,
     crossScalaVersions := Seq("2.13.16", scalaVersion.value),
-//    mimaPreviousArtifacts := {
-//      CrossVersion.partialVersion(scalaVersion.value) match {
-//        case Some((2, 13)) => Set(organization.value %% name.value % "4.0.0")
-//        case Some((3, _))  => Set.empty // No previous Scala 3 version yet
-//        case _             => Set.empty
-//      }
-//    },
+    // No previous Scala 3 version yet
+    mimaPreviousArtifacts := Set(
+      organization.value %% name.value % "4.0.0" cross CrossVersion.for2_13Use3
+    ),
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.3",
       "io.circe" %% "circe-core" % circeVersion,
