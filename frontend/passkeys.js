@@ -66,9 +66,10 @@ export async function authenticatePasskey(targetHref, csrfToken) {
                 'X-CSRF-Token': csrfToken // Securely include CSRF token in headers
             }
         });
-        
+        const authOptionsResponseJson = await authOptionsResponse.json();
+
         if (authOptionsResponse.status !== 200) {
-            console.error('Authentication options request failed:', authOptionsResponse.body);
+            console.error('Authentication options request failed:', authOptionsResponseJson);
             if (authOptionsResponse.status === 400) {
                 M.toast({
                     html: 'Please register a passkey before attempting to authenticate.',
@@ -83,7 +84,6 @@ export async function authenticatePasskey(targetHref, csrfToken) {
             return;
         }
 
-        const authOptionsResponseJson = await authOptionsResponse.json();
         const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
         const publicKeyCredential = await navigator.credentials.get({ publicKey: credentialGetOptions });
 
