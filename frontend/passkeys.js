@@ -68,7 +68,7 @@ export async function authenticatePasskey(targetHref, csrfToken) {
         });
         const authOptionsResponseJson = await authOptionsResponse.json();
 
-        if (authOptionsResponse.status !== 200) {
+        if (!authOptionsResponse.ok) {
             console.error('Authentication options request failed:', authOptionsResponseJson);
             if (authOptionsResponse.status === 400) {
                 M.toast({
