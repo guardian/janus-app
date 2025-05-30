@@ -140,7 +140,7 @@ lazy val configTools = (project in file("configTools"))
     crossScalaVersions := Seq("2.13.16", scalaVersion.value),
     // No previous Scala 3 version yet
     mimaPreviousArtifacts := Set(
-      organization.value %% name.value % "4.0.0" cross CrossVersion.for2_13Use3
+      organization.value %% name.value % "4.0.0" cross CrossVersion.for3Use2_13
     ),
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.3",
