@@ -97,6 +97,11 @@ lazy val root: Project = (project in file("."))
       ++ jacksonOverrides
       ++ pekkoSerializationJacksonOverrides,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
+    // See https://github.com/guardian/janus-app/security/dependabot/19
+    excludeDependencies += ExclusionRule(
+      organization = "net.sourceforge.htmlunit",
+      name = "htmlunit"
+    ),
 
     // local development
     playDefaultPort := 9100,
