@@ -19,17 +19,14 @@ val commonDependencies = Seq(
 )
 lazy val commonSettings = Seq(
   scalaVersion := "3.3.6",
-  scalacOptions ++= {
-    val commonOptions = Seq(
-      "-feature",
-      "-release:11"
-    )
-    CrossVersion.partialVersion(scalaVersion.value) match {
-      case Some((2, 13)) => commonOptions :+ "-Xfatal-warnings"
-      case Some((3, _))  => commonOptions :+ "-Werror"
-      case _             => commonOptions
-    }
-  },
+  scalacOptions ++= Seq(
+    "-feature",
+    "-release:11"
+  ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((2, 13)) => Seq("-Xfatal-warnings")
+    case Some((3, _))  => Seq("-Werror")
+    case _             => Seq.empty
+  }),
   Test / testOptions ++= Seq(
     Tests.Argument(TestFrameworks.ScalaTest, "-o"),
     Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports")
