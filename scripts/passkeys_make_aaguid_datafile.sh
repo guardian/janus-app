@@ -42,7 +42,7 @@ echo "Processing files..."
 cd "$TEMP_DIR"
 
 # Copy decode_jwt.sh to temp directory and run it
-cp "$SCRIPT_DIR/../scripts/decode_jwt.sh" .
+cp "$SCRIPT_DIR/decode_jwt.sh" .
 chmod +x decode_jwt.sh
 ./decode_jwt.sh
 
