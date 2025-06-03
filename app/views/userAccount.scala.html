@@ -37,7 +37,7 @@
                             <tbody>
                                 @for(passkey <- passkeys) {
                                     <tr>
-                                        <td data-passkey-name="true">@{passkey.name}</td>
+                                        <td>@{passkey.name}</td>
                                         <td>@{passkey.aaguid}</td>
                                         <td>@{dateFormat(passkey.registrationTime)}</td>
                                         <td>@{passkey.lastUsedTime.map(timeFormat).getOrElse("Never")}</td>
