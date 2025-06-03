@@ -98,7 +98,7 @@ export async function bypassPasskeyAuthentication(targetHref, csrfToken) {
  */
 export async function deletePasskey(passkeyId, csrfToken) {
     try {
-        const response = await fetch(`/passkey/delete/${passkeyId}`, {
+        const response = await fetch(`/passkey/${passkeyId}`, {
             method: 'DELETE',
             headers: {
                 'Csrf-Token': csrfToken, 
