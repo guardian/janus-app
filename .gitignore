@@ -140,3 +140,4 @@ crashlytics-build.properties
 .metals/
 .vscode/
 .bloop/
+/project/metals.sbt
