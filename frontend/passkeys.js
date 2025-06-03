@@ -167,7 +167,7 @@ export function setUpDeletePasskeyButtons(selector) {
                     } else {
                         window.location.reload();
                     }
-                } catch (error) {
+                } catch {
                     // Error is already handled in deletePasskey function
                 }
             } else {
@@ -322,7 +322,7 @@ function getPasskeyNameFromUser() {
                     errorMessage.textContent = 'Cannot save passkey name: only letters, numbers, spaces, underscores and hyphens are allowed';
                    
                 }
-                 return;
+                return;
             }
 
             // Close modal and resolve with the passkey name
