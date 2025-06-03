@@ -143,18 +143,6 @@ lazy val configTools = (project in file("configTools"))
       "2.13.16",
       scalaVersion.value
     ),
-    /*
-     * The release process tries to find the previously released version
-     * so that it can check for the level of compatibility
-     * to determine the version number of the next release.
-     * If there is no previous release, the process breaks.
-     * To get around this we temporarily use the latest 2.13 release make the comparison.
-     *
-     * TODO: remove this when we have released a Scala 3 version
-     */
-    mimaPreviousArtifacts := Set(
-      organization.value %% name.value % "4.0.0" cross CrossVersion.for3Use2_13
-    ),
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.3",
       "io.circe" %% "circe-core" % circeVersion,
