@@ -151,21 +151,31 @@ class PasskeyController(
       apiResponse(
         for {
           // Look up the passkey before deleting to include the name in the success message
-          passkeyData <- Try {
-            val queryResponse = PasskeyDB.loadCredentials(request.user).get
-            PasskeyDB
-              .extractMetadata(queryResponse)
-              .find(_.id == passkeyId)
-              .map(_.name)
-          }
+          queryResponse <- PasskeyDB.loadCredentials(request.user)
+          passkeys = PasskeyDB.extractMetadata(queryResponse)
+          passkeyName <- passkeys
+            .find(_.id == passkeyId)
+            .map(_.name)
+            .toRight(
+              JanusException(
+                userMessage = "Passkey not found",
+                engineerMessage =
+                  s"Passkey with ID $passkeyId not found for user ${request.user.username}",
+                httpCode = NOT_FOUND,
+                causedBy = Some(
+                  new NoSuchElementException(
+                    s"Passkey ID $passkeyId does not exist in user's passkey collection"
+                  )
+                )
+              )
+            )
+            .toTry
           _ <- PasskeyDB.deleteById(request.user, passkeyId)
           _ = logger.info(
             s"Deleted passkey for user ${request.user.username} with ID $passkeyId"
           )
         } yield {
-          val message = passkeyData
-            .map(name => s"Passkey '$name' was successfully deleted")
-            .getOrElse("Passkey was successfully deleted")
+          val message = s"Passkey '$passkeyName' was successfully deleted"
 
           // Return JSON response with flash session info for the toast
           Ok(
