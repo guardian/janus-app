@@ -6,14 +6,13 @@ import com.gu.googleauth.AuthAction
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.janus.model.JanusData
 import com.webauthn4j.data.client.challenge.DefaultChallenge
-import com.webauthn4j.util.Base64UrlUtil
 import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
 import models.JanusException.throwableWrites
 import models.{JanusException, PasskeyEncodings}
 import play.api.http.MimeTypes
-import play.api.libs.json.{Json, JsObject}
+import play.api.libs.json.{Json}
 import play.api.libs.json.Json.toJson
 import play.api.mvc._
 import play.api.{Logging, Mode}
