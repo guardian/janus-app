@@ -1,3 +1,5 @@
+# This script is used by the passkeys_make_aaguid_datafile.sh script.
+
 def has_content: . and (. | length > 0);
 
 .[0] as $community_list | .[1] as $official_list |

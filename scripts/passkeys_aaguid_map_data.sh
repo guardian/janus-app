@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# This script is used by the passkeys_make_aaguid_datafile.sh script.
+#
 # Script to merge combined_aaguid.json and decoded_jwt.json into a single output file
 # with aaguid to description and icon mappings
 
@@ -7,8 +9,8 @@ set -e
 
 INPUT_FILE_1="combined_aaguid.json"
 INPUT_FILE_2="decoded_jwt.json"
-OUTPUT_FILE="aaguid_descriptions.json"
-JQ_SCRIPT="aaguid_map_data.jq"
+OUTPUT_FILE="passkeys_aaguid_descriptions.json"
+JQ_SCRIPT="passkeys_aaguid_map_data.jq"
 
 # Check if input files exist
 if [[ ! -f "$INPUT_FILE_1" ]]; then

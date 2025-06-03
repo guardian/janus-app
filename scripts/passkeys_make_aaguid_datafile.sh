@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# Script to download JWT and JSON files from URLs and process them using existing scripts
+# Script to create a JSON mapping file conf/aaguid_descriptions.json,
+# which maps passkey aaguids to authenticator device info.
+#
+# It downloads JWT and JSON files from URLs and process them using scripts
+# passkeys_aaguid_map_data.sh and decode_jwt.sh
 
 set -e
 
@@ -42,19 +46,19 @@ cp "$SCRIPT_DIR/../scripts/decode_jwt.sh" .
 chmod +x decode_jwt.sh
 ./decode_jwt.sh
 
-# Copy aaguid_map_data.sh and its dependencies to temp directory
-cp "$SCRIPT_DIR/aaguid_map_data.sh" .
-cp "$SCRIPT_DIR/aaguid_map_data.jq" .
-chmod +x aaguid_map_data.sh
+# Copy passkeys_aaguid_map_data.sh and its dependencies to temp directory
+cp "$SCRIPT_DIR/passkeys_aaguid_map_data.sh" .
+cp "$SCRIPT_DIR/passkeys_aaguid_map_data.jq" .
+chmod +x passkeys_aaguid_map_data.sh
 
 # Run the mapping generation
-./aaguid_map_data.sh
+./passkeys_aaguid_map_data.sh
 
 # Copy output back to conf directory
-cp aaguid_descriptions.json "$CONF_DIR/"
+cp passkeys_aaguid_descriptions.json "$CONF_DIR/"
 
 echo "Process completed successfully!"
-echo "Output file: $CONF_DIR/aaguid_descriptions.json"
+echo "Output file: $CONF_DIR/passkeys_aaguid_descriptions.json"
 
 # Clean up
 cd "$SCRIPT_DIR"
