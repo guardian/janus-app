@@ -156,17 +156,7 @@ class PasskeyController(
             .find(_.id == passkeyId)
             .map(_.name)
             .toRight(
-              JanusException(
-                userMessage = "Passkey not found",
-                engineerMessage =
-                  s"Passkey with ID $passkeyId not found for user ${request.user.username}",
-                httpCode = NOT_FOUND,
-                causedBy = Some(
-                  new NoSuchElementException(
-                    s"Passkey ID $passkeyId does not exist in user's passkey collection"
-                  )
-                )
-              )
+              JanusException.missingItemInDb(request.user, "Passkeys")
             )
             .toTry
           _ <- PasskeyDB.deleteById(request.user, passkeyId)
