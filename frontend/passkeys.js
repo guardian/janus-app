@@ -102,7 +102,6 @@ export async function deletePasskey(passkeyId, csrfToken) {
             method: 'DELETE',
             headers: {
                 'Csrf-Token': csrfToken, 
-                'Content-Type': 'application/json'
             },
             credentials: 'same-origin'
         });
