@@ -94,7 +94,7 @@ export async function bypassPasskeyAuthentication(targetHref, csrfToken) {
  * Deletes a passkey from the user's account
  * @param {string} passkeyId - ID of the passkey to delete
  * @param {string} csrfToken - CSRF token for security verification
- * @returns {Promise<Response>} The fetch response
+ * @returns {Promise<Object>} A promise that resolves with the JSON response data
  */
 export async function deletePasskey(passkeyId, csrfToken) {
     try {
