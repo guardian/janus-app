@@ -4,23 +4,23 @@ import com.gu.googleauth.UserIdentity
 import com.webauthn4j.WebAuthnManager
 import com.webauthn4j.converter.exception.DataConversionException
 import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
-import com.webauthn4j.data.AttestationConveyancePreference.NONE
+import com.webauthn4j.data.AttestationConveyancePreference.{DIRECT, NONE}
 import com.webauthn4j.data.PublicKeyCredentialType.PUBLIC_KEY
 import com.webauthn4j.data.UserVerificationRequirement.REQUIRED
-import com.webauthn4j.data._
+import com.webauthn4j.data.*
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
-import com.webauthn4j.data.extension.client._
+import com.webauthn4j.data.extension.client.*
 import com.webauthn4j.server.ServerProperty
 import com.webauthn4j.util.Base64UrlUtil
 import com.webauthn4j.verifier.exception.VerificationException
-import models._
+import models.*
 
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.concurrent.duration.{Duration, SECONDS}
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 import scala.util.{Failure, Try}
 
 /** Logic for registration of passkeys and authentication using them. */
@@ -100,7 +100,7 @@ object Passkey {
         }
       val authenticatorSelection: AuthenticatorSelectionCriteria = null
       val hints: Seq[PublicKeyCredentialHints] = Nil
-      val attestation: AttestationConveyancePreference = NONE
+      val attestation = DIRECT
       val extensions: AuthenticationExtensionsClientInputs[
         RegistrationExtensionClientInput
       ] = null
