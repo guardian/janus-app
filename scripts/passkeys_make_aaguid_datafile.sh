@@ -13,6 +13,7 @@ JWT_URL="https://mds3.fidoalliance.org/"
 
 # Define temporary and output files
 TEMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TEMP_DIR"' EXIT
 JWT_FILE="$TEMP_DIR/blob.jwt"
 JSON_FILE="$TEMP_DIR/combined_aaguid.json"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
