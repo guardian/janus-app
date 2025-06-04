@@ -15,10 +15,10 @@ import com.webauthn4j.util.Base64UrlUtil
 import models.{JanusException, PasskeyMetadata}
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import software.amazon.awssdk.services.dynamodb.model._
+import software.amazon.awssdk.services.dynamodb.model.*
 
 import java.time.Instant
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 import scala.util.{Failure, Try}
 
 object PasskeyDB {
@@ -194,7 +194,8 @@ object PasskeyDB {
             lastUsedTime =
               if (attribs.containsKey("lastUsedTime"))
                 Some(Instant.parse(attribs.get("lastUsedTime").s()))
-              else None
+              else None,
+            authenticator = None
           )
         )
         .toSeq

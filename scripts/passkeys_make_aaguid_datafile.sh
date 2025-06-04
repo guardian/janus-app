@@ -1,10 +1,39 @@
 #!/bin/bash
-
-# Script to create a JSON mapping file conf/aaguid_descriptions.json,
-# which maps passkey aaguids to authenticator device info.
 #
-# It downloads JWT and JSON files from URLs and process them using scripts
-# passkeys_aaguid_map_data.sh and decode_jwt.sh
+# Passkey AAGUID Data File Generator
+#
+# This script creates a comprehensive JSON mapping file that maps passkey AAGUIDs
+# (Authenticator Attestation GUIDs) to authenticator device information including
+# descriptions and icons. This data is used to provide user-friendly names for
+# passkey authenticators in the application.
+#
+# Data sources:
+#   1. Community Database: GitHub repository with community-maintained AAGUID data
+#      URL: https://github.com/passkeydeveloper/passkey-authenticator-aaguids
+#   2. Official FIDO MDS: FIDO Alliance Metadata Service (JWT format)
+#      URL: https://mds3.fidoalliance.org/
+#
+# Process:
+#   1. Downloads both data sources
+#   2. Decodes the FIDO MDS JWT using decode_jwt.sh
+#   3. Merges both datasets using passkeys_aaguid_map_data.sh and .jq
+#   4. Outputs final mapping to conf/passkeys_aaguid_descriptions.json
+#
+# Dependencies:
+#   - curl (for downloading files)
+#   - jq (for JSON processing)
+#   - decode_jwt.sh (for JWT decoding)
+#   - passkeys_aaguid_map_data.sh (for data merging)
+#   - passkeys_aaguid_map_data.jq (jq script for data processing)
+#
+# Output:
+#   - conf/passkeys_aaguid_descriptions.json
+#
+# Usage:
+#   ./passkeys_make_aaguid_datafile.sh
+#
+# Note: The official FIDO MDS is updated roughly monthly and contains metadata
+# about when to check for updates next.
 
 set -e
 

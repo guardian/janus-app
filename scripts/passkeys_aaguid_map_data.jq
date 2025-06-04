@@ -1,4 +1,20 @@
-# This script is used by the passkeys_make_aaguid_datafile.sh script.
+# AAGUID Data Processor for Passkeys
+#
+# This jq script processes AAGUID (Authenticator Attestation GUID) data from two sources:
+# 1. Community-driven passkey authenticator database
+# 2. Official FIDO Alliance Metadata Service (MDS)
+#
+# The script merges data from both sources, with official FIDO MDS data taking precedence
+# over community data when conflicts occur. It extracts authenticator descriptions and
+# icons to create a unified AAGUID mapping file for passkey authentication.
+#
+# Input: JSON array with two elements:
+#   [0] - Community-driven AAGUID data
+#   [1] - Official FIDO MDS data
+#
+# Output: Merged JSON object mapping AAGUIDs to their descriptions and icons
+#
+# Used by: passkeys_make_aaguid_datafile.sh
 
 def has_content: . and (. | length > 0);
 

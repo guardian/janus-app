@@ -37,7 +37,8 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
             name = "Test",
             registrationTime = Instant.parse("2025-05-21T09:30:00.000000Z"),
             aaguid = new AAGUID("adce0002-35bc-c60a-648b-0b25f1f05503"),
-            lastUsedTime = None
+            lastUsedTime = None,
+            authenticator = None
           )
         )
       )
@@ -170,7 +171,8 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
           name = "Test",
           registrationTime = Instant.parse("2025-05-21T09:30:00.000000Z"),
           aaguid = new AAGUID("adce0002-35bc-c60a-648b-0b25f1f05503"),
-          lastUsedTime = None
+          lastUsedTime = None,
+          authenticator = None
         )
       )
 

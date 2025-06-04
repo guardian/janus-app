@@ -5,16 +5,17 @@ import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.janus.model.JanusData
+import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.DefaultChallenge
 import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
 import models.JanusException.throwableWrites
-import models.{JanusException, PasskeyEncodings}
+import models.{JanusException, PasskeyAuthenticator, PasskeyEncodings}
 import play.api.http.MimeTypes
-import play.api.libs.json.{Json}
+import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
-import play.api.mvc._
+import play.api.mvc.*
 import play.api.{Logging, Mode}
 import play.twirl.api.Html
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -31,7 +32,8 @@ class PasskeyController(
     host: String,
     janusData: JanusData,
     passkeysEnabled: Boolean,
-    enablingCookieName: String
+    enablingCookieName: String,
+    authenticators: Map[AAGUID, PasskeyAuthenticator]
 )(implicit dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
@@ -237,7 +239,9 @@ class PasskeyController(
         )
       for {
         queryResponse <- PasskeyDB.loadCredentials(request.user)
-        passkeys = PasskeyDB.extractMetadata(queryResponse)
+        passkeys = PasskeyDB
+          .extractMetadata(queryResponse)
+          .map(p => p.copy(authenticator = authenticators.get(p.aaguid)))
       } yield views.html.userAccount(
         request.user,
         janusData,

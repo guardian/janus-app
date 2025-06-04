@@ -1,9 +1,27 @@
 #!/bin/bash
-
-# This script is used by the passkeys_make_aaguid_datafile.sh script.
 #
-# Script to merge combined_aaguid.json and decoded_jwt.json into a single output file
-# with aaguid to description and icon mappings
+# AAGUID Data Merger for Passkeys
+#
+# This script merges AAGUID (Authenticator Attestation GUID) data from two sources:
+# 1. combined_aaguid.json - Community-driven passkey authenticator database
+# 2. decoded_jwt.json - Official FIDO Alliance Metadata Service (MDS) data
+#
+# The script uses an external jq script (passkeys_aaguid_map_data.jq) to process
+# and merge the data, creating a unified mapping of AAGUIDs to their descriptions
+# and icons for identifying types of passkey.
+#
+# Input files:
+#   - combined_aaguid.json: Community AAGUID data
+#   - decoded_jwt.json: Decoded FIDO MDS JWT payload
+#   - passkeys_aaguid_map_data.jq: jq processing script
+#
+# Output:
+#   - passkeys_aaguid_descriptions.json: Merged AAGUID mappings
+#
+# Usage:
+#   ./passkeys_aaguid_map_data.sh
+#
+# Called by: passkeys_make_aaguid_datafile.sh
 
 set -e
 
