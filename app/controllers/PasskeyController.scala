@@ -133,7 +133,13 @@ class PasskeyController(
   def authenticationOptions: Action[Unit] = authAction(parse.empty) { request =>
     apiResponse(
       for {
-        options <- Passkey.authenticationOptions(host, request.user)
+        loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
+        options <- Passkey.authenticationOptions(
+          appHost = host,
+          user = request.user,
+          challenge = new DefaultChallenge(),
+          existingPasskeys = PasskeyDB.extractMetadata(loadCredentialsResponse)
+        )
         _ <- PasskeyChallengeDB.insert(
           UserChallenge(request.user, options.getChallenge)
         )
