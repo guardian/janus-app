@@ -1,11 +1,9 @@
 import com.typesafe.sbt.packager.archetypes.systemloader.ServerLoader.Systemd
 import play.sbt.PlayImport.PlayKeys.*
+import sbt.*
 import sbt.Keys.*
-import sbt.{addCompilerPlugin, *}
 import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations.*
 import sbtversionpolicy.withsbtrelease.ReleaseVersion
-
-import play.sbt.PlayImport.PlayKeys.playRunHooks
 
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
@@ -20,14 +18,15 @@ val commonDependencies = Seq(
   "ch.qos.logback" % "logback-classic" % "1.5.18"
 )
 lazy val commonSettings = Seq(
-  scalaVersion := "2.13.16",
+  scalaVersion := "3.3.6",
   scalacOptions ++= Seq(
-    "-deprecation",
     "-feature",
-    "-unchecked",
-    "-release:11",
-    "-Xfatal-warnings"
-  ),
+    "-release:11"
+  ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((2, 13)) => Seq("-Xfatal-warnings")
+    case Some((3, _))  => Seq("-Werror")
+    case _             => Seq.empty
+  }),
   Test / testOptions ++= Seq(
     Tests.Argument(TestFrameworks.ScalaTest, "-o"),
     Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports")
@@ -64,7 +63,7 @@ lazy val root: Project = (project in file("."))
   .aggregate(configTools)
   .settings(
     commonSettings,
-    name := """janus""",
+    name := "janus",
     // The version is concatenated with the name to generate the filename for the deb file when building this project.
     // The result must match the URL in the cloudformation userdata in another repository, so the version is hard-coded.
     // We hard-code it only in the Debian scope so it affects the name of the deb file, but does not override the version
@@ -93,10 +92,13 @@ lazy val root: Project = (project in file("."))
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
       "com.webauthn4j" % "webauthn4j-core" % "0.29.2.RELEASE",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
-    ) ++ jacksonDatabindOverrides
-      ++ jacksonOverrides
-      ++ pekkoSerializationJacksonOverrides,
+    ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
+    // See https://github.com/guardian/janus-app/security/dependabot/19
+    excludeDependencies += ExclusionRule(
+      organization = "net.sourceforge.htmlunit",
+      name = "htmlunit"
+    ),
 
     // local development
     playDefaultPort := 9100,
@@ -109,6 +111,7 @@ lazy val root: Project = (project in file("."))
     releaseVersion := ReleaseVersion
       .fromAggregatedAssessedCompatibilityWithLatestRelease()
       .value,
+    releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
@@ -135,10 +138,11 @@ lazy val root: Project = (project in file("."))
 lazy val configTools = (project in file("configTools"))
   .enablePlugins(SbtTwirl)
   .settings(
-    addCompilerPlugin(
-      "org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full
-    ),
     commonSettings,
+    crossScalaVersions := Seq(
+      "2.13.16",
+      scalaVersion.value
+    ),
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.3",
       "io.circe" %% "circe-core" % circeVersion,
