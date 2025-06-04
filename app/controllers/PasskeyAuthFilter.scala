@@ -61,6 +61,15 @@ class PasskeyAuthFilter(
             request.user,
             authData.getCredentialId
           )
+          _ <-
+            if (credentialResponse.hasItem) Success(())
+            else
+              Failure(
+                JanusException.authenticationFailure(
+                  request.user,
+                  new IllegalArgumentException("Invalid passkey credential")
+                )
+              )
           credential <- PasskeyDB.extractCredential(
             credentialResponse,
             request.user
