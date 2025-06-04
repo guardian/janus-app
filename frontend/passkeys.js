@@ -96,16 +96,38 @@ export async function bypassPasskeyAuthentication(targetHref, csrfToken) {
  * Deletes a passkey from the user's account
  * @param {string} passkeyId - ID of the passkey to delete
  * @param {string} csrfToken - CSRF token for security verification
+ * @returns {Promise<Object>} A promise that resolves with the JSON response data
  */
-export function deletePasskey(passkeyId, csrfToken) {
-    try {   
-        createAndSubmitForm('/passkey/delete', {
-            passkeyId,
-            csrfToken
-        }); 
+export async function deletePasskey(passkeyId, csrfToken) {
+    try {
+        const response = await fetch(`/passkey/${passkeyId}`, {
+            method: 'DELETE',
+            headers: {
+                'Csrf-Token': csrfToken, 
+            },
+            credentials: 'same-origin'
+        });
+        
+        if (!response.ok) {
+            let errorMessage = `Server returned ${response.status}`;
+            try {
+                const errorData = await response.json();
+                if (errorData && errorData.message) {
+                    errorMessage = errorData.message;
+                }
+            } catch (e) {
+                console.warn('Could not parse error response as JSON:', e);
+            }
+            throw new Error(errorMessage);
+        }
+        
+        const responseData = await response.json();
+        
+        return responseData;
     } catch (error) {
         console.error('Error deleting passkey:', error);
-        M.toast({ html: 'An error occurred while deleting the passkey', classes: 'rounded red' });
+        M.toast({ html: `Error deleting passkey: ${error.message}`, classes: 'rounded red' });
+        throw error;
     }
 }   
 
@@ -138,7 +160,18 @@ export function setUpDeletePasskeyButtons(selector) {
             }
             
             if (confirm(`Are you sure you want to delete the passkey "${passkeyName}"?`)) {
-                deletePasskey(passkeyId, csrfToken);
+                try {
+                    const result = await deletePasskey(passkeyId, csrfToken);
+                    // Immediately redirect to the user-account page
+                    // The flash message will be displayed after the redirect
+                    if (result.redirect) {
+                        window.location.href = result.redirect;
+                    } else {
+                        window.location.reload();
+                    }
+                } catch {
+                    // Error is already handled in deletePasskey function
+                }
             } else {
                 M.toast({ html: 'Passkey deletion cancelled', classes: 'rounded orange' });
             }
@@ -285,11 +318,11 @@ function getPasskeyNameFromUser() {
                 // Show validation error
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
-                
                 if (passkeyName.length > maxLength) {
                     errorMessage.textContent = `Passkey name too long: maximum ${maxLength} characters allowed`;
                 } else {
                     errorMessage.textContent = 'Cannot save passkey name: only letters, numbers, spaces, underscores and hyphens are allowed';
+                   
                 }
                 return;
             }

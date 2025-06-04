@@ -4,7 +4,7 @@ import com.gu.googleauth.{GoogleAuthConfig, GoogleGroupChecker, LoginSupport}
 import com.gu.janus.model.JanusData
 import play.api.Mode
 import play.api.libs.ws.WSClient
-import play.api.mvc._
+import play.api.mvc.*
 
 import scala.concurrent.ExecutionContext
 
@@ -25,21 +25,21 @@ class AuthController(
   override val failureRedirectTarget: Call = routes.AuthController.loginError
   override val defaultRedirectTarget: Call = routes.Janus.index
 
-  def login = Action.async { implicit request =>
+  def login: Action[AnyContent] = Action.async { implicit request =>
     startGoogleLogin()
   }
 
-  def loginError = Action { implicit request =>
+  def loginError: Action[AnyContent] = Action { implicit request =>
     val error =
       request.flash.get("error").getOrElse("There was an error logging in")
     Ok(views.html.error(error, None, janusData))
   }
 
-  def logout = Action { implicit request =>
+  def logout: Action[AnyContent] = Action { implicit request =>
     Redirect(routes.Janus.index).withNewSession
   }
 
-  def oauthCallback = Action.async { implicit request =>
+  def oauthCallback: Action[AnyContent] = Action.async { implicit request =>
     processOauth2Callback(requiredGoogleGroups, googleGroupChecker)
   }
 }
