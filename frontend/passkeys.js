@@ -9,9 +9,10 @@ import M from 'materialize-css';
 export async function registerPasskey(csrfToken) {
     try {
         const regOptionsResponse = await fetch('/passkey/registration-options', {
-            method: 'GET',
+            method: 'POST',
             headers: {
-                'X-CSRF-Token': csrfToken // Securely include CSRF token in headers
+                'CSRF-Token': csrfToken, // Securely include CSRF token in headers
+                'Content-Type': 'application/x-www-form-urlencoded', // To satisfy Play CSRF filter
             }
         });
         const regOptionsResponseJson = await regOptionsResponse.json();
@@ -61,12 +62,30 @@ export function setUpRegisterPasskeyButton(selector) {
 export async function authenticatePasskey(targetHref, csrfToken) {
     try {
         const authOptionsResponse = await fetch('/passkey/auth-options', {
-            method: 'GET',
+            method: 'POST',
             headers: {
-                'X-CSRF-Token': csrfToken // Securely include CSRF token in headers
+                'CSRF-Token': csrfToken, // Securely include CSRF token in headers,
+                'Content-Type': 'application/x-www-form-urlencoded', // To satisfy Play CSRF filter
             }
         });
         const authOptionsResponseJson = await authOptionsResponse.json();
+
+        if (!authOptionsResponse.ok) {
+            console.error('Authentication options request failed:', authOptionsResponseJson);
+            if (authOptionsResponse.status === 400) {
+                M.toast({
+                    html: 'Please register a passkey before attempting to authenticate.',
+                    classes: 'rounded red'
+                });
+            } else {
+                M.toast({
+                    html: 'Failed to get authentication options from server. Please try again.',
+                    classes: 'rounded red'
+                });
+            }
+            return;
+        }
+
         const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
         const publicKeyCredential = await navigator.credentials.get({ publicKey: credentialGetOptions });
 

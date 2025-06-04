@@ -133,4 +133,14 @@ object JanusException {
       httpCode = UNAUTHORIZED,
       causedBy = Some(cause)
     )
+
+  def noPasskeysRegistered(user: UserIdentity): JanusException =
+    JanusException(
+      userMessage =
+        "No passkeys registered. Please register a passkey before attempting to authenticate.",
+      engineerMessage =
+        s"User ${user.username} attempted to authenticate but has no registered passkeys",
+      httpCode = BAD_REQUEST,
+      causedBy = None
+    )
 }
