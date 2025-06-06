@@ -431,8 +431,11 @@ a.copy-text--button__small {
 }
 
 .passkey-authenticator-icon {
+    position: relative;
+    top: 5px;
+    right: 5px;
     max-width: 24px;
-    height: auto;
+    max-height: 24px;
 }
 
 .hidden {
