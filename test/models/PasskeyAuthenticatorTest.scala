@@ -137,21 +137,6 @@ class PasskeyAuthenticatorTest
       result shouldBe empty
     }
 
-    "should return empty map when JSON is malformed" in {
-      // This test would require creating a malformed JSON resource
-      // For now, we'll test with a resource that doesn't exist
-      val result = PasskeyAuthenticator.fromResource("malformed.json")
-
-      result shouldBe empty
-    }
-
-    "should return empty map when JSON has wrong structure" in {
-      // This would require a resource with wrong JSON structure
-      val result = PasskeyAuthenticator.fromResource("wrong-structure.json")
-
-      result shouldBe empty
-    }
-
     "should properly parse AAGUID keys as AAGUID objects" - {
       val result =
         PasskeyAuthenticator.fromResource("passkeys_aaguid_descriptions.json")

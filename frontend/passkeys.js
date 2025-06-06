@@ -120,7 +120,7 @@ export async function deletePasskey(passkeyId, csrfToken) {
         const response = await fetch(`/passkey/${passkeyId}`, {
             method: 'DELETE',
             headers: {
-                'Csrf-Token': csrfToken, 
+                'CSRF-Token': csrfToken,
             },
             credentials: 'same-origin'
         });

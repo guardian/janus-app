@@ -4,9 +4,9 @@ import com.gu.googleauth.UserIdentity
 import com.webauthn4j.WebAuthnManager
 import com.webauthn4j.converter.exception.DataConversionException
 import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
-import com.webauthn4j.data.AttestationConveyancePreference.{DIRECT, NONE}
-import com.webauthn4j.data.PublicKeyCredentialType.PUBLIC_KEY
 import com.webauthn4j.data.*
+import com.webauthn4j.data.AttestationConveyancePreference.DIRECT
+import com.webauthn4j.data.PublicKeyCredentialType.PUBLIC_KEY
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
 import com.webauthn4j.data.client.challenge.Challenge
@@ -57,7 +57,13 @@ object Passkey {
   ): PublicKeyCredentialDescriptor = {
     val credType = PUBLIC_KEY
     val id = Base64UrlUtil.decode(passkey.id)
-    val transports: Set[AuthenticatorTransport] = Set.empty
+    // Include common transport types to help the authenticator find the right credential
+    val transports = Set(
+      AuthenticatorTransport.INTERNAL, // Platform authenticators
+      AuthenticatorTransport.HYBRID, // QR code and proximity-based
+      AuthenticatorTransport.USB, // USB security keys
+      AuthenticatorTransport.NFC // NFC-based authenticators
+    )
     new PublicKeyCredentialDescriptor(credType, id, transports.asJava)
   }
 
@@ -98,9 +104,13 @@ object Passkey {
         user.username,
         user.fullName
       )
-      val timeout = Duration(10, SECONDS)
+      val timeout = Duration(60, SECONDS)
       val excludeCredentials = existingPasskeys.map(toDescriptor)
-      val authenticatorSelection: AuthenticatorSelectionCriteria = null
+      val authenticatorSelection = new AuthenticatorSelectionCriteria(
+        AuthenticatorAttachment.PLATFORM, // Prefer platform authenticators (TouchID, FaceID, Windows Hello)
+        ResidentKeyRequirement.PREFERRED, // Store credentials on the authenticator when possible
+        UserVerificationRequirement.REQUIRED // Always require user verification
+      )
       val hints: Seq[PublicKeyCredentialHints] = Nil
       val attestation = DIRECT
       val extensions: AuthenticationExtensionsClientInputs[
@@ -143,7 +153,7 @@ object Passkey {
       Failure(JanusException.noPasskeysRegistered(user))
     } else {
       Try {
-        val timeout = Duration(10, SECONDS)
+        val timeout = Duration(60, SECONDS)
         val rpId = URI.create(appHost).getHost
         val allowCredentials = existingPasskeys.map(toDescriptor)
         val userVerification = UserVerificationRequirement.REQUIRED
