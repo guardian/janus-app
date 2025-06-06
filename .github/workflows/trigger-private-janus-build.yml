@@ -41,7 +41,13 @@ jobs:
         run: npm run build
         working-directory: frontend
 
-      - run: sbt clean compile scalafmtCheckAll scalafmtSbtCheck test
+      - run: >
+          sbt 
+          +compile 
+          +Test/compile 
+          scalafmtCheckAll 
+          scalafmtSbtCheck 
+          +test
 
       - name: Test Report for Janus-App
         uses: dorny/test-reporter@890a17cecf52a379fc869ab770a71657660be727 # v2.1.0
