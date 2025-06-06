@@ -38,7 +38,12 @@
                                 @for(passkey <- passkeys) {
                                     <tr>
                                         <td>@{passkey.name}</td>
-                                        <td>@{passkey.aaguid}</td>
+                                        <td>
+                                            @passkey.authenticator.flatMap(_.icon).map { icon =>
+                                                <img class="passkey-authenticator-icon" src="@icon" alt="@{passkey.authenticator.map(_.description).getOrElse("Unknown authenticator")} icon" />
+                                            }
+                                            @{passkey.authenticator.map(_.description).getOrElse("Unknown")}
+                                        </td>
                                         <td>@{dateFormat(passkey.registrationTime)}</td>
                                         <td>@{passkey.lastUsedTime.map(timeFormat).getOrElse("Never")}</td>
                                         <td>
@@ -73,7 +78,7 @@
             <p>Give this passkey a name to help you recognise it later.</p>
             <div class="input-field">
                 <input type="text" id="passkey-name" class="validate" placeholder="e.g. Macbook, Phone" required>
-                <div id="passkey-name-error" class="error-message red-text" style="display: none;">Please enter a name for your passkey</div>
+                <div id="passkey-name-error" class="error-message red-text hidden">Please enter a name for your passkey</div>
             </div>
         </div>
         <div class="modal-footer">
@@ -84,7 +89,7 @@
     
     <!-- Flash messages passed via data attributes to be handled by JavaScript -->
     <div id="flash-message" 
-         style="display: none;"
+         class="hidden"
          data-success="@request.flash.get("success").getOrElse("")"
          data-info="@request.flash.get("info").getOrElse("")"
          data-error="@request.flash.get("error").getOrElse("")">

@@ -429,3 +429,15 @@ a.copy-text--button__small {
 .festive .btn:active, .festive .btn:focus, .festive .btn-large:active, .festive .btn-large:focus {
     background-color: #1b5e20;
 }
+
+.passkey-authenticator-icon {
+    position: relative;
+    top: 5px;
+    right: 5px;
+    max-width: 24px;
+    max-height: 24px;
+}
+
+.hidden {
+    display: none;
+}

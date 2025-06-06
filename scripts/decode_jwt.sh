@@ -1,4 +1,22 @@
 #!/bin/bash
+#
+# JWT Decoder Script
+#
+# This script decodes a JWT (JSON Web Token) from a file and extracts its payload.
+# It handles base64url decoding (which is used in JWT format) and converts it to
+# readable JSON format. The script specifically processes MDS3 format JWT tokens.
+#
+# Usage:
+#   ./decode_jwt.sh
+#
+# Requirements:
+#   - A file named 'blob.jwt' containing the JWT token in the same directory
+#   - jq (optional, for JSON formatting - will fall back to raw output if not available)
+#
+# Output:
+#   - Creates 'decoded_jwt.json' with the decoded JWT payload
+#   - Displays a preview of the decoded content
+#
 
 # Define paths
 JWT_FILE="blob.jwt"

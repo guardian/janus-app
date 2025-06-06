@@ -1,13 +1,13 @@
 import aws.Clients
 import com.gu.googleauth.AuthAction
 import com.gu.googleauth.AuthAction.UserIdentityRequest
-import com.gu.play.secretrotation._
+import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.typesafe.config.ConfigException
 import conf.Config
-import controllers._
+import controllers.*
 import filters.HstsFilter
-import models._
+import models.*
 import play.api.libs.ws.ahc.AhcWSComponents
 import play.api.mvc.{ActionBuilder, AnyContent, EssentialFilter}
 import play.api.routing.Router
@@ -85,6 +85,11 @@ class AppComponents(context: ApplicationLoader.Context)
     controllerComponents.parsers.default
   )(executionContext)
 
+  private val passkeyAuthenticators =
+    PasskeyAuthenticator.fromResource(
+      "passkeys_aaguid_descriptions.json"
+    )
+
   private val passkeysEnabled: Boolean =
     configuration.get[Boolean]("passkeys.enabled")
   private val passkeysEnablingCookieName: String =
@@ -134,7 +139,8 @@ class AppComponents(context: ApplicationLoader.Context)
       host,
       janusData,
       passkeysEnabled,
-      passkeysEnablingCookieName
+      passkeysEnablingCookieName,
+      passkeyAuthenticators
     )(dynamodDB, mode, assetsFinder),
     new Utility(janusData, controllerComponents, authAction, configuration)(
       mode,
