@@ -108,7 +108,7 @@ object Passkey {
       val excludeCredentials = existingPasskeys.map(toDescriptor)
       val authenticatorSelection = new AuthenticatorSelectionCriteria(
         AuthenticatorAttachment.PLATFORM, // Prefer platform authenticators (TouchID, FaceID, Windows Hello)
-        ResidentKeyRequirement.PREFERRED, // Store credentials on the authenticator when possible
+        ResidentKeyRequirement.DISCOURAGED, // Don't allow passkeys unknown to the server to be discovered at authentication time
         UserVerificationRequirement.REQUIRED // Always require user verification
       )
       val hints: Seq[PublicKeyCredentialHints] = Nil
