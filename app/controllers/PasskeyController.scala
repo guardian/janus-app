@@ -2,11 +2,12 @@ package controllers
 
 import aws.PasskeyChallengeDB.UserChallenge
 import aws.{PasskeyChallengeDB, PasskeyDB}
-import com.gu.googleauth.AuthAction
 import com.gu.googleauth.AuthAction.UserIdentityRequest
+import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.DefaultChallenge
+import controllers.Validation.formattedErrors
 import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
@@ -62,6 +63,29 @@ class PasskeyController(
         Ok(json).as(MimeTypes.JSON)
     }
 
+  /** Redirects to a specified path and flashes messages on error.
+    */
+  private def redirectResponseOnError[A](
+      redirectPath: String
+  )(action: => Try[A]): Result =
+    action match {
+      case Failure(err: JanusException) =>
+        logger.error(err.engineerMessage, err.causedBy.orNull)
+        Redirect(redirectPath)
+          .flashing("error" -> err.userMessage)
+      case Failure(err) =>
+        logger.error(err.getMessage, err)
+        Redirect(redirectPath)
+          .flashing(
+            "error" -> "An unexpected error occurred"
+          )
+      case Success(result: Result) => result
+      case Success(html: Html)     => Ok(html)
+      case Success(a) =>
+        val json = PasskeyEncodings.mapper.writeValueAsString(a)
+        Ok(json).as(MimeTypes.JSON)
+    }
+
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
     */
@@ -103,19 +127,6 @@ class PasskeyController(
     )(data => Some((data.passkey, data.passkeyName)))
   )
 
-  private def formattedErrors(formWithErrors: Form[RegistrationData]) =
-    formWithErrors.errors
-      .map { error =>
-        val message = error.message match {
-          case "error.required"  => "missing value"
-          case "error.maxLength" => "too long"
-          case "error.pattern"   => "contains invalid characters"
-          case other             => other
-        }
-        s"${error.key}: $message"
-      }
-      .mkString(", ")
-
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#registering-the-webauthn-public-key-credential-on-the-server]].
     */
@@ -129,31 +140,56 @@ class PasskeyController(
           Redirect("/user-account")
             .flashing("error" -> formattedErrors(formWithErrors)),
         registrationData =>
-          apiResponse(for {
-            challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
-            challenge <- PasskeyChallengeDB.extractChallenge(
-              challengeResponse,
-              request.user
-            )
-            credRecord <- Passkey.verifiedRegistration(
-              host,
-              request.user,
-              challenge,
-              registrationData.passkey
-            )
-            _ <- PasskeyDB
-              .insert(request.user, credRecord, registrationData.passkeyName)
-            _ <- PasskeyChallengeDB.delete(request.user)
-            _ = logger
-              .info(s"Registered passkey for user ${request.user.username}")
-          } yield {
-            Redirect("/user-account")
-              .flashing(
-                "success" -> s"Passkey '${registrationData.passkeyName}' was registered successfully"
-              )
-          })
+          redirectResponseOnError("/user-account")(for {
+            _ <- validateRegistrationData(request.user, registrationData)
+            result <- performPasskeyRegistration(request.user, registrationData)
+          } yield result)
       )
   }
+
+  /** Validates the registration data against database content. */
+  private def validateRegistrationData(
+      user: UserIdentity,
+      registrationData: RegistrationData
+  ): Try[Unit] =
+    PasskeyDB.passkeyNameExists(user, registrationData.passkeyName).flatMap {
+      nameExists =>
+        if (nameExists) {
+          Failure(
+            JanusException.duplicatePasskeyNameFieldInRequest(
+              user,
+              registrationData.passkeyName
+            )
+          )
+        } else {
+          Success(())
+        }
+    }
+
+  /** Performs the core passkey registration process including cryptographic
+    * verification and database persistence. This method assumes all validation
+    * has already been completed.
+    */
+  private def performPasskeyRegistration(
+      user: UserIdentity,
+      registrationData: RegistrationData
+  ): Try[Result] =
+    for {
+      challengeResponse <- PasskeyChallengeDB.loadChallenge(user)
+      challenge <- PasskeyChallengeDB.extractChallenge(challengeResponse, user)
+      credRecord <- Passkey.verifiedRegistration(
+        host,
+        user,
+        challenge,
+        registrationData.passkey
+      )
+      _ <- PasskeyDB.insert(user, credRecord, registrationData.passkeyName)
+      _ <- PasskeyChallengeDB.delete(user)
+      _ = logger.info(s"Registered passkey for user ${user.username}")
+    } yield {
+      Redirect("/user-account")
+        .flashing("success" -> "Passkey was registered successfully")
+    }
 
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-assertion]].

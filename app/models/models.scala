@@ -64,6 +64,17 @@ object JanusException {
     causedBy = Some(cause)
   )
 
+  def duplicatePasskeyNameFieldInRequest(
+      user: UserIdentity,
+      passkeyName: String
+  ): JanusException = JanusException(
+    userMessage = "passkeyName: already exists",
+    engineerMessage =
+      s"Passkey name '$passkeyName' already exists for user ${user.username}",
+    httpCode = BAD_REQUEST,
+    causedBy = None
+  )
+
   def failedToLoadDbItem(
       user: UserIdentity,
       tableName: String,
