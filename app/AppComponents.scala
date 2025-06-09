@@ -13,7 +13,6 @@ import play.api.mvc.{ActionBuilder, AnyContent, EssentialFilter}
 import play.api.routing.Router
 import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
-import play.filters.csp.CSPComponents
 import router.Routes
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -25,12 +24,11 @@ class AppComponents(context: ApplicationLoader.Context)
     with AhcWSComponents
     with AssetsComponents
     with HttpFiltersComponents
-    with CSPComponents
     with RotatingSecretComponents
     with Logging {
 
   override def httpFilters: Seq[EssentialFilter] =
-    super.httpFilters :+ cspFilter :+ new HstsFilter
+    super.httpFilters :+ new HstsFilter
 
   // used by the template to detect development environment
   // in that situation, it'll load assets directly from npm vs production, where they'll come from the bundled files
