@@ -148,7 +148,9 @@ class PasskeyController(
               .info(s"Registered passkey for user ${request.user.username}")
           } yield {
             Redirect("/user-account")
-              .flashing("success" -> "Passkey was registered successfully")
+              .flashing(
+                "success" -> s"Passkey '${registrationData.passkeyName}' was registered successfully"
+              )
           })
       )
   }
