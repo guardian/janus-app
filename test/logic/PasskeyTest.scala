@@ -67,13 +67,18 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         |    "type" : "public-key",
         |    "alg" : -257
         |  } ],
-        |  "timeout" : 10000,
+        |  "timeout" : 60000,
         |  "excludeCredentials" : [ {
         |    "type" : "public-key",
         |    "id" : "K9iphQ03JmTBqf-1pPGBXvpzfvt96ZAy51_BrKjibn0",
-        |    "transports" : [ ]
+        |    "transports" : [ "internal", "hybrid", "usb", "nfc" ]
         |  } ],
-        |  "authenticatorSelection" : null,
+        |  "authenticatorSelection" : {
+        |    "authenticatorAttachment" : "platform",
+        |    "requireResidentKey" : false,
+        |    "residentKey" : "preferred",
+        |    "userVerification" : "required"
+        |  },
         |  "hints" : [ ],
         |  "attestation" : "direct",
         |  "extensions" : null
