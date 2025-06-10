@@ -2,7 +2,7 @@
 @import com.gu.janus.model.JanusData
 @import play.api.Mode
 
-@(error: String, user: Option[UserIdentity], janusData: JanusData)(implicit mode: Mode, assetsFinder: AssetsFinder)
+@(error: String, user: Option[UserIdentity], janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Home", user, janusData) {
     <div class="container">
