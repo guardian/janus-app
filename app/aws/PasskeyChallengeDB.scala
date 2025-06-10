@@ -1,16 +1,17 @@
 package aws
 
 import aws.PasskeyChallengeDB.UserChallenge.toDynamoItem
+import cats.implicits.catsSyntaxMonadError
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.util.Base64UrlUtil
 import models.JanusException
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import software.amazon.awssdk.services.dynamodb.model._
+import software.amazon.awssdk.services.dynamodb.model.*
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.Instant
-import scala.jdk.CollectionConverters._
+import scala.jdk.CollectionConverters.*
 import scala.util.{Failure, Try}
 
 object PasskeyChallengeDB {
@@ -49,14 +50,8 @@ object PasskeyChallengeDB {
         PutItemRequest.builder().tableName(tableName).item(item.asJava).build()
       dynamoDB.putItem(request)
       ()
-    }.recoverWith(exception =>
-      Failure(
-        JanusException.failedToCreateDbItem(
-          userChallenge.user,
-          tableName,
-          exception
-        )
-      )
+    }.adaptError(err =>
+      JanusException.failedToCreateDbItem(userChallenge.user, tableName, err)
     )
 
   def loadChallenge(
@@ -67,9 +62,7 @@ object PasskeyChallengeDB {
       val request =
         GetItemRequest.builder().tableName(tableName).key(key.asJava).build()
       dynamoDB.getItem(request)
-    }.recoverWith(err =>
-      Failure(JanusException.failedToLoadDbItem(user, tableName, err))
-    )
+    }.adaptError(err => JanusException.failedToLoadDbItem(user, tableName, err))
   }
 
   def extractChallenge(
@@ -96,7 +89,7 @@ object PasskeyChallengeDB {
         DeleteItemRequest.builder().tableName(tableName).key(key.asJava).build()
       dynamoDB.deleteItem(request)
       ()
-    }.recoverWith(exception =>
-      Failure(JanusException.failedToDeleteDbItem(user, tableName, exception))
+    }.adaptError(err =>
+      JanusException.failedToDeleteDbItem(user, tableName, err)
     )
 }
