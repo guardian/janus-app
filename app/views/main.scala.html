@@ -4,8 +4,9 @@
 @import logic.Customisation.displayColour
 @import play.api.Mode
 @import java.time.Instant
+@import views.html.helper.CSPNonce
 
-@(title: String, userOpt: Option[UserIdentity], janusData: JanusData, displayMode: DisplayMode = Normal)(content: Html)(implicit mode: Mode, assetsFinder: AssetsFinder)
+@(title: String, userOpt: Option[UserIdentity], janusData: JanusData, displayMode: DisplayMode = Normal)(content: Html)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 <!DOCTYPE html>
 <html lang="en">
@@ -83,16 +84,16 @@
         </footer>
 
         @if(mode == Mode.Dev) {
-            <script src="https://janus-frontend.local.dev-gutools.co.uk/janus.js"></script>
+            <script src="https://janus-frontend.local.dev-gutools.co.uk/janus.js" @{CSPNonce.attr}></script>
         } else {
-            <script src="@assetsFinder.path("frontend/janus.js")"></script>
+            <script src="@assetsFinder.path("frontend/janus.js")" @{CSPNonce.attr}></script>
         }
 
         @if(displayMode == Festive) {
             @if(mode == Mode.Dev) {
-                <script src="https://janus-frontend.local.dev-gutools.co.uk/snow.js"></script>
+                <script src="https://janus-frontend.local.dev-gutools.co.uk/snow.js" @{CSPNonce.attr}></script>
             } else {
-                <script src="@assetsFinder.path("frontend/snow.js")"></script>
+                <script src="@assetsFinder.path("frontend/snow.js")" @{CSPNonce.attr}></script>
             }
         }
 
