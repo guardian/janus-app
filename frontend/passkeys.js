@@ -321,19 +321,20 @@ function getPasskeyNameFromUser() {
 
         const existingPasskeyNameMessage = `A passkey with this name already exists, please choose a different name`;
 
-        // Reset the input field and error message when opening the modal
-        input.value = '';
-        input.classList.remove('invalid');
-        errorMessage.style.display = 'none';
+        // Helper function to update submit button state
+        const updateSubmitButtonState = (isValid) => {
+            if (isValid) {
+                submitButton.classList.remove('disabled');
+            } else {
+                submitButton.classList.add('disabled');
+            }
+        };
 
-        // Focus the input when modal opens
-        modalInstance.open();
-        setTimeout(() => input.focus(), 100); // Small delay to ensure modal is visible
-
-        // Define named handler functions so they can be properly removed later
-        const handleInput = () => {
+        // Helper function to validate input and update UI accordingly
+        const validateInput = () => {
             const input_value = input.value;
             const trimmedValue = input_value.trim();
+            let isValid = false;
             
             // Check if input is approaching the limit
             if (input_value.length > maxLength) {
@@ -350,40 +351,51 @@ function getPasskeyNameFromUser() {
             else if (trimmedValue && alphanumericRegex.test(input_value)) {
                 input.classList.remove('invalid');
                 errorMessage.style.display = 'none';
+                isValid = true; // Valid input
             } else {
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
                 errorMessage.textContent = `Use only letters, numbers, spaces, underscores and hyphens (max ${maxLength} characters)`;
             }
+            
+            // Update submit button state based on validation
+            updateSubmitButtonState(isValid);
+            return isValid;
+        };
+
+        // Reset the input field and error message when opening the modal
+        input.value = '';
+        input.classList.remove('invalid');
+        errorMessage.style.display = 'none';
+        
+        // Initially disable the submit button
+        updateSubmitButtonState(false);
+
+        // Focus the input when modal opens
+        modalInstance.open();
+        setTimeout(() => input.focus(), 100); // Small delay to ensure modal is visible
+
+        // Define named handler functions so they can be properly removed later
+        const handleInput = () => {
+            validateInput();
         };
 
         const handleSubmit = (e) => {
             e.preventDefault();
-            const passkeyName = input.value.trim();
-
-            if (!passkeyName || !alphanumericRegex.test(passkeyName) || passkeyName.length > maxLength) {
-                // Show validation error
-                input.classList.add('invalid');
-                errorMessage.style.display = 'block';
-                if (passkeyName.length > maxLength) {
-                    errorMessage.textContent = `Passkey name too long: maximum ${maxLength} characters allowed`;
-                } else {
-                    errorMessage.textContent = 'Cannot save passkey name: only letters, numbers, spaces, underscores and hyphens are allowed';
-                }
+            
+            // If button is disabled, don't proceed (extra safeguard)
+            if (submitButton.classList.contains('disabled')) {
                 return;
             }
-            
-            // Check for duplicate names before submitting
-            if (existingPasskeyNames.includes(passkeyName.toLowerCase())) {
-                input.classList.add('invalid');
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = existingPasskeyNameMessage;
+
+            // One last validation as a safeguard
+            if (!validateInput()) {
                 return;
             }
 
             // Close modal and resolve with the passkey name
             modalInstance.close();
-            resolve(DOMPurify.sanitize(passkeyName));
+            resolve(DOMPurify.sanitize(input.value.trim()));
         };
 
         const handleCancel = (e) => {
