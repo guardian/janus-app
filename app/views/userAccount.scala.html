@@ -37,7 +37,7 @@
                             <tbody>
                                 @for(passkey <- passkeys) {
                                     <tr>
-                                        <td>@{passkey.name}</td>
+                                        <td data-passkey-name="true">@{passkey.name}</td>
                                         <td>
                                             @passkey.authenticator.flatMap(_.icon).map { icon =>
                                                 <img class="passkey-authenticator-icon" src="@icon" alt="@{passkey.authenticator.map(_.description).getOrElse("Unknown authenticator")} icon" />
