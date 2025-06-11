@@ -313,6 +313,13 @@ function getPasskeyNameFromUser() {
         // Regex to allow letters, numbers, spaces, underscores and hyphens
         const alphanumericRegex = /^[a-zA-Z0-9 _-]*$/;
         const maxLength = 50; // Maximum character limit
+        
+        // Get existing passkey names from the DOM
+        const existingPasskeyNames = Array.from(
+            document.querySelectorAll('[data-passkey-name="true"]')
+        ).map(td => td.textContent.trim().toLowerCase());
+
+        const existingPasskeyNameMessage = `A passkey with this name already exists, please choose a different name`;
 
         // Reset the input field and error message when opening the modal
         input.value = '';
@@ -326,13 +333,21 @@ function getPasskeyNameFromUser() {
         // Define named handler functions so they can be properly removed later
         const handleInput = () => {
             const input_value = input.value;
+            const trimmedValue = input_value.trim();
             
             // Check if input is approaching the limit
             if (input_value.length > maxLength) {
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
                 errorMessage.textContent = `Name is too long: ${input_value.length}/${maxLength} characters`;
-            } else if (input_value.trim() && alphanumericRegex.test(input_value)) {
+            } 
+            // Check if the name already exists
+            else if (trimmedValue && existingPasskeyNames.includes(trimmedValue.toLowerCase())) {
+                input.classList.add('invalid');
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = existingPasskeyNameMessage;
+            }
+            else if (trimmedValue && alphanumericRegex.test(input_value)) {
                 input.classList.remove('invalid');
                 errorMessage.style.display = 'none';
             } else {
@@ -354,8 +369,15 @@ function getPasskeyNameFromUser() {
                     errorMessage.textContent = `Passkey name too long: maximum ${maxLength} characters allowed`;
                 } else {
                     errorMessage.textContent = 'Cannot save passkey name: only letters, numbers, spaces, underscores and hyphens are allowed';
-                   
                 }
+                return;
+            }
+            
+            // Check for duplicate names before submitting
+            if (existingPasskeyNames.includes(passkeyName.toLowerCase())) {
+                input.classList.add('invalid');
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = existingPasskeyNameMessage;
                 return;
             }
 
