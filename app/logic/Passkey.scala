@@ -107,8 +107,10 @@ object Passkey {
       )
       val timeout = Duration(60, SECONDS)
       val excludeCredentials = existingPasskeys.map(toDescriptor)
+      // Allow the widest possible range of authenticators
+      val authenticatorAttachment: AuthenticatorAttachment = null
       val authenticatorSelection = new AuthenticatorSelectionCriteria(
-        AuthenticatorAttachment.PLATFORM, // Prefer platform authenticators (TouchID, FaceID, Windows Hello)
+        authenticatorAttachment,
         ResidentKeyRequirement.PREFERRED, // Store credentials on the authenticator when possible
         UserVerificationRequirement.REQUIRED // Always require user verification
       )
