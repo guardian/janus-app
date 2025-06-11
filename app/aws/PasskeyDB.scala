@@ -1,5 +1,6 @@
 package aws
 
+import cats.implicits.catsSyntaxMonadError
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.converter.AttestedCredentialDataConverter
 import com.webauthn4j.converter.util.ObjectConverter
@@ -19,7 +20,7 @@ import software.amazon.awssdk.services.dynamodb.model.*
 
 import java.time.Instant
 import scala.jdk.CollectionConverters.*
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 object PasskeyDB {
 
@@ -90,9 +91,7 @@ object PasskeyDB {
       PutItemRequest.builder().tableName(tableName).item(item.asJava).build()
     dynamoDB.putItem(request)
     ()
-  }.recoverWith(exception =>
-    Failure(JanusException.failedToCreateDbItem(user, tableName, exception))
-  )
+  }.adaptError(err => JanusException.failedToCreateDbItem(user, tableName, err))
 
   def loadCredential(
       user: UserIdentity,
@@ -108,9 +107,7 @@ object PasskeyDB {
       val request =
         GetItemRequest.builder().tableName(tableName).key(key.asJava).build()
       dynamoDB.getItem(request)
-    }.recoverWith(err =>
-      Failure(JanusException.failedToLoadDbItem(user, tableName, err))
-    )
+    }.adaptError(err => JanusException.failedToLoadDbItem(user, tableName, err))
   }
 
   def extractCredential(
@@ -118,22 +115,22 @@ object PasskeyDB {
       user: UserIdentity
   ): Try[CredentialRecord] = {
     if (response.hasItem) {
-      Try {
-        val item = response.item()
-        val attestationStmt = objConverter.getCborConverter.readValue(
-          Base64UrlUtil.decode(item.get("attestationStatement").s()),
-          classOf[NoneAttestationStatement]
-        )
-        val counter = item.get("authCounter").n().toLong
-        val credentialData = credentialDataConverter.convert(
-          Base64UrlUtil.decode(item.get("credential").s())
-        )
-        val authExts = objConverter.getCborConverter.readValue(
-          Base64UrlUtil.decode(item.get("authenticatorExtensions").s()),
-          classOf[AuthenticationExtensionsAuthenticatorOutputs[
-            RegistrationExtensionAuthenticatorOutput
-          ]]
-        )
+      val item = response.item()
+      val attestationStmt = objConverter.getCborConverter.readValue(
+        Base64UrlUtil.decode(item.get("attestationStatement").s()),
+        classOf[NoneAttestationStatement]
+      )
+      val counter = item.get("authCounter").n().toLong
+      val credentialData = credentialDataConverter.convert(
+        Base64UrlUtil.decode(item.get("credential").s())
+      )
+      val authExts = objConverter.getCborConverter.readValue(
+        Base64UrlUtil.decode(item.get("authenticatorExtensions").s()),
+        classOf[AuthenticationExtensionsAuthenticatorOutputs[
+          RegistrationExtensionAuthenticatorOutput
+        ]]
+      )
+      Success(
         new CredentialRecordImpl(
           attestationStmt,
           null,
@@ -145,16 +142,6 @@ object PasskeyDB {
           null,
           null,
           null
-        )
-      }.recoverWith(err =>
-        Failure(
-          JanusException(
-            userMessage = "Invalid registered passkey",
-            engineerMessage =
-              s"Failed to extract credential data for user ${user.username}: ${err.getMessage}",
-            httpCode = INTERNAL_SERVER_ERROR,
-            causedBy = Some(err)
-          )
         )
       )
     } else
@@ -175,9 +162,7 @@ object PasskeyDB {
         .expressionAttributeValues(expressionValues.asJava)
         .build()
       dynamoDB.query(request)
-    }.recoverWith(err =>
-      Failure(JanusException.failedToLoadDbItem(user, tableName, err))
-    )
+    }.adaptError(err => JanusException.failedToLoadDbItem(user, tableName, err))
 
   def extractMetadata(response: QueryResponse): Seq[PasskeyMetadata] =
     if (response.hasItems && !response.items().isEmpty) {
@@ -254,15 +239,8 @@ object PasskeyDB {
       .build()
     dynamoDB.updateItem(request)
     ()
-  }.recoverWith(err =>
-    Failure(
-      JanusException.failedToUpdateDbItem(
-        user,
-        tableName,
-        attribName,
-        err
-      )
-    )
+  }.adaptError(err =>
+    JanusException.failedToUpdateDbItem(user, tableName, attribName, err)
   )
 
   def deleteById(
@@ -280,7 +258,5 @@ object PasskeyDB {
       .build()
     dynamoDB.deleteItem(request)
     ()
-  }.recoverWith(err =>
-    Failure(JanusException.failedToDeleteDbItem(user, tableName, err))
-  )
+  }.adaptError(err => JanusException.failedToDeleteDbItem(user, tableName, err))
 }
