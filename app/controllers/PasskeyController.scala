@@ -152,18 +152,17 @@ class PasskeyController(
       user: UserIdentity,
       registrationData: RegistrationData
   ): Try[Unit] =
-    PasskeyDB.passkeyNameExists(user, registrationData.passkeyName).flatMap {
-      nameExists =>
-        if (nameExists) {
-          Failure(
-            JanusException.duplicatePasskeyNameFieldInRequest(
-              user,
-              registrationData.passkeyName
-            )
+    PasskeyDB.loadCredentials(user).flatMap { credentialsResponse =>
+      val passkeys = PasskeyDB.extractMetadata(credentialsResponse)
+      if passkeys.exists(_.name.equalsIgnoreCase(registrationData.passkeyName))
+      then
+        Failure(
+          JanusException.duplicatePasskeyNameFieldInRequest(
+            user,
+            registrationData.passkeyName
           )
-        } else {
-          Success(())
-        }
+        )
+      else Success(())
     }
 
   /** Performs the core passkey registration process including cryptographic

@@ -259,31 +259,4 @@ object PasskeyDB {
     dynamoDB.deleteItem(request)
     ()
   }.adaptError(err => JanusException.failedToDeleteDbItem(user, tableName, err))
-
-  /** Checks if a passkey name already exists for the given user. */
-  def passkeyNameExists(
-      user: UserIdentity,
-      passkeyName: String
-  )(implicit dynamoDB: DynamoDbClient): Try[Boolean] = Try {
-    val expressionValues = Map(
-      ":username" -> AttributeValue.fromS(user.username)
-    )
-    val request = QueryRequest
-      .builder()
-      .tableName(tableName)
-      .keyConditionExpression("username = :username")
-      .expressionAttributeValues(expressionValues.asJava)
-      .build()
-
-    val response = dynamoDB.query(request)
-
-    if (response.hasItems && !response.items().isEmpty) {
-      response
-        .items()
-        .asScala
-        .exists(_.get("passkeyName").s().equalsIgnoreCase(passkeyName))
-    } else {
-      false
-    }
-  }.adaptError(err => JanusException.failedToLoadDbItem(user, tableName, err))
 }
