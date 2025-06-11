@@ -27,7 +27,7 @@ export async function registerPasskey(csrfToken) {
          *
          * This is a temporary measure until browsers accept the null value.
          */
-        if (regOptionsResponseJson.authenticatorSelection && regOptionsResponseJson.authenticatorSelection.authenticatorAttachment === null) {
+        if (regOptionsResponseJson.authenticatorSelection?.authenticatorAttachment === null) {
             delete regOptionsResponseJson.authenticatorSelection.authenticatorAttachment;
         }
 
