@@ -1,5 +1,6 @@
 package logic
 
+import cats.implicits.catsSyntaxMonadError
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.WebAuthnManager
 import com.webauthn4j.converter.exception.DataConversionException
@@ -106,8 +107,10 @@ object Passkey {
       )
       val timeout = Duration(60, SECONDS)
       val excludeCredentials = existingPasskeys.map(toDescriptor)
+      // Allow the widest possible range of authenticators
+      val authenticatorAttachment: AuthenticatorAttachment = null
       val authenticatorSelection = new AuthenticatorSelectionCriteria(
-        AuthenticatorAttachment.PLATFORM, // Prefer platform authenticators (TouchID, FaceID, Windows Hello)
+        authenticatorAttachment,
         ResidentKeyRequirement.DISCOURAGED, // Don't allow passkeys unknown to the server to be discovered at authentication time
         UserVerificationRequirement.REQUIRED // Always require user verification
       )
@@ -128,14 +131,8 @@ object Passkey {
         attestation,
         extensions
       )
-    }.recoverWith(exception =>
-      Failure(
-        JanusException.invalidFieldInRequest(
-          user,
-          "registration options",
-          exception
-        )
-      )
+    }.adaptError(err =>
+      JanusException.invalidFieldInRequest(user, "registration options", err)
     )
 
   /** Options required by a browser to initiate the authentication process.
@@ -170,13 +167,11 @@ object Passkey {
           hints.asJava,
           extensions
         )
-      }.recoverWith(exception =>
-        Failure(
-          JanusException.invalidFieldInRequest(
-            user,
-            "authentication options",
-            exception
-          )
+      }.adaptError(err =>
+        JanusException.invalidFieldInRequest(
+          user,
+          "authentication options",
+          err
         )
       )
     }
@@ -223,15 +218,11 @@ object Passkey {
         verified.getClientExtensions,
         verified.getTransports
       )
-    }.recoverWith {
-      case exception: VerificationException =>
-        Failure(
-          JanusException.invalidFieldInRequest(user, "passkey", exception)
-        )
-      case exception =>
-        Failure(
-          JanusException.invalidFieldInRequest(user, "passkey", exception)
-        )
+    }.adaptError {
+      case err: VerificationException =>
+        JanusException.invalidFieldInRequest(user, "passkey", err)
+      case err =>
+        JanusException.invalidFieldInRequest(user, "passkey", err)
     }
 
   /** Parses the authentication response from the browser. Call this when the
@@ -248,11 +239,11 @@ object Passkey {
       jsonResponse: String
   ): Try[AuthenticationData] =
     Try(webAuthnManager.parseAuthenticationResponseJSON(jsonResponse))
-      .recoverWith {
+      .adaptError {
         case err: DataConversionException =>
-          Failure(JanusException.invalidFieldInRequest(user, "passkey", err))
+          JanusException.invalidFieldInRequest(user, "passkey", err)
         case err =>
-          Failure(JanusException.invalidFieldInRequest(user, "passkey", err))
+          JanusException.invalidFieldInRequest(user, "passkey", err)
       }
 
   /** Verifies the authentication response from the browser. Call this when the
@@ -285,10 +276,10 @@ object Passkey {
         userVerificationRequired
       )
       webAuthnManager.verify(authenticationData, authParams)
-    }.recoverWith {
+    }.adaptError {
       case err: VerificationException =>
-        Failure(JanusException.authenticationFailure(user, err))
+        JanusException.authenticationFailure(user, err)
       case err =>
-        Failure(JanusException.invalidFieldInRequest(user, "passkey", err))
+        JanusException.invalidFieldInRequest(user, "passkey", err)
     }
 }

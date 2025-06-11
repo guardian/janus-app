@@ -74,7 +74,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         |    "transports" : [ "internal", "hybrid", "usb", "nfc" ]
         |  } ],
         |  "authenticatorSelection" : {
-        |    "authenticatorAttachment" : "platform",
+        |    "authenticatorAttachment" : null,
         |    "requireResidentKey" : false,
         |    "residentKey" : "discouraged",
         |    "userVerification" : "required"
