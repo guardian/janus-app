@@ -266,18 +266,24 @@ object PasskeyDB {
       passkeyName: String
   )(implicit dynamoDB: DynamoDbClient): Try[Boolean] = Try {
     val expressionValues = Map(
-      ":username" -> AttributeValue.fromS(user.username),
-      ":passkeyName" -> AttributeValue.fromS(passkeyName)
+      ":username" -> AttributeValue.fromS(user.username)
     )
     val request = QueryRequest
       .builder()
       .tableName(tableName)
       .keyConditionExpression("username = :username")
-      .filterExpression("passkeyName = :passkeyName")
       .expressionAttributeValues(expressionValues.asJava)
       .build()
 
     val response = dynamoDB.query(request)
-    response.hasItems && !response.items().isEmpty
+
+    if (response.hasItems && !response.items().isEmpty) {
+      response
+        .items()
+        .asScala
+        .exists(_.get("passkeyName").s().equalsIgnoreCase(passkeyName))
+    } else {
+      false
+    }
   }.adaptError(err => JanusException.failedToLoadDbItem(user, tableName, err))
 }
