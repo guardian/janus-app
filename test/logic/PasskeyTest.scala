@@ -76,7 +76,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         |  "authenticatorSelection" : {
         |    "authenticatorAttachment" : null,
         |    "requireResidentKey" : false,
-        |    "residentKey" : "preferred",
+        |    "residentKey" : "discouraged",
         |    "userVerification" : "required"
         |  },
         |  "hints" : [ ],
