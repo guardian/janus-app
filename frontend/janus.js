@@ -256,8 +256,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // remove wallclock option if we're too far from 19:00
         if (msToEndOfWork > maxLongDuration) {
             const walltimeSelector = document.querySelector(".dropdown-time__link--walltime[data-length=standard]");
-            walltimeSelector.closest(".login-duration__header").querySelector(".dropdown-trigger").textContent = defaultLongDurationLink.textContent;
-            walltimeSelector.remove();
+            if (walltimeSelector) {
+                walltimeSelector.closest(".login-duration__header").querySelector(".dropdown-trigger").textContent = defaultLongDurationLink.textContent;
+                walltimeSelector.remove();
+            }
         }
 
         // remove admin control if there are no admin permissions available
