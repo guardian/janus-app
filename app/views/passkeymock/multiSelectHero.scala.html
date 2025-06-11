@@ -1,0 +1,68 @@
+@import play.filters.csrf.CSRF
+@import aws.Federation.{maxLongTime, maxShortTime, defaultLongTime, defaultShortTime}
+@import logic.Date.formatDuration
+@(passkeysEnabled: Boolean)(implicit request: RequestHeader)
+
+<div class="controls__hero">
+    <div class="container controls__container">
+        <div class="controls__row row">
+            <div class="col s12 m6 push-m6">
+                <div class="multiple-credentials-control__container">
+                    <div class="multiple-credentials-control--inactive">
+                        <p class="multiple-credentials__text multiple-credentials__text--inactive grey-text text-darken-1">
+                                Use checkboxes to select multiple accounts
+                        </p>
+                    </div>
+                    <div class="multiple-credentials-control--active">
+                        <a class="multiple-credentials-control--clear janus-btn--flat waves-effect waves-light btn-flat">
+                            <i class="material-icons">clear</i>
+                        </a>
+                        <a
+                            class="multiple-credentials__link btn-large federation__link federation__link--standard right"
+                            csrf-token="@{CSRF.getToken.get.value}"
+                            data-passkey-protected="true"
+                            @if(!passkeysEnabled) {data-passkey-bypassed="true"}
+                            href="/passkey/protected-credentials-page?"
+                        >
+                            <i class="material-icons right">vpn_key</i>
+                            <span class="multi-accounts-count">0 accounts</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="login-duration__container col s6 m3 pull-m6 center-align">
+                <div class="login-duration__title">
+                        Standard <i class="material-icons">access_time</i>
+                    </div>
+                <div class="login-duration__header">
+                    <a class='dropdown-trigger btn time-link time-link--standard' href='#' data-target='dropdown-time--standard' disabled="disabled">
+                            Until 7pm
+                    </a>
+                    <ul id='dropdown-time--standard' class='dropdown-content'>
+                        <li><a href="#!" data-length="standard" data-duration="" class="dropdown-time__link dropdown-time__link--walltime">Until 7pm</a></li>
+                        <li class="divider"></li>
+                        <li><a href="#!" data-length="standard" data-duration="3600000" class="dropdown-time__link">1 hour</a></li>
+                        <li><a href="#!" data-length="standard" data-duration="14400000" class="dropdown-time__link">4 hours</a></li>
+                        <li><a href="#!" data-length="standard" data-duration="@defaultLongTime.toMillis" class="dropdown-time__link dropdown-time__link--default">@formatDuration(defaultLongTime)</a></li>
+                        <li><a href="#!" data-length="standard" data-duration="@maxLongTime.toMillis" class="dropdown-time__link dropdown-time__link--max">@formatDuration(maxLongTime)</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="login-duration__container login-duration--admin col s6 m3 pull-m6 center-align">
+                <div class="login-duration__title">
+                        Admin <i class="material-icons">access_time</i>
+                    </div>
+                <div class="login-duration__header">
+                    <a class='dropdown-trigger btn time-link time-link--short' href='#' data-target='dropdown-time--short' disabled="disabled">
+                            1 hour
+                    </a>
+                    <ul id='dropdown-time--short' class='dropdown-content'>
+                        <li><a href="#!" data-length="short" data-duration="1800000" class="dropdown-time__link">30 mins</a></li>
+                        <li><a href="#!" data-length="short" data-duration="@defaultShortTime.toMillis" class="dropdown-time__link dropdown-time__link--default">@formatDuration(defaultShortTime)</a></li>
+                        <li><a href="#!" data-length="short" data-duration="@maxShortTime.toMillis" class="dropdown-time__link dropdown-time__link--max">@formatDuration(maxShortTime)</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
