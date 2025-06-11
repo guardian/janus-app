@@ -12,6 +12,9 @@ import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
 import models.JanusException.throwableWrites
 import models.{JanusException, PasskeyAuthenticator, PasskeyEncodings}
+import play.api.data.Form
+import play.api.data.Forms.{mapping, text}
+import play.api.data.validation.Constraints.*
 import play.api.http.MimeTypes
 import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
@@ -83,50 +86,73 @@ class PasskeyController(
     )
   }
 
+  /*
+   * Validation rules for input fields to the 'register' route.
+   * These should correspond with the frontend rules defined in [[passkeys.js#getPasskeysFromUser]].
+   */
+  private val registrationForm: Form[RegistrationData] = Form(
+    mapping(
+      "passkey" -> text.verifying(nonEmpty),
+      "passkeyName" -> text
+        .transform(_.trim, identity)
+        .verifying(nonEmpty)
+        .verifying(maxLength(50))
+        .verifying(pattern("^[a-zA-Z0-9 _-]+$".r))
+    )(
+      RegistrationData.apply
+    )(data => Some((data.passkey, data.passkeyName)))
+  )
+
+  private def formattedErrors(formWithErrors: Form[RegistrationData]) =
+    formWithErrors.errors
+      .map { error =>
+        val message = error.message match {
+          case "error.required"  => "missing value"
+          case "error.maxLength" => "too long"
+          case "error.pattern"   => "contains invalid characters"
+          case other             => other
+        }
+        s"${error.key}: $message"
+      }
+      .mkString(", ")
+
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#registering-the-webauthn-public-key-credential-on-the-server]].
     */
   def register: Action[Map[String, Seq[String]]] = authAction(
     parse.formUrlEncoded
-  ) { request =>
-    apiResponse(
-      for {
-        challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
-        challenge <- PasskeyChallengeDB.extractChallenge(
-          challengeResponse,
-          request.user
-        )
-        passkey <- request.body.get("passkey") match {
-          case Some(values) => Success(values.head)
-          case None =>
-            Failure(
-              JanusException.missingFieldInRequest(request.user, "passkey")
+  ) { implicit request =>
+    registrationForm
+      .bindFromRequest()
+      .fold(
+        formWithErrors =>
+          Redirect("/user-account")
+            .flashing("error" -> formattedErrors(formWithErrors)),
+        registrationData =>
+          apiResponse(for {
+            challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
+            challenge <- PasskeyChallengeDB.extractChallenge(
+              challengeResponse,
+              request.user
             )
-        }
-        passkeyName <- request.body.get("passkeyName") match {
-          case Some(values) => Success(values.head)
-          case None =>
-            Failure(
-              JanusException.missingFieldInRequest(request.user, "passkeyName")
+            credRecord <- Passkey.verifiedRegistration(
+              host,
+              request.user,
+              challenge,
+              registrationData.passkey
             )
-        }
-        credRecord <- Passkey.verifiedRegistration(
-          host,
-          request.user,
-          challenge,
-          passkey
-        )
-        _ <- PasskeyDB.insert(request.user, credRecord, passkeyName)
-        _ <- PasskeyChallengeDB.delete(request.user)
-        _ = logger.info(s"Registered passkey for user ${request.user.username}")
-      } yield {
-        val message =
-          if (passkeyName.nonEmpty)
-            s"Passkey '$passkeyName' was registered successfully"
-          else "Passkey was registered successfully"
-        Redirect("/user-account").flashing("success" -> message)
-      }
-    )
+            _ <- PasskeyDB
+              .insert(request.user, credRecord, registrationData.passkeyName)
+            _ <- PasskeyChallengeDB.delete(request.user)
+            _ = logger
+              .info(s"Registered passkey for user ${request.user.username}")
+          } yield {
+            Redirect("/user-account")
+              .flashing(
+                "success" -> s"Passkey '${registrationData.passkeyName}' was registered successfully"
+              )
+          })
+      )
   }
 
   /** See
@@ -252,3 +278,5 @@ class PasskeyController(
     }
   }
 }
+
+case class RegistrationData(passkey: String, passkeyName: String)
