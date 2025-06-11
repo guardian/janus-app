@@ -279,5 +279,5 @@ object PasskeyDB {
 
     val response = dynamoDB.query(request)
     response.hasItems && !response.items().isEmpty
-  }.adaptError(err => JanusException.failedToDeleteDbItem(user, tableName, err))
+  }.adaptError(err => JanusException.failedToLoadDbItem(user, tableName, err))
 }
