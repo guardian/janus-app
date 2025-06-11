@@ -111,7 +111,7 @@ object Passkey {
       val authenticatorAttachment: AuthenticatorAttachment = null
       val authenticatorSelection = new AuthenticatorSelectionCriteria(
         authenticatorAttachment,
-        ResidentKeyRequirement.PREFERRED, // Store credentials on the authenticator when possible
+        ResidentKeyRequirement.DISCOURAGED, // Don't allow passkeys unknown to the server to be discovered at authentication time
         UserVerificationRequirement.REQUIRED // Always require user verification
       )
       val hints: Seq[PublicKeyCredentialHints] = Nil
