@@ -3,6 +3,7 @@ package logic
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.DefaultChallenge
+import com.webauthn4j.data.AuthenticatorTransport
 import models.{JanusException, PasskeyEncodings, PasskeyMetadata}
 import org.scalatest.EitherValues
 import org.scalatest.freespec.AnyFreeSpec
@@ -37,6 +38,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
             name = "Test",
             registrationTime = Instant.parse("2025-05-21T09:30:00.000000Z"),
             aaguid = new AAGUID("adce0002-35bc-c60a-648b-0b25f1f05503"),
+            transports = Seq(AuthenticatorTransport.INTERNAL, AuthenticatorTransport.HYBRID, AuthenticatorTransport.USB, AuthenticatorTransport.NFC),
             lastUsedTime = None,
             authenticator = None
           )
@@ -176,6 +178,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
           name = "Test",
           registrationTime = Instant.parse("2025-05-21T09:30:00.000000Z"),
           aaguid = new AAGUID("adce0002-35bc-c60a-648b-0b25f1f05503"),
+          transports = Seq(AuthenticatorTransport.INTERNAL),
           lastUsedTime = None,
           authenticator = None
         )

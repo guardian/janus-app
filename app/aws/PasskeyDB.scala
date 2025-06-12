@@ -5,16 +5,15 @@ import com.gu.googleauth.UserIdentity
 import com.webauthn4j.converter.AttestedCredentialDataConverter
 import com.webauthn4j.converter.util.ObjectConverter
 import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
-import com.webauthn4j.data.AuthenticationData
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.attestation.statement.NoneAttestationStatement
 import com.webauthn4j.data.extension.authenticator.{
   AuthenticationExtensionsAuthenticatorOutputs,
   RegistrationExtensionAuthenticatorOutput
 }
+import com.webauthn4j.data.{AuthenticationData, AuthenticatorTransport}
 import com.webauthn4j.util.Base64UrlUtil
 import models.{JanusException, PasskeyMetadata}
-import play.api.http.Status.INTERNAL_SERVER_ERROR
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.*
 
@@ -70,13 +69,21 @@ object PasskeyDB {
           )
         )
       ),
-      // see https://www.w3.org/TR/webauthn-1/#sign-counter
+      // See https://www.w3.org/TR/webauthn-1/#sign-counter
       "authCounter" -> AttributeValue.fromN("0"),
       "passkeyName" -> AttributeValue.fromS(passkeyName),
       "registrationTime" -> AttributeValue.fromS(registrationTime.toString),
       "aaguid" -> AttributeValue.fromS(
         credentialRecord.getAttestedCredentialData.getAaguid.toString
-      )
+      ),
+      // Enables us to determine whether passkey is platform, cross-platform or hybrid.
+      "transports" -> {
+        val transports = Option(credentialRecord.getTransports)
+          .map(_.asScala.toList)
+          .getOrElse(List.empty)
+          .map(transport => AttributeValue.fromS(transport.getValue))
+        AttributeValue.fromL(transports.asJava)
+      }
     )
 
   def insert(
@@ -176,6 +183,12 @@ object PasskeyDB {
             registrationTime =
               Instant.parse(attribs.get("registrationTime").s()),
             aaguid = new AAGUID(attribs.get("aaguid").s()),
+            transports = attribs
+              .get("transports")
+              .l()
+              .asScala
+              .map(transport => AuthenticatorTransport.create(transport.s()))
+              .toSeq,
             lastUsedTime =
               if (attribs.containsKey("lastUsedTime"))
                 Some(Instant.parse(attribs.get("lastUsedTime").s()))

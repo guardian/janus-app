@@ -21,9 +21,15 @@ case class PasskeyMetadata(
     registrationTime: Instant,
     // Identifies the model of the authenticator device that created the passkey
     aaguid: AAGUID,
+    transports: Seq[AuthenticatorTransport],
     lastUsedTime: Option[Instant],
     authenticator: Option[PasskeyAuthenticator]
-)
+                          ) {
+  val isPlatform: Boolean = transports match {
+    case t :: nil if t == AuthenticatorTransport.INTERNAL => true
+    case _ => false
+  }
+}
 
 object PasskeyEncodings {
 

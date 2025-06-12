@@ -17,7 +17,7 @@
         <h3 class="header orange-text">Passkeys</h3>
 
         <p>Passkeys are a secure way to log in without a password. They are used to authenticate you when you access Janus credentials or the AWS console.</p>
-        <p>We recommend you register at least two passkeys. One should be on-device (e.g. Touch ID) and the other off-device (e.g. security key or authenticator app).</p>
+        <p>We recommend you register at least two passkeys. One should be on-device (e.g. Touch ID) and the other off-device (e.g. Yubikey or password manager built into a phone).</p>
 
         <div class="row">           
             <h4 class="header orange-text">Registered passkeys</h4>
@@ -42,7 +42,8 @@
                                             @passkey.authenticator.flatMap(_.icon).map { icon =>
                                                 <img class="passkey-authenticator-icon" src="@icon" alt="@{passkey.authenticator.map(_.description).getOrElse("Unknown authenticator")} icon" />
                                             }
-                                            @{passkey.authenticator.map(_.description).getOrElse("Unknown")}
+                                            @{passkey.authenticator.map(_.description).getOrElse("Unknown")}<br />
+                                            ***@{passkey.isPlatform}***
                                         </td>
                                         <td>@{dateFormat(passkey.registrationTime)}</td>
                                         <td>@{passkey.lastUsedTime.map(timeFormat).getOrElse("Never")}</td>
