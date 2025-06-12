@@ -16,6 +16,21 @@ export async function registerPasskey(csrfToken) {
             }
         });
         const regOptionsResponseJson = await regOptionsResponse.json();
+
+        /*
+         * authenticatorSelection.authenticatorAttachment can be "platform" | "cross-platform" | null.
+         * A null value means any authenticator is allowed.
+         * Unfortunately, even though null is the recommended value, Safari won't allow it
+         * and Firefox gives a warning about it.
+         * So we remove the field if its value is null and all browsers are then happy.
+         * The effect is unchanged.
+         *
+         * This is a temporary measure until browsers accept the null value.
+         */
+        if (regOptionsResponseJson.authenticatorSelection?.authenticatorAttachment === null) {
+            delete regOptionsResponseJson.authenticatorSelection.authenticatorAttachment;
+        }
+
         const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsResponseJson);
         const publicKeyCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
         const passkeyName = await getPasskeyNameFromUser();
