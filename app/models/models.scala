@@ -4,12 +4,11 @@ import com.gu.googleauth.UserIdentity
 import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, UNAUTHORIZED}
 import play.api.libs.json.{Json, Writes}
 
-sealed trait AccountConfigStatus
-case class FederationConfigError(causedBy: Throwable)
-    extends AccountConfigStatus
-case object ConfigSuccess extends AccountConfigStatus
-case class ConfigWarn(accounts: Set[String]) extends AccountConfigStatus
-case class ConfigError(accounts: Set[String]) extends AccountConfigStatus
+enum AccountConfigStatus:
+  case FederationConfigError(causedBy: Throwable)
+  case ConfigSuccess
+  case ConfigWarn(accounts: Set[String])
+  case ConfigError(accounts: Set[String])
 
 enum DisplayMode:
   case Normal, Spooky, Festive
