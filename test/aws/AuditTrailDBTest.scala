@@ -15,7 +15,7 @@ import java.time.{Duration, ZonedDateTime}
 class AuditTrailDBTest extends AnyFreeSpec with Matchers {
 
   "test db stuff - use this to test DynamoDB stuff locally during development" - {
-    implicit val dynamoDB: DynamoDbClient = Clients.localDb
+    given dynamoDB: DynamoDbClient = Clients.localDb
 
     "insertion and querying" ignore {
       val dateTime = ZonedDateTime.of(2015, 11, 5, 17, 35, 0, 0, UTC).toInstant

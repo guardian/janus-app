@@ -5,7 +5,7 @@ import play.api.mvc.{Filter, RequestHeader, Result}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class HstsFilter(implicit material: Materializer, ec: ExecutionContext)
+class HstsFilter(using material: Materializer, ec: ExecutionContext)
     extends Filter {
   def apply(
       next: RequestHeader => Future[Result]
@@ -15,5 +15,5 @@ class HstsFilter(implicit material: Materializer, ec: ExecutionContext)
     )
   }
 
-  override implicit def mat: Materializer = material
+  override given mat: Materializer = material
 }

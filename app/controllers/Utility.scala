@@ -14,7 +14,7 @@ class Utility(
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
     configuration: Configuration
-)(implicit mode: Mode, assetsFinder: AssetsFinder)
+)(using mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 

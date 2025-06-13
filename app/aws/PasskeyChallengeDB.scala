@@ -43,7 +43,7 @@ object PasskeyChallengeDB {
 
   def insert(
       userChallenge: UserChallenge
-  )(implicit dynamoDB: DynamoDbClient): Try[Unit] =
+  )(using dynamoDB: DynamoDbClient): Try[Unit] =
     Try {
       val item = toDynamoItem(userChallenge)
       val request =
@@ -56,7 +56,7 @@ object PasskeyChallengeDB {
 
   def loadChallenge(
       user: UserIdentity
-  )(implicit dynamoDB: DynamoDbClient): Try[GetItemResponse] = {
+  )(using dynamoDB: DynamoDbClient): Try[GetItemResponse] = {
     Try {
       val key = Map("username" -> AttributeValue.fromS(user.username))
       val request =
@@ -82,7 +82,7 @@ object PasskeyChallengeDB {
 
   def delete(
       user: UserIdentity
-  )(implicit dynamoDB: DynamoDbClient): Try[Unit] =
+  )(using dynamoDB: DynamoDbClient): Try[Unit] =
     Try {
       val key = Map("username" -> AttributeValue.fromS(user.username))
       val request =

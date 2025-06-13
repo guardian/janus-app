@@ -25,7 +25,7 @@ class PasskeyAuthFilter(
     host: String,
     passkeysEnabled: Boolean,
     enablingCookieName: String
-)(implicit
+)(using
     dynamoDb: DynamoDbClient,
     ec: ExecutionContext
 ) extends ActionFilter[UserIdentityRequest]

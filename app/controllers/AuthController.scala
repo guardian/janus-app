@@ -14,7 +14,7 @@ class AuthController(
     val authConfig: GoogleAuthConfig,
     val googleGroupChecker: GoogleGroupChecker,
     requiredGoogleGroups: Set[String]
-)(implicit
+)(using
     val wsClient: WSClient,
     ec: ExecutionContext,
     mode: Mode,

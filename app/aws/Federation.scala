@@ -150,7 +150,7 @@ object Federation {
       after: Instant,
       roleArn: String,
       stsClient: StsClient
-  )(implicit mode: Mode): Unit = {
+  )(using mode: Mode): Unit = {
     val revocationPolicyDocument = denyOlderSessionsPolicyDocument(after)
 
     val username = mode match {

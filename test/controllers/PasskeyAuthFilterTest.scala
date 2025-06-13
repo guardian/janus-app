@@ -6,14 +6,17 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.mvc.{AnyContentAsFormUrlEncoded, Cookie, Results}
 import play.api.test.{FakeHeaders, FakeRequest}
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class PasskeyAuthFilterSpec
+class PasskeyAuthFilterTest
     extends AnyFreeSpec
     with Matchers
     with ScalaFutures
     with Results {
+
+  given DynamoDbClient = null
 
   private val testHost = "test.example.com"
   private val testCookieName = "test-cookie"
@@ -60,7 +63,7 @@ class PasskeyAuthFilterSpec
         passkeysEnabled = false,
         enablingCookieName = testCookieName,
         host = testHost
-      )(null, global)
+      )
 
       val request = createRequestWithCookie(validFormBody)
       val result = filter.filter(request).futureValue
@@ -73,7 +76,7 @@ class PasskeyAuthFilterSpec
         passkeysEnabled = true,
         enablingCookieName = testCookieName,
         host = testHost
-      )(null, global)
+      )
 
       val request = createRequestWithoutCookie(validFormBody)
       val result = filter.filter(request).futureValue

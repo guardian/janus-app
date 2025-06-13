@@ -84,7 +84,7 @@ object PasskeyDB {
       credentialRecord: CredentialRecord,
       passkeyName: String,
       registrationTime: Instant = Instant.now()
-  )(implicit dynamoDB: DynamoDbClient): Try[Unit] = Try {
+  )(using dynamoDB: DynamoDbClient): Try[Unit] = Try {
     val item =
       toDynamoItem(user, credentialRecord, passkeyName, registrationTime)
     val request =
@@ -96,7 +96,7 @@ object PasskeyDB {
   def loadCredential(
       user: UserIdentity,
       credentialId: Array[Byte]
-  )(implicit dynamoDB: DynamoDbClient): Try[GetItemResponse] = {
+  )(using dynamoDB: DynamoDbClient): Try[GetItemResponse] = {
     Try {
       val key = Map(
         "username" -> AttributeValue.fromS(user.username),
@@ -150,7 +150,7 @@ object PasskeyDB {
 
   def loadCredentials(
       user: UserIdentity
-  )(implicit dynamoDB: DynamoDbClient): Try[QueryResponse] =
+  )(using dynamoDB: DynamoDbClient): Try[QueryResponse] =
     Try {
       val expressionValues = Map(
         ":username" -> AttributeValue.fromS(user.username)
@@ -192,7 +192,7 @@ object PasskeyDB {
     *
     * See https://www.w3.org/TR/webauthn-1/#sign-counter
     */
-  def updateCounter(user: UserIdentity, authData: AuthenticationData)(implicit
+  def updateCounter(user: UserIdentity, authData: AuthenticationData)(using
       dynamoDB: DynamoDbClient
   ): Try[Unit] =
     updateAttribute(
@@ -208,7 +208,7 @@ object PasskeyDB {
       user: UserIdentity,
       authData: AuthenticationData,
       lastUsedTime: Instant = Instant.now()
-  )(implicit dynamoDB: DynamoDbClient): Try[Unit] =
+  )(using dynamoDB: DynamoDbClient): Try[Unit] =
     updateAttribute(
       user,
       authData,
@@ -221,7 +221,7 @@ object PasskeyDB {
       authData: AuthenticationData,
       attribName: String,
       attribValue: AttributeValue
-  )(implicit
+  )(using
       dynamoDB: DynamoDbClient
   ): Try[Unit] = Try {
     val key = Map(
@@ -246,7 +246,7 @@ object PasskeyDB {
   def deleteById(
       user: UserIdentity,
       credentialId: String
-  )(implicit dynamoDB: DynamoDbClient): Try[Unit] = Try {
+  )(using dynamoDB: DynamoDbClient): Try[Unit] = Try {
     val key = Map(
       "username" -> AttributeValue.fromS(user.username),
       "credentialId" -> AttributeValue.fromS(credentialId)

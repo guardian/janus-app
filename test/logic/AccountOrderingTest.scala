@@ -1,6 +1,7 @@
 package logic
 
 import fixtures.Fixtures._
+import logic.AccountOrdering.permissionOrdering
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers

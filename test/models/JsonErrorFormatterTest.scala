@@ -139,7 +139,7 @@ class JsonErrorFormatterTest extends AnyFreeSpec with Matchers {
   "integration tests" - {
     "real Play JSON validation" - {
       case class TestUser(name: String, age: Int, email: String)
-      implicit val testUserReads: Reads[TestUser] = Json.reads[TestUser]
+      given testUserReads: Reads[TestUser] = Json.reads[TestUser]
 
       val invalidJson =
         """{"name": 123, "age": "invalid", "missing": "email"}"""
@@ -194,8 +194,8 @@ class JsonErrorFormatterTest extends AnyFreeSpec with Matchers {
       case class Address(street: String, city: String, zipCode: Int)
       case class Person(name: String, age: Int, address: Address)
 
-      implicit val addressReads: Reads[Address] = Json.reads[Address]
-      implicit val personReads: Reads[Person] = Json.reads[Person]
+      given addressReads: Reads[Address] = Json.reads[Address]
+      given personReads: Reads[Person] = Json.reads[Person]
 
       val invalidJson =
         """{"name": 123, "age": "invalid", "address": {"street": 456, "city": "Valid City"}}"""
@@ -250,8 +250,8 @@ class JsonErrorFormatterTest extends AnyFreeSpec with Matchers {
       case class Item(id: Int, name: String)
       case class Container(items: Seq[Item])
 
-      implicit val itemReads: Reads[Item] = Json.reads[Item]
-      implicit val containerReads: Reads[Container] = Json.reads[Container]
+      given itemReads: Reads[Item] = Json.reads[Item]
+      given containerReads: Reads[Container] = Json.reads[Container]
 
       val invalidJson =
         """{"items": [{"id": "invalid", "name": "valid"}, {"id": 2}]}"""
