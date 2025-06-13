@@ -12,7 +12,7 @@ import scala.jdk.CollectionConverters._
 object AuditTrailDB {
   import AuditTrail._
 
-  def insert(auditLog: AuditLog)(implicit dynamoDB: DynamoDbClient): Unit = {
+  def insert(auditLog: AuditLog)(using dynamoDB: DynamoDbClient): Unit = {
     val auditLogDbAttrs = AuditLogDbEntryAttrs.fromAuditLog(auditLog)
     val item = auditLogDbAttrs.toMap.asJava
     val request =
@@ -24,7 +24,7 @@ object AuditTrailDB {
       account: String,
       startDate: Instant,
       endDate: Instant
-  )(implicit dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] = {
+  )(using dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] = {
     val request = QueryRequest
       .builder()
       .tableName(tableName)
@@ -46,7 +46,7 @@ object AuditTrailDB {
       username: String,
       startDate: Instant,
       endDate: Instant
-  )(implicit dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] = {
+  )(using dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] = {
     val request = QueryRequest
       .builder()
       .tableName(tableName)

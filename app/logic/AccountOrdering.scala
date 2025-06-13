@@ -38,7 +38,7 @@ object AccountOrdering {
     * hard-coded dev/admin conventions for now, TODO: find a better
     * representation for ordering
     */
-  implicit val permissionOrdering: Ordering[Permission] =
+  given permissionOrdering: Ordering[Permission] =
     (p1: Permission, p2: Permission) => {
       def sortKey(p: Permission) = p.label match {
         case "dev"            => "aaaa"

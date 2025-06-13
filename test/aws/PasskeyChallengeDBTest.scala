@@ -23,7 +23,7 @@ import scala.util.{Failure, Success}
 class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
 
   "test db stuff - use this to test DynamoDB stuff locally during development" - {
-    implicit val dynamoDB: DynamoDbClient = Clients.localDb
+    given dynamoDB: DynamoDbClient = Clients.localDb
 
     "insertion and querying" - {
       val clock = Clock.fixed(Instant.parse("2025-03-31T01:00:00Z"), UTC)
