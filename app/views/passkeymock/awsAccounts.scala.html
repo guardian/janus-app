@@ -1,6 +1,7 @@
 @import com.gu.janus.model.AwsAccountAccess
 @import logic.Customisation.displayColour
 @import models.DisplayMode
+@import models.DisplayMode.*
 
 @import play.filters.csrf.CSRF
 @(accountAccesses: List[AwsAccountAccess], allowFavs: Boolean, displayMode: DisplayMode = Normal, passkeysEnabled: Boolean)(implicit request: RequestHeader)

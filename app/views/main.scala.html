@@ -5,6 +5,8 @@
 @import play.api.Mode
 @import java.time.Instant
 @import views.html.helper.CSPNonce
+@import models.DisplayMode
+@import models.DisplayMode.*
 
 @(title: String, userOpt: Option[UserIdentity], janusData: JanusData, displayMode: DisplayMode = Normal)(content: Html)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
