@@ -11,10 +11,8 @@ case object ConfigSuccess extends AccountConfigStatus
 case class ConfigWarn(accounts: Set[String]) extends AccountConfigStatus
 case class ConfigError(accounts: Set[String]) extends AccountConfigStatus
 
-sealed trait DisplayMode
-object Normal extends DisplayMode
-object Spooky extends DisplayMode
-object Festive extends DisplayMode
+enum DisplayMode:
+  case Normal, Spooky, Festive
 
 case class JanusException(
     userMessage: String,

@@ -182,17 +182,17 @@ class DateTest extends AnyFreeSpec with Matchers with OptionValues {
 
     "returns the correct display mode for Halloween" in {
       val today = ZonedDateTime.of(2025, 10, 31, 1, 0, 0, 0, timezone)
-      Date.displayMode(today) shouldEqual models.Spooky
+      Date.displayMode(today) shouldEqual models.DisplayMode.Spooky
     }
 
     "returns the correct display mode for Christmas" in {
       val today = ZonedDateTime.of(2025, 12, 25, 2, 0, 0, 0, timezone)
-      Date.displayMode(today) shouldEqual models.Festive
+      Date.displayMode(today) shouldEqual models.DisplayMode.Festive
     }
 
     "returns the correct display mode for an arbitrary date neither Halloween nor Christmas" in {
       val today = ZonedDateTime.of(2025, 3, 5, 3, 0, 0, 0, timezone)
-      Date.displayMode(today) shouldEqual models.Normal
+      Date.displayMode(today) shouldEqual models.DisplayMode.Normal
     }
   }
 
