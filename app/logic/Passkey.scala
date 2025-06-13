@@ -108,17 +108,17 @@ object Passkey {
       val timeout = Duration(60, SECONDS)
       val excludeCredentials = existingPasskeys.map(toDescriptor)
       // Allow the widest possible range of authenticators
-      val authenticatorAttachment: AuthenticatorAttachment = null
+      val authenticatorAttachment: Option[AuthenticatorAttachment] = None
       val authenticatorSelection = new AuthenticatorSelectionCriteria(
-        authenticatorAttachment,
+        authenticatorAttachment.orNull,
         ResidentKeyRequirement.DISCOURAGED, // Don't allow passkeys unknown to the server to be discovered at authentication time
         UserVerificationRequirement.REQUIRED // Always require user verification
       )
       val hints: Seq[PublicKeyCredentialHints] = Nil
       val attestation = DIRECT
-      val extensions: AuthenticationExtensionsClientInputs[
-        RegistrationExtensionClientInput
-      ] = null
+      val extensions: Option[
+        AuthenticationExtensionsClientInputs[RegistrationExtensionClientInput]
+      ] = None
       new PublicKeyCredentialCreationOptions(
         relyingParty,
         userInfo,
@@ -129,7 +129,7 @@ object Passkey {
         authenticatorSelection,
         hints.asJava,
         attestation,
-        extensions
+        extensions.orNull
       )
     }.adaptError(err =>
       JanusException.invalidFieldInRequest(user, "registration options", err)
