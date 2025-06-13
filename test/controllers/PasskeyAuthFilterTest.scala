@@ -59,7 +59,11 @@ class PasskeyAuthFilterTest
 
   "PasskeyAuthFilter" - {
     "bypass authentication when disabled" in {
-      val filter = new PasskeyAuthFilter(passkeysEnabled = false, enablingCookieName = testCookieName, host = testHost)
+      val filter = new PasskeyAuthFilter(
+        passkeysEnabled = false,
+        enablingCookieName = testCookieName,
+        host = testHost
+      )
 
       val request = createRequestWithCookie(validFormBody)
       val result = filter.filter(request).futureValue
@@ -68,7 +72,11 @@ class PasskeyAuthFilterTest
     }
 
     "bypass authentication when enabling cookie is not present" in {
-      val filter = new PasskeyAuthFilter(passkeysEnabled = true, enablingCookieName = testCookieName, host = testHost)
+      val filter = new PasskeyAuthFilter(
+        passkeysEnabled = true,
+        enablingCookieName = testCookieName,
+        host = testHost
+      )
 
       val request = createRequestWithoutCookie(validFormBody)
       val result = filter.filter(request).futureValue
