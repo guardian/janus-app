@@ -23,6 +23,13 @@ import play.api.mvc.*
 import play.api.{Logging, Mode}
 import play.twirl.api.Html
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import com.webauthn4j.data.attestation.AttestationObject
+import com.webauthn4j.data.attestation.statement.AttestationStatement
+import com.webauthn4j.data.attestation.statement.NoneAttestationStatement
+import com.webauthn4j.data.attestation.statement.FIDOU2FAttestationStatement
+import com.webauthn4j.data.attestation.statement.PackedAttestationStatement
+import com.webauthn4j.data.attestation.statement.AttestationTrustResolver
+import com.webauthn4j.webauthn.WebAuthnManager
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneId, ZonedDateTime}
@@ -47,6 +54,21 @@ class PasskeyController(
     case Mode.Test => "Janus-Test"
     case Mode.Prod => "Janus-Prod"
   }
+
+  private val webAuthnManager = WebAuthnManager.createWebAuthnManager(
+    attestationTrustResolver = new AttestationTrustResolver {
+      override def isValidAttestation(
+          attestation: AttestationObject
+      ): Boolean = {
+        attestation.getAttestationStatement match {
+          case _: NoneAttestationStatement    => false
+          case _: FIDOU2FAttestationStatement => true
+          case _: PackedAttestationStatement  => true
+          case _                              => false
+        }
+      }
+    }
+  )
 
   private def apiResponse[A](action: => Try[A]): Result =
     action match {
