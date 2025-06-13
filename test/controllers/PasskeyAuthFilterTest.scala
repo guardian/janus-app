@@ -6,14 +6,17 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.mvc.{AnyContentAsFormUrlEncoded, Cookie, Results}
 import play.api.test.{FakeHeaders, FakeRequest}
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class PasskeyAuthFilterSpec
+class PasskeyAuthFilterTest
     extends AnyFreeSpec
     with Matchers
     with ScalaFutures
     with Results {
+
+  given DynamoDbClient = null
 
   private val testHost = "test.example.com"
   private val testCookieName = "test-cookie"
@@ -56,11 +59,7 @@ class PasskeyAuthFilterSpec
 
   "PasskeyAuthFilter" - {
     "bypass authentication when disabled" in {
-      val filter = new PasskeyAuthFilter(
-        passkeysEnabled = false,
-        enablingCookieName = testCookieName,
-        host = testHost
-      )(null, global)
+      val filter = new PasskeyAuthFilter(passkeysEnabled = false, enablingCookieName = testCookieName, host = testHost)
 
       val request = createRequestWithCookie(validFormBody)
       val result = filter.filter(request).futureValue
@@ -69,11 +68,7 @@ class PasskeyAuthFilterSpec
     }
 
     "bypass authentication when enabling cookie is not present" in {
-      val filter = new PasskeyAuthFilter(
-        passkeysEnabled = true,
-        enablingCookieName = testCookieName,
-        host = testHost
-      )(null, global)
+      val filter = new PasskeyAuthFilter(passkeysEnabled = true, enablingCookieName = testCookieName, host = testHost)
 
       val request = createRequestWithoutCookie(validFormBody)
       val result = filter.filter(request).futureValue
