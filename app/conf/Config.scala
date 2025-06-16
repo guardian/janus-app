@@ -10,6 +10,7 @@ import com.gu.janus.JanusConfig
 import com.gu.janus.model._
 import com.gu.play.secretrotation.SnapshotProvider
 import models._
+import models.AccountConfigStatus.*
 import play.api.Configuration
 
 import java.io.{File, FileInputStream}

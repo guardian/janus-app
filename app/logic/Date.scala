@@ -1,6 +1,7 @@
 package logic
 
-import models.{DisplayMode, Festive, Normal, Spooky}
+import models.DisplayMode
+import models.DisplayMode.*
 
 import java.time.ZoneOffset.UTC
 import java.time._
