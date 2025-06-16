@@ -325,8 +325,10 @@ function getPasskeyNameFromUser() {
         const updateSubmitButtonState = (isValid) => {
             if (isValid) {
                 submitButton.classList.remove('disabled');
+                submitButton.disabled = false;
             } else {
                 submitButton.classList.add('disabled');
+                submitButton.disabled = true;
             }
         };
 
