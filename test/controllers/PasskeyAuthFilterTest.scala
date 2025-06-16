@@ -16,7 +16,14 @@ class PasskeyAuthFilterTest
     with ScalaFutures
     with Results {
 
-  given DynamoDbClient = null
+  given DynamoDbClient = {
+    // Stub implementation for testing
+    val mockClient = new DynamoDbClient {
+      override def serviceName(): String = "dynamodb-mock"
+      override def close(): Unit = {}
+    }
+    mockClient
+  }
 
   private val testHost = "test.example.com"
   private val testCookieName = "test-cookie"
