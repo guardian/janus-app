@@ -319,7 +319,7 @@ function getPasskeyNameFromUser() {
             document.querySelectorAll('[data-passkey-name="true"]')
         ).map(td => td.textContent.trim().toLowerCase());
 
-        const existingPasskeyNameMessage = `A passkey with this name already exists, please choose a different name`;
+        const existingPasskeyNameMessage = 'A passkey with this name already exists, please choose a different name';
 
         // Helper function to update submit button state
         const updateSubmitButtonState = (isValid) => {
