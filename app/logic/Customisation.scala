@@ -1,6 +1,7 @@
 package logic
 
-import models.{DisplayMode, Festive, Normal, Spooky}
+import models.DisplayMode
+import models.DisplayMode.*
 import play.api.mvc.RequestHeader
 
 import java.time.{Duration, ZoneId, ZoneOffset}

@@ -3,7 +3,8 @@ package conf
 import com.gu.janus.model._
 import com.typesafe.config.ConfigFactory
 import fixtures.Fixtures._
-import models.{ConfigError, ConfigSuccess, ConfigWarn, FederationConfigError}
+import models.AccountConfigStatus
+import models.AccountConfigStatus.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.Configuration
