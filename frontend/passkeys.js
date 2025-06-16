@@ -334,15 +334,15 @@ function getPasskeyNameFromUser() {
 
         // Helper function to validate input and update UI accordingly
         const validateInput = () => {
-            const input_value = input.value;
-            const trimmedValue = input_value.trim();
+            const inputValue = input.value;
+            const trimmedValue = inputValue.trim();
             let isValid = false;
             
             // Check if input is approaching the limit
-            if (input_value.length > maxLength) {
+            if (inputValue.length > maxLength) {
                 input.classList.add('invalid');
                 errorMessage.style.display = 'block';
-                errorMessage.textContent = `Name is too long: ${input_value.length}/${maxLength} characters`;
+                errorMessage.textContent = `Name is too long: ${inputValue.length}/${maxLength} characters`;
             } 
             // Check if the name already exists
             else if (trimmedValue && existingPasskeyNames.includes(trimmedValue.toLowerCase())) {
@@ -350,7 +350,7 @@ function getPasskeyNameFromUser() {
                 errorMessage.style.display = 'block';
                 errorMessage.textContent = existingPasskeyNameMessage;
             }
-            else if (trimmedValue && alphanumericRegex.test(input_value)) {
+            else if (trimmedValue && alphanumericRegex.test(trimmedValue)) {
                 input.classList.remove('invalid');
                 errorMessage.style.display = 'none';
                 isValid = true; // Valid input
