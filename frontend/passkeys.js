@@ -314,10 +314,10 @@ function getPasskeyNameFromUser() {
         const alphanumericRegex = /^[a-zA-Z0-9 _-]*$/;
         const maxLength = 50; // Maximum character limit
         
-        // Get existing passkey names from the DOM
+        // Get existing passkey names from the DOM - using attribute values directly
         const existingPasskeyNames = Array.from(
-            document.querySelectorAll('[data-passkey-name="true"]')
-        ).map(td => td.textContent.trim().toLowerCase());
+            document.querySelectorAll('[data-passkey-name]')
+        ).map(element => element.getAttribute('data-passkey-name').trim().toLowerCase());
 
         const existingPasskeyNameMessage = 'A passkey with this name already exists, please choose a different name';
 
