@@ -38,7 +38,7 @@ class PasskeyController(
     passkeysEnabled: Boolean,
     enablingCookieName: String,
     authenticators: Map[AAGUID, PasskeyAuthenticator]
-)(implicit dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
+)(using dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 

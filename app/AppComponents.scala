@@ -9,6 +9,7 @@ import controllers.*
 import filters.HstsFilter
 import models.*
 import models.AccountConfigStatus.*
+import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSComponents
 import play.api.mvc.{ActionBuilder, AnyContent, EssentialFilter}
 import play.api.routing.Router
@@ -30,12 +31,15 @@ class AppComponents(context: ApplicationLoader.Context)
     with RotatingSecretComponents
     with Logging {
 
+  given WSClient = wsClient
+  given AssetsFinder = assetsFinder
+
   override def httpFilters: Seq[EssentialFilter] =
     super.httpFilters :+ cspFilter :+ new HstsFilter
 
   // used by the template to detect development environment
   // in that situation, it'll load assets directly from npm vs production, where they'll come from the bundled files
-  val mode: Mode = context.environment.mode
+  given mode: Mode = context.environment.mode
 
   // Janus has no Code stage
   private val stage = mode match {
@@ -61,7 +65,7 @@ class AppComponents(context: ApplicationLoader.Context)
     Config.googleSettings(configuration, secretStateSupplier)
   val googleGroupChecker = Config.googleGroupChecker(configuration)
   val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
-  val dynamodDB =
+  given dynamodDB: DynamoDbClient =
     if (context.environment.mode == play.api.Mode.Prod)
       DynamoDbClient.builder().region(EU_WEST_1).build()
     else Clients.localDb
@@ -100,10 +104,7 @@ class AppComponents(context: ApplicationLoader.Context)
 
   val passkeyAuthAction: ActionBuilder[UserIdentityRequest, AnyContent] =
     authAction.andThen(
-      new PasskeyAuthFilter(host, passkeysEnabled, passkeysEnablingCookieName)(
-        dynamodDB,
-        executionContext
-      )
+      new PasskeyAuthFilter(host, passkeysEnabled, passkeysEnablingCookieName)
     )
 
   override def router: Router = new Routes(
@@ -115,26 +116,22 @@ class AppComponents(context: ApplicationLoader.Context)
       host,
       Clients.stsClient,
       configuration
-    )(dynamodDB, mode, assetsFinder),
-    new Audit(janusData, controllerComponents, authAction)(
-      dynamodDB,
-      mode,
-      assetsFinder
     ),
+    new Audit(janusData, controllerComponents, authAction),
     new RevokePermissions(
       janusData,
       controllerComponents,
       authAction,
       Clients.stsClient,
       configuration
-    )(mode, assetsFinder),
+    ),
     new AuthController(
       janusData,
       controllerComponents,
       googleAuthConfig,
       googleGroupChecker,
       requiredGoogleGroups
-    )(wsClient, executionContext, mode, assetsFinder),
+    ),
     new PasskeyController(
       controllerComponents,
       authAction,
@@ -144,11 +141,8 @@ class AppComponents(context: ApplicationLoader.Context)
       passkeysEnabled,
       passkeysEnablingCookieName,
       passkeyAuthenticators
-    )(dynamodDB, mode, assetsFinder),
-    new Utility(janusData, controllerComponents, authAction, configuration)(
-      mode,
-      assetsFinder
     ),
+    new Utility(janusData, controllerComponents, authAction, configuration),
     assets
   )
 }

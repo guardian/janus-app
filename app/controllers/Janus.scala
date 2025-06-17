@@ -22,7 +22,7 @@ class Janus(
     host: String,
     stsClient: StsClient,
     configuration: Configuration
-)(implicit dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
+)(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 

@@ -22,16 +22,15 @@ case class JanusException(
 
 object JanusException {
 
-  implicit val janusExceptionWrites: Writes[JanusException] = Writes {
-    exception =>
-      Json.obj(
-        "status" -> "error",
-        "message" -> exception.userMessage,
-        "httpCode" -> exception.httpCode
-      )
+  given janusExceptionWrites: Writes[JanusException] = Writes { exception =>
+    Json.obj(
+      "status" -> "error",
+      "message" -> exception.userMessage,
+      "httpCode" -> exception.httpCode
+    )
   }
 
-  implicit val throwableWrites: Writes[Throwable] = Writes { throwable =>
+  given throwableWrites: Writes[Throwable] = Writes { throwable =>
     Json.obj(
       "status" -> "error",
       "message" -> throwable.getClass.getSimpleName
