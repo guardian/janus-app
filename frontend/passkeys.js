@@ -313,11 +313,65 @@ function getPasskeyNameFromUser() {
         // Regex to allow letters, numbers, spaces, underscores and hyphens
         const alphanumericRegex = /^[a-zA-Z0-9 _-]*$/;
         const maxLength = 50; // Maximum character limit
+        
+        // Get existing passkey names from the DOM - using attribute values directly
+        const existingPasskeyNames = Array.from(
+            document.querySelectorAll('[data-passkey-name]')
+        ).map(element => element.getAttribute('data-passkey-name').trim().toLowerCase());
+
+        const existingPasskeyNameMessage = 'A passkey with this name already exists, please choose a different name';
+
+        // Helper function to update submit button state
+        const updateSubmitButtonState = (isValid) => {
+            if (isValid) {
+                submitButton.classList.remove('disabled');
+                submitButton.disabled = false;
+            } else {
+                submitButton.classList.add('disabled');
+                submitButton.disabled = true;
+            }
+        };
+
+        // Helper function to validate input and update UI accordingly
+        const validateInput = () => {
+            const inputValue = input.value;
+            const trimmedValue = inputValue.trim();
+            let isValid = false;
+            
+            // Check if input is approaching the limit
+            if (inputValue.length > maxLength) {
+                input.classList.add('invalid');
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = `Name is too long: ${inputValue.length}/${maxLength} characters`;
+            } 
+            // Check if the name already exists
+            else if (trimmedValue && existingPasskeyNames.includes(trimmedValue.toLowerCase())) {
+                input.classList.add('invalid');
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = existingPasskeyNameMessage;
+            }
+            else if (trimmedValue && alphanumericRegex.test(trimmedValue)) {
+                input.classList.remove('invalid');
+                errorMessage.style.display = 'none';
+                isValid = true; // Valid input
+            } else {
+                input.classList.add('invalid');
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = `Use only letters, numbers, spaces, underscores and hyphens (max ${maxLength} characters)`;
+            }
+            
+            // Update submit button state based on validation
+            updateSubmitButtonState(isValid);
+            return isValid;
+        };
 
         // Reset the input field and error message when opening the modal
         input.value = '';
         input.classList.remove('invalid');
         errorMessage.style.display = 'none';
+        
+        // Initially disable the submit button
+        updateSubmitButtonState(false);
 
         // Focus the input when modal opens
         modalInstance.open();
@@ -325,43 +379,25 @@ function getPasskeyNameFromUser() {
 
         // Define named handler functions so they can be properly removed later
         const handleInput = () => {
-            const input_value = input.value;
-            
-            // Check if input is approaching the limit
-            if (input_value.length > maxLength) {
-                input.classList.add('invalid');
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = `Name is too long: ${input_value.length}/${maxLength} characters`;
-            } else if (input_value.trim() && alphanumericRegex.test(input_value)) {
-                input.classList.remove('invalid');
-                errorMessage.style.display = 'none';
-            } else {
-                input.classList.add('invalid');
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = `Use only letters, numbers, spaces, underscores and hyphens (max ${maxLength} characters)`;
-            }
+            validateInput();
         };
 
         const handleSubmit = (e) => {
             e.preventDefault();
-            const passkeyName = input.value.trim();
+            
+            // If button is disabled, don't proceed (extra safeguard)
+            if (submitButton.classList.contains('disabled')) {
+                return;
+            }
 
-            if (!passkeyName || !alphanumericRegex.test(passkeyName) || passkeyName.length > maxLength) {
-                // Show validation error
-                input.classList.add('invalid');
-                errorMessage.style.display = 'block';
-                if (passkeyName.length > maxLength) {
-                    errorMessage.textContent = `Passkey name too long: maximum ${maxLength} characters allowed`;
-                } else {
-                    errorMessage.textContent = 'Cannot save passkey name: only letters, numbers, spaces, underscores and hyphens are allowed';
-                   
-                }
+            // One last validation as a safeguard
+            if (!validateInput()) {
                 return;
             }
 
             // Close modal and resolve with the passkey name
             modalInstance.close();
-            resolve(DOMPurify.sanitize(passkeyName));
+            resolve(DOMPurify.sanitize(input.value.trim()));
         };
 
         const handleCancel = (e) => {
