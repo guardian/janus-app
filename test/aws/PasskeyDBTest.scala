@@ -10,7 +10,7 @@ import software.amazon.awssdk.services.dynamodb.model._
 class PasskeyDBTest extends AnyFreeSpec with Matchers {
 
   "test db stuff - use this to test DynamoDB stuff locally during development" - {
-    implicit val dynamoDB: DynamoDbClient = Clients.localDb
+    given dynamoDB: DynamoDbClient = Clients.localDb
 
     "create table" ignore {
       createTable()

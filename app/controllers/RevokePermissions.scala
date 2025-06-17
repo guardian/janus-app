@@ -23,7 +23,7 @@ class RevokePermissions(
     authAction: AuthAction[AnyContent],
     stsClient: StsClient,
     configuration: Configuration
-)(implicit mode: Mode, assetsFinder: AssetsFinder)
+)(using mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 
