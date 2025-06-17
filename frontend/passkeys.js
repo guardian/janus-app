@@ -88,16 +88,13 @@ export async function authenticatePasskey(targetHref, csrfToken) {
         if (!authOptionsResponse.ok) {
             console.error('Authentication options request failed:', authOptionsResponseJson);
             if (authOptionsResponse.status === 400) {
-                M.toast({
-                    html: 'Please register a passkey before attempting to authenticate.',
-                    classes: 'rounded red'
-                });
-            } else {
-                M.toast({
-                    html: 'Failed to get authentication options from server. Please try again.',
-                    classes: 'rounded red'
-                });
+                window.location.href = '/user-account';
+                return;
             }
+            M.toast({
+                html: 'Failed to get authentication options from server. Please try again.',
+                classes: 'rounded red'
+            });
             return;
         }
 

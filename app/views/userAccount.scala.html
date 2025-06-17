@@ -63,7 +63,13 @@
                             </tbody>
                         </table>
                     } else {                                 
-                        <p>You haven't registered any passkeys yet.</p>
+                        <div class="center-align">
+                            <div class="alert-box">
+                                <i class="material-icons medium red-text">error</i>
+                                <h5>No Passkeys Registered</h5>
+                                <p>Before you can access AWS credentials or console you must register at least one passkey.</p>
+                            </div>
+                        </div>
                     }                    
                     <div class="section">
                         <button id="register-passkey" 
