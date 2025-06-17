@@ -87,6 +87,10 @@ export async function authenticatePasskey(targetHref, csrfToken) {
 
         if (!authOptionsResponse.ok) {
             console.error('Authentication options request failed:', authOptionsResponseJson);
+            /*
+             * We only get a 400 response here if the user has no registered passkeys.
+             * In this scenario, we redirect them to the user account page where they are urged to register one.
+             */
             if (authOptionsResponse.status === 400) {
                 window.location.href = '/user-account';
                 return;
