@@ -1,6 +1,7 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
-import {displayFlashMessages, setUpDeletePasskeyButtons, setUpProtectedLinks, setUpRegisterPasskeyButton} from './passkeys.js';
+import {displayFlashMessages} from './flashMessages.js';
+import {setUpDeletePasskeyButtons, setUpProtectedLinks, setUpRegisterPasskeyButton} from './passkeys.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
