@@ -90,10 +90,10 @@ export async function registerPasskey(csrfToken) {
     } catch (err) {
         if (err.name === 'InvalidStateError') {
             console.warn('Passkey already registered:', err);
-            M.toast({html: 'This passkey has already been registered.', classes: 'rounded orange'});
+            M.toast({html: DOMPurify.sanitize('This passkey has already been registered.'), classes: 'rounded orange'});
         } else {
             console.error('Error during passkey registration:', err);
-            M.toast({html: 'Registration failed: this passkey may have already been registered, or it could be a transient issue in which case please try again.', classes: 'rounded red'});
+            M.toast({html: DOMPurify.sanitize('Registration failed: this passkey may have already been registered, or it could be a transient issue in which case please try again.'), classes: 'rounded red'});
         }
     }
 }
@@ -143,7 +143,7 @@ export async function authenticatePasskey(targetHref, csrfToken) {
                 return;
             }
             M.toast({
-                html: 'Failed to get authentication options from server. Please try again.',
+                html: DOMPurify.sanitize('Failed to get authentication options from server. Please try again.'),
                 classes: 'rounded red'
             });
             return;
@@ -158,7 +158,7 @@ export async function authenticatePasskey(targetHref, csrfToken) {
         });
     } catch (err) {
         console.error('Error during passkey authentication:', err);
-        M.toast({ html: 'Authentication failed. Please try again.', classes: 'rounded red' });
+        M.toast({ html: DOMPurify.sanitize('Authentication failed. Please try again.'), classes: 'rounded red' });
     }
 }
 
@@ -206,7 +206,7 @@ export async function deletePasskey(passkeyId, csrfToken) {
         return responseData;
     } catch (error) {
         console.error('Error deleting passkey:', error);
-        M.toast({ html: `Error deleting passkey: ${error.message}`, classes: 'rounded red' });
+        M.toast({ html: DOMPurify.sanitize(`Error deleting passkey: ${error.message}`), classes: 'rounded red' });
         throw error;
     }
 }   
@@ -229,17 +229,17 @@ export function setUpDeletePasskeyButtons(selector) {
             
             if (!passkeyId) {
                 console.error('No passkey ID found');
-                M.toast({ html: 'Error: Passkey ID not found', classes: 'rounded red' });
+                M.toast({ html: DOMPurify.sanitize('Error: Passkey ID not found'), classes: 'rounded red' });
                 return;
             }
             
             if (!csrfToken) {
                 console.error('No CSRF token found');
-                M.toast({ html: 'Error: Security token not found', classes: 'rounded red' });
+                M.toast({ html: DOMPurify.sanitize('Error: Security token not found'), classes: 'rounded red' });
                 return;
             }
             
-            if (confirm(`Are you sure you want to delete the passkey "${passkeyName}"?`)) {
+            if (confirm(`Are you sure you want to delete the passkey "${DOMPurify.sanitize(passkeyName)}"?`)) {
                 try {
                     const result = await deletePasskey(passkeyId, csrfToken);
                     // Immediately redirect to the user-account page
@@ -253,7 +253,7 @@ export function setUpDeletePasskeyButtons(selector) {
                     // Error is already handled in deletePasskey function
                 }
             } else {
-                M.toast({ html: 'Passkey deletion cancelled', classes: 'rounded orange' });
+                M.toast({ html: DOMPurify.sanitize('Passkey deletion cancelled'), classes: 'rounded orange' });
             }
         });
     });
@@ -318,19 +318,19 @@ export function displayFlashMessages(flashMessages) {
     }
     if (flashMessages.success) {
         M.toast({
-            html: flashMessages.success,
+            html: DOMPurify.sanitize(flashMessages.success),
             classes: 'green lighten-1 rounded',
         });
     }
     if (flashMessages.info) {
         M.toast({
-            html: flashMessages.info,
+            html: DOMPurify.sanitize(flashMessages.info),
             classes: 'blue lighten-1 rounded',
         });
     }
     if (flashMessages.error) {
         M.toast({
-            html: flashMessages.error,
+            html: DOMPurify.sanitize(flashMessages.error),
             classes: 'red lighten-1 rounded',
         });
     }
@@ -455,7 +455,7 @@ function getPasskeyNameFromUser() {
             input.classList.remove('invalid');
             errorMessage.style.display = 'none';
             modalInstance.close();
-            M.toast({html: 'Passkey registration cancelled', classes: 'rounded orange'});
+            M.toast({html: DOMPurify.sanitize('Passkey registration cancelled'), classes: 'rounded orange'});
             reject(new Error('Passkey registration cancelled'));
 
         };
