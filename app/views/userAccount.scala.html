@@ -16,8 +16,13 @@
 
         <h3 class="header orange-text">Passkeys</h3>
 
-        <p>Passkeys are a secure way to log in without a password. They are used to authenticate you when you access Janus credentials or the AWS console.</p>
-        <p>We recommend you register at least two passkeys. One should be on-device (e.g. Touch ID) and the other off-device (e.g. security key or authenticator app).</p>
+        <p>Passkeys are a secure way to authenticate sensitive actions.
+            Janus uses them as an extra layer of security to authenticate you before allowing you to access
+            AWS credentials or the AWS console.</p>
+        <p>We recommend that you <strong>register at least two passkeys</strong> to ensure you have access to
+            your AWS accounts.
+            One should be on-device (e.g. Mac Touch ID or Windows Hello)
+            and the other off-device (e.g. security key or phone).</p>
 
         <div class="row">           
             <h4 class="header orange-text">Registered passkeys</h4>
@@ -59,7 +64,13 @@
                             </tbody>
                         </table>
                     } else {                                 
-                        <p>You haven't registered any passkeys yet.</p>
+                        <div class="center-align">
+                            <div class="alert-box">
+                                <i class="material-icons medium red-text">error</i>
+                                <h5>No Passkeys Registered</h5>
+                                <p>Before you can access AWS credentials or console you must register at least one passkey.</p>
+                            </div>
+                        </div>
                     }                    
                     <div class="section">
                         <button id="register-passkey" 
@@ -77,7 +88,7 @@
             <h4 class="orange-text">Passkey name</h4>
             <p>Give this passkey a name to help you recognise it later.</p>
             <div class="input-field">
-                <input type="text" id="passkey-name" class="validate" placeholder="e.g. Macbook, Phone" required>
+                <input type="text" id="passkey-name" class="validate" placeholder="e.g. Macbook Chrome, Phone" required>
                 <div id="passkey-name-error" class="error-message red-text hidden">Please enter a name for your passkey</div>
             </div>
         </div>

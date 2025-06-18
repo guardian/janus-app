@@ -87,17 +87,18 @@ export async function authenticatePasskey(targetHref, csrfToken) {
 
         if (!authOptionsResponse.ok) {
             console.error('Authentication options request failed:', authOptionsResponseJson);
+            /*
+             * We only get a 400 response here if the user has no registered passkeys.
+             * In this scenario, we redirect them to the user account page where they are urged to register one.
+             */
             if (authOptionsResponse.status === 400) {
-                M.toast({
-                    html: 'Please register a passkey before attempting to authenticate.',
-                    classes: 'rounded red'
-                });
-            } else {
-                M.toast({
-                    html: 'Failed to get authentication options from server. Please try again.',
-                    classes: 'rounded red'
-                });
+                window.location.href = '/user-account';
+                return;
             }
+            M.toast({
+                html: 'Failed to get authentication options from server. Please try again.',
+                classes: 'rounded red'
+            });
             return;
         }
 
