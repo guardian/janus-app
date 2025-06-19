@@ -1,4 +1,3 @@
-@import play.filters.csrf.CSRF
 @import aws.Federation.{maxLongTime, maxShortTime, defaultLongTime, defaultShortTime}
 @import logic.Date.formatDuration
 @(passkeysEnabled: Boolean)(implicit request: RequestHeader)
@@ -19,7 +18,6 @@
                         </a>
                         <a
                             class="multiple-credentials__link btn-large federation__link federation__link--standard right"
-                            csrf-token="@{CSRF.getToken.get.value}"
                             data-passkey-protected="true"
                             @if(!passkeysEnabled) {data-passkey-bypassed="true"}
                             href="/passkey/protected-credentials-page?"
