@@ -1,7 +1,7 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
-import {displayFlashMessages} from './flashMessages.js';
-import {setUpDeletePasskeyButtons, setUpProtectedLinks, setUpRegisterPasskeyButton} from './passkeys.js';
+import {authenticatePasskey, bypassPasskeyAuthentication, deletePasskey, registerPasskey} from './passkeys.js';
+import {displayFlashMessages, displayToast, messageType} from './utils/toastMessages.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
@@ -11,10 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (!csrfToken) {
         console.error('CSRF token not available');
-        M.toast({ 
-            html: 'Security token not available. Please refresh the page.', 
-            classes: 'rounded red' 
-        });
+        displayToast('Security token not available. Please refresh the page.', messageType.error);
         return;
     }
     
@@ -308,6 +305,92 @@ document.addEventListener('DOMContentLoaded', function() {
         // this can be removed in the near future, when this cookie will have been cleared out of colleague's browsers
         const COOKIE__AUTO_LOGOUT = "janus_auto_logout";
         document.cookie = `${COOKIE__AUTO_LOGOUT}=; expires=Thu, 01 Jan 1970 12:00:00 UTC; path=/`;
+    }
+
+    /**
+     * Sets up click event listener for the passkey registration button
+     * @param {string} selector - CSS selector for the register button
+     * @param {string} csrfToken - CSRF token for security verification
+     */
+    function setUpRegisterPasskeyButton(selector, csrfToken) {
+    const registerButton = document.querySelector(selector);
+    if (!registerButton) { return }
+
+    registerButton?.addEventListener('click', function (e) {
+        e.preventDefault();
+        registerPasskey(csrfToken).catch(function (err) {
+            console.error('Error setting up register passkey button:', err);
+        });
+    });
+    }
+
+    /**
+     * Sets up click event listeners for passkey deletion buttons
+     * @param {string} selector - CSS selector for delete buttons
+     * @param {string} csrfToken - CSRF token for security verification
+     */
+    function setUpDeletePasskeyButtons(selector, csrfToken) {
+        const deleteButtons = document.querySelectorAll(selector);
+        if (!deleteButtons.length) {
+            return;
+        }
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', async () => {
+                const passkeyName = button.getAttribute('data-passkey-name');
+                const passkeyId = button.getAttribute('data-passkey-id');
+                
+                if (!passkeyId) {
+                    console.error('No passkey ID found');
+                    displayToast('Error: Passkey ID not found', messageType.error);
+                    return;
+                }
+                
+                if (confirm(`Are you sure you want to delete the passkey "${DOMPurify.sanitize(passkeyName)}"?`)) {
+                    try {
+                        const result = await deletePasskey(passkeyId, csrfToken);
+                        // Immediately redirect to the user-account page
+                        // The flash message will be displayed after the redirect
+                        if (result.redirect) {
+                            window.location.href = result.redirect;
+                        } else {
+                            window.location.reload();
+                        }
+                    } catch {
+                        // Error is already handled in deletePasskey function
+                    }
+                } else {
+                    displayToast('Passkey deletion cancelled', messageType.warning);
+                }
+            });
+        });
+    }
+
+    /**
+     * Sets up protected links that require passkey authentication
+     * @param {NodeList|HTMLElement[]} links - Collection of link elements to protect
+     * @param {string} csrfToken - CSRF token for security verification
+     */
+    function setUpProtectedLinks(links, csrfToken) {
+        if (!links.length) {
+            return;
+        }
+
+        links.forEach((link) => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetHref = link.href;
+                if (link.dataset.passkeyBypassed) {
+                    bypassPasskeyAuthentication(targetHref, csrfToken).catch(function (err) {
+                        console.error('Error setting up bypass of protected link:', err);
+                    });
+                } else {
+                    authenticatePasskey(targetHref, csrfToken).catch(function (err) {
+                        console.error('Error setting up protected link:', err);
+                    });
+                }
+            });
+        });
     }
 
     try {

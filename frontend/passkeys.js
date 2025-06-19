@@ -1,7 +1,8 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
-import { createAndSubmitForm } from './formUtils.js';
 import { getPasskeyNameFromUser } from './passkeyNameModal.js';
+import { createAndSubmitForm } from './utils/formUtils.js';
+import { displayToast, messageType } from './utils/toastMessages.js'
 
 /**
  * Registers a new passkey for the current user
@@ -92,29 +93,12 @@ export async function registerPasskey(csrfToken) {
     } catch (err) {
         if (err.name === 'InvalidStateError') {
             console.warn('Passkey already registered:', err);
-            M.toast({html: DOMPurify.sanitize('This passkey has already been registered.'), classes: 'rounded orange'});
+            displayToast('This passkey has already been registered.', messageType.warning);
         } else {
             console.error('Error during passkey registration:', err);
-            M.toast({html: DOMPurify.sanitize('Registration failed: this passkey may have already been registered, or it could be a transient issue in which case please try again.'), classes: 'rounded red'});
+            displayToast('Registration failed: passkey may already be registered', messageType.error);
         }
     }
-}
-
-/**
- * Sets up click event listener for the passkey registration button
- * @param {string} selector - CSS selector for the register button
- * @param {string} csrfToken - CSRF token for security verification
- */
-export function setUpRegisterPasskeyButton(selector, csrfToken) {
-    const registerButton = document.querySelector(selector);
-    if (!registerButton) { return }
-
-    registerButton?.addEventListener('click', function (e) {
-        e.preventDefault();
-        registerPasskey(csrfToken).catch(function (err) {
-            console.error('Error setting up register passkey button:', err);
-        });
-    });
 }
 
 /**
@@ -144,10 +128,7 @@ export async function authenticatePasskey(targetHref, csrfToken) {
                 window.location.href = '/user-account';
                 return;
             }
-            M.toast({
-                html: DOMPurify.sanitize('Failed to get authentication options from server. Please try again.'),
-                classes: 'rounded red'
-            });
+            displayToast('Failed to get authentication options from server. Please try again.', messageType.error);
             return;
         }
 
@@ -160,7 +141,7 @@ export async function authenticatePasskey(targetHref, csrfToken) {
         });
     } catch (err) {
         console.error('Error during passkey authentication:', err);
-        M.toast({ html: DOMPurify.sanitize('Authentication failed. Please try again.'), classes: 'rounded red' });
+        displayToast('Authentication failed. Please try again.', messageType.error)
     }
 }
 
@@ -208,76 +189,8 @@ export async function deletePasskey(passkeyId, csrfToken) {
         return responseData;
     } catch (error) {
         console.error('Error deleting passkey:', error);
-        M.toast({ html: DOMPurify.sanitize(`Error deleting passkey: ${error.message}`), classes: 'rounded red' });
+        displayToast(`Error deleting passkey: ${error.message}`, messageType.error);
         throw error;
     }
 }   
 
-/**
- * Sets up click event listeners for passkey deletion buttons
- * @param {string} selector - CSS selector for delete buttons
- * @param {string} csrfToken - CSRF token for security verification
- */
-export function setUpDeletePasskeyButtons(selector, csrfToken) {
-    const deleteButtons = document.querySelectorAll(selector);
-    if (!deleteButtons.length) {
-        return;
-    }
-
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', async () => {
-            const passkeyName = button.getAttribute('data-passkey-name');
-            const passkeyId = button.getAttribute('data-passkey-id');
-            
-            if (!passkeyId) {
-                console.error('No passkey ID found');
-                M.toast({ html: DOMPurify.sanitize('Error: Passkey ID not found'), classes: 'rounded red' });
-                return;
-            }
-            
-            if (confirm(`Are you sure you want to delete the passkey "${DOMPurify.sanitize(passkeyName)}"?`)) {
-                try {
-                    const result = await deletePasskey(passkeyId, csrfToken);
-                    // Immediately redirect to the user-account page
-                    // The flash message will be displayed after the redirect
-                    if (result.redirect) {
-                        window.location.href = result.redirect;
-                    } else {
-                        window.location.reload();
-                    }
-                } catch {
-                    // Error is already handled in deletePasskey function
-                }
-            } else {
-                M.toast({ html: DOMPurify.sanitize('Passkey deletion cancelled'), classes: 'rounded orange' });
-            }
-        });
-    });
-}
-
-/**
- * Sets up protected links that require passkey authentication
- * @param {NodeList|HTMLElement[]} links - Collection of link elements to protect
- * @param {string} csrfToken - CSRF token for security verification
- */
-export function setUpProtectedLinks(links, csrfToken) {
-    if (!links.length) {
-        return;
-    }
-
-    links.forEach((link) => {
-        link.addEventListener('click', function (e) {
-            e.preventDefault();
-            const targetHref = link.href;
-            if (link.dataset.passkeyBypassed) {
-                bypassPasskeyAuthentication(targetHref, csrfToken).catch(function (err) {
-                    console.error('Error setting up bypass of protected link:', err);
-                });
-            } else {
-                authenticatePasskey(targetHref, csrfToken).catch(function (err) {
-                    console.error('Error setting up protected link:', err);
-                });
-            }
-        });
-    });
-}
