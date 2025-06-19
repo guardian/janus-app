@@ -5,6 +5,19 @@ import {setUpDeletePasskeyButtons, setUpProtectedLinks, setUpRegisterPasskeyButt
 
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
+    
+    // Get CSRF token from global config 
+    const csrfToken = window.janusConfig?.csrfToken;
+    
+    if (!csrfToken) {
+        console.error('CSRF token not available');
+        M.toast({ 
+            html: 'Security token not available. Please refresh the page.', 
+            classes: 'rounded red' 
+        });
+        return;
+    }
+    
     //Initialise Materialize elements
     const sidenavElems = document.querySelectorAll('.sidenav');
     // eslint-disable-next-line no-unused-vars -- required by Materialize
@@ -297,10 +310,14 @@ document.addEventListener('DOMContentLoaded', function() {
         document.cookie = `${COOKIE__AUTO_LOGOUT}=; expires=Thu, 01 Jan 1970 12:00:00 UTC; path=/`;
     }
 
-    setUpRegisterPasskeyButton('#register-passkey');
-    setUpDeletePasskeyButtons('.delete-passkey-btn');
-    const protectedLinks = document.querySelectorAll('[data-passkey-protected]');
-    setUpProtectedLinks(protectedLinks);
+    try {
+        setUpRegisterPasskeyButton('#register-passkey', csrfToken);
+        setUpDeletePasskeyButtons('.delete-passkey-btn', csrfToken);
+        const protectedLinks = document.querySelectorAll('[data-passkey-protected]');
+        setUpProtectedLinks(protectedLinks, csrfToken);
+    } catch (error) {
+        console.error('Error setting up passkey functionality:', error);
+    }
     
     const flashMessage = document.getElementById('flash-message');
     if (flashMessage) {

@@ -2,7 +2,6 @@
 @import com.gu.janus.model.JanusData
 @import logic.UserAccess.username
 @import play.api.Mode
-@import play.filters.csrf.CSRF
 @import java.time.Instant
 
 @(user: UserIdentity, janusData: JanusData, passkeys: Seq[models.PasskeyMetadata], dateFormat: Instant => String, timeFormat: Instant => String)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
@@ -53,7 +52,7 @@
                                         <td>@{passkey.lastUsedTime.map(timeFormat).getOrElse("Never")}</td>
                                         <td>
                                             <button class="btn delete-passkey-btn" 
-                                                    csrf-token="@{CSRF.getToken.get.value}" 
+                                                
                                                     data-passkey-id="@{passkey.id}" 
                                                     data-passkey-name="@{passkey.name}">
                                                 <i class="material-icons">delete</i>
@@ -73,9 +72,7 @@
                         </div>
                     }                    
                     <div class="section">
-                        <button id="register-passkey" 
-                                class="btn" 
-                                csrf-token="@{CSRF.getToken.get.value}">
+                        <button id="register-passkey" class="btn">
                             Register a new passkey
                         </button>
                     </div>

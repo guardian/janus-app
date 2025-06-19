@@ -11,7 +11,7 @@
         <h1 class="header orange-text hide">Your permissions</h1>
         <div class="index-main__container">
             @form(routes.Janus.favourite()) {
-                @CSRF.formField
+                @helper.CSRF.formField
                 @passkeymock.awsAccounts(accountAccesses, allowFavs = true, displayMode, passkeysEnabled)
             }
         </div>

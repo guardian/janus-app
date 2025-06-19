@@ -103,14 +103,14 @@ export async function registerPasskey(csrfToken) {
 /**
  * Sets up click event listener for the passkey registration button
  * @param {string} selector - CSS selector for the register button
+ * @param {string} csrfToken - CSRF token for security verification
  */
-export function setUpRegisterPasskeyButton(selector) {
+export function setUpRegisterPasskeyButton(selector, csrfToken) {
     const registerButton = document.querySelector(selector);
     if (!registerButton) { return }
 
     registerButton?.addEventListener('click', function (e) {
         e.preventDefault();
-        const csrfToken = this.getAttribute('csrf-token');
         registerPasskey(csrfToken).catch(function (err) {
             console.error('Error setting up register passkey button:', err);
         });
@@ -216,8 +216,9 @@ export async function deletePasskey(passkeyId, csrfToken) {
 /**
  * Sets up click event listeners for passkey deletion buttons
  * @param {string} selector - CSS selector for delete buttons
+ * @param {string} csrfToken - CSRF token for security verification
  */
-export function setUpDeletePasskeyButtons(selector) {
+export function setUpDeletePasskeyButtons(selector, csrfToken) {
     const deleteButtons = document.querySelectorAll(selector);
     if (!deleteButtons.length) {
         return;
@@ -227,17 +228,10 @@ export function setUpDeletePasskeyButtons(selector) {
         button.addEventListener('click', async () => {
             const passkeyName = button.getAttribute('data-passkey-name');
             const passkeyId = button.getAttribute('data-passkey-id');
-            const csrfToken = button.getAttribute('csrf-token');
             
             if (!passkeyId) {
                 console.error('No passkey ID found');
                 M.toast({ html: DOMPurify.sanitize('Error: Passkey ID not found'), classes: 'rounded red' });
-                return;
-            }
-            
-            if (!csrfToken) {
-                console.error('No CSRF token found');
-                M.toast({ html: DOMPurify.sanitize('Error: Security token not found'), classes: 'rounded red' });
                 return;
             }
             
@@ -264,8 +258,9 @@ export function setUpDeletePasskeyButtons(selector) {
 /**
  * Sets up protected links that require passkey authentication
  * @param {NodeList|HTMLElement[]} links - Collection of link elements to protect
+ * @param {string} csrfToken - CSRF token for security verification
  */
-export function setUpProtectedLinks(links) {
+export function setUpProtectedLinks(links, csrfToken) {
     if (!links.length) {
         return;
     }
@@ -273,7 +268,6 @@ export function setUpProtectedLinks(links) {
     links.forEach((link) => {
         link.addEventListener('click', function (e) {
             e.preventDefault();
-            const csrfToken = link.getAttribute('csrf-token');
             const targetHref = link.href;
             if (link.dataset.passkeyBypassed) {
                 bypassPasskeyAuthentication(targetHref, csrfToken).catch(function (err) {
