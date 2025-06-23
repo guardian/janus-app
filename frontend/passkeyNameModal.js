@@ -7,14 +7,14 @@ import M from 'materialize-css';
  */
 export function getPasskeyNameFromUser() {
     return new Promise((resolve, reject) => {        
-        const modalElement = document.getElementById("passkey-name-modal");
-        modalElement.style.visibility = "visible";
+        const modalElement = document.getElementById('passkey-name-modal');
+        modalElement.style.display = 'none';
         // Initialize Materialize modal
         const modalInstance = M.Modal.init(modalElement, {
             dismissible: false, // User must use buttons to close
             onCloseEnd: () => {
                 // Hide the modal from the UI when closed
-                modalElement.style.visibility = "hidden";
+                modalElement.style.display = 'none';
             }
         });
 
@@ -145,7 +145,7 @@ export function getPasskeyNameFromUser() {
         // Update the onCloseEnd callback to use the named function references
         modalInstance.options.onCloseEnd = () => {
             // Hide the modal from the UI when closed
-            modalElement.style.visibility = "hidden";
+            modalElement.style.display = 'none';
             // Clear input field data for privacy/security
             input.value = '';
             input.classList.remove('invalid');
