@@ -331,9 +331,6 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function setUpDeletePasskeyButtons(selector, csrfToken) {
         const deleteButtons = document.querySelectorAll(selector);
-        if (!deleteButtons.length) {
-            return;
-        }
 
         deleteButtons.forEach(button => {
             button.addEventListener('click', async () => {
@@ -372,10 +369,6 @@ document.addEventListener('DOMContentLoaded', function() {
      * @param {string} csrfToken - CSRF token for security verification
      */
     function setUpProtectedLinks(links, csrfToken) {
-        if (!links.length) {
-            return;
-        }
-
         links.forEach((link) => {
             link.addEventListener('click', function (e) {
                 e.preventDefault();
