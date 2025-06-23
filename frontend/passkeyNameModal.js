@@ -12,10 +12,6 @@ export function getPasskeyNameFromUser() {
         // Initialize Materialize modal
         const modalInstance = M.Modal.init(modalElement, {
             dismissible: false, // User must use buttons to close
-            onCloseEnd: () => {
-                // Hide the modal from the UI when closed
-                modalElement.style.display = 'none';
-            }
         });
 
         // Set up event listeners
@@ -88,6 +84,11 @@ export function getPasskeyNameFromUser() {
 
         // Focus the input when modal opens
         modalInstance.open();
+        modalElement.inert = false;
+        const userAccountContainer = document.querySelector('#user-account-container');
+        if (userAccountContainer) {
+            userAccountContainer.inert = true;
+        }
         setTimeout(() => input.focus(), 100); // Small delay to ensure modal is visible
 
         // Define named handler functions so they can be properly removed later
@@ -142,10 +143,13 @@ export function getPasskeyNameFromUser() {
         // so our validation can show the error message before browser truncation
         input.setAttribute('maxlength', maxLength + 1);
 
-        // Update the onCloseEnd callback to use the named function references
         modalInstance.options.onCloseEnd = () => {
             // Hide the modal from the UI when closed
             modalElement.style.display = 'none';
+            modalElement.inert = true;
+            if (userAccountContainer) {
+                userAccountContainer.inert = false;
+            }
             // Clear input field data for privacy/security
             input.value = '';
             input.classList.remove('invalid');
