@@ -1,5 +1,3 @@
-import DOMPurify from 'dompurify';
-import M from 'materialize-css';
 import { getPasskeyNameFromUser } from './passkeyNameModal.js';
 import { createAndSubmitForm } from './utils/formUtils.js';
 import { displayToast, messageType } from './utils/toastMessages.js'
