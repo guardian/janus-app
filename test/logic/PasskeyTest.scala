@@ -124,7 +124,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
   }
 
   "authenticationOptions" - {
-    "returns failure when user has no registered passkeys" - {
+    "creates valid authentication options when passkeys don't exist" - {
       val appHost = "https://test.example.com"
       val testUser = UserIdentity(
         sub = "sub",
@@ -144,18 +144,22 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         emptyPasskeys
       )
 
-      val exception = result.failed.get.asInstanceOf[JanusException]
+      val options = result.get
 
-      "returns failure" in {
-        result.isFailure shouldBe true
+      "returns success" in {
+        result.isSuccess shouldBe true
       }
 
-      "returns expected HTTP code" in {
-        exception.httpCode shouldBe 400
+      "sets the correct challenge" in {
+        options.getChallenge shouldBe challenge
       }
 
-      "returns expected error message" in {
-        exception.userMessage should include("No passkeys registered")
+      "sets the correct RP ID" in {
+        options.getRpId shouldBe "test.example.com"
+      }
+
+      "includes no credentials" in {
+        options.getAllowCredentials.isEmpty shouldBe true
       }
     }
 

@@ -146,35 +146,31 @@ object Passkey {
       challenge: Challenge,
       existingPasskeys: Seq[PasskeyMetadata]
   ): Try[PublicKeyCredentialRequestOptions] = {
-    if (existingPasskeys.isEmpty) {
-      Failure(JanusException.noPasskeysRegistered(user))
-    } else {
-      Try {
-        val timeout = Duration(60, SECONDS)
-        val rpId = URI.create(appHost).getHost
-        val allowCredentials = existingPasskeys.map(toDescriptor)
-        val userVerification = UserVerificationRequirement.REQUIRED
-        val hints = Nil
-        val extensions: AuthenticationExtensionsClientInputs[
-          AuthenticationExtensionClientInput
-        ] = null
-        new PublicKeyCredentialRequestOptions(
-          challenge,
-          timeout.toMillis,
-          rpId,
-          allowCredentials.asJava,
-          userVerification,
-          hints.asJava,
-          extensions
-        )
-      }.adaptError(err =>
-        JanusException.invalidFieldInRequest(
-          user,
-          "authentication options",
-          err
-        )
+    Try {
+      val timeout = Duration(60, SECONDS)
+      val rpId = URI.create(appHost).getHost
+      val allowCredentials = existingPasskeys.map(toDescriptor)
+      val userVerification = UserVerificationRequirement.REQUIRED
+      val hints = Nil
+      val extensions: AuthenticationExtensionsClientInputs[
+        AuthenticationExtensionClientInput
+      ] = null
+      new PublicKeyCredentialRequestOptions(
+        challenge,
+        timeout.toMillis,
+        rpId,
+        allowCredentials.asJava,
+        userVerification,
+        hints.asJava,
+        extensions
       )
-    }
+    }.adaptError(err =>
+      JanusException.invalidFieldInRequest(
+        user,
+        "authentication options",
+        err
+      )
+    )
   }
 
   /** Verifies the registration response from the browser. This is called after
