@@ -327,7 +327,7 @@ class PasskeyController(
       dbResponse: QueryResponse,
       user: UserIdentity
   ): Try[Seq[PasskeyMetadata]] =
-    if dbResponse.hasItems && !dbResponse.items.isEmpty then
+    if !dbResponse.items.isEmpty then
       Success(PasskeyDB.extractMetadata(dbResponse))
     else Failure(JanusException.noPasskeysRegistered(user))
 }
