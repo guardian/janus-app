@@ -203,7 +203,7 @@ class PasskeyController(
     apiResponse(
       for {
         loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
-        existingPasskeys <- ensureExistingPasskeys(
+        existingPasskeys <- loadExistingPasskeysOrFail(
           loadCredentialsResponse,
           request.user
         )
@@ -323,7 +323,7 @@ class PasskeyController(
     }
   }
 
-  private def ensureExistingPasskeys(
+  private def loadExistingPasskeysOrFail(
       dbResponse: QueryResponse,
       user: UserIdentity
   ): Try[Seq[PasskeyMetadata]] =
