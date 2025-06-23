@@ -117,9 +117,12 @@ class PasskeyAuthFilter(
               JanusException.missingFieldInRequest(request.user, "credentials")
             )
             .toTry
-        case _ =>
+        case other =>
           Failure(
-            JanusException.missingFieldInRequest(request.user, "credentials")
+            JanusException.invalidRequest(
+              request.user,
+              s"Unexpected body type: ${other.getClass.getName}"
+            )
           )
       }
       authData <- Passkey.parsedAuthentication(request.user, body)

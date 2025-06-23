@@ -37,13 +37,23 @@ object JanusException {
     )
   }
 
+  def invalidRequest(
+      user: UserIdentity,
+      detail: String
+  ): JanusException = JanusException(
+    userMessage = s"Invalid request",
+    engineerMessage = s"Invalid request for user ${user.username}: $detail",
+    httpCode = BAD_REQUEST,
+    causedBy = None
+  )
+
   def missingFieldInRequest(
       user: UserIdentity,
       fieldName: String
   ): JanusException = JanusException(
-    userMessage = s"Missing $fieldName field",
+    userMessage = s"Missing '$fieldName' field",
     engineerMessage =
-      s"Missing $fieldName in request body for user ${user.username}",
+      s"Missing '$fieldName' field in request body for user ${user.username}",
     httpCode = BAD_REQUEST,
     causedBy = None
   )

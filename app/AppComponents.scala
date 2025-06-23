@@ -6,7 +6,7 @@ import com.gu.play.secretrotation.aws.parameterstore
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
-import filters.HstsFilter
+import filters.{HstsFilter, PasskeyRegistrationAuthFilter}
 import models.*
 import models.AccountConfigStatus.*
 import play.api.libs.ws.WSClient
@@ -102,10 +102,14 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
 
-  val passkeyAuthAction: ActionBuilder[UserIdentityRequest, AnyContent] =
-    authAction.andThen(
-      new PasskeyAuthFilter(host, passkeysEnabled, passkeysEnablingCookieName)
-    )
+  private val passkeyAuthFilter =
+    new PasskeyAuthFilter(host, passkeysEnabled, passkeysEnablingCookieName)
+  private val passkeyRegistrationAuthFilter =
+    new PasskeyRegistrationAuthFilter(passkeyAuthFilter)
+
+  private val passkeyAuthAction = authAction.andThen(passkeyAuthFilter)
+  private val passkeyRegistrationAuthAction =
+    authAction.andThen(passkeyRegistrationAuthFilter)
 
   override def router: Router = new Routes(
     httpErrorHandler,
@@ -136,6 +140,7 @@ class AppComponents(context: ApplicationLoader.Context)
       controllerComponents,
       authAction,
       passkeyAuthAction,
+      passkeyRegistrationAuthAction,
       host,
       janusData,
       passkeysEnabled,

@@ -8,6 +8,42 @@ import M from 'materialize-css';
  */
 export async function registerPasskey(csrfToken) {
     try {
+        // 1. Fetch the authentication options
+        const authOptionsResponse = await fetch('/passkey/registration-auth-options', {
+            method: 'POST',
+            headers: {
+                'CSRF-Token': csrfToken, // Securely include CSRF token in headers,
+                'Content-Type': 'application/x-www-form-urlencoded', // To satisfy Play CSRF filter
+            }
+        });
+        const authOptionsResponseJson = await authOptionsResponse.json();
+
+        if (!authOptionsResponse.ok) {
+            console.error('Authentication options request failed:', authOptionsResponseJson);
+            M.toast({
+                html: 'Failed to get authentication options from server. Please try again.',
+                classes: 'rounded red'
+            });
+            return;
+        }
+
+        let existingCredential;
+
+        // 2. If user has existing passkeys, use one to authenticate the registration of the new passkey
+        if(authOptionsResponseJson.allowCredentials.length > 0) {
+            M.toast({
+                html: 'First, use a passkey you have already registered to authenticate your request.',
+                classes: 'rounded green'
+            });
+            const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
+            existingCredential = await navigator.credentials.get({publicKey: credentialGetOptions});
+            M.toast({
+                html: 'Now register your new passkey.',
+                classes: 'rounded green'
+            });
+        }
+
+        // 3. Fetch the passkey creation options
         const regOptionsResponse = await fetch('/passkey/registration-options', {
             method: 'POST',
             headers: {
@@ -31,15 +67,26 @@ export async function registerPasskey(csrfToken) {
             delete regOptionsResponseJson.authenticatorSelection.authenticatorAttachment;
         }
 
+        // 4. Create a new passkey
         const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsResponseJson);
-        const publicKeyCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
+        const createdCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
         const passkeyName = await getPasskeyNameFromUser();
 
-        createAndSubmitForm('/passkey/register', {
-            passkey: JSON.stringify(publicKeyCredential.toJSON()),
-            csrfToken: csrfToken,
-            passkeyName: passkeyName
-        });
+        // 5. Make the registration call - includes authentication credentials if they exist so that they can be verified
+        if (existingCredential) {
+            createAndSubmitForm('/passkey/register', {
+                credentials: JSON.stringify(existingCredential.toJSON()),
+                passkey: JSON.stringify(createdCredential.toJSON()),
+                csrfToken: csrfToken,
+                passkeyName: passkeyName
+            });
+        } else {
+            createAndSubmitForm('/passkey/register', {
+                passkey: JSON.stringify(createdCredential.toJSON()),
+                csrfToken: csrfToken,
+                passkeyName: passkeyName
+            });
+        }
     } catch (err) {
         if (err.name === 'InvalidStateError') {
             console.warn('Passkey already registered:', err);
