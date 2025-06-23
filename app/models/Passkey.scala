@@ -7,7 +7,6 @@ import com.webauthn4j.data.*
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.DefaultChallenge
 import com.webauthn4j.util.Base64UrlUtil
-import models.PasskeyAuthenticator.logger
 import play.api.Logging
 import play.api.libs.json.{JsError, JsSuccess, Json, Reads}
 
@@ -24,6 +23,9 @@ case class PasskeyMetadata(
     lastUsedTime: Option[Instant],
     authenticator: Option[PasskeyAuthenticator]
 )
+
+enum PasskeyFlow:
+  case Registration, Authentication
 
 object PasskeyEncodings {
 

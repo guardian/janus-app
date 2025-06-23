@@ -5,7 +5,7 @@ import cats.implicits.catsSyntaxMonadError
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.util.Base64UrlUtil
-import models.JanusException
+import models.{JanusException, PasskeyFlow}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.*
 
@@ -20,6 +20,7 @@ object PasskeyChallengeDB {
 
   case class UserChallenge(
       user: UserIdentity,
+      flow: PasskeyFlow,
       challenge: Challenge,
       // TTL can take up to 48 hours to take effect so this will be a fallback rather than something to rely on
       expiresAt: Instant = Instant.now().plusSeconds(60)
@@ -31,6 +32,7 @@ object PasskeyChallengeDB {
     ): Map[String, AttributeValue] = {
       Map(
         "username" -> AttributeValue.fromS(userChallenge.user.username),
+        "flow" -> AttributeValue.fromS(userChallenge.flow.toString),
         "challenge" -> AttributeValue.fromS(
           Base64UrlUtil.encodeToString(userChallenge.challenge.getValue)
         ),
@@ -55,10 +57,14 @@ object PasskeyChallengeDB {
     )
 
   def loadChallenge(
-      user: UserIdentity
+      user: UserIdentity,
+      flow: PasskeyFlow
   )(using dynamoDB: DynamoDbClient): Try[GetItemResponse] = {
     Try {
-      val key = Map("username" -> AttributeValue.fromS(user.username))
+      val key = Map(
+        "username" -> AttributeValue.fromS(user.username),
+        "flow" -> AttributeValue.fromS(flow.toString)
+      )
       val request =
         GetItemRequest.builder().tableName(tableName).key(key.asJava).build()
       dynamoDB.getItem(request)
@@ -81,10 +87,14 @@ object PasskeyChallengeDB {
   }
 
   def delete(
-      user: UserIdentity
+      user: UserIdentity,
+      flow: PasskeyFlow
   )(using dynamoDB: DynamoDbClient): Try[Unit] =
     Try {
-      val key = Map("username" -> AttributeValue.fromS(user.username))
+      val key = Map(
+        "username" -> AttributeValue.fromS(user.username),
+        "flow" -> AttributeValue.fromS(flow.toString)
+      )
       val request =
         DeleteItemRequest.builder().tableName(tableName).key(key.asJava).build()
       dynamoDB.deleteItem(request)
