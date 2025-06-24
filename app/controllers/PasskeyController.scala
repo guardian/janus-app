@@ -12,6 +12,7 @@ import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
 import models.JanusException.throwableWrites
+import models.PasskeyFlow.{Authentication, Registration}
 import models.{
   JanusException,
   PasskeyAuthenticator,
@@ -107,7 +108,7 @@ class PasskeyController(
           existingPasskeys = PasskeyDB.extractMetadata(loadCredentialsResponse)
         )
         _ <- PasskeyChallengeDB.insert(
-          UserChallenge(request.user, options.getChallenge)
+          UserChallenge(request.user, Registration, options.getChallenge)
         )
         _ = logger.info(
           s"Created registration options for user ${request.user.username}"
@@ -180,7 +181,7 @@ class PasskeyController(
       registrationData: RegistrationData
   ): Try[Result] =
     for {
-      challengeResponse <- PasskeyChallengeDB.loadChallenge(user)
+      challengeResponse <- PasskeyChallengeDB.loadChallenge(user, Registration)
       challenge <- PasskeyChallengeDB.extractChallenge(challengeResponse, user)
       credRecord <- Passkey.verifiedRegistration(
         host,
@@ -189,7 +190,7 @@ class PasskeyController(
         registrationData.passkey
       )
       _ <- PasskeyDB.insert(user, credRecord, registrationData.passkeyName)
-      _ <- PasskeyChallengeDB.delete(user)
+      _ <- PasskeyChallengeDB.delete(user, Registration)
       _ = logger.info(s"Registered passkey for user ${user.username}")
     } yield {
       Redirect("/user-account")
@@ -214,7 +215,7 @@ class PasskeyController(
           existingPasskeys
         )
         _ <- PasskeyChallengeDB.insert(
-          UserChallenge(request.user, options.getChallenge)
+          UserChallenge(request.user, Authentication, options.getChallenge)
         )
         _ = logger.info(
           s"Created authentication options for user ${request.user.username}"
