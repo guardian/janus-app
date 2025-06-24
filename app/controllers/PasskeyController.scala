@@ -13,7 +13,12 @@ import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
 import models.JanusException.throwableWrites
 import models.PasskeyFlow.{Authentication, Registration}
-import models.{JanusException, PasskeyAuthenticator, PasskeyEncodings}
+import models.{
+  JanusException,
+  PasskeyAuthenticator,
+  PasskeyEncodings,
+  PasskeyMetadata
+}
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
 import play.api.data.validation.Constraints.*
@@ -24,6 +29,7 @@ import play.api.mvc.*
 import play.api.{Logging, Mode}
 import play.twirl.api.Html
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.QueryResponse
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneId, ZonedDateTime}
@@ -198,11 +204,15 @@ class PasskeyController(
     apiResponse(
       for {
         loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
+        existingPasskeys <- loadExistingPasskeysOrFail(
+          loadCredentialsResponse,
+          request.user
+        )
         options <- Passkey.authenticationOptions(
           appHost = host,
           user = request.user,
           challenge = new DefaultChallenge(),
-          existingPasskeys = PasskeyDB.extractMetadata(loadCredentialsResponse)
+          existingPasskeys
         )
         _ <- PasskeyChallengeDB.insert(
           UserChallenge(request.user, Authentication, options.getChallenge)
@@ -313,6 +323,14 @@ class PasskeyController(
       )
     }
   }
+
+  private def loadExistingPasskeysOrFail(
+      dbResponse: QueryResponse,
+      user: UserIdentity
+  ): Try[Seq[PasskeyMetadata]] =
+    if !dbResponse.items.isEmpty then
+      Success(PasskeyDB.extractMetadata(dbResponse))
+    else Failure(JanusException.noPasskeysRegistered(user))
 }
 
 case class RegistrationData(passkey: String, passkeyName: String)
