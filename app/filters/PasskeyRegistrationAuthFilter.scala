@@ -4,6 +4,7 @@ import aws.PasskeyDB
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import controllers.PasskeyAuthFilter
 import play.api.Logging
+import play.api.libs.json.Json
 import play.api.mvc.Results.InternalServerError
 import play.api.mvc.{ActionFilter, Result}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -52,10 +53,16 @@ class PasskeyRegistrationAuthFilter(authFilter: PasskeyAuthFilter)(using
             s"Failed to load existing credentials for user ${request.user.username}",
             err
           )
-          Future.successful(Some(InternalServerError(Json.obj(
-            "error" -> "DB load error",
-            "message" -> "Failed to load existing credentials for the user."
-          ))))
+          Future.successful(
+            Some(
+              InternalServerError(
+                Json.obj(
+                  "error" -> "DB load error",
+                  "message" -> "Failed to load existing credentials for the user."
+                )
+              )
+            )
+          )
         },
         dbResponse =>
           if !dbResponse.items.isEmpty then authFilter.filter(request)
