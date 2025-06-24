@@ -313,15 +313,15 @@ document.addEventListener('DOMContentLoaded', function() {
      * @param {string} csrfToken - CSRF token for security verification
      */
     function setUpRegisterPasskeyButton(selector, csrfToken) {
-    const registerButton = document.querySelector(selector);
-    if (!registerButton) { return }
+        const registerButton = document.querySelector(selector);
+        if (!registerButton) { return }
 
-    registerButton?.addEventListener('click', function (e) {
-        e.preventDefault();
-        registerPasskey(csrfToken).catch(function (err) {
-            console.error('Error setting up register passkey button:', err);
+        registerButton?.addEventListener('click', function (e) {
+            e.preventDefault();
+            registerPasskey(csrfToken).catch(function (err) {
+                console.error('Error setting up register passkey button:', err);
+            });
         });
-    });
     }
 
     /**
