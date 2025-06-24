@@ -52,7 +52,10 @@ class PasskeyRegistrationAuthFilter(authFilter: PasskeyAuthFilter)(using
             s"Failed to load existing credentials for user ${request.user.username}",
             err
           )
-          Future.successful(Some(InternalServerError("DB load error")))
+          Future.successful(Some(InternalServerError(Json.obj(
+            "error" -> "DB load error",
+            "message" -> "Failed to load existing credentials for the user."
+          ))))
         },
         dbResponse =>
           if !dbResponse.items.isEmpty then authFilter.filter(request)
