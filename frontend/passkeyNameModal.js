@@ -1,5 +1,6 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
+import { displayToast, messageType } from './utils/toastMessages';
 
 // Regex to allow letters, numbers, spaces, underscores and hyphens
 const VALID_REGEX = /^[a-zA-Z0-9 _-]*$/;
@@ -184,7 +185,7 @@ export function getPasskeyNameFromUser() {
             input.classList.remove('invalid');
             errorMessage.style.display = 'none';
             modalInstance.close();
-            M.toast({html: DOMPurify.sanitize('Passkey registration cancelled'), classes: 'rounded orange'});
+            displayToast('Passkey registration cancelled', messageType.info);
             reject(new Error('Passkey registration cancelled'));
         };
         const handleKeyPress = (e) => {
