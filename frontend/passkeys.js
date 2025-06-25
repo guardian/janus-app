@@ -85,7 +85,7 @@ export async function registerPasskey(csrfToken) {
             displayToast('This passkey has already been registered.', messageType.warning);
         } else {
             console.error('Error during passkey registration:', err);
-            displayToast('Registration failed: passkey may already be registered', messageType.error);
+            displayToast('Passkey not registered', messageType.error);
         }
     }
 }
