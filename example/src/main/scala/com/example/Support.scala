@@ -40,23 +40,25 @@ object Support {
     SupportACL.create(rota.toMap map convertRota, supportAccess, supportPeriod)
 
   /** Helper so the rota can be simply hand-written.
-   */
+    */
   private def convertRota(
       rotaEntry: ((Int, Int, Int), (String, String))
   ): (Instant, (String, String)) = {
     rotaEntry match {
       case ((year, month, day), users) =>
         // this rota changes over at 11am London time
-        ZonedDateTime.of(
-          year,
-          month,
-          day,
-          11,
-          0,
-          0,
-          0,
-          ZoneId.of("Europe/London")
-        ).toInstant -> users
+        ZonedDateTime
+          .of(
+            year,
+            month,
+            day,
+            11,
+            0,
+            0,
+            0,
+            ZoneId.of("Europe/London")
+          )
+          .toInstant -> users
     }
   }
 }
