@@ -40,6 +40,10 @@ class PasskeyController(
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
     passkeyAuthAction: ActionBuilder[UserIdentityRequest, AnyContent],
+    passkeyRegistrationAuthAction: ActionBuilder[
+      UserIdentityRequest,
+      AnyContent
+    ],
     host: String,
     janusData: JanusData,
     passkeysEnabled: Boolean,
@@ -137,21 +141,23 @@ class PasskeyController(
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#registering-the-webauthn-public-key-credential-on-the-server]].
     */
-  def register: Action[Map[String, Seq[String]]] = authAction(
-    parse.formUrlEncoded
-  ) { implicit request =>
-    registrationForm
-      .bindFromRequest()
-      .fold(
-        formWithErrors =>
-          Redirect("/user-account")
-            .flashing("error" -> formattedErrors(formWithErrors)),
-        registrationData =>
-          redirectResponseOnError("/user-account")(for {
-            _ <- validateRegistrationData(request.user, registrationData)
-            result <- performPasskeyRegistration(request.user, registrationData)
-          } yield result)
-      )
+  def register: Action[AnyContent] = passkeyRegistrationAuthAction {
+    implicit request =>
+      registrationForm
+        .bindFromRequest()
+        .fold(
+          formWithErrors =>
+            Redirect("/user-account")
+              .flashing("error" -> formattedErrors(formWithErrors)),
+          registrationData =>
+            redirectResponseOnError("/user-account")(for {
+              _ <- validateRegistrationData(request.user, registrationData)
+              result <- performPasskeyRegistration(
+                request.user,
+                registrationData
+              )
+            } yield result)
+        )
   }
 
   /** Validates the registration data against database content. */
@@ -223,6 +229,39 @@ class PasskeyController(
       } yield options
     )
   }
+
+  /** Creates authentication options during the passkey registration flow.
+    *
+    * This method generates the necessary challenge data for authenticating a
+    * user who already has passkeys registered before they can register a new
+    * passkey. It loads the user's existing credentials, creates authentication
+    * options with a new challenge, and stores this challenge in the database
+    * for future verification.
+    *
+    * @return
+    *   Authentication options containing credentials and challenge data
+    */
+  def registrationAuthenticationOptions: Action[Unit] =
+    authAction(parse.empty) { request =>
+      apiResponse(
+        for {
+          loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
+          options <- Passkey.authenticationOptions(
+            appHost = host,
+            user = request.user,
+            challenge = new DefaultChallenge(),
+            existingPasskeys =
+              PasskeyDB.extractMetadata(loadCredentialsResponse)
+          )
+          _ <- PasskeyChallengeDB.insert(
+            UserChallenge(request.user, Authentication, options.getChallenge)
+          )
+          _ = logger.info(
+            s"Created registration authentication options for user ${request.user.username}"
+          )
+        } yield options
+      )
+    }
 
   /** Deletes a passkey from the user's account */
   def deletePasskey(passkeyId: String): Action[Unit] = authAction(parse.empty) {
