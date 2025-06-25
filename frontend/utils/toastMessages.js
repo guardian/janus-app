@@ -25,19 +25,19 @@ export function displayToast(message, type) {
 
 /**
  * Displays flash messages from the server as toasts
- * @param {Object} flashMessage Object containing flash messages by type
+ * @param {Object} flashMessages Object containing flash messages by type
  */
-export function displayFlashMessages(flashMessage) {
-    if (!flashMessage) { 
+export function displayFlashMessages(flashMessages) {
+    if (!flashMessages) { 
         return 
     }
-    if (flashMessage.success) {
-        displayToast(flashMessage.success, messageType.success);
+    if (flashMessages.success) {
+        displayToast(flashMessages.success, messageType.success);
     }
-    if (flashMessage.info) {
-       displayToast(flashMessage.info, messageType.info);
+    if (flashMessages.info) {
+       displayToast(flashMessages.info, messageType.info);
     }
-    if (flashMessage.error) {
-        displayToast(flashMessage.error, messageType.error);
+    if (flashMessages.error) {
+        displayToast(flashMessages.error, messageType.error);
     }
 }
