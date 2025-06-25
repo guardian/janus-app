@@ -21,10 +21,7 @@ export async function registerPasskey(csrfToken) {
 
         if (!authOptionsResponse.ok) {
             console.error('Authentication options request failed:', authOptionsResponseJson);
-            M.toast({
-                html: 'Failed to get authentication options from server. Please try again.',
-                classes: 'rounded red'
-            });
+            displayToast('Failed to get authentication options from server. Please try again.', messageType.warning);
             return;
         }
 
@@ -32,16 +29,10 @@ export async function registerPasskey(csrfToken) {
 
         // 2. If user has existing passkeys, use one to authenticate the registration of the new passkey
         if(authOptionsResponseJson.allowCredentials.length > 0) {
-            M.toast({
-                html: 'First, use a passkey you have already registered to authenticate your request.',
-                classes: 'rounded green'
-            });
+            displayToast('First, use a passkey you have already registered to authenticate your request.', messageType.warning);
             const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
             existingCredential = await navigator.credentials.get({publicKey: credentialGetOptions});
-            M.toast({
-                html: 'Now register your new passkey.',
-                classes: 'rounded green'
-            });
+            displayToast('Now register your new passkey.', messageType.info);
         }
 
         // 3. Fetch the passkey creation options
