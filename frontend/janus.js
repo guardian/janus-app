@@ -6,8 +6,9 @@ import {displayFlashMessages, displayToast, messageType} from './utils/toastMess
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
     
-    // Get CSRF token from global config 
-    const csrfToken = window.janusConfig?.csrfToken;
+    // Get CSRF token from meta tag 
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
     
     if (!csrfToken) {
         console.error('CSRF token not available');
