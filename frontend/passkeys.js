@@ -62,7 +62,15 @@ export async function registerPasskey(csrfToken) {
         // 4. Create a new passkey
         const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsResponseJson);
         const createdCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
-        const passkeyName = await getPasskeyNameFromUser();
+        let passkeyName;
+        try {
+            passkeyName = await getPasskeyNameFromUser();
+            if (passkeyName === null) {
+                return;
+            }
+        } catch (error) {
+            console.error('Modal error:', error);
+        }
 
         // 5. Make the registration call - includes authentication credentials if they exist so that they can be verified
         if (existingCredential) {
