@@ -68,19 +68,64 @@ const updateSubmitButtonState = (submitButton, isValid) => {
     }
 };
 
-const setInvalidState = (input, errorMessage, message) => {
-    input.classList.add('invalid');
-    errorMessage.style.display = 'block';
-    errorMessage.textContent = message;
-};
-
-const setValidState = (input, errorMessage) => {
-    input.classList.remove('invalid');
-    errorMessage.style.display = 'none';
+/**
+ * Validation function that returns a single validation error
+ * @param {string} inputValue - The value to validate
+ * @param {string[]} existingPasskeyNames - Array of existing passkey names (lowercase)
+ * @returns {string|null} Error message or null if valid
+ */
+const validatePasskeyName = (inputValue, existingPasskeyNames) => {
+    const sanitizedValue = DOMPurify.sanitize(inputValue);
+    const trimmedValue = sanitizedValue.trim();
+    
+    // Check if input is empty first
+    if (!trimmedValue) {
+        return VALIDATION_MESSAGES.INVALID_CHARS;
+    }
+    
+    // Check length
+    if (sanitizedValue.length > MAX_LENGTH) {
+        return VALIDATION_MESSAGES.TOO_LONG(sanitizedValue.length);
+    }
+    
+    // Check for invalid characters
+    if (!VALID_REGEX.test(trimmedValue)) {
+        return VALIDATION_MESSAGES.INVALID_CHARS;
+    }
+    
+    // Check for duplicate names
+    if (existingPasskeyNames.includes(trimmedValue.toLowerCase())) {
+        return VALIDATION_MESSAGES.EXISTING_NAME;
+    }
+    
+    return null; // Valid
 };
 
 /**
- * Validates user input for passkey name and updates UI state accordingly
+ * Updates UI state based on validation error
+ * @param {string|null} error - Error message or null if valid
+ * @param {HTMLInputElement} input - The input element
+ * @param {HTMLButtonElement} submitButton - Submit button to enable/disable
+ * @param {HTMLElement} errorMessage - Error message element
+ */
+const updateValidationUI = (error, input, submitButton, errorMessage) => {
+    const isValid = error === null;
+    
+    if (isValid) {
+        input.classList.remove('invalid');
+        errorMessage.style.display = 'none';
+        errorMessage.textContent = '';
+    } else {
+        input.classList.add('invalid');
+        errorMessage.style.display = 'block';
+        errorMessage.textContent = error;
+    }
+    
+    updateSubmitButtonState(submitButton, isValid);
+};
+
+/**
+ * Validates user input and updates UI state accordingly
  * @param {HTMLInputElement} input - The input element to validate
  * @param {string[]} existingPasskeyNames - Array of existing passkey names (lowercase)
  * @param {HTMLButtonElement} submitButton - Submit button to enable/disable
@@ -88,25 +133,9 @@ const setValidState = (input, errorMessage) => {
  * @returns {boolean} True if input is valid, false otherwise
  */
 const validateInput = (input, existingPasskeyNames, submitButton, errorMessage) => {
-    const inputValue = DOMPurify.sanitize(input.value);
-    const trimmedValue = inputValue.trim();
-    let isValid = false;
-    
-    if (inputValue.length > MAX_LENGTH) {
-        setInvalidState(input, errorMessage, VALIDATION_MESSAGES.TOO_LONG(inputValue.length));
-    } 
-    else if (trimmedValue && existingPasskeyNames.includes(trimmedValue.toLowerCase())) {
-        setInvalidState(input, errorMessage, VALIDATION_MESSAGES.EXISTING_NAME);
-    }
-    else if (trimmedValue && VALID_REGEX.test(trimmedValue)) {
-        setValidState(input, errorMessage);
-        isValid = true;
-    } else {
-        setInvalidState(input, errorMessage, VALIDATION_MESSAGES.INVALID_CHARS);
-    }
-    
-    updateSubmitButtonState(submitButton, isValid);
-    return isValid;
+    const error = validatePasskeyName(input.value, existingPasskeyNames);
+    updateValidationUI(error, input, submitButton, errorMessage);
+    return error === null;
 };
 
 /**
