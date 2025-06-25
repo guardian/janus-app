@@ -5,6 +5,7 @@ import com.gu.googleauth.AuthAction.UserIdentityRequest
 import logic.Passkey
 import models.JanusException
 import models.JanusException.throwableWrites
+import models.PasskeyFlow.Authentication
 import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.Json.toJson
@@ -51,7 +52,10 @@ class PasskeyAuthFilter(
     Future(
       apiResponse(
         for {
-          challengeResponse <- PasskeyChallengeDB.loadChallenge(request.user)
+          challengeResponse <- PasskeyChallengeDB.loadChallenge(
+            request.user,
+            Authentication
+          )
           challenge <- PasskeyChallengeDB.extractChallenge(
             challengeResponse,
             request.user
@@ -81,7 +85,7 @@ class PasskeyAuthFilter(
             authData,
             credential
           )
-          _ <- PasskeyChallengeDB.delete(request.user)
+          _ <- PasskeyChallengeDB.delete(request.user, Authentication)
           _ <- PasskeyDB.updateCounter(request.user, verifiedAuthData)
           _ <- PasskeyDB.updateLastUsedTime(request.user, verifiedAuthData)
           _ = logger.info(

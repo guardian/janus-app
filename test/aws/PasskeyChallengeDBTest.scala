@@ -1,14 +1,15 @@
 package aws
 
-import aws.PasskeyChallengeDB._
+import aws.PasskeyChallengeDB.*
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.data.client.challenge.DefaultChallenge
+import models.PasskeyFlow.{Authentication, Registration}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import software.amazon.awssdk.services.dynamodb.model.KeyType.HASH
+import software.amazon.awssdk.services.dynamodb.model.KeyType.{HASH, RANGE}
 import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType.S
-import software.amazon.awssdk.services.dynamodb.model._
+import software.amazon.awssdk.services.dynamodb.model.*
 
 import java.nio.charset.StandardCharsets.UTF_8
 import java.time.ZoneOffset.UTC
@@ -37,6 +38,7 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
           exp = 0,
           avatarUrl = None
         ),
+        Registration,
         new DefaultChallenge("challenge".getBytes(UTF_8)),
         clock.instant.plusSeconds(60)
       )
@@ -51,7 +53,7 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
 
       "load succeeds" ignore {
         (for {
-          response <- loadChallenge(userChallenge.user)
+          response <- loadChallenge(userChallenge.user, Authentication)
           challenge <- extractChallenge(response, userChallenge.user)
         } yield challenge) match {
           case Failure(e) =>
@@ -62,7 +64,7 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
       }
 
       "deletion succeeds" ignore {
-        delete(userChallenge.user) match {
+        delete(userChallenge.user, Registration) match {
           case Failure(e) =>
             fail(s"Failed to delete user challenge: ${e.getMessage}")
           case Success(_) => succeed
@@ -97,12 +99,22 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
             .builder()
             .attributeName("username")
             .keyType(HASH)
+            .build(),
+          KeySchemaElement
+            .builder()
+            .attributeName("flow")
+            .keyType(RANGE)
             .build()
         )
         .attributeDefinitions(
           AttributeDefinition
             .builder()
             .attributeName("username")
+            .attributeType(S)
+            .build(),
+          AttributeDefinition
+            .builder()
+            .attributeName("flow")
             .attributeType(S)
             .build()
         )
