@@ -345,22 +345,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 if (confirm(`Are you sure you want to delete the passkey "${DOMPurify.sanitize(passkeyName)}"?`)) {
-                    try {
-                        const result = await deletePasskey(passkeyId, csrfToken);
-                        // Immediately redirect to the user-account page
-                        // The flash message will be displayed after the redirect
-                        if (result.redirect) {
-                            window.location.href = result.redirect;
-                        } else {
-                            window.location.reload();
-                        }
-                    } catch {
-                        // Error is already handled in deletePasskey function
+                    const result = await deletePasskey(passkeyId, csrfToken);
+                    // Immediately redirect to the user-account page
+                    // The flash message will be displayed after the redirect
+                    if (result.redirect) {
+                        window.location.href = result.redirect;
+                    } else {
+                        window.location.reload();
                     }
-                } else {
-                    displayToast('Passkey deletion cancelled', messageType.warning);
                 }
-            });
+            });                       
         });
     }
 
