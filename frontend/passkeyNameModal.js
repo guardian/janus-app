@@ -140,7 +140,7 @@ const cleanupModal = (modalElement, input, userAccountContainer, handlers, error
  * @returns {Promise<string>} A promise that resolves with the passkey name
  */
 export function getPasskeyNameFromUser() {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         const modalElement = document.getElementById('passkey-name-modal');
         const submitButton = modalElement?.querySelector('#submit-button');
         const cancelButton = modalElement?.querySelector('#cancel-button');
@@ -186,7 +186,6 @@ export function getPasskeyNameFromUser() {
             errorMessage.style.display = 'none';
             modalInstance.close();
             displayToast('Passkey registration cancelled', messageType.info);
-            reject(new Error('Passkey registration cancelled'));
         };
         const handleKeyPress = (e) => {
             if (e.key === 'Enter') {
