@@ -6,6 +6,7 @@ import { displayToast, messageType } from './utils/toastMessages';
 const VALID_REGEX = /^[a-zA-Z0-9 _-]*$/;
 const MAX_LENGTH = 50; // Maximum character limit
 const FOCUS_DELAY = 100;
+const DEBOUNCE_TIME = 150;
 const VALIDATION_MESSAGES = {
     TOO_LONG: (length) => `Name is too long: ${length}/${MAX_LENGTH} characters`,
     INVALID_CHARS: `Use only letters, numbers, spaces, underscores and hyphens (max ${MAX_LENGTH} characters)`,
@@ -158,8 +159,12 @@ export function getPasskeyNameFromUser() {
         const modalInstance = initializeModal(modalElement, input, submitButton, userAccountContainer, errorMessage);
 
         // Define handlers inside promise scope
+        let validationTimeout;
         const handleInput = () => {
-            validateInput(input, existingPasskeyNames, submitButton, errorMessage);
+            clearTimeout(validationTimeout);
+            validationTimeout = setTimeout(() => {
+                validateInput(input, existingPasskeyNames, submitButton, errorMessage);
+            }, DEBOUNCE_TIME); // Short debounce time to reduce excessive validation calls
         };
         const handleSubmit = (e) => {
             e.preventDefault();
