@@ -46,7 +46,6 @@ export async function registerPasskey(csrfToken) {
             const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
             existingCredential = await navigator.credentials.get({publicKey: credentialGetOptions});
             
-            // Show modal instead of toast
             await showConfirmationModal(
                 'Register new passkey',
                 'Authentication successful! Now register your new passkey.',
