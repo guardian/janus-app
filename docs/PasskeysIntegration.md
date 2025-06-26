@@ -120,8 +120,7 @@ On a Mac, it will fall back to the iCloud Keychain authenticator if the user cho
 ### Firefox
 Firefox uses the native OS mechanism to find a default authenticator which on a Mac is the iCloud Keychain.
 This means that without an Apple account there is no on-device authenticator for Firefox.
-Haven't tested whether an on-device password manager could be used instead.  
-(Possibly an easier option than providing Apple accounts?)
+Depending on how it's configured, an on-device password manager could be used instead.  
 
 ### Safari
 Safari, as might be expected, uses the iCloud Keychain as its default authenticator.
