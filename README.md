@@ -209,6 +209,11 @@ included in the application's configuration file, and the service
 account certificate file will need to be available to the Janus
 application.
 
+### Passkey auth
+
+Sensitive endpoints have additional passkey authentication.
+See [this doc](/docs/PasskeysIntegration.md) for an overview of the integration.
+
 
 ## Non-Guardian use
 
