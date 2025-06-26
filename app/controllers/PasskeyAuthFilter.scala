@@ -10,7 +10,7 @@ import play.api.Logging
 import play.api.http.Status.INTERNAL_SERVER_ERROR
 import play.api.libs.json.Json.toJson
 import play.api.mvc.Results.Status
-import play.api.mvc.{ActionFilter, AnyContentAsFormUrlEncoded, Result}
+import play.api.mvc.{ActionFilter, AnyContentAsFormUrlEncoded, AnyContentAsText, Result}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import scala.concurrent.{ExecutionContext, Future}
@@ -117,6 +117,8 @@ class PasskeyAuthFilter(
               JanusException.missingFieldInRequest(request.user, "credentials")
             )
             .toTry
+        case AnyContentAsText(data) =>
+          Option(data).toRight(JanusException.missingFieldInRequest(request.user, "body")).toTry
         case other =>
           Failure(
             JanusException.invalidRequest(
