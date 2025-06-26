@@ -89,6 +89,7 @@ export async function registerPasskey(csrfToken) {
             }
         } catch (error) {
             console.error('Modal error:', error);
+            throw error;
         }
 
         // 5. Make the registration call - includes authentication credentials if they exist so that they can be verified
