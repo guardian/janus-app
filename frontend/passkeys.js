@@ -32,8 +32,8 @@ export async function registerPasskey(csrfToken) {
         if(authOptionsResponseJson.allowCredentials.length > 0) {
             // Show confirmation modal
             const userConfirmed = await showConfirmationModal(                
-                'Authenticate',
-                'First, use a passkey you have already registered to authenticate your request.',
+                'Authenticate with existing passkey',
+                'Before you register a new passkey, use a passkey you have already registered to authenticate your request.',
                 'authenticate'
             );
             
