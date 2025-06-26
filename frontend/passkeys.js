@@ -1,6 +1,7 @@
-import { getPasskeyNameFromUser } from './passkeyNameModal.js';
 import { createAndSubmitForm } from './utils/formUtils.js';
-import { displayToast, messageType } from './utils/toastMessages.js'
+import { getPasskeyNameFromUser } from './utils/modalUtils.js';
+import { showConfirmationModal } from './utils/modalUtils.js';
+import { displayToast, messageType } from './utils/toastMessages.js';
 
 /**
  * Registers a new passkey for the current user
@@ -13,8 +14,8 @@ export async function registerPasskey(csrfToken) {
         const authOptionsResponse = await fetch('/passkey/registration-auth-options', {
             method: 'POST',
             headers: {
-                'CSRF-Token': csrfToken, // Securely include CSRF token in headers,
-                'Content-Type': 'application/x-www-form-urlencoded', // To satisfy Play CSRF filter
+                'CSRF-Token': csrfToken,
+                'Content-Type': 'application/x-www-form-urlencoded',
             }
         });
         const authOptionsResponseJson = await authOptionsResponse.json();
@@ -29,10 +30,27 @@ export async function registerPasskey(csrfToken) {
 
         // 2. If user has existing passkeys, use one to authenticate the registration of the new passkey
         if(authOptionsResponseJson.allowCredentials.length > 0) {
-            displayToast('First, use a passkey you have already registered to authenticate your request.', messageType.warning);
+            // Show confirmation modal
+            const userConfirmed = await showConfirmationModal(                
+                'Authenticate with existing passkey',
+                'Before you register a new passkey, use a passkey you have already registered to authenticate your request.',
+                'authenticate'
+            );
+            
+            if (!userConfirmed) {
+                displayToast('Passkey registration cancelled', messageType.info);
+                return;
+            }
+            
+            // Now proceed with the authentication flow
             const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
             existingCredential = await navigator.credentials.get({publicKey: credentialGetOptions});
-            displayToast('Now register your new passkey.', messageType.info);
+            
+            await showConfirmationModal(
+                'Register new passkey',
+                'Authentication successful! Now register your new passkey.',
+                'register'                
+            );
         }
 
         // 3. Fetch the passkey creation options
@@ -70,6 +88,7 @@ export async function registerPasskey(csrfToken) {
             }
         } catch (error) {
             console.error('Modal error:', error);
+            throw error;
         }
 
         // 5. Make the registration call - includes authentication credentials if they exist so that they can be verified
