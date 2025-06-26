@@ -56,20 +56,20 @@ class PasskeyAuthTest extends AsyncFlatSpec with Matchers {
 //
 //  "Passkey registration" should "complete successfully" in {
 //    withPlaywright {
-//      // Navigate to your registration page
-//      page.navigate("https://your-app.com/register")
-//
-//      // Fill in registration form
-//      page.fill("#email", "test@example.com")
-//      page.fill("#name", "Test User")
-//
-//      // Trigger the passkey registration
-//      page.click("#register-with-passkey")
-//
-//      // WebAuthn flow will be automatically handled by the virtual authenticator
-//
-//      // Wait for success message or redirect
-//      page.waitForSelector("#registration-success", new Page.WaitForSelectorOptions().setTimeout(10000))
+  //      // Navigate to your registration page
+  //      page.navigate("https://your-app.com/register")
+  //
+  //      // Fill in registration form
+  //      page.fill("#email", "test@example.com")
+  //      page.fill("#name", "Test User")
+  //
+  //      // Trigger the passkey registration
+  //      page.click("#register-with-passkey")
+  //
+  //      // WebAuthn flow will be automatically handled by the virtual authenticator
+  //
+  //      // Wait for success message or redirect
+  //      page.waitForSelector("#registration-success", new Page.WaitForSelectorOptions().setTimeout(10000))
 //
 //      // Verify registration was successful
 //      page.isVisible("#registration-success") shouldBe true
