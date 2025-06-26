@@ -52,11 +52,6 @@ graph TB
 
     PDB --> DynamoPasskeys
     PCDB --> DynamoChallenges
-    
-    style Browser fill:#e6f3ff,stroke:#333,stroke-width:2px
-    style Authenticator fill:#bbf,stroke:#333,stroke-width:2px
-    style DynamoPasskeys fill:#bfb,stroke:#333,stroke-width:2px
-    style DynamoChallenges fill:#bfb,stroke:#333,stroke-width:2px
 ```
 
 ## Terminology
