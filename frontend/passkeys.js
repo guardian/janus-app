@@ -179,34 +179,85 @@ export async function bypassPasskeyAuthentication(targetHref, csrfToken) {
  */
 export async function deletePasskey(passkeyId, csrfToken) {
     try {
-        const response = await fetch(`/passkey/${passkeyId}`, {
-            method: 'DELETE',
+        // 1. Fetch the authentication options
+        const authOptionsResponse = await fetch('/passkey/registration-auth-options', {
+            method: 'POST',
             headers: {
                 'CSRF-Token': csrfToken,
-            },
-            credentials: 'same-origin'
-        });
-        
-        if (!response.ok) {
-            let errorMessage = `Server returned ${response.status}`;
-            try {
-                const errorData = await response.json();
-                if (errorData && errorData.message) {
-                    errorMessage = errorData.message;
-                }
-            } catch (e) {
-                console.warn('Could not parse error response as JSON:', e);
+                'Content-Type': 'application/x-www-form-urlencoded',
             }
-            throw new Error(errorMessage);
+        });
+        const authOptionsResponseJson = await authOptionsResponse.json();
+
+        if (!authOptionsResponse.ok) {
+            console.error('Authentication options request failed:', authOptionsResponseJson);
+            displayToast('Failed to get authentication options from server. Please try again.', messageType.warning);
+            return;
         }
-        
-        const responseData = await response.json();
-        
-        return responseData;
+
+        // 2. If user has existing passkeys, use one to authenticate the deletion of the passkey
+        let existingCredential;
+        if(authOptionsResponseJson.allowCredentials.length > 0) {
+            const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
+            existingCredential = await navigator.credentials.get({publicKey: credentialGetOptions});
+        }
+
+        // 3. Make the deletion call - includes authentication credentials if they exist so that they can be verified
+        if (existingCredential) {
+            const response = await fetch(`/passkey/${passkeyId}`, {
+                method: 'DELETE',
+                headers: {
+                    'CSRF-Token': csrfToken,
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(existingCredential.toJSON())
+            });
+
+            if (!response.ok) {
+                let errorMessage = `Server returned ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData && errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } catch (e) {
+                    console.warn('Could not parse error response as JSON:', e);
+                }
+                throw new Error(errorMessage);
+            }
+
+            const responseData = await response.json();
+
+            return responseData;
+        } else {
+            const response = await fetch(`/passkey/${passkeyId}`, {
+                method: 'DELETE',
+                headers: {
+                    'CSRF-Token': csrfToken,
+                },
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                let errorMessage = `Server returned ${response.status}`;
+                try {
+                    const errorData = await response.json();
+                    if (errorData && errorData.message) {
+                        errorMessage = errorData.message;
+                    }
+                } catch (e) {
+                    console.warn('Could not parse error response as JSON:', e);
+                }
+                throw new Error(errorMessage);
+            }
+
+            const responseData = await response.json();
+
+            return responseData;
+        }
     } catch (error) {
         console.error('Error deleting passkey:', error);
         displayToast(`Error deleting passkey: ${error.message}`, messageType.error);
         throw error;
     }
 }   
-
