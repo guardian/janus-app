@@ -1,9 +1,21 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
-import {displayFlashMessages, setUpDeletePasskeyButtons, setUpProtectedLinks, setUpRegisterPasskeyButton} from './passkeys.js';
+import {authenticatePasskey, bypassPasskeyAuthentication, deletePasskey, registerPasskey} from './passkeys.js';
+import {displayFlashMessages, displayToast, messageType} from './utils/toastMessages.js';
 
 document.addEventListener('DOMContentLoaded', function() {
     "use strict";
+    
+    // Get CSRF token from meta tag 
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+    
+    if (!csrfToken) {
+        console.error('CSRF token not available');
+        displayToast('Security token not available. Please refresh the page.', messageType.error);
+        return;
+    }
+    
     //Initialise Materialize elements
     const sidenavElems = document.querySelectorAll('.sidenav');
     // eslint-disable-next-line no-unused-vars -- required by Materialize
@@ -296,10 +308,87 @@ document.addEventListener('DOMContentLoaded', function() {
         document.cookie = `${COOKIE__AUTO_LOGOUT}=; expires=Thu, 01 Jan 1970 12:00:00 UTC; path=/`;
     }
 
-    setUpRegisterPasskeyButton('#register-passkey');
-    setUpDeletePasskeyButtons('.delete-passkey-btn');
-    const protectedLinks = document.querySelectorAll('[data-passkey-protected]');
-    setUpProtectedLinks(protectedLinks);
+    /**
+     * Sets up click event listener for the passkey registration button
+     * @param {string} selector - CSS selector for the register button
+     * @param {string} csrfToken - CSRF token for security verification
+     */
+    function setUpRegisterPasskeyButton(selector, csrfToken) {
+        const registerButton = document.querySelector(selector);
+        if (!registerButton) { return }
+
+        registerButton?.addEventListener('click', function (e) {
+            e.preventDefault();
+            registerPasskey(csrfToken).catch(function (err) {
+                console.error('Error setting up register passkey button:', err);
+            });
+        });
+    }
+
+    /**
+     * Sets up click event listeners for passkey deletion buttons
+     * @param {string} selector - CSS selector for delete buttons
+     * @param {string} csrfToken - CSRF token for security verification
+     */
+    function setUpDeletePasskeyButtons(selector, csrfToken) {
+        const deleteButtons = document.querySelectorAll(selector);
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', async () => {
+                const passkeyName = button.getAttribute('data-passkey-name');
+                const passkeyId = button.getAttribute('data-passkey-id');
+                
+                if (!passkeyId) {
+                    console.error('No passkey ID found');
+                    displayToast('Error: Passkey ID not found', messageType.error);
+                    return;
+                }
+                
+                if (confirm(`Are you sure you want to delete the passkey "${DOMPurify.sanitize(passkeyName)}"?`)) {
+                    const result = await deletePasskey(passkeyId, csrfToken);
+                    // Immediately redirect to the user-account page
+                    // The flash message will be displayed after the redirect
+                    if (result.redirect) {
+                        window.location.href = result.redirect;
+                    } else {
+                        window.location.reload();
+                    }
+                }
+            });                       
+        });
+    }
+
+    /**
+     * Sets up protected links that require passkey authentication
+     * @param {NodeList|HTMLElement[]} links - Collection of link elements to protect
+     * @param {string} csrfToken - CSRF token for security verification
+     */
+    function setUpProtectedLinks(links, csrfToken) {
+        links.forEach((link) => {
+            link.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetHref = link.href;
+                if (link.dataset.passkeyBypassed) {
+                    bypassPasskeyAuthentication(targetHref, csrfToken).catch(function (err) {
+                        console.error('Error setting up bypass of protected link:', err);
+                    });
+                } else {
+                    authenticatePasskey(targetHref, csrfToken).catch(function (err) {
+                        console.error('Error setting up protected link:', err);
+                    });
+                }
+            });
+        });
+    }
+
+    try {
+        setUpRegisterPasskeyButton('#register-passkey', csrfToken);
+        setUpDeletePasskeyButtons('.delete-passkey-btn', csrfToken);
+        const protectedLinks = document.querySelectorAll('[data-passkey-protected]');
+        setUpProtectedLinks(protectedLinks, csrfToken);
+    } catch (error) {
+        console.error('Error setting up passkey functionality:', error);
+    }
     
     const flashMessage = document.getElementById('flash-message');
     if (flashMessage) {

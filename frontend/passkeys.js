@@ -1,5 +1,6 @@
-import DOMPurify from 'dompurify';
-import M from 'materialize-css';
+import { getPasskeyNameFromUser } from './passkeyNameModal.js';
+import { createAndSubmitForm } from './utils/formUtils.js';
+import { displayToast, messageType } from './utils/toastMessages.js'
 
 /**
  * Registers a new passkey for the current user
@@ -20,10 +21,7 @@ export async function registerPasskey(csrfToken) {
 
         if (!authOptionsResponse.ok) {
             console.error('Authentication options request failed:', authOptionsResponseJson);
-            M.toast({
-                html: 'Failed to get authentication options from server. Please try again.',
-                classes: 'rounded red'
-            });
+            displayToast('Failed to get authentication options from server. Please try again.', messageType.warning);
             return;
         }
 
@@ -31,16 +29,10 @@ export async function registerPasskey(csrfToken) {
 
         // 2. If user has existing passkeys, use one to authenticate the registration of the new passkey
         if(authOptionsResponseJson.allowCredentials.length > 0) {
-            M.toast({
-                html: 'First, use a passkey you have already registered to authenticate your request.',
-                classes: 'rounded green'
-            });
+            displayToast('First, use a passkey you have already registered to authenticate your request.', messageType.warning);
             const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
             existingCredential = await navigator.credentials.get({publicKey: credentialGetOptions});
-            M.toast({
-                html: 'Now register your new passkey.',
-                classes: 'rounded green'
-            });
+            displayToast('Now register your new passkey.', messageType.info);
         }
 
         // 3. Fetch the passkey creation options
@@ -70,7 +62,15 @@ export async function registerPasskey(csrfToken) {
         // 4. Create a new passkey
         const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsResponseJson);
         const createdCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
-        const passkeyName = await getPasskeyNameFromUser();
+        let passkeyName;
+        try {
+            passkeyName = await getPasskeyNameFromUser();
+            if (passkeyName === null) {
+                return;
+            }
+        } catch (error) {
+            console.error('Modal error:', error);
+        }
 
         // 5. Make the registration call - includes authentication credentials if they exist so that they can be verified
         if (existingCredential) {
@@ -90,29 +90,12 @@ export async function registerPasskey(csrfToken) {
     } catch (err) {
         if (err.name === 'InvalidStateError') {
             console.warn('Passkey already registered:', err);
-            M.toast({html: 'This passkey has already been registered.', classes: 'rounded orange'});
+            displayToast('This passkey has already been registered.', messageType.warning);
         } else {
             console.error('Error during passkey registration:', err);
-            M.toast({html: 'Registration failed: this passkey may have already been registered, or it could be a transient issue in which case please try again.', classes: 'rounded red'});
+            displayToast('Passkey not registered', messageType.error);
         }
     }
-}
-
-/**
- * Sets up click event listener for the passkey registration button
- * @param {string} selector - CSS selector for the register button
- */
-export function setUpRegisterPasskeyButton(selector) {
-    const registerButton = document.querySelector(selector);
-    if (!registerButton) { return }
-
-    registerButton?.addEventListener('click', function (e) {
-        e.preventDefault();
-        const csrfToken = this.getAttribute('csrf-token');
-        registerPasskey(csrfToken).catch(function (err) {
-            console.error('Error setting up register passkey button:', err);
-        });
-    });
 }
 
 /**
@@ -142,10 +125,7 @@ export async function authenticatePasskey(targetHref, csrfToken) {
                 window.location.href = '/user-account';
                 return;
             }
-            M.toast({
-                html: 'Failed to get authentication options from server. Please try again.',
-                classes: 'rounded red'
-            });
+            displayToast('Failed to get authentication options from server. Please try again.', messageType.error);
             return;
         }
 
@@ -158,7 +138,7 @@ export async function authenticatePasskey(targetHref, csrfToken) {
         });
     } catch (err) {
         console.error('Error during passkey authentication:', err);
-        M.toast({ html: 'Authentication failed. Please try again.', classes: 'rounded red' });
+        displayToast('Authentication failed. Please try again.', messageType.error)
     }
 }
 
@@ -206,290 +186,8 @@ export async function deletePasskey(passkeyId, csrfToken) {
         return responseData;
     } catch (error) {
         console.error('Error deleting passkey:', error);
-        M.toast({ html: `Error deleting passkey: ${error.message}`, classes: 'rounded red' });
+        displayToast(`Error deleting passkey: ${error.message}`, messageType.error);
         throw error;
     }
 }   
 
-/**
- * Sets up click event listeners for passkey deletion buttons
- * @param {string} selector - CSS selector for delete buttons
- */
-export function setUpDeletePasskeyButtons(selector) {
-    const deleteButtons = document.querySelectorAll(selector);
-    if (!deleteButtons.length) {
-        return;
-    }
-
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', async () => {
-            const passkeyName = button.getAttribute('data-passkey-name');
-            const passkeyId = button.getAttribute('data-passkey-id');
-            const csrfToken = button.getAttribute('csrf-token');
-            
-            if (!passkeyId) {
-                console.error('No passkey ID found');
-                M.toast({ html: 'Error: Passkey ID not found', classes: 'rounded red' });
-                return;
-            }
-            
-            if (!csrfToken) {
-                console.error('No CSRF token found');
-                M.toast({ html: 'Error: Security token not found', classes: 'rounded red' });
-                return;
-            }
-            
-            if (confirm(`Are you sure you want to delete the passkey "${passkeyName}"?`)) {
-                try {
-                    const result = await deletePasskey(passkeyId, csrfToken);
-                    // Immediately redirect to the user-account page
-                    // The flash message will be displayed after the redirect
-                    if (result.redirect) {
-                        window.location.href = result.redirect;
-                    } else {
-                        window.location.reload();
-                    }
-                } catch {
-                    // Error is already handled in deletePasskey function
-                }
-            } else {
-                M.toast({ html: 'Passkey deletion cancelled', classes: 'rounded orange' });
-            }
-        });
-    });
-}
-
-/**
- * Creates and submits a form with the provided data
- * @param {string} targetHref - Form submission URL
- * @param {Object} formData - Data to include in the form
- */
-function createAndSubmitForm(targetHref, formData) {
-    const form = document.createElement('form');
-    form.setAttribute('method', 'post');
-    form.setAttribute('action', DOMPurify.sanitize(targetHref));
-
-    Object.entries(formData).forEach(([name, value]) => {
-        const input = document.createElement('input');
-        input.setAttribute('type', 'hidden');
-        input.setAttribute('name', DOMPurify.sanitize(name));
-        input.setAttribute('value', DOMPurify.sanitize(value));
-        form.appendChild(input);
-    });
-
-    document.body.append(form);
-    form.submit();
-}
-
-/**
- * Sets up protected links that require passkey authentication
- * @param {NodeList|HTMLElement[]} links - Collection of link elements to protect
- */
-export function setUpProtectedLinks(links) {
-    if (!links.length) {
-        return;
-    }
-
-    links.forEach((link) => {
-        link.addEventListener('click', function (e) {
-            e.preventDefault();
-            const csrfToken = link.getAttribute('csrf-token');
-            const targetHref = link.href;
-            if (link.dataset.passkeyBypassed) {
-                bypassPasskeyAuthentication(targetHref, csrfToken).catch(function (err) {
-                    console.error('Error setting up bypass of protected link:', err);
-                });
-            } else {
-                authenticatePasskey(targetHref, csrfToken).catch(function (err) {
-                    console.error('Error setting up protected link:', err);
-                });
-            }
-        });
-    });
-}
-
-/**
- * Displays flash messages from the server as toasts
- * @param {Object} flashMessages Object containing flash messages by type
- */
-export function displayFlashMessages(flashMessages) {
-    if (!flashMessages) { 
-        return 
-    }
-    if (flashMessages.success) {
-        M.toast({
-            html: flashMessages.success,
-            classes: 'green lighten-1 rounded',
-        });
-    }
-    if (flashMessages.info) {
-        M.toast({
-            html: flashMessages.info,
-            classes: 'blue lighten-1 rounded',
-        });
-    }
-    if (flashMessages.error) {
-        M.toast({
-            html: flashMessages.error,
-            classes: 'red lighten-1 rounded',
-        });
-    }
-}
-
-/**
- * Prompts the user to name a passkey via a modal dialog
- * @returns {Promise<string>} A promise that resolves with the passkey name
- */
-function getPasskeyNameFromUser() {
-    return new Promise((resolve, reject) => {        
-        const modalElement = document.getElementById("passkey-name-modal");
-        modalElement.style.visibility = "visible";
-        // Initialize Materialize modal
-        const modalInstance = M.Modal.init(modalElement, {
-            dismissible: false, // User must use buttons to close
-            onCloseEnd: () => {
-                // Hide the modal from the UI when closed
-                modalElement.style.visibility = "hidden";
-            }
-        });
-
-        // Set up event listeners
-        const submitButton = modalElement.querySelector('#submit-button');
-        const cancelButton = modalElement.querySelector('#cancel-button');
-        const input = modalElement.querySelector('#passkey-name');
-        const errorMessage = modalElement.querySelector('#passkey-name-error');
-        // Regex to allow letters, numbers, spaces, underscores and hyphens
-        const alphanumericRegex = /^[a-zA-Z0-9 _-]*$/;
-        const maxLength = 50; // Maximum character limit
-        
-        // Get existing passkey names from the DOM - using attribute values directly
-        const existingPasskeyNames = Array.from(
-            document.querySelectorAll('[data-passkey-name]')
-        ).map(element => element.getAttribute('data-passkey-name').trim().toLowerCase());
-
-        const existingPasskeyNameMessage = 'A passkey with this name already exists, please choose a different name';
-
-        // Helper function to update submit button state
-        const updateSubmitButtonState = (isValid) => {
-            if (isValid) {
-                submitButton.classList.remove('disabled');
-                submitButton.disabled = false;
-            } else {
-                submitButton.classList.add('disabled');
-                submitButton.disabled = true;
-            }
-        };
-
-        // Helper function to validate input and update UI accordingly
-        const validateInput = () => {
-            const inputValue = input.value;
-            const trimmedValue = inputValue.trim();
-            let isValid = false;
-            
-            // Check if input is approaching the limit
-            if (inputValue.length > maxLength) {
-                input.classList.add('invalid');
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = `Name is too long: ${inputValue.length}/${maxLength} characters`;
-            } 
-            // Check if the name already exists
-            else if (trimmedValue && existingPasskeyNames.includes(trimmedValue.toLowerCase())) {
-                input.classList.add('invalid');
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = existingPasskeyNameMessage;
-            }
-            else if (trimmedValue && alphanumericRegex.test(trimmedValue)) {
-                input.classList.remove('invalid');
-                errorMessage.style.display = 'none';
-                isValid = true; // Valid input
-            } else {
-                input.classList.add('invalid');
-                errorMessage.style.display = 'block';
-                errorMessage.textContent = `Use only letters, numbers, spaces, underscores and hyphens (max ${maxLength} characters)`;
-            }
-            
-            // Update submit button state based on validation
-            updateSubmitButtonState(isValid);
-            return isValid;
-        };
-
-        // Reset the input field and error message when opening the modal
-        input.value = '';
-        input.classList.remove('invalid');
-        errorMessage.style.display = 'none';
-        
-        // Initially disable the submit button
-        updateSubmitButtonState(false);
-
-        // Focus the input when modal opens
-        modalInstance.open();
-        setTimeout(() => input.focus(), 100); // Small delay to ensure modal is visible
-
-        // Define named handler functions so they can be properly removed later
-        const handleInput = () => {
-            validateInput();
-        };
-
-        const handleSubmit = (e) => {
-            e.preventDefault();
-            
-            // If button is disabled, don't proceed (extra safeguard)
-            if (submitButton.classList.contains('disabled')) {
-                return;
-            }
-
-            // One last validation as a safeguard
-            if (!validateInput()) {
-                return;
-            }
-
-            // Close modal and resolve with the passkey name
-            modalInstance.close();
-            resolve(DOMPurify.sanitize(input.value.trim()));
-        };
-
-        const handleCancel = (e) => {
-            e.preventDefault();
-            // Clear the input field when cancelling
-            input.value = '';
-            input.classList.remove('invalid');
-            errorMessage.style.display = 'none';
-            modalInstance.close();
-            M.toast({html: 'Passkey registration cancelled', classes: 'rounded orange'});
-            reject(new Error('Passkey registration cancelled'));
-
-        };
-
-        const handleKeyPress = (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                submitButton.click();
-            }
-        };
-
-        // Add event listeners using the named functions
-        input.addEventListener('input', handleInput);
-        submitButton.addEventListener('click', handleSubmit);
-        cancelButton.addEventListener('click', handleCancel);
-        input.addEventListener('keypress', handleKeyPress);
-
-        // Set maxlength attribute but make it slightly higher than our logical limit
-        // so our validation can show the error message before browser truncation
-        input.setAttribute('maxlength', maxLength + 1);
-
-        // Update the onCloseEnd callback to use the named function references
-        modalInstance.options.onCloseEnd = () => {
-            // Hide the modal from the UI when closed
-            modalElement.style.visibility = "hidden";
-            // Clear input field data for privacy/security
-            input.value = '';
-            input.classList.remove('invalid');
-            errorMessage.style.display = 'none';
-            // Clean up event listeners to prevent memory leaks
-            submitButton.removeEventListener('click', handleSubmit);
-            cancelButton.removeEventListener('click', handleCancel);
-            input.removeEventListener('input', handleInput);
-            input.removeEventListener('keypress', handleKeyPress);
-        };
-    });
-}
