@@ -1,3 +1,27 @@
+/**
+ * Modal utility functions for user interactions
+ * 
+ * This module provides reusable modal dialogs for:
+ * - Collecting passkey names from users with validation
+ * - Showing confirmation dialogs with custom messages
+ * - Managing modal lifecycle (creation, cleanup, event handling)
+ * 
+ * Features:
+ * - Input validation with real-time feedback
+ * - Accessibility support (inert attribute management)
+ * - XSS protection via DOMPurify sanitization
+ * - Proper event listener cleanup to prevent memory leaks
+ * - Debounced validation for better performance
+ * - Keyboard navigation support (Enter key handling)
+ * 
+ * Dependencies:
+ * - DOMPurify: Content sanitization
+ * - Materialize CSS: Modal component styling and behavior
+ * - toastMessages: User feedback notifications
+ * 
+ * @fileoverview Modal utilities for passkey management and user confirmations
+ */
+
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
 import { displayToast, messageType } from './toastMessages';
