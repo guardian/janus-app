@@ -1,15 +1,12 @@
 import DOMPurify from 'dompurify';
 import M from 'materialize-css';
 
-
-
 export const messageType = {
     error: 'red',
     warning: 'orange',
     info: 'blue',
     success: 'green'
 } 
-
 
 /**
  * Displays messages as toasts
