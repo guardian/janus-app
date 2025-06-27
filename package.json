@@ -1,0 +1,30 @@
+{
+  "name": "janus-app",
+  "version": "1.0.0",
+  "description": "Janus =====",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "example": "example",
+    "test": "test"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guardian/janus-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/guardian/janus-app/issues"
+  },
+  "homepage": "https://github.com/guardian/janus-app#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.53.1",
+    "@types/node": "^24.0.4"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.0"
+  }
+}
