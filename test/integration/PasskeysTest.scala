@@ -5,7 +5,7 @@ import com.microsoft.playwright.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
-class IndexTest extends AnyFreeSpec with Matchers {
+class PasskeysTest extends AnyFreeSpec with Matchers {
 
   private val domain = sys.env("JANUS_DOMAIN")
 
@@ -51,38 +51,26 @@ class IndexTest extends AnyFreeSpec with Matchers {
     }
   }
 
-  "Homepage should load successfully and allow manual login" in withPlaywright {
-    page =>
-      page.navigate(s"https://$domain/")
-      page.waitForLoadState()
+  "Passkeys" - withPlaywright { page =>
+    "Registration" - {
+      "Successful first passkey creation" in {
+        page.navigate(s"https://$domain/user-account")
+        page.click("#register-passkey")
 
-      // Pause for manual login
-      println("\n\n==================================================")
-      println("TEST PAUSED: Please complete the Google login manually")
-      println("==================================================\n\n")
+        // WebAuthn flow will be automatically handled by the virtual authenticator
 
-      // Wait for redirect back to Janus
-      page.waitForURL(s"https://$domain/**", new Page.WaitForURLOptions())
+        // Handle modal dialog
+        page.waitForSelector("input[type='text']")
+        page.fill("input[type='text']", "t1")
+        page.click("#submit-button")
 
-      val title = page.title()
-      title shouldBe "Your permissions - Janus"
-  }
+        // Wait for redirect back to user account page
+        page.waitForURL(
+          s"https://$domain/user-account",
+          new Page.WaitForURLOptions()
+        )
 
-  "Registration" - {
-    "Successful first passkey" - withPlaywright { page =>
-      page.navigate(s"https://$domain/user-account")
-      page.click("#register-passkey")
-
-      // WebAuthn flow will be automatically handled by the virtual authenticator
-
-      // Wait for redirect back to user account page
-      page.waitForURL(
-        s"https://$domain/user-account",
-        new Page.WaitForURLOptions()
-      )
-
-      "Passkey created" in {
-        page.isVisible("Mac") shouldBe true
+        page.isVisible("td[data-passkey-name='t1']") shouldBe true
       }
     }
   }
