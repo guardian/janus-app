@@ -93,7 +93,9 @@ lazy val root: Project = (project in file("."))
       "com.webauthn4j" % "webauthn4j-core" % "0.29.3.RELEASE",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test,
       "com.microsoft.playwright" % "playwright" % "1.51.0" % Test
-    ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides,
+    ) ++ jacksonDatabindOverrides
+      ++ jacksonOverrides
+      ++ pekkoSerializationJacksonOverrides,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
     // See https://github.com/guardian/janus-app/security/dependabot/19
     excludeDependencies += ExclusionRule(
