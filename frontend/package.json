@@ -6,7 +6,11 @@
   "scripts": {
     "start": "parcel --port 1234 --no-hmr",
     "build": "parcel build --dist-dir ../public/frontend",
-    "lint": "eslint"
+    "lint": "eslint --max-warnings=0",
+    "lint:fix": "eslint --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "source": [
     "janus.js",
@@ -31,7 +35,14 @@
     "parcel": "^2.13.3"
   },
   "devDependencies": {
+    "@babel/preset-env": "^7.27.2",
     "@guardian/eslint-config": "^11.0.0",
-    "eslint": "^9.25.1"
+    "@testing-library/jest-dom": "^6.6.3",
+    "babel-jest": "^30.0.2",
+    "eslint": "^9.25.1",
+    "eslint-plugin-jest": "^29.0.1",
+    "jest": "^30.0.3",
+    "jest-environment-jsdom": "^30.0.2",
+    "jest-fetch-mock": "^3.0.3"
   }
 }
