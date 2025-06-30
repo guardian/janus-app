@@ -5,12 +5,12 @@ import { displayToast, messageType } from './utils/toastMessages.js';
 
 const passkeyApi = {
   // Common function to handle fetch with CSRF token
-  async fetchWithCsrf(url, method = 'POST', body = null, csrfToken) {
+  async fetchWithCsrf(url, method = 'POST', body = null, contentType = 'application/x-www-form-urlencoded', csrfToken) {
     const options = {
       method,
       headers: {
+        'Content-Type': contentType,
         'CSRF-Token': csrfToken,
-        'Content-Type': 'application/x-www-form-urlencoded', // To satisfy Play CSRF filter
       },
       credentials: 'same-origin',
     };
@@ -30,6 +30,7 @@ const passkeyApi = {
         const response = await this.fetchWithCsrf(
             endpoint,
             'POST',
+            null,
             null,
             csrfToken,
         );
@@ -261,12 +262,13 @@ export async function deletePasskey(passkeyId, csrfToken) {
       await passkeyApi.getUserCredential(authOptionsJson);
 
     // 3. Make the deletion call - includes authentication credentials so that they can be verified
-    const response = await fetch(`/passkey/${passkeyId}`, {
-      method: 'DELETE',
-      headers: { 'CSRF-Token': csrfToken },
-      credentials: 'same-origin',
-      body: JSON.stringify(existingCredential.toJSON()),
-    });
+    const response = await passkeyApi.fetchWithCsrf(
+      `/passkey/${passkeyId}`,
+      'DELETE',
+      JSON.stringify(existingCredential.toJSON()),
+      'text/plain',
+      csrfToken
+    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
