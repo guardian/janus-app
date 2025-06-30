@@ -164,7 +164,7 @@ describe('Passkeys Module Tests', () => {
         '/passkey/passkey-id-123',
         expect.objectContaining({
           method: 'DELETE',
-          headers: { 'CSRF-Token': mockCsrfToken },
+          headers: {'Content-Type': 'text/plain', 'CSRF-Token': mockCsrfToken},
         }),
       );
       expect(result).toEqual({ success: true });
