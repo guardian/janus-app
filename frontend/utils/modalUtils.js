@@ -1,11 +1,11 @@
 /**
  * Modal utility functions for user interactions
- * 
+ *
  * This module provides reusable modal dialogs for:
  * - Collecting passkey names from users with validation
  * - Showing confirmation dialogs with custom messages
  * - Managing modal lifecycle (creation, cleanup, event handling)
- * 
+ *
  * Features:
  * - Input validation with real-time feedback
  * - Accessibility support (inert attribute management)
@@ -13,18 +13,18 @@
  * - Proper event listener cleanup to prevent memory leaks
  * - Debounced validation for better performance
  * - Keyboard navigation support (Enter key handling)
- * 
+ *
  * Dependencies:
  * - DOMPurify: Content sanitization
  * - Materialize CSS: Modal component styling and behavior
  * - toastMessages: User feedback notifications
- * 
+ *
  * @fileoverview Modal utilities for passkey management and user confirmations
  */
 
-import DOMPurify from 'dompurify';
-import M from 'materialize-css';
-import { displayToast, messageType } from './toastMessages';
+import DOMPurify from "dompurify";
+import M from "materialize-css";
+import { displayToast, messageType } from "./toastMessages";
 
 // Regex to allow letters, numbers, spaces, underscores and hyphens
 const VALID_REGEX = /^[a-zA-Z0-9 _-]*$/;
@@ -32,17 +32,18 @@ const MAX_LENGTH = 50; // Maximum character limit
 const FOCUS_DELAY = 100;
 const DEBOUNCE_TIME = 150;
 const VALIDATION_MESSAGES = {
-    TOO_LONG: (length) => `Name is too long: ${length}/${MAX_LENGTH} characters`,
-    INVALID_CHARS: `Use only letters, numbers, spaces, underscores and hyphens (max ${MAX_LENGTH} characters)`,
-    EXISTING_NAME: 'A passkey with this name already exists, please choose a different name'
+  TOO_LONG: (length) => `Name is too long: ${length}/${MAX_LENGTH} characters`,
+  INVALID_CHARS: `Use only letters, numbers, spaces, underscores and hyphens (max ${MAX_LENGTH} characters)`,
+  EXISTING_NAME:
+    "A passkey with this name already exists, please choose a different name",
 };
 
 const validateRequiredDOMElements = (elements) => {
-    for (const [name, element] of Object.entries(elements)) {
-        if (!element) {
-            throw new Error(`Required element not found: ${name}`);
-        }
+  for (const [name, element] of Object.entries(elements)) {
+    if (!element) {
+      throw new Error(`Required element not found: ${name}`);
     }
+  }
 };
 
 /**
@@ -54,42 +55,48 @@ const validateRequiredDOMElements = (elements) => {
  * @param {HTMLElement} errorMessage - Error message element
  * @returns {Object} Materialize modal instance
  */
-const initializeModal = (modalElement, input, submitButton, userAccountContainer, errorMessage) => {
-    modalElement.style.display = 'none';
-    
-    // Initialize Materialize modal
-    const modalInstance = M.Modal.init(modalElement, {
-        dismissible: false, // User must use buttons to close
-    });
-    
-    // Reset the input field and error message when opening the modal
-    input.value = '';
-    input.classList.remove('invalid');
-    errorMessage.style.display = 'none';
-    
-    // Initially disable the submit button
-    updateSubmitButtonState(submitButton, false);
-    
-    // Focus the input when modal opens
-    modalInstance.open();
-    modalElement.inert = false;
-    if (userAccountContainer) {
-        userAccountContainer.inert = true;
-    }
-    setTimeout(() => input.focus(), FOCUS_DELAY);
-    
-    return modalInstance;
+const initializeModal = (
+  modalElement,
+  input,
+  submitButton,
+  userAccountContainer,
+  errorMessage,
+) => {
+  modalElement.style.display = "none";
+
+  // Initialize Materialize modal
+  const modalInstance = M.Modal.init(modalElement, {
+    dismissible: false, // User must use buttons to close
+  });
+
+  // Reset the input field and error message when opening the modal
+  input.value = "";
+  input.classList.remove("invalid");
+  errorMessage.style.display = "none";
+
+  // Initially disable the submit button
+  updateSubmitButtonState(submitButton, false);
+
+  // Focus the input when modal opens
+  modalInstance.open();
+  modalElement.inert = false;
+  if (userAccountContainer) {
+    userAccountContainer.inert = true;
+  }
+  setTimeout(() => input.focus(), FOCUS_DELAY);
+
+  return modalInstance;
 };
 
 // Helper function to update submit button state
 const updateSubmitButtonState = (submitButton, isValid) => {
-    if (isValid) {
-        submitButton.classList.remove('disabled');
-        submitButton.disabled = false;
-    } else {
-        submitButton.classList.add('disabled');
-        submitButton.disabled = true;
-    }
+  if (isValid) {
+    submitButton.classList.remove("disabled");
+    submitButton.disabled = false;
+  } else {
+    submitButton.classList.add("disabled");
+    submitButton.disabled = true;
+  }
 };
 
 /**
@@ -99,30 +106,30 @@ const updateSubmitButtonState = (submitButton, isValid) => {
  * @returns {string|null} Error message or null if valid
  */
 const validatePasskeyName = (inputValue, existingPasskeyNames) => {
-    const sanitizedValue = DOMPurify.sanitize(inputValue);
-    const trimmedValue = sanitizedValue.trim();
-    
-    // Check if input is empty first
-    if (!trimmedValue) {
-        return VALIDATION_MESSAGES.INVALID_CHARS;
-    }
-    
-    // Check length
-    if (sanitizedValue.length > MAX_LENGTH) {
-        return VALIDATION_MESSAGES.TOO_LONG(sanitizedValue.length);
-    }
-    
-    // Check for invalid characters
-    if (!VALID_REGEX.test(trimmedValue)) {
-        return VALIDATION_MESSAGES.INVALID_CHARS;
-    }
-    
-    // Check for duplicate names
-    if (existingPasskeyNames.includes(trimmedValue.toLowerCase())) {
-        return VALIDATION_MESSAGES.EXISTING_NAME;
-    }
-    
-    return null; // Valid
+  const sanitizedValue = DOMPurify.sanitize(inputValue);
+  const trimmedValue = sanitizedValue.trim();
+
+  // Check if input is empty first
+  if (!trimmedValue) {
+    return VALIDATION_MESSAGES.INVALID_CHARS;
+  }
+
+  // Check length
+  if (sanitizedValue.length > MAX_LENGTH) {
+    return VALIDATION_MESSAGES.TOO_LONG(sanitizedValue.length);
+  }
+
+  // Check for invalid characters
+  if (!VALID_REGEX.test(trimmedValue)) {
+    return VALIDATION_MESSAGES.INVALID_CHARS;
+  }
+
+  // Check for duplicate names
+  if (existingPasskeyNames.includes(trimmedValue.toLowerCase())) {
+    return VALIDATION_MESSAGES.EXISTING_NAME;
+  }
+
+  return null; // Valid
 };
 
 /**
@@ -133,19 +140,19 @@ const validatePasskeyName = (inputValue, existingPasskeyNames) => {
  * @param {HTMLElement} errorMessage - Error message element
  */
 const updateValidationUI = (error, input, submitButton, errorMessage) => {
-    const isValid = error === null;
-    
-    if (isValid) {
-        input.classList.remove('invalid');
-        errorMessage.style.display = 'none';
-        errorMessage.textContent = '';
-    } else {
-        input.classList.add('invalid');
-        errorMessage.style.display = 'block';
-        errorMessage.textContent = error;
-    }
-    
-    updateSubmitButtonState(submitButton, isValid);
+  const isValid = error === null;
+
+  if (isValid) {
+    input.classList.remove("invalid");
+    errorMessage.style.display = "none";
+    errorMessage.textContent = "";
+  } else {
+    input.classList.add("invalid");
+    errorMessage.style.display = "block";
+    errorMessage.textContent = error;
+  }
+
+  updateSubmitButtonState(submitButton, isValid);
 };
 
 /**
@@ -156,10 +163,15 @@ const updateValidationUI = (error, input, submitButton, errorMessage) => {
  * @param {HTMLElement} errorMessage - Error message element to show/hide
  * @returns {boolean} True if input is valid, false otherwise
  */
-const validateInput = (input, existingPasskeyNames, submitButton, errorMessage) => {
-    const error = validatePasskeyName(input.value, existingPasskeyNames);
-    updateValidationUI(error, input, submitButton, errorMessage);
-    return error === null;
+const validateInput = (
+  input,
+  existingPasskeyNames,
+  submitButton,
+  errorMessage,
+) => {
+  const error = validatePasskeyName(input.value, existingPasskeyNames);
+  updateValidationUI(error, input, submitButton, errorMessage);
+  return error === null;
 };
 
 /**
@@ -170,23 +182,29 @@ const validateInput = (input, existingPasskeyNames, submitButton, errorMessage) 
  * @param {Object} handlers - Object containing event handler functions
  * @param {HTMLElement} errorMessage - Error message element
  */
-const cleanupModal = (modalElement, input, userAccountContainer, handlers, errorMessage) => {
-    const submitButton = modalElement.querySelector('#submit-button');
-    const cancelButton = modalElement.querySelector('#cancel-button');
-    
-    modalElement.style.display = 'none';
-    modalElement.inert = true;
-    if (userAccountContainer) {
-        userAccountContainer.inert = false;
-    }
-    input.value = '';
-    input.classList.remove('invalid');
-    errorMessage.style.display = 'none';
-    
-    submitButton.removeEventListener('click', handlers.handleSubmit);
-    cancelButton.removeEventListener('click', handlers.handleCancel);
-    input.removeEventListener('input', handlers.handleInput);
-    input.removeEventListener('keypress', handlers.handleKeyPress);
+const cleanupModal = (
+  modalElement,
+  input,
+  userAccountContainer,
+  handlers,
+  errorMessage,
+) => {
+  const submitButton = modalElement.querySelector("#submit-button");
+  const cancelButton = modalElement.querySelector("#cancel-button");
+
+  modalElement.style.display = "none";
+  modalElement.inert = true;
+  if (userAccountContainer) {
+    userAccountContainer.inert = false;
+  }
+  input.value = "";
+  input.classList.remove("invalid");
+  errorMessage.style.display = "none";
+
+  submitButton.removeEventListener("click", handlers.handleSubmit);
+  cancelButton.removeEventListener("click", handlers.handleCancel);
+  input.removeEventListener("input", handlers.handleInput);
+  input.removeEventListener("keypress", handlers.handleKeyPress);
 };
 
 /**
@@ -194,90 +212,114 @@ const cleanupModal = (modalElement, input, userAccountContainer, handlers, error
  * @returns {Promise<string>} A promise that resolves with the passkey name
  */
 export function getPasskeyNameFromUser() {
-    return new Promise((resolve, reject) => {
-        const modalElement = document.getElementById('passkey-name-modal');
-        const submitButton = modalElement?.querySelector('#submit-button');
-        const cancelButton = modalElement?.querySelector('#cancel-button');
-        const input = modalElement?.querySelector('#passkey-name');
-        const errorMessage = modalElement?.querySelector('#passkey-name-error');
-        const userAccountContainer = document.querySelector('#user-account-container');
+  return new Promise((resolve, reject) => {
+    const modalElement = document.getElementById("passkey-name-modal");
+    const submitButton = modalElement?.querySelector("#submit-button");
+    const cancelButton = modalElement?.querySelector("#cancel-button");
+    const input = modalElement?.querySelector("#passkey-name");
+    const errorMessage = modalElement?.querySelector("#passkey-name-error");
+    const userAccountContainer = document.querySelector(
+      "#user-account-container",
+    );
 
-        // Get existing passkey names from the DOM
-        const existingPasskeyNames = Array.from(
-            document.querySelectorAll('[data-passkey-name]')
-        ).map(element => element.getAttribute('data-passkey-name').trim().toLowerCase());
+    // Get existing passkey names from the DOM
+    const existingPasskeyNames = Array.from(
+      document.querySelectorAll("[data-passkey-name]"),
+    ).map((element) =>
+      element.getAttribute("data-passkey-name").trim().toLowerCase(),
+    );
 
-        try {
-            validateRequiredDOMElements({ modalElement, submitButton, cancelButton, input, errorMessage }); 
-        } catch (error) {
-            reject(error);
-            return;
-        }
-        
-        const modalInstance = initializeModal(modalElement, input, submitButton, userAccountContainer, errorMessage);
+    try {
+      validateRequiredDOMElements({
+        modalElement,
+        submitButton,
+        cancelButton,
+        input,
+        errorMessage,
+      });
+    } catch (error) {
+      reject(error);
+      return;
+    }
 
-        // Define handlers inside promise scope
-        let validationTimeout;
-        const handleInput = () => {
-            clearTimeout(validationTimeout);
-            validationTimeout = setTimeout(() => {
-                validateInput(input, existingPasskeyNames, submitButton, errorMessage);
-            }, DEBOUNCE_TIME); // Short debounce time to reduce excessive validation calls
-        };
-        const handleSubmit = (e) => {
-            e.preventDefault();
-            
-            // If button is disabled, don't proceed (extra safeguard)
-            if (submitButton.classList.contains('disabled')) {
-                return;
-            }
+    const modalInstance = initializeModal(
+      modalElement,
+      input,
+      submitButton,
+      userAccountContainer,
+      errorMessage,
+    );
 
-            // One last validation as a safeguard
-            if (!validateInput(input, existingPasskeyNames, submitButton, errorMessage)) {
-                return;
-            }
+    // Define handlers inside promise scope
+    let validationTimeout;
+    const handleInput = () => {
+      clearTimeout(validationTimeout);
+      validationTimeout = setTimeout(() => {
+        validateInput(input, existingPasskeyNames, submitButton, errorMessage);
+      }, DEBOUNCE_TIME); // Short debounce time to reduce excessive validation calls
+    };
+    const handleSubmit = (e) => {
+      e.preventDefault();
 
-            // Close modal and resolve with the passkey name
-            modalInstance.close();
-            resolve(DOMPurify.sanitize(input.value.trim()));
-        };
-        const handleCancel = (e) => {
-            e.preventDefault();
-            // Clear the input field when cancelling
-            input.value = '';
-            input.classList.remove('invalid');
-            errorMessage.style.display = 'none';
-            modalInstance.close();
-            displayToast('Passkey registration cancelled', messageType.info);
-            resolve(null);
-        };
-        const handleKeyPress = (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                submitButton.click();
-            }
-        };
+      // If button is disabled, don't proceed (extra safeguard)
+      if (submitButton.classList.contains("disabled")) {
+        return;
+      }
 
-        const handlers = {
-            handleInput,
-            handleSubmit,
-            handleCancel,
-            handleKeyPress
-        };
+      // One last validation as a safeguard
+      if (
+        !validateInput(input, existingPasskeyNames, submitButton, errorMessage)
+      ) {
+        return;
+      }
 
-        input.addEventListener('input', handleInput);
-        submitButton.addEventListener('click', handleSubmit);
-        cancelButton.addEventListener('click', handleCancel);
-        input.addEventListener('keypress', handleKeyPress);
+      // Close modal and resolve with the passkey name
+      modalInstance.close();
+      resolve(DOMPurify.sanitize(input.value.trim()));
+    };
+    const handleCancel = (e) => {
+      e.preventDefault();
+      // Clear the input field when cancelling
+      input.value = "";
+      input.classList.remove("invalid");
+      errorMessage.style.display = "none";
+      modalInstance.close();
+      displayToast("Passkey registration cancelled", messageType.info);
+      resolve(null);
+    };
+    const handleKeyPress = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitButton.click();
+      }
+    };
 
-        // Set maxlength attribute but make it slightly higher than our logical limit
-        // so our validation can show the error message before browser truncation
-        input.setAttribute('maxlength', MAX_LENGTH + 1);
+    const handlers = {
+      handleInput,
+      handleSubmit,
+      handleCancel,
+      handleKeyPress,
+    };
 
-        modalInstance.options.onCloseEnd = () => {
-            cleanupModal(modalElement, input, userAccountContainer, handlers, errorMessage);
-        };
-    });
+    input.addEventListener("input", handleInput);
+    submitButton.addEventListener("click", handleSubmit);
+    cancelButton.addEventListener("click", handleCancel);
+    input.addEventListener("keypress", handleKeyPress);
+
+    // Set maxlength attribute but make it slightly higher than our logical limit
+    // so our validation can show the error message before browser truncation
+    input.setAttribute("maxlength", MAX_LENGTH + 1);
+
+    modalInstance.options.onCloseEnd = () => {
+      cleanupModal(
+        modalElement,
+        input,
+        userAccountContainer,
+        handlers,
+        errorMessage,
+      );
+    };
+  });
 }
 
 /**
@@ -287,17 +329,21 @@ export function getPasskeyNameFromUser() {
  * @param {string} buttonText - Text for the confirmation button (default: "Continue")
  * @returns {Promise<boolean>} Promise that resolves to true when confirmed, false when cancelled
  */
-export function showConfirmationModal(heading, message, buttonText = "Continue") {
-    return new Promise((resolve) => {
-        const modalId = `confirmation-modal-${Date.now()}`; // Unique ID
-        
-        // Sanitize user inputs individually
-        const safeHeading = DOMPurify.sanitize(heading);
-        const safeMessage = DOMPurify.sanitize(message);
-        const safeButtonText = DOMPurify.sanitize(buttonText);
-        
-        // Create modal HTML with sanitized content
-        const modalHTML = `
+export function showConfirmationModal(
+  heading,
+  message,
+  buttonText = "Continue",
+) {
+  return new Promise((resolve) => {
+    const modalId = `confirmation-modal-${Date.now()}`; // Unique ID
+
+    // Sanitize user inputs individually
+    const safeHeading = DOMPurify.sanitize(heading);
+    const safeMessage = DOMPurify.sanitize(message);
+    const safeButtonText = DOMPurify.sanitize(buttonText);
+
+    // Create modal HTML with sanitized content
+    const modalHTML = `
             <div id="${modalId}" class="modal">
                 <div class="modal-content">
                     <h4>${safeHeading}</h4>
@@ -310,50 +356,52 @@ export function showConfirmationModal(heading, message, buttonText = "Continue")
             </div>
         `;
 
-        // Remove any existing confirmation modals
-        document.querySelectorAll('[id^="confirmation-modal-"]').forEach(modal => modal.remove());
+    // Remove any existing confirmation modals
+    document
+      .querySelectorAll('[id^="confirmation-modal-"]')
+      .forEach((modal) => modal.remove());
 
-        // Add modal to DOM
-        document.body.insertAdjacentHTML('beforeend', modalHTML);
-        
-        const modalElement = document.getElementById(modalId);
-        const confirmButton = document.getElementById(`${modalId}-confirm`);
-        const cancelButton = document.getElementById(`${modalId}-cancel`);
+    // Add modal to DOM
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
 
-        if (!modalElement || !confirmButton || !cancelButton) {
-            console.error('Failed to create modal elements');
-            resolve(false);
-            return;
-        }
+    const modalElement = document.getElementById(modalId);
+    const confirmButton = document.getElementById(`${modalId}-confirm`);
+    const cancelButton = document.getElementById(`${modalId}-cancel`);
 
-        // Event handlers
-        const handleConfirm = () => {
-            cleanup();
-            resolve(true);
-        };
+    if (!modalElement || !confirmButton || !cancelButton) {
+      console.error("Failed to create modal elements");
+      resolve(false);
+      return;
+    }
 
-        const handleCancel = () => {
-            cleanup();
-            resolve(false);
-        };
+    // Event handlers
+    const handleConfirm = () => {
+      cleanup();
+      resolve(true);
+    };
 
-        const cleanup = () => {
-            confirmButton.removeEventListener('click', handleConfirm);
-            cancelButton.removeEventListener('click', handleCancel);
-            modalInstance.destroy();
-            modalElement.remove();
-        };
+    const handleCancel = () => {
+      cleanup();
+      resolve(false);
+    };
 
-        // Initialize modal
-        const modalInstance = M.Modal.init(modalElement, {
-            dismissible: false,
-            onCloseEnd: cleanup
-        });
+    const cleanup = () => {
+      confirmButton.removeEventListener("click", handleConfirm);
+      cancelButton.removeEventListener("click", handleCancel);
+      modalInstance.destroy();
+      modalElement.remove();
+    };
 
-        confirmButton.addEventListener('click', handleConfirm);
-        cancelButton.addEventListener('click', handleCancel);
-
-        // Open modal
-        modalInstance.open();
+    // Initialize modal
+    const modalInstance = M.Modal.init(modalElement, {
+      dismissible: false,
+      onCloseEnd: cleanup,
     });
+
+    confirmButton.addEventListener("click", handleConfirm);
+    cancelButton.addEventListener("click", handleCancel);
+
+    // Open modal
+    modalInstance.open();
+  });
 }
