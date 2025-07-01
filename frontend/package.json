@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@guardian/eslint-config": "^11.0.0",
-    "eslint": "^9.25.1",
-    "prettier": "^3.6.2"
+    "@guardian/prettier": "^8.0.1",
+    "eslint": "^9.25.1"
   }
 }
