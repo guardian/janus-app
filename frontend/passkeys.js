@@ -159,6 +159,7 @@ export async function registerPasskey(csrfToken) {
       '/passkey/registration-options',
       'POST',
       null,
+      null,
       csrfToken
     );
     const regOptionsJson = await regOptionsResponse.json();
