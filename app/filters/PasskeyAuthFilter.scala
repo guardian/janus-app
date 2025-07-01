@@ -1,4 +1,4 @@
-package controllers
+package filters
 
 import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction.UserIdentityRequest
