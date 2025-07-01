@@ -292,7 +292,7 @@ class PasskeyController(
               "message" -> message,
               "redirect" -> "/user-account"
             )
-          ).flashing("success" -> message)
+          )
         }
       )
     }
