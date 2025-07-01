@@ -71,6 +71,7 @@ const passkeyApi = {
         endpoint,
         'POST',
         null,
+        null,
         csrfToken,
       );
       const optionsJson = await response.json();
