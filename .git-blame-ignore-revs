@@ -9,3 +9,6 @@ dd2eda6b2e7fdb1d34fd80d5bc275d512d11fa50
 
 # Scala Steward: Reformat with scalafmt 3.9.3
 6b4f7b65de45821a968e152d430f790c93d4704d
+
+# Initial formatting of JS files with Prettier
+df014ec9ff303963eb74e814317cd6506daf407a
