@@ -40,6 +40,11 @@ class AuthController(
   }
 
   def oauthCallback: Action[AnyContent] = Action.async { implicit request =>
-    processOauth2Callback(requiredGoogleGroups, googleGroupChecker)
+    processOauth2Callback(requiredGoogleGroups, googleGroupChecker).map(
+      result =>
+        result.withSession(
+          request.session + ("reauth_time" -> System.currentTimeMillis.toString)
+        )
+    )
   }
 }

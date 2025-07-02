@@ -1,17 +1,16 @@
 import aws.Clients
-import com.gu.googleauth.AuthAction
-import com.gu.googleauth.AuthAction.UserIdentityRequest
+import com.gu.googleauth.{AuthAction, GoogleAuthConfig}
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
-import filters.{HstsFilter, PasskeyRegistrationAuthFilter}
+import filters.{GoogleReauthFilter, HstsFilter, PasskeyRegistrationAuthFilter}
 import models.*
 import models.AccountConfigStatus.*
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSComponents
-import play.api.mvc.{ActionBuilder, AnyContent, EssentialFilter}
+import play.api.mvc.{AnyContent, EssentialFilter}
 import play.api.routing.Router
 import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
@@ -65,6 +64,11 @@ class AppComponents(context: ApplicationLoader.Context)
     Config.googleSettings(configuration, secretStateSupplier)
   val googleGroupChecker = Config.googleGroupChecker(configuration)
   val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
+
+  // Google auth config that never completes silently
+  private val googleReauthConfig: GoogleAuthConfig =
+    googleAuthConfig.copy(prompt = Some("login"))
+
   given dynamodDB: DynamoDbClient =
     if (context.environment.mode == play.api.Mode.Prod)
       DynamoDbClient.builder().region(EU_WEST_1).build()
@@ -86,12 +90,6 @@ class AppComponents(context: ApplicationLoader.Context)
     case ConfigSuccess =>
   }
 
-  val authAction = new AuthAction[AnyContent](
-    googleAuthConfig,
-    routes.AuthController.login,
-    controllerComponents.parsers.default
-  )(executionContext)
-
   private val passkeyAuthenticators =
     PasskeyAuthenticator.fromResource(
       "passkeys_aaguid_descriptions.json"
@@ -102,11 +100,17 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
 
+  private val googleReauthFilter = new GoogleReauthFilter(googleReauthConfig)
   private val passkeyAuthFilter =
     new PasskeyAuthFilter(host, passkeysEnabled, passkeysEnablingCookieName)
   private val passkeyRegistrationAuthFilter =
-    new PasskeyRegistrationAuthFilter(passkeyAuthFilter)
+    new PasskeyRegistrationAuthFilter(googleReauthFilter, passkeyAuthFilter)
 
+  private val authAction = new AuthAction[AnyContent](
+    googleAuthConfig,
+    routes.AuthController.login,
+    controllerComponents.parsers.default
+  )(executionContext)
   private val passkeyAuthAction = authAction.andThen(passkeyAuthFilter)
   private val passkeyRegistrationAuthAction =
     authAction.andThen(passkeyRegistrationAuthFilter)
