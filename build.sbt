@@ -9,7 +9,7 @@ ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
 val awsSdkVersion = "2.31.67"
-val circeVersion = "0.14.13"
+val circeVersion = "0.14.14"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
@@ -37,8 +37,8 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.19.0"
-val jacksonDatabindVersion = "2.19.0"
+val jacksonVersion = "2.19.1"
+val jacksonDatabindVersion = "2.19.1"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core",
@@ -90,7 +90,7 @@ lazy val root: Project = (project in file("."))
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
-      "com.webauthn4j" % "webauthn4j-core" % "0.29.3.RELEASE",
+      "com.webauthn4j" % "webauthn4j-core" % "0.29.4.RELEASE",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
     ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
@@ -148,7 +148,7 @@ lazy val configTools = (project in file("configTools"))
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
-      "io.circe" %% "circe-config" % "0.10.1"
+      "io.circe" %% "circe-config" % "0.10.2"
     ) ++ jacksonDatabindOverrides,
     name := "janus-config-tools",
     description := "Library for reading and writing Janus configuration files"
