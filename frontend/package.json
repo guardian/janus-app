@@ -6,7 +6,10 @@
   "scripts": {
     "start": "parcel --port 1234 --no-hmr",
     "build": "parcel build --dist-dir ../public/frontend",
-    "lint": "eslint"
+    "lint": "eslint --max-warnings=0",
+    "lint:fix": "eslint --fix",
+    "format": "prettier --write \"**/*.js\"",
+    "format:check": "prettier --check \"**/*.js\""
   },
   "source": [
     "janus.js",
@@ -32,6 +35,7 @@
   },
   "devDependencies": {
     "@guardian/eslint-config": "^11.0.0",
+    "@guardian/prettier": "^8.0.1",
     "eslint": "^9.25.1"
   }
 }

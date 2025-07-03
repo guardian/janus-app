@@ -1,7 +1,130 @@
-import { createAndSubmitForm } from './utils/formUtils.js';
-import { getPasskeyNameFromUser } from './utils/modalUtils.js';
-import { showConfirmationModal } from './utils/modalUtils.js';
-import { displayToast, messageType } from './utils/toastMessages.js';
+import { createAndSubmitForm } from "./utils/formUtils.js";
+import { getPasskeyNameFromUser } from "./utils/modalUtils.js";
+import { showConfirmationModal } from "./utils/modalUtils.js";
+import { displayToast, messageType } from "./utils/toastMessages.js";
+
+const passkeyApi = {
+  // Common function to handle fetch with CSRF token
+  async fetchWithCsrf(
+    url,
+    method = "POST",
+    body = null,
+    contentType = "application/x-www-form-urlencoded",
+    csrfToken,
+  ) {
+    const options = {
+      method,
+      headers: {
+        "Content-Type": contentType,
+        "CSRF-Token": csrfToken,
+      },
+      credentials: "same-origin",
+    };
+
+    if (body) {
+      options.body = body;
+    }
+
+    return fetch(url, options);
+  },
+
+  async getAuthenticationOptions(
+    csrfToken,
+    endpoint = "/passkey/auth-options",
+  ) {
+    try {
+      const response = await this.fetchWithCsrf(
+        endpoint,
+        "POST",
+        null,
+        null,
+        csrfToken,
+      );
+      const optionsJson = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 400) {
+          /*
+           * We only get a 400 response here if the user has no registered passkeys.
+           * In this scenario, we redirect them to the user account page where they are urged to register one.
+           */
+          window.location.href = "/user-account";
+          return;
+        }
+
+        console.error("Authentication options request failed:", optionsJson);
+        displayToast(
+          "Failed to get authentication options from server. Please try again.",
+          messageType.warning,
+        );
+        return null;
+      }
+
+      return optionsJson;
+    } catch (error) {
+      console.error("Error fetching authentication options:", error);
+      displayToast(
+        "Network error while getting authentication options",
+        messageType.error,
+      );
+      return null;
+    }
+  },
+
+  async getOptionalAuthenticationOptions(
+    csrfToken,
+    endpoint = "/passkey/registration-auth-options",
+  ) {
+    try {
+      const response = await this.fetchWithCsrf(
+        endpoint,
+        "POST",
+        null,
+        null,
+        csrfToken,
+      );
+      const optionsJson = await response.json();
+
+      if (!response.ok) {
+        console.error("Authentication options request failed:", optionsJson);
+        displayToast(
+          "Failed to get authentication options from server. Please try again.",
+          messageType.warning,
+        );
+        return null;
+      }
+
+      return optionsJson;
+    } catch (error) {
+      console.error("Error fetching authentication options:", error);
+      displayToast(
+        "Network error while getting authentication options",
+        messageType.error,
+      );
+      return null;
+    }
+  },
+
+  async getUserCredential(authOptionsJson) {
+    const credentialGetOptions =
+      PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsJson);
+    return await navigator.credentials.get({ publicKey: credentialGetOptions });
+  },
+
+  // Handle common error scenarios
+  handlePasskeyError(err, operation) {
+    if (err.name === "InvalidStateError") {
+      console.warn("Passkey already registered:", err);
+      displayToast(
+        "This passkey has already been registered.",
+        messageType.warning,
+      );
+    } else {
+      console.error(`Error during passkey ${operation}:`, err);
+      displayToast(`Passkey ${operation} failed`, messageType.error);
+    }
+  },
+};
 
 /**
  * Registers a new passkey for the current user
@@ -9,112 +132,94 @@ import { displayToast, messageType } from './utils/toastMessages.js';
  * @returns {Promise<void>} A promise that resolves when registration completes
  */
 export async function registerPasskey(csrfToken) {
-    try {
-        // 1. Fetch the authentication options
-        const authOptionsResponse = await fetch('/passkey/registration-auth-options', {
-            method: 'POST',
-            headers: {
-                'CSRF-Token': csrfToken,
-                'Content-Type': 'application/x-www-form-urlencoded',
-            }
-        });
-        const authOptionsResponseJson = await authOptionsResponse.json();
-
-        if (!authOptionsResponse.ok) {
-            console.error('Authentication options request failed:', authOptionsResponseJson);
-            displayToast('Failed to get authentication options from server. Please try again.', messageType.warning);
-            return;
-        }
-
-        let existingCredential;
-
-        // 2. If user has existing passkeys, use one to authenticate the registration of the new passkey
-        if(authOptionsResponseJson.allowCredentials.length > 0) {
-            // Show confirmation modal
-            const userConfirmed = await showConfirmationModal(                
-                'Authenticate with existing passkey',
-                'Before you register a new passkey, use a passkey you have already registered to authenticate your request.',
-                'authenticate'
-            );
-            
-            if (!userConfirmed) {
-                displayToast('Passkey registration cancelled', messageType.info);
-                return;
-            }
-            
-            // Now proceed with the authentication flow
-            const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
-            existingCredential = await navigator.credentials.get({publicKey: credentialGetOptions});
-            
-            await showConfirmationModal(
-                'Register new passkey',
-                'Authentication successful! Now register your new passkey.',
-                'register'                
-            );
-        }
-
-        // 3. Fetch the passkey creation options
-        const regOptionsResponse = await fetch('/passkey/registration-options', {
-            method: 'POST',
-            headers: {
-                'CSRF-Token': csrfToken, // Securely include CSRF token in headers
-                'Content-Type': 'application/x-www-form-urlencoded', // To satisfy Play CSRF filter
-            }
-        });
-        const regOptionsResponseJson = await regOptionsResponse.json();
-
-        /*
-         * authenticatorSelection.authenticatorAttachment can be "platform" | "cross-platform" | null.
-         * A null value means any authenticator is allowed.
-         * Unfortunately, even though null is the recommended value, Safari won't allow it
-         * and Firefox gives a warning about it.
-         * So we remove the field if its value is null and all browsers are then happy.
-         * The effect is unchanged.
-         *
-         * This is a temporary measure until browsers accept the null value.
-         */
-        if (regOptionsResponseJson.authenticatorSelection?.authenticatorAttachment === null) {
-            delete regOptionsResponseJson.authenticatorSelection.authenticatorAttachment;
-        }
-
-        // 4. Create a new passkey
-        const credentialCreationOptions = PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsResponseJson);
-        const createdCredential = await navigator.credentials.create({ publicKey: credentialCreationOptions });
-        let passkeyName;
-        try {
-            passkeyName = await getPasskeyNameFromUser();
-            if (passkeyName === null) {
-                return;
-            }
-        } catch (error) {
-            console.error('Modal error:', error);
-            throw error;
-        }
-
-        // 5. Make the registration call - includes authentication credentials if they exist so that they can be verified
-        if (existingCredential) {
-            createAndSubmitForm('/passkey/register', {
-                credentials: JSON.stringify(existingCredential.toJSON()),
-                passkey: JSON.stringify(createdCredential.toJSON()),
-                csrfToken: csrfToken,
-                passkeyName: passkeyName
-            });
-        } else {
-            createAndSubmitForm('/passkey/register', {
-                passkey: JSON.stringify(createdCredential.toJSON()),
-                csrfToken: csrfToken,
-                passkeyName: passkeyName
-            });
-        }
-    } catch (err) {
-        if (err.name === 'InvalidStateError') {
-            console.warn('Passkey already registered:', err);
-            displayToast('This passkey has already been registered.', messageType.warning);
-        } else {
-            console.error('Error during passkey registration:', err);
-            displayToast('Passkey not registered', messageType.error);
-        }
+  try {
+    // 1. Fetch the authentication options
+    const authOptionsJson =
+      await passkeyApi.getOptionalAuthenticationOptions(csrfToken);
+    if (!authOptionsJson) {
+      return;
     }
+
+    let existingCredential;
+
+    // 2. If user has existing passkeys, use one to authenticate the registration of the new passkey
+    if (authOptionsJson.allowCredentials.length > 0) {
+      // Show confirmation modal
+      const userConfirmed = await showConfirmationModal(
+        "Authenticate with existing passkey",
+        "Before you register a new passkey, use a passkey you have already registered to authenticate your request.",
+        "authenticate",
+      );
+
+      if (!userConfirmed) {
+        displayToast("Passkey registration cancelled", messageType.info);
+        return;
+      }
+
+      // Now proceed with the authentication flow
+      existingCredential = await passkeyApi.getUserCredential(authOptionsJson);
+
+      await showConfirmationModal(
+        "Register new passkey",
+        "Authentication successful! Now register your new passkey.",
+        "register",
+      );
+    }
+
+    // 3. Fetch the passkey creation options
+    const regOptionsResponse = await passkeyApi.fetchWithCsrf(
+      "/passkey/registration-options",
+      "POST",
+      null,
+      null,
+      csrfToken,
+    );
+    const regOptionsJson = await regOptionsResponse.json();
+
+    /*
+     * authenticatorSelection.authenticatorAttachment can be "platform" | "cross-platform" | null.
+     * A null value means any authenticator is allowed.
+     * Unfortunately, even though null is the recommended value, Safari won't allow it
+     * and Firefox gives a warning about it.
+     * So we remove the field if its value is null and all browsers are then happy.
+     * The effect is unchanged.
+     *
+     * This is a temporary measure until browsers accept the null value.
+     */
+    if (
+      regOptionsJson.authenticatorSelection?.authenticatorAttachment === null
+    ) {
+      delete regOptionsJson.authenticatorSelection.authenticatorAttachment;
+    }
+
+    // 4. Create a new passkey
+    const credentialCreationOptions =
+      PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsJson);
+    const createdCredential = await navigator.credentials.create({
+      publicKey: credentialCreationOptions,
+    });
+
+    // 5. Get name for the passkey
+    const passkeyName = await getPasskeyNameFromUser();
+    if (passkeyName === null) {
+      return;
+    }
+
+    // 6. Make the registration call - includes authentication credentials if they exist so that they can be verified
+    const formData = {
+      passkey: JSON.stringify(createdCredential.toJSON()),
+      csrfToken: csrfToken,
+      passkeyName: passkeyName,
+    };
+
+    if (existingCredential) {
+      formData.credentials = JSON.stringify(existingCredential.toJSON());
+    }
+
+    createAndSubmitForm("/passkey/register", formData);
+  } catch (err) {
+    passkeyApi.handlePasskeyError(err, "registration");
+  }
 }
 
 /**
@@ -124,51 +229,31 @@ export async function registerPasskey(csrfToken) {
  * @returns {Promise<void>} A promise that resolves when authentication completes
  */
 export async function authenticatePasskey(targetHref, csrfToken) {
-    try {
-        const authOptionsResponse = await fetch('/passkey/auth-options', {
-            method: 'POST',
-            headers: {
-                'CSRF-Token': csrfToken, // Securely include CSRF token in headers,
-                'Content-Type': 'application/x-www-form-urlencoded', // To satisfy Play CSRF filter
-            }
-        });
-        const authOptionsResponseJson = await authOptionsResponse.json();
-
-        if (!authOptionsResponse.ok) {
-            console.error('Authentication options request failed:', authOptionsResponseJson);
-            /*
-             * We only get a 400 response here if the user has no registered passkeys.
-             * In this scenario, we redirect them to the user account page where they are urged to register one.
-             */
-            if (authOptionsResponse.status === 400) {
-                window.location.href = '/user-account';
-                return;
-            }
-            displayToast('Failed to get authentication options from server. Please try again.', messageType.error);
-            return;
-        }
-
-        const credentialGetOptions = PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsResponseJson);
-        const publicKeyCredential = await navigator.credentials.get({ publicKey: credentialGetOptions });
-
-        createAndSubmitForm(targetHref, {
-            credentials: JSON.stringify(publicKeyCredential.toJSON()),
-            csrfToken: csrfToken
-        });
-    } catch (err) {
-        console.error('Error during passkey authentication:', err);
-        displayToast('Authentication failed. Please try again.', messageType.error)
+  try {
+    const authOptionsJson = await passkeyApi.getAuthenticationOptions(
+      csrfToken,
+      "/passkey/auth-options",
+    );
+    if (!authOptionsJson) {
+      return;
     }
+    const publicKeyCredential =
+      await passkeyApi.getUserCredential(authOptionsJson);
+    createAndSubmitForm(targetHref, {
+      credentials: JSON.stringify(publicKeyCredential.toJSON()),
+      csrfToken: csrfToken,
+    });
+  } catch (err) {
+    passkeyApi.handlePasskeyError(err, "authentication");
+  }
 }
 
 export async function bypassPasskeyAuthentication(targetHref, csrfToken) {
-    try {
-        createAndSubmitForm(targetHref, {
-            csrfToken: csrfToken
-        });
-    } catch (err) {
-        console.error('Error during bypass of passkey authentication:', err);
-    }
+  try {
+    createAndSubmitForm(targetHref, { csrfToken });
+  } catch (err) {
+    console.error("Error during bypass of passkey authentication:", err);
+  }
 }
 
 /**
@@ -178,35 +263,38 @@ export async function bypassPasskeyAuthentication(targetHref, csrfToken) {
  * @returns {Promise<Object>} A promise that resolves with the JSON response data
  */
 export async function deletePasskey(passkeyId, csrfToken) {
-    try {
-        const response = await fetch(`/passkey/${passkeyId}`, {
-            method: 'DELETE',
-            headers: {
-                'CSRF-Token': csrfToken,
-            },
-            credentials: 'same-origin'
-        });
-        
-        if (!response.ok) {
-            let errorMessage = `Server returned ${response.status}`;
-            try {
-                const errorData = await response.json();
-                if (errorData && errorData.message) {
-                    errorMessage = errorData.message;
-                }
-            } catch (e) {
-                console.warn('Could not parse error response as JSON:', e);
-            }
-            throw new Error(errorMessage);
-        }
-        
-        const responseData = await response.json();
-        
-        return responseData;
-    } catch (error) {
-        console.error('Error deleting passkey:', error);
-        displayToast(`Error deleting passkey: ${error.message}`, messageType.error);
-        throw error;
+  try {
+    // 1. Fetch the authentication options
+    const authOptionsJson =
+      await passkeyApi.getAuthenticationOptions(csrfToken);
+    if (!authOptionsJson) {
+      return;
     }
-}   
 
+    // 2. Use a passkey to authenticate the deletion of the passkey
+    const existingCredential =
+      await passkeyApi.getUserCredential(authOptionsJson);
+
+    // 3. Make the deletion call - includes authentication credentials so that they can be verified
+    const response = await passkeyApi.fetchWithCsrf(
+      `/passkey/${passkeyId}`,
+      "DELETE",
+      JSON.stringify(existingCredential.toJSON()),
+      "text/plain",
+      csrfToken,
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.message || `Server returned ${response.status}`,
+      );
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error deleting passkey:", error);
+    displayToast(`Error deleting passkey: ${error.message}`, messageType.error);
+    throw error;
+  }
+}
