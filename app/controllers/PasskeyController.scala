@@ -5,14 +5,13 @@ import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
-import com.webauthn4j.data.attestation.authenticator.AAGUID
-import com.webauthn4j.data.client.challenge.DefaultChallenge
+import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import controllers.Validation.formattedErrors
 import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
+import models.JanusException
 import models.PasskeyFlow.{Authentication, Registration}
-import models.{JanusException, PasskeyAuthenticator}
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
 import play.api.data.validation.Constraints.*
@@ -72,23 +71,6 @@ class PasskeyController(
     )
   }
 
-  /*
-   * Validation rules for input fields to the 'register' route.
-   * These should correspond with the frontend rules defined in [[passkeys.js#getPasskeysFromUser]].
-   */
-  private val registrationForm: Form[RegistrationData] = Form(
-    mapping(
-      "passkey" -> text.verifying(nonEmpty),
-      "passkeyName" -> text
-        .transform(_.trim, identity)
-        .verifying(nonEmpty)
-        .verifying(maxLength(50))
-        .verifying(pattern("^[a-zA-Z0-9 _-]+$".r))
-    )(
-      RegistrationData.apply
-    )(data => Some((data.passkey, data.passkeyName)))
-  )
-
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#registering-the-webauthn-public-key-credential-on-the-server]].
     */
@@ -98,61 +80,20 @@ class PasskeyController(
         .bindFromRequest()
         .fold(
           formWithErrors =>
-            Redirect("/user-account")
+            Redirect(routes.Janus.userAccount)
               .flashing("error" -> formattedErrors(formWithErrors)),
           registrationData =>
-            redirectResponseOnError("/user-account")(for {
-              _ <- validateRegistrationData(request.user, registrationData)
-              result <- performPasskeyRegistration(
-                request.user,
-                registrationData
-              )
-            } yield result)
+            redirectResponse(routes.Janus.userAccount) {
+              for {
+                _ <- validateUniquePasskeyName(
+                  request.user,
+                  registrationData.passkeyName
+                )
+                _ <- performPasskeyRegistration(request.user, registrationData)
+              } yield "Passkey was registered successfully"
+            }
         )
   }
-
-  /** Validates the registration data against database content. */
-  private def validateRegistrationData(
-      user: UserIdentity,
-      registrationData: RegistrationData
-  ): Try[Unit] =
-    PasskeyDB.loadCredentials(user).flatMap { credentialsResponse =>
-      val passkeys = PasskeyDB.extractMetadata(credentialsResponse)
-      if passkeys.exists(_.name.equalsIgnoreCase(registrationData.passkeyName))
-      then
-        Failure(
-          JanusException.duplicatePasskeyNameFieldInRequest(
-            user,
-            registrationData.passkeyName
-          )
-        )
-      else Success(())
-    }
-
-  /** Performs the core passkey registration process including cryptographic
-    * verification and database persistence. This method assumes all validation
-    * has already been completed.
-    */
-  private def performPasskeyRegistration(
-      user: UserIdentity,
-      registrationData: RegistrationData
-  ): Try[Result] =
-    for {
-      challengeResponse <- PasskeyChallengeDB.loadChallenge(user, Registration)
-      challenge <- PasskeyChallengeDB.extractChallenge(challengeResponse, user)
-      credRecord <- Passkey.verifiedRegistration(
-        host,
-        user,
-        challenge,
-        registrationData.passkey
-      )
-      _ <- PasskeyDB.insert(user, credRecord, registrationData.passkeyName)
-      _ <- PasskeyChallengeDB.delete(user, Registration)
-      _ = logger.info(s"Registered passkey for user ${user.username}")
-    } yield {
-      Redirect("/user-account")
-        .flashing("success" -> "Passkey was registered successfully")
-    }
 
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-assertion]].
@@ -234,13 +175,10 @@ class PasskeyController(
             s"Deleted passkey for user ${request.user.username} with ID $passkeyId"
           )
         } yield {
-          val message = s"Passkey '$passkeyName' was successfully deleted"
-
-          // Return JSON response with flash session info for the toast
           Ok(
             Json.obj(
               "success" -> true,
-              "message" -> message,
+              "message" -> s"Passkey '$passkeyName' was successfully deleted",
               "redirect" -> "/user-account"
             )
           )
@@ -286,6 +224,74 @@ class PasskeyController(
       )
     }).getOrElse(Ok(views.html.noPermissions(request.user, janusData)))
   }
+
+  /*
+   * Validation rules for input fields to the 'register' route.
+   * These should correspond with the frontend rules defined in [[passkeys.js#getPasskeysFromUser]].
+   */
+  private val registrationForm: Form[RegistrationData] = Form(
+    mapping(
+      "passkey" -> text.verifying(nonEmpty),
+      "passkeyName" -> text
+        .transform(_.trim, identity[String])
+        .verifying(nonEmpty)
+        .verifying(maxLength(50))
+        .verifying(pattern("^[a-zA-Z0-9 _-]+$".r))
+    )(
+      RegistrationData.apply
+    )(data => Some((data.passkey, data.passkeyName)))
+  )
+
+  private def validateUniquePasskeyName(
+      user: UserIdentity,
+      passkeyName: String
+  ): Try[Unit] =
+    PasskeyDB.loadCredentials(user).flatMap { credentialsResponse =>
+      val passkeys = PasskeyDB.extractMetadata(credentialsResponse)
+      if passkeys.exists(_.name.equalsIgnoreCase(passkeyName)) then
+        Failure(
+          JanusException.duplicatePasskeyNameFieldInRequest(user, passkeyName)
+        )
+      else Success(())
+    }
+
+  private def loadRegistrationChallenge(
+      user: UserIdentity
+  ): Try[Challenge] =
+    for {
+      challengeResponse <- PasskeyChallengeDB.loadChallenge(user, Registration)
+      challenge <- PasskeyChallengeDB.extractChallenge(challengeResponse, user)
+    } yield challenge
+
+  private def performPasskeyRegistration(
+      user: UserIdentity,
+      registrationData: RegistrationData
+  ): Try[Unit] =
+    for {
+      challenge <- loadRegistrationChallenge(user)
+      credRecord <- Passkey.verifiedRegistration(
+        host,
+        user,
+        challenge,
+        registrationData.passkey
+      )
+      _ <- PasskeyDB.insert(user, credRecord, registrationData.passkeyName)
+      _ <- PasskeyChallengeDB.delete(user, Registration)
+      _ = logger.info(s"Registered passkey for user ${user.username}")
+    } yield ()
+
+  /** Redirects to a specified path and flashes messages on error. */
+  private def redirectResponse(call: Call)(action: => Try[String]): Result =
+    action match {
+      case Failure(err: JanusException) =>
+        logger.error(err.engineerMessage, err.causedBy.orNull)
+        Redirect(call).flashing("error" -> err.userMessage)
+      case Failure(err) =>
+        logger.error(err.getMessage, err)
+        Redirect(call).flashing("error" -> "An unexpected error occurred")
+      case Success(msg) =>
+        Redirect(call).flashing("success" -> msg)
+    }
 }
 
 case class RegistrationData(passkey: String, passkeyName: String)

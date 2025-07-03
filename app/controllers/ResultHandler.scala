@@ -24,30 +24,7 @@ private[controllers] trait ResultHandler extends Results with Logging {
       case Failure(err) =>
         logger.error(err.getMessage, err)
         InternalServerError(toJson(err))
-      case Success(result: Result) => result
-      case Success(html: Html)     => Ok(html)
-      case Success(a) =>
-        val json = PasskeyEncodings.mapper.writeValueAsString(a)
-        Ok(json).as(MimeTypes.JSON)
-    }
-
-  /** Redirects to a specified path and flashes messages on error. */
-  def redirectResponseOnError[A](
-      redirectPath: String
-  )(action: => Try[A]): Result =
-    action match {
-      case Failure(err: JanusException) =>
-        logger.error(err.engineerMessage, err.causedBy.orNull)
-        Redirect(redirectPath)
-          .flashing("error" -> err.userMessage)
-      case Failure(err) =>
-        logger.error(err.getMessage, err)
-        Redirect(redirectPath)
-          .flashing(
-            "error" -> "An unexpected error occurred"
-          )
-      case Success(result: Result) => result
-      case Success(html: Html)     => Ok(html)
+      case Success(html: Html) => Ok(html)
       case Success(a) =>
         val json = PasskeyEncodings.mapper.writeValueAsString(a)
         Ok(json).as(MimeTypes.JSON)
