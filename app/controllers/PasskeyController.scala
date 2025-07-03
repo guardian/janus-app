@@ -11,23 +11,14 @@ import controllers.Validation.formattedErrors
 import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
-import models.JanusException.throwableWrites
 import models.PasskeyFlow.{Authentication, Registration}
-import models.{
-  JanusException,
-  PasskeyAuthenticator,
-  PasskeyEncodings,
-  PasskeyMetadata
-}
+import models.{JanusException, PasskeyAuthenticator, PasskeyMetadata}
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
 import play.api.data.validation.Constraints.*
-import play.api.http.MimeTypes
 import play.api.libs.json.Json
-import play.api.libs.json.Json.toJson
 import play.api.mvc.*
 import play.api.{Logging, Mode}
-import play.twirl.api.Html
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.QueryResponse
 
@@ -51,6 +42,7 @@ class PasskeyController(
     authenticators: Map[AAGUID, PasskeyAuthenticator]
 )(using dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
+    with ResultHandler
     with Logging {
 
   private val appName = mode match {
@@ -58,44 +50,6 @@ class PasskeyController(
     case Mode.Test => "Janus-Test"
     case Mode.Prod => "Janus-Prod"
   }
-
-  private def apiResponse[A](action: => Try[A]): Result =
-    action match {
-      case Failure(err: JanusException) =>
-        logger.error(err.engineerMessage, err.causedBy.orNull)
-        Status(err.httpCode)(toJson(err))
-      case Failure(err) =>
-        logger.error(err.getMessage, err)
-        Status(INTERNAL_SERVER_ERROR)(toJson(err))
-      case Success(result: Result) => result
-      case Success(html: Html)     => Ok(html)
-      case Success(a) =>
-        val json = PasskeyEncodings.mapper.writeValueAsString(a)
-        Ok(json).as(MimeTypes.JSON)
-    }
-
-  /** Redirects to a specified path and flashes messages on error.
-    */
-  private def redirectResponseOnError[A](
-      redirectPath: String
-  )(action: => Try[A]): Result =
-    action match {
-      case Failure(err: JanusException) =>
-        logger.error(err.engineerMessage, err.causedBy.orNull)
-        Redirect(redirectPath)
-          .flashing("error" -> err.userMessage)
-      case Failure(err) =>
-        logger.error(err.getMessage, err)
-        Redirect(redirectPath)
-          .flashing(
-            "error" -> "An unexpected error occurred"
-          )
-      case Success(result: Result) => result
-      case Success(html: Html)     => Ok(html)
-      case Success(a) =>
-        val json = PasskeyEncodings.mapper.writeValueAsString(a)
-        Ok(json).as(MimeTypes.JSON)
-    }
 
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
