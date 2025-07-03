@@ -110,7 +110,7 @@ class PasskeyController(
           appHost = host,
           user = request.user,
           challenge = new DefaultChallenge(),
-          existingPasskeys
+          existingPasskeys = existingPasskeys
         )
         _ <- PasskeyChallengeDB.insert(
           UserChallenge(request.user, Authentication, options.getChallenge)
