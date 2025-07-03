@@ -11,28 +11,17 @@ import controllers.Validation.formattedErrors
 import logic.AccountOrdering.orderedAccountAccess
 import logic.UserAccess.{userAccess, username}
 import logic.{Date, Favourites, Passkey}
-import models.JanusException.throwableWrites
 import models.PasskeyFlow.{Authentication, Registration}
-import models.{
-  JanusException,
-  PasskeyAuthenticator,
-  PasskeyEncodings,
-  PasskeyMetadata
-}
+import models.{JanusException, PasskeyAuthenticator}
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
 import play.api.data.validation.Constraints.*
-import play.api.http.MimeTypes
 import play.api.libs.json.Json
-import play.api.libs.json.Json.toJson
 import play.api.mvc.*
 import play.api.{Logging, Mode}
-import play.twirl.api.Html
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import software.amazon.awssdk.services.dynamodb.model.QueryResponse
 
-import java.time.format.DateTimeFormatter
-import java.time.{Instant, ZoneId, ZonedDateTime}
+import java.time.{ZoneId, ZonedDateTime}
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
@@ -47,10 +36,10 @@ class PasskeyController(
     host: String,
     janusData: JanusData,
     passkeysEnabled: Boolean,
-    enablingCookieName: String,
-    authenticators: Map[AAGUID, PasskeyAuthenticator]
+    enablingCookieName: String
 )(using dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
+    with ResultHandler
     with Logging {
 
   private val appName = mode match {
@@ -58,44 +47,6 @@ class PasskeyController(
     case Mode.Test => "Janus-Test"
     case Mode.Prod => "Janus-Prod"
   }
-
-  private def apiResponse[A](action: => Try[A]): Result =
-    action match {
-      case Failure(err: JanusException) =>
-        logger.error(err.engineerMessage, err.causedBy.orNull)
-        Status(err.httpCode)(toJson(err))
-      case Failure(err) =>
-        logger.error(err.getMessage, err)
-        Status(INTERNAL_SERVER_ERROR)(toJson(err))
-      case Success(result: Result) => result
-      case Success(html: Html)     => Ok(html)
-      case Success(a) =>
-        val json = PasskeyEncodings.mapper.writeValueAsString(a)
-        Ok(json).as(MimeTypes.JSON)
-    }
-
-  /** Redirects to a specified path and flashes messages on error.
-    */
-  private def redirectResponseOnError[A](
-      redirectPath: String
-  )(action: => Try[A]): Result =
-    action match {
-      case Failure(err: JanusException) =>
-        logger.error(err.engineerMessage, err.causedBy.orNull)
-        Redirect(redirectPath)
-          .flashing("error" -> err.userMessage)
-      case Failure(err) =>
-        logger.error(err.getMessage, err)
-        Redirect(redirectPath)
-          .flashing(
-            "error" -> "An unexpected error occurred"
-          )
-      case Success(result: Result) => result
-      case Success(html: Html)     => Ok(html)
-      case Success(a) =>
-        val json = PasskeyEncodings.mapper.writeValueAsString(a)
-        Ok(json).as(MimeTypes.JSON)
-    }
 
   /** See
     * [[https://webauthn4j.github.io/webauthn4j/en/#generating-a-webauthn-credential-key-pair]].
@@ -210,10 +161,10 @@ class PasskeyController(
     apiResponse(
       for {
         loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
-        existingPasskeys <- loadExistingPasskeysOrFail(
-          loadCredentialsResponse,
-          request.user
-        )
+        existingPasskeys <-
+          if !loadCredentialsResponse.items.isEmpty then
+            Success(PasskeyDB.extractMetadata(loadCredentialsResponse))
+          else Failure(JanusException.noPasskeysRegistered(request.user))
         options <- Passkey.authenticationOptions(
           appHost = host,
           user = request.user,
@@ -335,41 +286,6 @@ class PasskeyController(
       )
     }).getOrElse(Ok(views.html.noPermissions(request.user, janusData)))
   }
-
-  // TODO: move to Janus or account controller
-  def showUserAccountPage: Action[AnyContent] = authAction { implicit request =>
-    apiResponse {
-      def dateTimeFormat(instant: Instant, formatter: DateTimeFormatter) =
-        instant.atZone(ZoneId.of("Europe/London")).format(formatter)
-      def dateFormat(instant: Instant) =
-        dateTimeFormat(instant, DateTimeFormatter.ofPattern("d MMM yyyy"))
-      def timeFormat(instant: Instant) =
-        dateTimeFormat(
-          instant,
-          DateTimeFormatter.ofPattern("d MMM yyyy HH:mm:ss XXXXX")
-        )
-      for {
-        queryResponse <- PasskeyDB.loadCredentials(request.user)
-        passkeys = PasskeyDB
-          .extractMetadata(queryResponse)
-          .map(p => p.copy(authenticator = authenticators.get(p.aaguid)))
-      } yield views.html.userAccount(
-        request.user,
-        janusData,
-        passkeys,
-        dateFormat,
-        timeFormat
-      )
-    }
-  }
-
-  private def loadExistingPasskeysOrFail(
-      dbResponse: QueryResponse,
-      user: UserIdentity
-  ): Try[Seq[PasskeyMetadata]] =
-    if !dbResponse.items.isEmpty then
-      Success(PasskeyDB.extractMetadata(dbResponse))
-    else Failure(JanusException.noPasskeysRegistered(user))
 }
 
 case class RegistrationData(passkey: String, passkeyName: String)

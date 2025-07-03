@@ -92,7 +92,7 @@ class AppComponents(context: ApplicationLoader.Context)
     controllerComponents.parsers.default
   )(executionContext)
 
-  private val passkeyAuthenticators =
+  private val passkeyAuthenticatorMetadata =
     PasskeyAuthenticator.fromResource(
       "passkeys_aaguid_descriptions.json"
     )
@@ -119,7 +119,8 @@ class AppComponents(context: ApplicationLoader.Context)
       authAction,
       host,
       Clients.stsClient,
-      configuration
+      configuration,
+      passkeyAuthenticatorMetadata
     ),
     new Audit(janusData, controllerComponents, authAction),
     new RevokePermissions(
@@ -144,8 +145,7 @@ class AppComponents(context: ApplicationLoader.Context)
       host,
       janusData,
       passkeysEnabled,
-      passkeysEnablingCookieName,
-      passkeyAuthenticators
+      passkeysEnablingCookieName
     ),
     new Utility(janusData, controllerComponents, authAction, configuration),
     assets
