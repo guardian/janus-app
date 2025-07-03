@@ -179,7 +179,7 @@ class PasskeyController(
             Json.obj(
               "success" -> true,
               "message" -> s"Passkey '$passkeyName' was successfully deleted",
-              "redirect" -> "/user-account"
+              "redirect" -> routes.Janus.userAccount.url
             )
           )
         }
