@@ -28,6 +28,56 @@ const passkeyApi = {
     return fetch(url, options);
   },
 
+  async getRegistrationOptions(
+    csrfToken,
+    endpoint = "/passkey/registration-options",
+  ) {
+    try {
+      const response = await this.fetchWithCsrf(
+        endpoint,
+        "POST",
+        null,
+        null,
+        csrfToken,
+      );
+      const optionsJson = await response.json();
+
+      if (!response.ok) {
+        console.error("Registration options request failed:", optionsJson);
+        displayToast(
+          optionsJson.message,
+          messageType.warning,
+        );
+        return null;
+      }
+
+      /*
+       * authenticatorSelection.authenticatorAttachment can be "platform" | "cross-platform" | null.
+       * A null value means any authenticator is allowed.
+       * Unfortunately, even though null is the recommended value, Safari won't allow it
+       * and Firefox gives a warning about it.
+       * So we remove the field if its value is null and all browsers are then happy.
+       * The effect is unchanged.
+       *
+       * This is a temporary measure until browsers accept the null value.
+       */
+      if (
+          optionsJson.authenticatorSelection?.authenticatorAttachment === null
+      ) {
+        delete optionsJson.authenticatorSelection.authenticatorAttachment;
+      }
+
+      return optionsJson;
+    } catch (error) {
+      console.error("Error fetching authentication options:", error);
+      displayToast(
+        "Network error while getting authentication options",
+        messageType.error,
+      );
+      return null;
+    }
+  },
+
   async getAuthenticationOptions(
     csrfToken,
     endpoint = "/passkey/auth-options",
@@ -167,29 +217,9 @@ export async function registerPasskey(csrfToken) {
     }
 
     // 3. Fetch the passkey creation options
-    const regOptionsResponse = await passkeyApi.fetchWithCsrf(
-      "/passkey/registration-options",
-      "POST",
-      null,
-      null,
-      csrfToken,
-    );
-    const regOptionsJson = await regOptionsResponse.json();
-
-    /*
-     * authenticatorSelection.authenticatorAttachment can be "platform" | "cross-platform" | null.
-     * A null value means any authenticator is allowed.
-     * Unfortunately, even though null is the recommended value, Safari won't allow it
-     * and Firefox gives a warning about it.
-     * So we remove the field if its value is null and all browsers are then happy.
-     * The effect is unchanged.
-     *
-     * This is a temporary measure until browsers accept the null value.
-     */
-    if (
-      regOptionsJson.authenticatorSelection?.authenticatorAttachment === null
-    ) {
-      delete regOptionsJson.authenticatorSelection.authenticatorAttachment;
+    const regOptionsJson = await passkeyApi.getRegistrationOptions(csrfToken);
+    if (!regOptionsJson) {
+      return;
     }
 
     // 4. Create a new passkey
