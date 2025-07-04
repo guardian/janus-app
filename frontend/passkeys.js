@@ -66,9 +66,9 @@ const passkeyApi = {
 
       return optionsJson;
     } catch (error) {
-      console.error("Error fetching authentication options:", error);
+      console.error("Error fetching registration options:", error);
       displayToast(
-        "Network error while getting authentication options",
+        "Network error while getting registration options",
         messageType.error,
       );
       return null;
