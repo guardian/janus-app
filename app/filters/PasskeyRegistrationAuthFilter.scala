@@ -2,7 +2,6 @@ package filters
 
 import aws.PasskeyDB
 import com.gu.googleauth.AuthAction.UserIdentityRequest
-import controllers.PasskeyAuthFilter
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Results.InternalServerError

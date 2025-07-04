@@ -1,17 +1,16 @@
 import aws.Clients
 import com.gu.googleauth.AuthAction
-import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
-import filters.{HstsFilter, PasskeyRegistrationAuthFilter}
+import filters.{HstsFilter, PasskeyAuthFilter, PasskeyRegistrationAuthFilter}
 import models.*
 import models.AccountConfigStatus.*
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSComponents
-import play.api.mvc.{ActionBuilder, AnyContent, EssentialFilter}
+import play.api.mvc.{AnyContent, EssentialFilter}
 import play.api.routing.Router
 import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
