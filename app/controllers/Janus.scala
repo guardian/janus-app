@@ -1,12 +1,14 @@
 package controllers
 
-import aws.{AuditTrailDB, Federation}
+import aws.{AuditTrailDB, Federation, PasskeyDB}
 import cats.syntax.all.*
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.*
+import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
+import models.PasskeyAuthenticator
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -14,6 +16,7 @@ import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.model.Credentials
 
 import java.time.*
+import java.time.format.DateTimeFormatter
 
 class Janus(
     janusData: JanusData,
@@ -21,9 +24,11 @@ class Janus(
     authAction: AuthAction[AnyContent],
     host: String,
     stsClient: StsClient,
-    configuration: Configuration
+    configuration: Configuration,
+    passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator]
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
+    with ResultHandler
     with Logging {
 
   import logic.AccountOrdering.*
@@ -93,6 +98,34 @@ class Janus(
         )
       )
     }
+
+  def userAccount: Action[AnyContent] = authAction { implicit request =>
+    apiResponse {
+      def dateTimeFormat(instant: Instant, formatter: DateTimeFormatter) =
+        instant.atZone(ZoneId.of("Europe/London")).format(formatter)
+      def dateFormat(instant: Instant) =
+        dateTimeFormat(instant, DateTimeFormatter.ofPattern("d MMM yyyy"))
+      def timeFormat(instant: Instant) =
+        dateTimeFormat(
+          instant,
+          DateTimeFormatter.ofPattern("d MMM yyyy HH:mm:ss XXXXX")
+        )
+      for {
+        queryResponse <- PasskeyDB.loadCredentials(request.user)
+        passkeys = PasskeyDB
+          .extractMetadata(queryResponse)
+          .map(p =>
+            p.copy(authenticator = passkeyAuthenticatorMetadata.get(p.aaguid))
+          )
+      } yield views.html.userAccount(
+        request.user,
+        janusData,
+        passkeys,
+        dateFormat,
+        timeFormat
+      )
+    }
+  }
 
   def consoleLogin(permissionId: String): Action[AnyContent] =
     authAction { implicit request =>
