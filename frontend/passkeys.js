@@ -44,10 +44,7 @@ const passkeyApi = {
 
       if (!response.ok) {
         console.error("Registration options request failed:", optionsJson);
-        displayToast(
-          optionsJson.message,
-          messageType.warning,
-        );
+        displayToast(optionsJson.message, messageType.warning);
         return null;
       }
 
@@ -62,7 +59,7 @@ const passkeyApi = {
        * This is a temporary measure until browsers accept the null value.
        */
       if (
-          optionsJson.authenticatorSelection?.authenticatorAttachment === null
+        optionsJson.authenticatorSelection?.authenticatorAttachment === null
       ) {
         delete optionsJson.authenticatorSelection.authenticatorAttachment;
       }
