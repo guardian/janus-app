@@ -6,6 +6,7 @@
 GET     /                           controllers.Janus.index
 GET     /superuser                  controllers.Janus.admin
 GET     /support                    controllers.Janus.support
+GET     /user-account               controllers.Janus.userAccount
 GET     /console                    controllers.Janus.consoleLogin(permissionId: String)
 GET     /consoleUrl                 controllers.Janus.consoleUrl(permissionId: String)
 GET     /credentials                controllers.Janus.credentials(permissionId: String)
@@ -38,8 +39,6 @@ POST    /passkey/protected-credentials-page controllers.PasskeyController.protec
 GET     /passkey/pretend-aws-console        controllers.PasskeyController.pretendAwsConsole
 POST    /passkey/protected-redirect         controllers.PasskeyController.protectedRedirect
 GET     /passkey/mock-home                  controllers.PasskeyController.mockHome
-
-GET     /user-account               controllers.PasskeyController.showUserAccountPage
 
 GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts
