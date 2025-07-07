@@ -7,9 +7,7 @@ import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import controllers.Validation.formattedErrors
-import logic.AccountOrdering.orderedAccountAccess
-import logic.UserAccess.{userAccess, username}
-import logic.{Date, Favourites, Passkey}
+import logic.Passkey
 import models.JanusException
 import models.PasskeyFlow.{Authentication, Registration}
 import play.api.data.Form
@@ -20,7 +18,6 @@ import play.api.mvc.*
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
-import java.time.{ZoneId, ZonedDateTime}
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
@@ -33,9 +30,7 @@ class PasskeyController(
       AnyContent
     ],
     host: String,
-    janusData: JanusData,
-    passkeysEnabled: Boolean,
-    enablingCookieName: String
+    janusData: JanusData
 )(using dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
@@ -185,45 +180,6 @@ class PasskeyController(
         }
       )
     }
-
-  // To be removed when passkeyAuthAction has been applied to real endpoints
-  def protectedCredentialsPage: Action[AnyContent] = passkeyAuthAction { _ =>
-    Ok("This is the protected page you're authorised to see.")
-  }
-
-  // To be removed when passkeyAuthAction has been applied to real endpoints
-  def pretendAwsConsole: Action[AnyContent] = Action {
-    Ok("This is the pretend AWS console.")
-  }
-
-  // To be removed when passkeyAuthAction has been applied to real endpoints
-  def protectedRedirect: Action[AnyContent] = passkeyAuthAction { _ =>
-    Redirect("/passkey/pretend-aws-console")
-  }
-
-  // To be removed when passkeyAuthAction has been applied to real endpoints
-  def mockHome: Action[AnyContent] = authAction { implicit request =>
-    val displayMode =
-      Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
-    (for {
-      permissions <- userAccess(username(request.user), janusData.access)
-      favourites = Favourites.fromCookie(request.cookies.get("favourites"))
-      awsAccountAccess = orderedAccountAccess(permissions, favourites)
-      enablingCookieIsPresent = request.cookies
-        .get(enablingCookieName)
-        .isDefined
-    } yield {
-      Ok(
-        views.html.passkeymock.index(
-          awsAccountAccess,
-          request.user,
-          janusData,
-          displayMode,
-          passkeysEnabled && enablingCookieIsPresent
-        )
-      )
-    }).getOrElse(Ok(views.html.noPermissions(request.user, janusData)))
-  }
 
   /*
    * Validation rules for input fields to the 'register' route.

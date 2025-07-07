@@ -149,9 +149,7 @@ class AppComponents(context: ApplicationLoader.Context)
       passkeyAuthAction,
       passkeyRegistrationAuthAction,
       host,
-      janusData,
-      passkeysEnabled,
-      passkeysEnablingCookieName
+      janusData
     ),
     new Utility(janusData, controllerComponents, authAction, configuration),
     assets

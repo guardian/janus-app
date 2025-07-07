@@ -34,12 +34,6 @@ POST    /passkey/registration-auth-options  controllers.PasskeyController.regist
 POST    /passkey/register                   controllers.PasskeyController.register
 DELETE  /passkey/:passkeyId                 controllers.PasskeyController.deletePasskey(passkeyId: String)
 
-# Temporary endpoints for testing passkey auth
-POST    /passkey/protected-credentials-page controllers.PasskeyController.protectedCredentialsPage
-GET     /passkey/pretend-aws-console        controllers.PasskeyController.pretendAwsConsole
-POST    /passkey/protected-redirect         controllers.PasskeyController.protectedRedirect
-GET     /passkey/mock-home                  controllers.PasskeyController.mockHome
-
 GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts
 
