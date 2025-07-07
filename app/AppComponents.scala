@@ -1,17 +1,16 @@
 import aws.Clients
 import com.gu.googleauth.AuthAction
-import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
-import filters.{HstsFilter, PasskeyRegistrationAuthFilter}
+import filters.{HstsFilter, PasskeyAuthFilter, PasskeyRegistrationAuthFilter}
 import models.*
 import models.AccountConfigStatus.*
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSComponents
-import play.api.mvc.{ActionBuilder, AnyContent, EssentialFilter}
+import play.api.mvc.{AnyContent, EssentialFilter}
 import play.api.routing.Router
 import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
@@ -92,7 +91,7 @@ class AppComponents(context: ApplicationLoader.Context)
     controllerComponents.parsers.default
   )(executionContext)
 
-  private val passkeyAuthenticators =
+  private val passkeyAuthenticatorMetadata =
     PasskeyAuthenticator.fromResource(
       "passkeys_aaguid_descriptions.json"
     )
@@ -119,7 +118,8 @@ class AppComponents(context: ApplicationLoader.Context)
       authAction,
       host,
       Clients.stsClient,
-      configuration
+      configuration,
+      passkeyAuthenticatorMetadata
     ),
     new Audit(janusData, controllerComponents, authAction),
     new RevokePermissions(
@@ -144,8 +144,7 @@ class AppComponents(context: ApplicationLoader.Context)
       host,
       janusData,
       passkeysEnabled,
-      passkeysEnablingCookieName,
-      passkeyAuthenticators
+      passkeysEnablingCookieName
     ),
     new Utility(janusData, controllerComponents, authAction, configuration),
     assets

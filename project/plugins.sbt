@@ -5,11 +5,11 @@ addSbtPlugin(
 )
 
 // The Play plugin
-addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.7")
+addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.8")
 
 addSbtPlugin("com.github.sbt" % "sbt-digest" % "2.1.0")
 
-libraryDependencies += "org.vafer" % "jdeb" % "1.13" artifacts Artifact(
+libraryDependencies += "org.vafer" % "jdeb" % "1.14" artifacts Artifact(
   "jdeb",
   "jar",
   "jar"
@@ -22,4 +22,4 @@ addSbtPlugin("ch.epfl.scala" % "sbt-version-policy" % "3.2.1")
 addDependencyTreePlugin
 
 // Formatting
-addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.4")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.5.5")

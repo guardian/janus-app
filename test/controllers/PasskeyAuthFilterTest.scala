@@ -1,6 +1,7 @@
 package controllers
 
 import com.gu.googleauth.{AuthAction, UserIdentity}
+import filters.PasskeyAuthFilter
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
