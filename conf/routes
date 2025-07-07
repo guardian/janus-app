@@ -7,10 +7,10 @@ GET     /                           controllers.Janus.index
 GET     /superuser                  controllers.Janus.admin
 GET     /support                    controllers.Janus.support
 GET     /user-account               controllers.Janus.userAccount
-GET     /console                    controllers.Janus.consoleLogin(permissionId: String)
-GET     /consoleUrl                 controllers.Janus.consoleUrl(permissionId: String)
-GET     /credentials                controllers.Janus.credentials(permissionId: String)
-GET     /multi-credentials          controllers.Janus.multiCredentials(permissionIds: String)
+POST    /console                    controllers.Janus.consoleLogin(permissionId: String)
+POST    /consoleUrl                 controllers.Janus.consoleUrl(permissionId: String)
+POST    /credentials                controllers.Janus.credentials(permissionId: String)
+POST    /multi-credentials          controllers.Janus.multiCredentials(permissionIds: String)
 POST    /favourite                  controllers.Janus.favourite()
 
 GET     /audit/user/:username       controllers.Audit.byUser(username: String)

@@ -20,6 +20,7 @@ import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.time.Duration
+import scala.util.chaining.scalaUtilChainingOps
 
 class AppComponents(context: ApplicationLoader.Context)
     extends BuiltInComponentsFromContext(context)
@@ -97,7 +98,11 @@ class AppComponents(context: ApplicationLoader.Context)
     )
 
   private val passkeysEnabled: Boolean =
-    configuration.get[Boolean]("passkeys.enabled")
+    configuration
+      .get[Boolean]("passkeys.enabled")
+      .tap(enabled =>
+        if !enabled then logger.warn("Passkey authentication is globally disabled!")
+      )
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
 
@@ -119,6 +124,8 @@ class AppComponents(context: ApplicationLoader.Context)
       host,
       Clients.stsClient,
       configuration,
+      passkeysEnabled,
+      passkeysEnablingCookieName,
       passkeyAuthenticatorMetadata
     ),
     new Audit(janusData, controllerComponents, authAction),

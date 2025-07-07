@@ -25,6 +25,8 @@ class Janus(
     host: String,
     stsClient: StsClient,
     configuration: Configuration,
+    passkeysEnabled: Boolean,
+    passkeyEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator]
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
@@ -42,10 +44,19 @@ class Janus(
         permissions <- userAccess(username(request.user), janusData.access)
         favourites = Favourites.fromCookie(request.cookies.get("favourites"))
         awsAccountAccess = orderedAccountAccess(permissions, favourites)
+        passkeysEnablingCookieIsPresent = request.cookies
+          .get(passkeyEnablingCookieName)
+          .isDefined
       } yield {
         Ok(
           views.html
-            .index(awsAccountAccess, request.user, janusData, displayMode)
+            .index(
+              awsAccountAccess,
+              request.user,
+              janusData,
+              displayMode,
+              passkeysEnabled && passkeysEnablingCookieIsPresent
+            )
         )
       }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
     }
@@ -55,8 +66,18 @@ class Janus(
       (for {
         permissions <- userAccess(username(request.user), janusData.admin)
         awsAccountAccess = orderedAccountAccess(permissions)
+        passkeysEnablingCookieIsPresent = request.cookies
+          .get(passkeyEnablingCookieName)
+          .isDefined
       } yield {
-        Ok(views.html.admin(awsAccountAccess, request.user, janusData))
+        Ok(
+          views.html.admin(
+            awsAccountAccess,
+            request.user,
+            janusData,
+            passkeysEnabled && passkeysEnablingCookieIsPresent
+          )
+        )
       }) getOrElse Ok(
         views.html
           .error("You do not have admin access", Some(request.user), janusData)
@@ -77,6 +98,9 @@ class Janus(
           janusData.support
         )
         awsAccountAccess = orderedAccountAccess(permissions)
+        passkeysEnablingCookieIsPresent = request.cookies
+          .get(passkeyEnablingCookieName)
+          .isDefined
       } yield {
         Ok(
           views.html.support.support(
@@ -85,7 +109,8 @@ class Janus(
             supportUsersInNextPeriod,
             currentUserFutureSupportPeriods,
             request.user,
-            janusData
+            janusData,
+            passkeysEnabled && passkeysEnablingCookieIsPresent
           )
         )
       }) getOrElse Ok(
