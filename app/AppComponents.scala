@@ -101,7 +101,8 @@ class AppComponents(context: ApplicationLoader.Context)
     configuration
       .get[Boolean]("passkeys.enabled")
       .tap(enabled =>
-        if !enabled then logger.warn("Passkey authentication is globally disabled!")
+        if !enabled then
+          logger.warn("Passkey authentication is globally disabled!")
       )
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
