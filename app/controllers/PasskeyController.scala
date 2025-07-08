@@ -8,7 +8,7 @@ import com.gu.janus.model.JanusData
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import controllers.Validation.formattedErrors
 import logic.AccountOrdering.orderedAccountAccess
-import logic.UserAccess.{userAccess, username}
+import logic.UserAccess.{hasAccess, userAccess, username}
 import logic.{Date, Favourites, Passkey}
 import models.JanusException
 import models.PasskeyFlow.{Authentication, Registration}
@@ -53,6 +53,7 @@ class PasskeyController(
   def registrationOptions: Action[Unit] = authAction(parse.empty) { request =>
     apiResponse(
       for {
+        _ <- verifyHasAccess(request.user)
         loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
         options <- Passkey.registrationOptions(
           appName,
@@ -85,11 +86,15 @@ class PasskeyController(
           registrationData =>
             redirectResponse(routes.Janus.userAccount) {
               for {
+                _ <- verifyHasAccess(request.user)
                 _ <- validateUniquePasskeyName(
                   request.user,
                   registrationData.passkeyName
                 )
-                _ <- performPasskeyRegistration(request.user, registrationData)
+                _ <- performPasskeyRegistration(
+                  request.user,
+                  registrationData
+                )
               } yield "Passkey was registered successfully"
             }
         )
@@ -137,6 +142,7 @@ class PasskeyController(
     authAction(parse.empty) { request =>
       apiResponse(
         for {
+          _ <- verifyHasAccess(request.user)
           loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
           options <- Passkey.authenticationOptions(
             appHost = host,
@@ -254,6 +260,14 @@ class PasskeyController(
         )
       else Success(())
     }
+
+  private def verifyHasAccess(
+      user: UserIdentity
+  ): Try[Unit] =
+    if hasAccess(user.username, janusData.access) ||
+      hasAccess(user.username, janusData.admin)
+    then Success(())
+    else Failure(JanusException.noAccessFailure(user))
 
   private def loadRegistrationChallenge(
       user: UserIdentity

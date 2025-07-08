@@ -1,7 +1,12 @@
 package models
 
 import com.gu.googleauth.UserIdentity
-import play.api.http.Status.{BAD_REQUEST, INTERNAL_SERVER_ERROR, UNAUTHORIZED}
+import play.api.http.Status.{
+  BAD_REQUEST,
+  FORBIDDEN,
+  INTERNAL_SERVER_ERROR,
+  UNAUTHORIZED
+}
 import play.api.libs.json.{Json, Writes}
 
 enum AccountConfigStatus:
@@ -149,6 +154,15 @@ object JanusException {
         s"Authentication failed for user ${user.username}: ${cause.getMessage}",
       httpCode = UNAUTHORIZED,
       causedBy = Some(cause)
+    )
+
+  def noAccessFailure(user: UserIdentity): JanusException =
+    JanusException(
+      userMessage = "You haven't yet been granted any Janus permissions.",
+      engineerMessage =
+        s"Authorisation failed for user ${user.username}: no Janus permissions",
+      httpCode = FORBIDDEN,
+      causedBy = None
     )
 
   def noPasskeysRegistered(user: UserIdentity): JanusException =
