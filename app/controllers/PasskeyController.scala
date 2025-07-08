@@ -142,6 +142,7 @@ class PasskeyController(
     authAction(parse.empty) { request =>
       apiResponse(
         for {
+          _ <- verifyHasAccess(request.user)
           loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
           options <- Passkey.authenticationOptions(
             appHost = host,
@@ -263,7 +264,9 @@ class PasskeyController(
   private def verifyHasAccess(
       user: UserIdentity
   ): Try[Unit] =
-    if hasAccess(user.username, janusData.access) then Success(())
+    if hasAccess(user.username, janusData.access) ||
+      hasAccess(user.username, janusData.admin)
+    then Success(())
     else Failure(JanusException.noAccessFailure(user))
 
   private def loadRegistrationChallenge(
