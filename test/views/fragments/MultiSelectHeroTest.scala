@@ -24,8 +24,8 @@ class MultiSelectHeroTest extends AnyFreeSpec with Matchers {
       val html = views.html.fragments.multiSelectHero(passkeysEnabled = false)
       val renderedHtml = contentAsString(html)
 
-      "should include data-passkey-bypassed attribute" in {
-        renderedHtml should include("""data-passkey-bypassed="true"""")
+      "should set data-passkey-protected to false" in {
+        renderedHtml should include("""data-passkey-protected="false"""")
       }
     }
 
@@ -33,8 +33,8 @@ class MultiSelectHeroTest extends AnyFreeSpec with Matchers {
       val html = views.html.fragments.multiSelectHero(passkeysEnabled = true)
       val renderedHtml = contentAsString(html)
 
-      "should not include data-passkey-bypassed attribute" in {
-        renderedHtml should not include ("data-passkey-bypassed")
+      "should set data-passkey-protected to true" in {
+        renderedHtml should include("""data-passkey-protected="true"""")
       }
     }
   }

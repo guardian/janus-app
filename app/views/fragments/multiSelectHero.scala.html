@@ -17,9 +17,9 @@
                         <a class="multiple-credentials-control--clear janus-btn--flat waves-effect waves-light btn-flat">
                             <i class="material-icons">clear</i>
                         </a>
-                        <a class="multiple-credentials__link btn-large federation__link federation__link--standard right" href="/multi-credentials?"
-                            data-passkey-protected="true"
-                            @if(!passkeysEnabled) {data-passkey-bypassed="true"}
+                        <a class="multiple-credentials__link btn-large federation__link federation__link--standard right"
+                            href="/multi-credentials?"
+                            data-passkey-protected="@passkeysEnabled"
                         >
                             <i class="material-icons right">vpn_key</i>
                             <span class="multi-accounts-count">0 accounts</span>

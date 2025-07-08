@@ -30,8 +30,8 @@ class AwsAccountsTest extends AnyFreeSpec with Matchers {
       )
       val renderedHtml = contentAsString(html)
 
-      "should include data-passkey-bypassed attribute" in {
-        renderedHtml should include("""data-passkey-bypassed="true"""")
+      "should set data-passkey-protected to false" in {
+        renderedHtml should include("""data-passkey-protected="false"""")
       }
     }
 
@@ -44,8 +44,8 @@ class AwsAccountsTest extends AnyFreeSpec with Matchers {
       )
       val renderedHtml = contentAsString(html)
 
-      "should not include data-passkey-bypassed attribute" in {
-        renderedHtml should not include ("data-passkey-bypassed")
+      "should set data-passkey-protected to true" in {
+        renderedHtml should include("""data-passkey-protected="true"""")
       }
     }
   }
