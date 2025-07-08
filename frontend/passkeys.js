@@ -8,9 +8,9 @@ const passkeyApi = {
   async fetchWithCsrf(
     url,
     method = "POST",
-    body = null,
-    contentType = "application/x-www-form-urlencoded",
     csrfToken,
+    contentType = "application/x-www-form-urlencoded",
+    body = null,
   ) {
     const options = {
       method,
@@ -80,13 +80,7 @@ const passkeyApi = {
     endpoint = "/passkey/auth-options",
   ) {
     try {
-      const response = await this.fetchWithCsrf(
-        endpoint,
-        "POST",
-        null,
-        null,
-        csrfToken,
-      );
+      const response = await this.fetchWithCsrf(endpoint, "POST", csrfToken);
       const optionsJson = await response.json();
 
       if (!response.ok) {
@@ -123,13 +117,7 @@ const passkeyApi = {
     endpoint = "/passkey/registration-auth-options",
   ) {
     try {
-      const response = await this.fetchWithCsrf(
-        endpoint,
-        "POST",
-        null,
-        null,
-        csrfToken,
-      );
+      const response = await this.fetchWithCsrf(endpoint, "POST", csrfToken);
       const optionsJson = await response.json();
 
       if (!response.ok) {
@@ -306,9 +294,9 @@ export async function deletePasskey(passkeyId, csrfToken) {
     const response = await passkeyApi.fetchWithCsrf(
       `/passkey/${passkeyId}`,
       "DELETE",
-      JSON.stringify(existingCredential.toJSON()),
-      "text/plain",
       csrfToken,
+      "text/plain",
+      JSON.stringify(existingCredential.toJSON()),
     );
 
     if (!response.ok) {
