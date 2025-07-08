@@ -33,18 +33,12 @@ const passkeyApi = {
     endpoint = "/passkey/registration-options",
   ) {
     try {
-      const response = await this.fetchWithCsrf(
-        endpoint,
-        "POST",
-        null,
-        null,
-        csrfToken,
-      );
+      const response = await this.fetchWithCsrf(endpoint, "POST", csrfToken);
       const optionsJson = await response.json();
 
       if (!response.ok) {
         console.error("Registration options request failed:", optionsJson);
-        displayToast(optionsJson.message, messageType.warning);
+        displayToast(optionsJson.message, messageType.error);
         return null;
       }
 
@@ -122,10 +116,7 @@ const passkeyApi = {
 
       if (!response.ok) {
         console.error("Authentication options request failed:", optionsJson);
-        displayToast(
-          "Failed to get authentication options from server. Please try again.",
-          messageType.warning,
-        );
+        displayToast(optionsJson.message, messageType.error);
         return null;
       }
 
