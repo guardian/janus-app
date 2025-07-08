@@ -8,6 +8,7 @@ import com.gu.janus.model.JanusData
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import controllers.Validation.formattedErrors
 import logic.Passkey
+import logic.UserAccess.hasAccess
 import models.JanusException
 import models.PasskeyFlow.{Authentication, Registration}
 import play.api.data.Form
