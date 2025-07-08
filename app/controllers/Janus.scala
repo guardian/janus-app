@@ -2,6 +2,7 @@ package controllers
 
 import aws.{AuditTrailDB, Federation, PasskeyDB}
 import cats.syntax.all.*
+import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.*
 import com.webauthn4j.data.attestation.authenticator.AAGUID
@@ -25,8 +26,8 @@ class Janus(
     host: String,
     stsClient: StsClient,
     configuration: Configuration,
-    passkeysEnabled: Boolean,
-    passkeyEnablingCookieName: String,
+    passkeysEnabledGlobally: Boolean,
+    passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator]
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
@@ -44,9 +45,6 @@ class Janus(
         permissions <- userAccess(username(request.user), janusData.access)
         favourites = Favourites.fromCookie(request.cookies.get("favourites"))
         awsAccountAccess = orderedAccountAccess(permissions, favourites)
-        passkeysEnablingCookieIsPresent = request.cookies
-          .get(passkeyEnablingCookieName)
-          .isDefined
       } yield {
         Ok(
           views.html
@@ -55,7 +53,7 @@ class Janus(
               request.user,
               janusData,
               displayMode,
-              passkeysEnabled && passkeysEnablingCookieIsPresent
+              passkeysEnabledGlobally && passkeysEnabledForRequest(request)
             )
         )
       }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
@@ -66,16 +64,13 @@ class Janus(
       (for {
         permissions <- userAccess(username(request.user), janusData.admin)
         awsAccountAccess = orderedAccountAccess(permissions)
-        passkeysEnablingCookieIsPresent = request.cookies
-          .get(passkeyEnablingCookieName)
-          .isDefined
       } yield {
         Ok(
           views.html.admin(
             awsAccountAccess,
             request.user,
             janusData,
-            passkeysEnabled && passkeysEnablingCookieIsPresent
+            passkeysEnabledGlobally && passkeysEnabledForRequest(request)
           )
         )
       }) getOrElse Ok(
@@ -98,9 +93,6 @@ class Janus(
           janusData.support
         )
         awsAccountAccess = orderedAccountAccess(permissions)
-        passkeysEnablingCookieIsPresent = request.cookies
-          .get(passkeyEnablingCookieName)
-          .isDefined
       } yield {
         Ok(
           views.html.support.support(
@@ -110,7 +102,7 @@ class Janus(
             currentUserFutureSupportPeriods,
             request.user,
             janusData,
-            passkeysEnabled && passkeysEnablingCookieIsPresent
+            passkeysEnabledGlobally && passkeysEnabledForRequest(request)
           )
         )
       }) getOrElse Ok(
@@ -329,4 +321,9 @@ class Janus(
       })
       .sequence
   }
+
+  private def passkeysEnabledForRequest(
+      request: UserIdentityRequest[AnyContent]
+  ): Boolean =
+    request.cookies.get(passkeysEnablingCookieName).isDefined
 }
