@@ -8,9 +8,9 @@ const passkeyApi = {
   async fetchWithCsrf(
     url,
     method = "POST",
-    body = null,
-    contentType = "application/x-www-form-urlencoded",
     csrfToken,
+    contentType = "application/x-www-form-urlencoded",
+    body = null,
   ) {
     const options = {
       method,
@@ -28,18 +28,53 @@ const passkeyApi = {
     return fetch(url, options);
   },
 
+  async getRegistrationOptions(
+    csrfToken,
+    endpoint = "/passkey/registration-options",
+  ) {
+    try {
+      const response = await this.fetchWithCsrf(endpoint, "POST", csrfToken);
+      const optionsJson = await response.json();
+
+      if (!response.ok) {
+        console.error("Registration options request failed:", optionsJson);
+        displayToast(optionsJson.message, messageType.error);
+        return null;
+      }
+
+      /*
+       * authenticatorSelection.authenticatorAttachment can be "platform" | "cross-platform" | null.
+       * A null value means any authenticator is allowed.
+       * Unfortunately, even though null is the recommended value, Safari won't allow it
+       * and Firefox gives a warning about it.
+       * So we remove the field if its value is null and all browsers are then happy.
+       * The effect is unchanged.
+       *
+       * This is a temporary measure until browsers accept the null value.
+       */
+      if (
+        optionsJson.authenticatorSelection?.authenticatorAttachment === null
+      ) {
+        delete optionsJson.authenticatorSelection.authenticatorAttachment;
+      }
+
+      return optionsJson;
+    } catch (error) {
+      console.error("Error fetching registration options:", error);
+      displayToast(
+        "Network error while getting registration options",
+        messageType.error,
+      );
+      return null;
+    }
+  },
+
   async getAuthenticationOptions(
     csrfToken,
     endpoint = "/passkey/auth-options",
   ) {
     try {
-      const response = await this.fetchWithCsrf(
-        endpoint,
-        "POST",
-        null,
-        null,
-        csrfToken,
-      );
+      const response = await this.fetchWithCsrf(endpoint, "POST", csrfToken);
       const optionsJson = await response.json();
 
       if (!response.ok) {
@@ -76,21 +111,12 @@ const passkeyApi = {
     endpoint = "/passkey/registration-auth-options",
   ) {
     try {
-      const response = await this.fetchWithCsrf(
-        endpoint,
-        "POST",
-        null,
-        null,
-        csrfToken,
-      );
+      const response = await this.fetchWithCsrf(endpoint, "POST", csrfToken);
       const optionsJson = await response.json();
 
       if (!response.ok) {
         console.error("Authentication options request failed:", optionsJson);
-        displayToast(
-          "Failed to get authentication options from server. Please try again.",
-          messageType.warning,
-        );
+        displayToast(optionsJson.message, messageType.error);
         return null;
       }
 
@@ -167,29 +193,9 @@ export async function registerPasskey(csrfToken) {
     }
 
     // 3. Fetch the passkey creation options
-    const regOptionsResponse = await passkeyApi.fetchWithCsrf(
-      "/passkey/registration-options",
-      "POST",
-      null,
-      null,
-      csrfToken,
-    );
-    const regOptionsJson = await regOptionsResponse.json();
-
-    /*
-     * authenticatorSelection.authenticatorAttachment can be "platform" | "cross-platform" | null.
-     * A null value means any authenticator is allowed.
-     * Unfortunately, even though null is the recommended value, Safari won't allow it
-     * and Firefox gives a warning about it.
-     * So we remove the field if its value is null and all browsers are then happy.
-     * The effect is unchanged.
-     *
-     * This is a temporary measure until browsers accept the null value.
-     */
-    if (
-      regOptionsJson.authenticatorSelection?.authenticatorAttachment === null
-    ) {
-      delete regOptionsJson.authenticatorSelection.authenticatorAttachment;
+    const regOptionsJson = await passkeyApi.getRegistrationOptions(csrfToken);
+    if (!regOptionsJson) {
+      return;
     }
 
     // 4. Create a new passkey
@@ -279,9 +285,9 @@ export async function deletePasskey(passkeyId, csrfToken) {
     const response = await passkeyApi.fetchWithCsrf(
       `/passkey/${passkeyId}`,
       "DELETE",
-      JSON.stringify(existingCredential.toJSON()),
-      "text/plain",
       csrfToken,
+      "text/plain",
+      JSON.stringify(existingCredential.toJSON()),
     );
 
     if (!response.ok) {

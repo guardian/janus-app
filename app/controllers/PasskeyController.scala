@@ -48,6 +48,7 @@ class PasskeyController(
   def registrationOptions: Action[Unit] = authAction(parse.empty) { request =>
     apiResponse(
       for {
+        _ <- verifyHasAccess(request.user)
         loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
         options <- Passkey.registrationOptions(
           appName,
@@ -80,11 +81,15 @@ class PasskeyController(
           registrationData =>
             redirectResponse(routes.Janus.userAccount) {
               for {
+                _ <- verifyHasAccess(request.user)
                 _ <- validateUniquePasskeyName(
                   request.user,
                   registrationData.passkeyName
                 )
-                _ <- performPasskeyRegistration(request.user, registrationData)
+                _ <- performPasskeyRegistration(
+                  request.user,
+                  registrationData
+                )
               } yield "Passkey was registered successfully"
             }
         )
@@ -132,6 +137,7 @@ class PasskeyController(
     authAction(parse.empty) { request =>
       apiResponse(
         for {
+          _ <- verifyHasAccess(request.user)
           loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
           options <- Passkey.authenticationOptions(
             appHost = host,
@@ -210,6 +216,14 @@ class PasskeyController(
         )
       else Success(())
     }
+
+  private def verifyHasAccess(
+      user: UserIdentity
+  ): Try[Unit] =
+    if hasAccess(user.username, janusData.access) ||
+      hasAccess(user.username, janusData.admin)
+    then Success(())
+    else Failure(JanusException.noAccessFailure(user))
 
   private def loadRegistrationChallenge(
       user: UserIdentity
