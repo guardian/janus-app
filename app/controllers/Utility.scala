@@ -40,6 +40,7 @@ class Utility(
   }
 
   def gone: Action[Unit] = authAction(parse.empty) { implicit request =>
+    logger.warn(s"410 response served for path '${request.method} ${request.path}' from user ${request.user.username}")
     val displayMode =
       Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
     Gone(views.html.gone(request.user, janusData, displayMode))
