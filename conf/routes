@@ -37,7 +37,7 @@ DELETE  /passkey/:passkeyId                 controllers.PasskeyController.delete
 GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts
 
-# Old routes
+# Old routes that moved to POST when passkey authentication was introduced
 GET     /console                    controllers.Utility.gone
 GET     /consoleUrl                 controllers.Utility.gone
 GET     /credentials                controllers.Utility.gone
