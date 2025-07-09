@@ -153,7 +153,6 @@ class AppComponents(context: ApplicationLoader.Context)
       janusData
     ),
     new Utility(janusData, controllerComponents, authAction, configuration),
-    new GoneController(controllerComponents, authAction, janusData),
     assets
   )
 }

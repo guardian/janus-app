@@ -38,10 +38,10 @@ GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts
 
 # Old routes
-GET     /console                    controllers.GoneController.gone
-GET     /consoleUrl                 controllers.GoneController.gone
-GET     /credentials                controllers.GoneController.gone
-GET     /multi-credentials          controllers.GoneController.gone
+GET     /console                    controllers.Utility.gone
+GET     /consoleUrl                 controllers.Utility.gone
+GET     /credentials                controllers.Utility.gone
+GET     /multi-credentials          controllers.Utility.gone
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(file)
