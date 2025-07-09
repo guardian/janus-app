@@ -454,7 +454,7 @@ document.addEventListener("DOMContentLoaded", function () {
       link.addEventListener("click", function (e) {
         e.preventDefault();
         const targetHref = link.href;
-        if (link.dataset.passkeyBypassed) {
+        if (link.dataset.passkeyProtected === "false") {
           bypassPasskeyAuthentication(targetHref, csrfToken).catch(
             function (err) {
               console.error("Error setting up bypass of protected link:", err);

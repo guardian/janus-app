@@ -1,10 +1,7 @@
-
-@import helper._
-@import aws.Federation.{maxLongTime, maxShortTime, defaultLongTime, defaultShortTime}
+@import aws.Federation.{defaultLongTime, defaultShortTime, maxLongTime, maxShortTime}
 @import logic.Date.formatDuration
-@import models.DisplayMode
 
-@()
+@(passkeysEnabled: Boolean)
 
 <div class="controls__hero">
     <div class="container controls__container">
@@ -20,7 +17,10 @@
                         <a class="multiple-credentials-control--clear janus-btn--flat waves-effect waves-light btn-flat">
                             <i class="material-icons">clear</i>
                         </a>
-                        <a class="multiple-credentials__link btn-large federation__link federation__link--standard right" href="/multi-credentials?">
+                        <a class="multiple-credentials__link btn-large federation__link federation__link--standard right"
+                            href="/multi-credentials?"
+                            data-passkey-protected="@passkeysEnabled"
+                        >
                             <i class="material-icons right">vpn_key</i>
                             <span class="multi-accounts-count">0 accounts</span>
                         </a>

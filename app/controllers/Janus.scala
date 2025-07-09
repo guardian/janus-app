@@ -2,6 +2,7 @@ package controllers
 
 import aws.{AuditTrailDB, Federation, PasskeyDB}
 import cats.syntax.all.*
+import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.*
 import com.webauthn4j.data.attestation.authenticator.AAGUID
@@ -25,6 +26,8 @@ class Janus(
     host: String,
     stsClient: StsClient,
     configuration: Configuration,
+    passkeysEnabledGlobally: Boolean,
+    passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator]
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
@@ -45,7 +48,13 @@ class Janus(
       } yield {
         Ok(
           views.html
-            .index(awsAccountAccess, request.user, janusData, displayMode)
+            .index(
+              awsAccountAccess,
+              request.user,
+              janusData,
+              displayMode,
+              passkeysEnabledGlobally && passkeysEnabledForRequest(request)
+            )
         )
       }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
     }
@@ -56,7 +65,14 @@ class Janus(
         permissions <- userAccess(username(request.user), janusData.admin)
         awsAccountAccess = orderedAccountAccess(permissions)
       } yield {
-        Ok(views.html.admin(awsAccountAccess, request.user, janusData))
+        Ok(
+          views.html.admin(
+            awsAccountAccess,
+            request.user,
+            janusData,
+            passkeysEnabledGlobally && passkeysEnabledForRequest(request)
+          )
+        )
       }) getOrElse Ok(
         views.html
           .error("You do not have admin access", Some(request.user), janusData)
@@ -85,7 +101,8 @@ class Janus(
             supportUsersInNextPeriod,
             currentUserFutureSupportPeriods,
             request.user,
-            janusData
+            janusData,
+            passkeysEnabledGlobally && passkeysEnabledForRequest(request)
           )
         )
       }) getOrElse Ok(
@@ -304,4 +321,9 @@ class Janus(
       })
       .sequence
   }
+
+  private def passkeysEnabledForRequest(
+      request: UserIdentityRequest[AnyContent]
+  ): Boolean =
+    request.cookies.get(passkeysEnablingCookieName).isDefined
 }

@@ -2,7 +2,7 @@
 @import com.gu.googleauth.UserIdentity
 @import play.api.Mode
 
-@(accountAccesses: List[AwsAccountAccess], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountAccesses: List[AwsAccountAccess], user: UserIdentity, janusData: JanusData, passkeysEnabled: Boolean)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Admin", Some(user), janusData) {
     <div class="container">
@@ -21,9 +21,9 @@
             </div>
         </div>
 
-        @fragments.awsAccounts(accountAccesses, allowFavs = false)
+        @fragments.awsAccounts(accountAccesses, allowFavs = false, passkeysEnabled = passkeysEnabled)
     </div>
 
-    @fragments.multiSelectHero()
+    @fragments.multiSelectHero(passkeysEnabled = passkeysEnabled)
 
 }

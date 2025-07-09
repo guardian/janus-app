@@ -6,7 +6,7 @@
 @(accountAccesses: List[AwsAccountAccess],
   activeSupportUsers: Option[(Instant, (Option[String], Option[String]))],
     nextSupportUsers: Option[(Instant, (Option[String], Option[String]))],
-  futureSupportDates: List[(Instant, String)], user: UserIdentity, janusData: JanusData
+  futureSupportDates: List[(Instant, String)], user: UserIdentity, janusData: JanusData, passkeysEnabled: Boolean
 )(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Support", Some(user), janusData) {
@@ -24,12 +24,12 @@
                         need to use this access try to let the team know what you
                         are doing to their account.
                         <br />
-                        Please note that Janus access is logged and visible by all users.
+                        Please note that Janus access is logged and visible to all users.
                     </span>
                 </div>
             </div>
         </div>
 
-        @fragments.awsAccounts(accountAccesses, allowFavs = false)
+        @fragments.awsAccounts(accountAccesses, allowFavs = false, passkeysEnabled = passkeysEnabled)
     </div>
 }
