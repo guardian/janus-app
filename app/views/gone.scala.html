@@ -1,0 +1,16 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+@import models.DisplayMode
+@import play.api.Mode
+
+@(user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@main("Gone", Some(user), janusData, displayMode) {
+    <div class="container">
+        <h1 class="header orange-text">Resource Gone</h1>
+        <div class="card-panel">
+            <p><strong>The <code>@{req.path}</code> link has been updated!</strong></p>
+            <p>Please go back to the <a href="@routes.Janus.index">home page</a> and follow the new link from there.</p>
+        </div>
+    </div>
+}
