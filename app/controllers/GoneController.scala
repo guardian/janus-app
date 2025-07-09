@@ -15,10 +15,9 @@ class GoneController(
 )(using mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(cc) {
 
-  def gone: Action[Unit] = authAction(parse.empty) {
-    implicit request =>
-      val displayMode =
-        Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
-      Gone(views.html.gone(request.user, janusData, displayMode))
+  def gone: Action[Unit] = authAction(parse.empty) { implicit request =>
+    val displayMode =
+      Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
+    Gone(views.html.gone(request.user, janusData, displayMode))
   }
 }
