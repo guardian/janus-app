@@ -4,10 +4,8 @@ import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import conf.Config
 import logic.Owners
+import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
-import play.api.mvc._
-
-import scala.util.{Failure, Try}
 
 class Utility(
     janusData: JanusData,
@@ -36,5 +34,12 @@ class Utility(
           .warn(s"Couldn't lookup account number for ${account.name}", err)
       }
     Ok(views.html.accounts(accountData, request.user, janusData))
+  }
+
+  def gone: Action[AnyContent] = authAction { implicit request =>
+    logger.warn(
+      s"410 response served for request '${request.method} ${request.path}' from user ${request.user.username}"
+    )
+    Gone(views.html.gone(request.user, janusData))
   }
 }
