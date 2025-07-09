@@ -3,12 +3,9 @@ package controllers
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import conf.Config
-import logic.{Date, Owners}
-import play.api.{Configuration, Logging, Mode}
+import logic.Owners
 import play.api.mvc.*
-
-import java.time.{ZoneId, ZonedDateTime}
-import scala.util.{Failure, Try}
+import play.api.{Configuration, Logging, Mode}
 
 class Utility(
     janusData: JanusData,
@@ -39,10 +36,10 @@ class Utility(
     Ok(views.html.accounts(accountData, request.user, janusData))
   }
 
-  def gone: Action[Unit] = authAction(parse.empty) { implicit request =>
-    logger.warn(s"410 response served for request '${request.method} ${request.path}' from user ${request.user.username}")
-    val displayMode =
-      Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
-    Gone(views.html.gone(request.user, janusData, displayMode))
+  def gone: Action[AnyContent] = authAction { implicit request =>
+    logger.warn(
+      s"410 response served for request '${request.method} ${request.path}' from user ${request.user.username}"
+    )
+    Gone(views.html.gone(request.user, janusData))
   }
 }

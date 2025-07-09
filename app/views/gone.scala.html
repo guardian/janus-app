@@ -3,9 +3,9 @@
 @import models.DisplayMode
 @import play.api.Mode
 
-@(user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
-@main("Gone", Some(user), janusData, displayMode) {
+@main("Gone", Some(user), janusData) {
     <div class="container">
         <h1 class="header orange-text">Resource Gone</h1>
         <div class="card-panel">
