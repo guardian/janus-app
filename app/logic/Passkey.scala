@@ -7,6 +7,11 @@ import com.webauthn4j.converter.exception.DataConversionException
 import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
 import com.webauthn4j.data.*
 import com.webauthn4j.data.AttestationConveyancePreference.DIRECT
+import com.webauthn4j.data.PublicKeyCredentialHints.{
+  CLIENT_DEVICE,
+  HYBRID,
+  SECURITY_KEY
+}
 import com.webauthn4j.data.PublicKeyCredentialType.PUBLIC_KEY
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
@@ -53,21 +58,6 @@ object Passkey {
 
   private val webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager()
 
-  private def toDescriptor(
-      passkey: PasskeyMetadata
-  ): PublicKeyCredentialDescriptor = {
-    val credType = PUBLIC_KEY
-    val id = Base64UrlUtil.decode(passkey.id)
-    // Include common transport types to help the authenticator find the right credential
-    val transports = Set(
-      AuthenticatorTransport.INTERNAL, // Platform authenticators
-      AuthenticatorTransport.HYBRID, // QR code and proximity-based
-      AuthenticatorTransport.USB, // USB security keys
-      AuthenticatorTransport.NFC // NFC-based authenticators
-    )
-    new PublicKeyCredentialDescriptor(credType, id, transports.asJava)
-  }
-
   /** Creates registration options for a new passkey. This is required by a
     * browser to initiate the registration process.
     *
@@ -106,15 +96,26 @@ object Passkey {
         user.fullName
       )
       val timeout = Duration(60, SECONDS)
-      val excludeCredentials = existingPasskeys.map(toDescriptor)
+      val excludeCredentials = existingPasskeys.map { p =>
+        val credType = PUBLIC_KEY
+        val id = Base64UrlUtil.decode(p.id)
+        val transports: Option[Set[AuthenticatorTransport]] = None
+        new PublicKeyCredentialDescriptor(
+          credType,
+          id,
+          transports.orNull.asJava
+        )
+      }
       // Allow the widest possible range of authenticators
       val authenticatorAttachment: AuthenticatorAttachment = null
+      val requireResidentKey = true
       val authenticatorSelection = new AuthenticatorSelectionCriteria(
         authenticatorAttachment,
-        ResidentKeyRequirement.DISCOURAGED, // Don't allow passkeys unknown to the server to be discovered at authentication time
-        UserVerificationRequirement.REQUIRED // Always require user verification
+        requireResidentKey,
+        ResidentKeyRequirement.REQUIRED,
+        UserVerificationRequirement.REQUIRED
       )
-      val hints: Seq[PublicKeyCredentialHints] = Nil
+      val hints = Seq(CLIENT_DEVICE, SECURITY_KEY, HYBRID)
       val attestation = DIRECT
       val extensions: AuthenticationExtensionsClientInputs[
         RegistrationExtensionClientInput
@@ -149,7 +150,18 @@ object Passkey {
     Try {
       val timeout = Duration(60, SECONDS)
       val rpId = URI.create(appHost).getHost
-      val allowCredentials = existingPasskeys.map(toDescriptor)
+      val allowCredentials = existingPasskeys.map{ p =>
+        val credType = PUBLIC_KEY
+        val id = Base64UrlUtil.decode(p.id)
+        // Include common transport types to help the authenticator find the right credential
+        val transports = Set(
+          AuthenticatorTransport.INTERNAL, // Platform authenticators
+          AuthenticatorTransport.HYBRID, // QR code and proximity-based
+          AuthenticatorTransport.USB, // USB security keys
+          AuthenticatorTransport.NFC // NFC-based authenticators
+        )
+        new PublicKeyCredentialDescriptor(credType, id, transports.asJava)
+      }
       val userVerification = UserVerificationRequirement.REQUIRED
       val hints = Nil
       val extensions: AuthenticationExtensionsClientInputs[
