@@ -18,13 +18,13 @@
         <div class="card-panel">
         @if(request.cookies.get(passkeysEnablingCookieName).isDefined) {
             <p class="green-text"><i class="material-icons left">check_circle</i>You are currently opted in to passkey authentication.</p>
-            <a href="/opt/out/passkeys" class="btn red waves-effect waves-light">
+            <a href="@routes.Utility.optOutOfPasskeys" class="btn red waves-effect waves-light">
                 <i class="material-icons left">cancel</i>
                 Opt out
             </a>
         } else {
             <p class="grey-text"><i class="material-icons left">info</i>You are currently opted out of passkey authentication.</p>
-            <a href="/opt/in/passkeys" class="btn green waves-effect waves-light">
+            <a href="@routes.Utility.optInToPasskeys" class="btn green waves-effect waves-light">
                 <i class="material-icons left">check_circle</i>
                 Opt in
             </a>
