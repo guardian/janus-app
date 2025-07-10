@@ -64,7 +64,11 @@ object Passkey {
     val credType = PUBLIC_KEY
     val id = Base64UrlUtil.decode(passkey.id)
     val transports: Option[Set[AuthenticatorTransport]] = None
-    new PublicKeyCredentialDescriptor(credType, id, transports.map(_.asJava).orNull)
+    new PublicKeyCredentialDescriptor(
+      credType,
+      id,
+      transports.map(_.asJava).orNull
+    )
   }
 
   /** Creates registration options for a new passkey. This is required by a
