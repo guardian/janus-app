@@ -15,20 +15,33 @@
 
         <h3 class="header orange-text">Passkeys</h3>
 
-        <div class="card-panel">
-        @if(request.cookies.get(passkeysEnablingCookieName).isDefined) {
-            <p class="green-text"><i class="material-icons left">check_circle</i>You are currently opted in to passkey authentication.</p>
-            <a href="@routes.Utility.optOutOfPasskeys" class="btn red waves-effect waves-light">
-                <i class="material-icons left">cancel</i>
-                Opt out
-            </a>
-        } else {
-            <p class="grey-text"><i class="material-icons left">info</i>You are currently opted out of passkey authentication.</p>
-            <a href="@routes.Utility.optInToPasskeys" class="btn green waves-effect waves-light">
-                <i class="material-icons left">check_circle</i>
-                Opt in
-            </a>
-        }
+        <div role="region" aria-labelledby="passkey-status-heading">
+            <h4 id="passkey-status-heading" class="sr-only">Passkey authentication status</h4>
+            @if(request.cookies.get(passkeysEnablingCookieName).isDefined) {
+                <p class="green-text" role="status" aria-live="polite">
+                    <i class="material-icons left" aria-hidden="true">check_circle</i>
+                    <span>You are currently opted in to passkey authentication.</span>
+                </p>
+                <a href="@routes.Utility.optOutOfPasskeys"
+                   class="btn red waves-effect waves-light"
+                   role="button"
+                   aria-describedby="passkey-status-heading">
+                    <i class="material-icons left" aria-hidden="true">cancel</i>
+                    <span>Opt out</span>
+                </a>
+            } else {
+                <p class="grey-text" role="status" aria-live="polite">
+                    <i class="material-icons left" aria-hidden="true">info</i>
+                    <span>You are currently opted out of passkey authentication.</span>
+                </p>
+                <a href="@routes.Utility.optInToPasskeys"
+                   class="btn green waves-effect waves-light"
+                   role="button"
+                   aria-describedby="passkey-status-heading">
+                    <i class="material-icons left" aria-hidden="true">check_circle</i>
+                    <span>Opt in</span>
+                </a>
+            }
         </div>
 
         <p>Passkeys are a secure way to authenticate sensitive actions.
