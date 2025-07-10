@@ -26,7 +26,7 @@ import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.concurrent.duration.{Duration, SECONDS}
 import scala.jdk.CollectionConverters.*
-import scala.util.{Failure, Try}
+import scala.util.Try
 
 /** Logic for registration of passkeys and authentication using them. */
 object Passkey {
@@ -57,6 +57,15 @@ object Passkey {
   )
 
   private val webAuthnManager = WebAuthnManager.createNonStrictWebAuthnManager()
+
+  private def toDescriptor(
+      passkey: PasskeyMetadata
+  ): PublicKeyCredentialDescriptor = {
+    val credType = PUBLIC_KEY
+    val id = Base64UrlUtil.decode(passkey.id)
+    val transports: Option[Set[AuthenticatorTransport]] = None
+    new PublicKeyCredentialDescriptor(credType, id, transports.orNull.asJava)
+  }
 
   /** Creates registration options for a new passkey. This is required by a
     * browser to initiate the registration process.
@@ -96,16 +105,7 @@ object Passkey {
         user.fullName
       )
       val timeout = Duration(60, SECONDS)
-      val excludeCredentials = existingPasskeys.map { p =>
-        val credType = PUBLIC_KEY
-        val id = Base64UrlUtil.decode(p.id)
-        val transports: Option[Set[AuthenticatorTransport]] = None
-        new PublicKeyCredentialDescriptor(
-          credType,
-          id,
-          transports.orNull.asJava
-        )
-      }
+      val excludeCredentials = existingPasskeys.map(toDescriptor)
       // Allow the widest possible range of authenticators
       val authenticatorAttachment: AuthenticatorAttachment = null
       val requireResidentKey = true
@@ -150,20 +150,9 @@ object Passkey {
     Try {
       val timeout = Duration(60, SECONDS)
       val rpId = URI.create(appHost).getHost
-      val allowCredentials = existingPasskeys.map{ p =>
-        val credType = PUBLIC_KEY
-        val id = Base64UrlUtil.decode(p.id)
-        // Include common transport types to help the authenticator find the right credential
-        val transports = Set(
-          AuthenticatorTransport.INTERNAL, // Platform authenticators
-          AuthenticatorTransport.HYBRID, // QR code and proximity-based
-          AuthenticatorTransport.USB, // USB security keys
-          AuthenticatorTransport.NFC // NFC-based authenticators
-        )
-        new PublicKeyCredentialDescriptor(credType, id, transports.asJava)
-      }
+      val allowCredentials = existingPasskeys.map(toDescriptor)
       val userVerification = UserVerificationRequirement.REQUIRED
-      val hints = Nil
+      val hints = Seq(CLIENT_DEVICE, SECURITY_KEY, HYBRID)
       val extensions: AuthenticationExtensionsClientInputs[
         AuthenticationExtensionClientInput
       ] = null

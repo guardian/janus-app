@@ -184,6 +184,7 @@ object PasskeyDB {
           )
         )
         .toSeq
+        .sortBy(_.registrationTime)
     } else Nil
 
   /** The device hosting the passkey keeps a count of how many times the passkey
