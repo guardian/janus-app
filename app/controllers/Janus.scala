@@ -139,7 +139,8 @@ class Janus(
         janusData,
         passkeys,
         dateFormat,
-        timeFormat
+        timeFormat,
+        passkeysEnablingCookieName
       )
     }
   }

@@ -4,7 +4,7 @@
 @import play.api.Mode
 @import java.time.Instant
 
-@(user: UserIdentity, janusData: JanusData, passkeys: Seq[models.PasskeyMetadata], dateFormat: Instant => String, timeFormat: Instant => String)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(user: UserIdentity, janusData: JanusData, passkeys: Seq[models.PasskeyMetadata], dateFormat: Instant => String, timeFormat: Instant => String, passkeysEnablingCookieName: String)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("User account", Some(user), janusData) {
 
@@ -15,6 +15,22 @@
 
         <h3 class="header orange-text">Passkeys</h3>
 
+        <div class="card-panel">
+        @if(request.cookies.get(passkeysEnablingCookieName).isDefined) {
+            <p class="green-text"><i class="material-icons left">check_circle</i>You are currently opted in to passkey authentication.</p>
+            <a href="/opt/out/passkeys" class="btn red waves-effect waves-light">
+                <i class="material-icons left">cancel</i>
+                Opt out
+            </a>
+        } else {
+            <p class="grey-text"><i class="material-icons left">info</i>You are currently opted out of passkey authentication.</p>
+            <a href="/opt/in/passkeys" class="btn green waves-effect waves-light">
+                <i class="material-icons left">check_circle</i>
+                Opt in
+            </a>
+        }
+        </div>
+
         <p>Passkeys are a secure way to authenticate sensitive actions.
             Janus uses them as an extra layer of security to authenticate you before allowing you to access
             AWS credentials or the AWS console.</p>
@@ -23,7 +39,7 @@
             One should be on-device (e.g. Mac Touch ID or Windows Hello)
             and the other off-device (e.g. security key or phone).</p>
 
-        <div class="row">           
+        <div class="row">
             <h4 class="header orange-text">Registered passkeys</h4>
             <div class="col s12">
                 <div class="card-panel">
