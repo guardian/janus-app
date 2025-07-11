@@ -70,16 +70,15 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         |  "timeout" : 60000,
         |  "excludeCredentials" : [ {
         |    "type" : "public-key",
-        |    "id" : "K9iphQ03JmTBqf-1pPGBXvpzfvt96ZAy51_BrKjibn0",
-        |    "transports" : [ "internal", "hybrid", "usb", "nfc" ]
+        |    "id" : "K9iphQ03JmTBqf-1pPGBXvpzfvt96ZAy51_BrKjibn0"
         |  } ],
         |  "authenticatorSelection" : {
         |    "authenticatorAttachment" : null,
-        |    "requireResidentKey" : false,
-        |    "residentKey" : "discouraged",
+        |    "requireResidentKey" : true,
+        |    "residentKey" : "required",
         |    "userVerification" : "required"
         |  },
-        |  "hints" : [ ],
+        |  "hints" : [ "client-device", "security-key", "hybrid" ],
         |  "attestation" : "direct",
         |  "extensions" : null
         |}""".stripMargin
@@ -124,7 +123,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
   }
 
   "authenticationOptions" - {
-    "creates valid authentication options when passkeys don't exist" - {
+    "creates valid authentication options when passkeys don't exist" in {
       val appHost = "https://test.example.com"
       val testUser = UserIdentity(
         sub = "sub",
@@ -137,33 +136,28 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
       val challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
       val emptyPasskeys = Seq.empty[PasskeyMetadata]
 
-      val result = Passkey.authenticationOptions(
+      val options = Passkey.authenticationOptions(
         appHost,
         testUser,
         challenge,
         emptyPasskeys
       )
-
-      val options = result.get
-
-      "returns success" in {
-        result.isSuccess shouldBe true
-      }
-
-      "sets the correct challenge" in {
-        options.getChallenge shouldBe challenge
-      }
-
-      "sets the correct RP ID" in {
-        options.getRpId shouldBe "test.example.com"
-      }
-
-      "includes no credentials" in {
-        options.getAllowCredentials.isEmpty shouldBe true
-      }
+      val json = PasskeyEncodings.mapper
+        .writerWithDefaultPrettyPrinter()
+        .writeValueAsString(options.toEither.value)
+      json shouldBe
+        """{
+          |  "challenge" : "Y2hhbGxlbmdl",
+          |  "timeout" : 60000,
+          |  "rpId" : "test.example.com",
+          |  "allowCredentials" : [ ],
+          |  "userVerification" : "required",
+          |  "hints" : [ "client-device", "security-key", "hybrid" ],
+          |  "extensions" : null
+          |}""".stripMargin
     }
 
-    "creates valid authentication options when passkeys exist" - {
+    "creates valid authentication options when passkeys exist" in {
       val appHost = "https://test.example.com"
       val testUser = UserIdentity(
         sub = "sub",
@@ -185,30 +179,28 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         )
       )
 
-      val result = Passkey.authenticationOptions(
+      val options = Passkey.authenticationOptions(
         appHost,
         testUser,
         challenge,
         existingPasskeys
       )
-
-      val options = result.get
-
-      "returns success" in {
-        result.isSuccess shouldBe true
-      }
-
-      "sets the correct challenge" in {
-        options.getChallenge shouldBe challenge
-      }
-
-      "sets the correct RP ID" in {
-        options.getRpId shouldBe "test.example.com"
-      }
-
-      "includes all credentials" in {
-        options.getAllowCredentials.size() shouldBe 1
-      }
+      val json = PasskeyEncodings.mapper
+        .writerWithDefaultPrettyPrinter()
+        .writeValueAsString(options.toEither.value)
+      json shouldBe
+        """{
+          |  "challenge" : "Y2hhbGxlbmdl",
+          |  "timeout" : 60000,
+          |  "rpId" : "test.example.com",
+          |  "allowCredentials" : [ {
+          |    "type" : "public-key",
+          |    "id" : "K9iphQ03JmTBqf-1pPGBXvpzfvt96ZAy51_BrKjibn0"
+          |  } ],
+          |  "userVerification" : "required",
+          |  "hints" : [ "client-device", "security-key", "hybrid" ],
+          |  "extensions" : null
+          |}""".stripMargin
     }
   }
 }
