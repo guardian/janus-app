@@ -34,6 +34,10 @@ POST    /passkey/registration-auth-options  controllers.PasskeyController.regist
 POST    /passkey/register                   controllers.PasskeyController.register
 DELETE  /passkey/:passkeyId                 controllers.PasskeyController.deletePasskey(passkeyId: String)
 
+# Tmp routes for passkey trial
+GET     /opt/in/passkeys            controllers.Utility.optInToPasskeys
+GET     /opt/out/passkeys           controllers.Utility.optOutOfPasskeys
+
 GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts
 
