@@ -8,6 +8,8 @@ set -euo pipefail
 # Removing all their passkeys so that they can start again is the easiest solution to most problems.
 #
 # Requirements:
+# - AWS CLI installed
+# - jQ installed
 # - AWS CLI configured with 'security' profile
 # - Permission to write to DynamoDB service
 #
@@ -15,6 +17,27 @@ set -euo pipefail
 # - username whose passkeys to delete
 # - --dry-run (optional): show what would be deleted without actually deleting
 #
+
+check_dependencies() {
+    local missing_deps=()
+
+    if ! command -v aws &> /dev/null; then
+        missing_deps+=("aws")
+    fi
+
+    if ! command -v jq &> /dev/null; then
+        missing_deps+=("jq")
+    fi
+
+    if [ ${#missing_deps[@]} -gt 0 ]; then
+        echo "Error: Missing required dependencies: ${missing_deps[*]}"
+        echo "Please install the missing tools and try again."
+        exit 1
+    fi
+}
+
+# Check dependencies first
+check_dependencies
 
 # Parse arguments
 DRY_RUN=false
