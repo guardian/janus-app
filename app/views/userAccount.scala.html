@@ -4,7 +4,7 @@
 @import play.api.Mode
 @import java.time.Instant
 
-@(user: UserIdentity, janusData: JanusData, passkeys: Seq[models.PasskeyMetadata], dateFormat: Instant => String, timeFormat: Instant => String)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(user: UserIdentity, janusData: JanusData, passkeys: Seq[models.PasskeyMetadata], dateFormat: Instant => String, timeFormat: Instant => String, passkeysEnablingCookieName: String)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("User account", Some(user), janusData) {
 
@@ -15,6 +15,36 @@
 
         <h3 class="header orange-text">Passkeys</h3>
 
+        <div class="col s12">
+                <div role="region" id="passkey-status-heading" aria-label="Passkey authentication status">
+                    @if(request.cookies.get(passkeysEnablingCookieName).isDefined) {
+                    <div class="card-panel green lighten-4" role="status" aria-live="polite">
+                        <p><i class="material-icons" aria-hidden="true">check_circle</i> You are currently <strong>opted in</strong> to passkey authentication.</p>
+                        <div><a href="@routes.Utility.optOutOfPasskeys"
+                        class="btn red waves-effect waves-light"
+                        role="button"
+                        aria-describedby="passkey-status-heading">
+                            <i class="material-icons left" aria-hidden="true">cancel</i>
+                            <span>Opt out</span>
+                        </a></div>
+                    </div>
+                    } else {
+                    <div class="card-panel grey lighten-4" role="status" aria-live="polite">
+                        <p><i class="material-icons" aria-hidden="true">info</i> You are currently <strong>opted out</strong> of passkey authentication.</p>
+                        <div> 
+                            <a href="@routes.Utility.optInToPasskeys"
+                            class="btn green waves-effect waves-light"
+                            role="button"
+                            aria-describedby="passkey-status-heading">
+                            <i class="material-icons left" aria-hidden="true">check_circle</i>
+                            <span>Opt in</span>
+                            </a>
+                        </div>
+                    </div>               
+                    }
+                </div>
+            </div>
+
         <p>Passkeys are a secure way to authenticate sensitive actions.
             Janus uses them as an extra layer of security to authenticate you before allowing you to access
             AWS credentials or the AWS console.</p>
@@ -23,7 +53,7 @@
             One should be on-device (e.g. Mac Touch ID or Windows Hello)
             and the other off-device (e.g. security key or phone).</p>
 
-        <div class="row">           
+        <div class="row">
             <h4 class="header orange-text">Registered passkeys</h4>
             <div class="col s12">
                 <div class="card-panel">

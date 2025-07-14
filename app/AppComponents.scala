@@ -152,7 +152,13 @@ class AppComponents(context: ApplicationLoader.Context)
       host,
       janusData
     ),
-    new Utility(janusData, controllerComponents, authAction, configuration),
+    new Utility(
+      janusData,
+      controllerComponents,
+      authAction,
+      configuration,
+      passkeysEnablingCookieName
+    ),
     assets
   )
 }
