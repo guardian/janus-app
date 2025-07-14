@@ -38,6 +38,7 @@ if [ -z "$USERNAME" ]; then
 fi
 
 PROFILE="security"
+REGION="eu-west-1"
 
 if [ "$DRY_RUN" = true ]; then
     echo "[DRY RUN] Would delete all passkeys for username: $USERNAME"
@@ -50,7 +51,7 @@ ITEMS=$(aws dynamodb scan \
     --table-name Passkeys \
     --filter-expression "username = :username" \
     --expression-attribute-values '{":username": {"S": "'$USERNAME'"}}' \
-    --region eu-west-1 \
+    --region $REGION \
     --profile $PROFILE \
     --output json)
 
@@ -63,8 +64,8 @@ echo "$ITEMS" | jq -r '.Items[] | .credentialId.S' | while read -r CREDENTIAL_ID
         aws dynamodb delete-item \
             --table-name Passkeys \
             --key '{"credentialId": {"S": "'$CREDENTIAL_ID'"}, "username": {"S": "'$USERNAME'"}}' \
-            --region eu-west-1 \
-            --profile security
+            --region $REGION \
+            --profile $PROFILE
     fi
 done
 
