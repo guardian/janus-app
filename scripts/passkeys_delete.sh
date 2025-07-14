@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail
+
 #
 # This script deletes all passkeys belonging to a given user
 # from the production Janus Passkeys table.
