@@ -8,7 +8,7 @@ import sbtversionpolicy.withsbtrelease.ReleaseVersion
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.31.67"
+val awsSdkVersion = "2.31.78"
 val circeVersion = "0.14.14"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
@@ -83,7 +83,7 @@ lazy val root: Project = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "24.1.1",
+      "com.gu.play-googleauth" %% "play-v30" % "24.1.2",
       "com.gu.play-secret-rotation" %% "play-v30" % "14.3.4",
       "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "14.3.4",
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
