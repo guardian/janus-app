@@ -112,11 +112,9 @@ object Passkey {
       val excludeCredentials = existingPasskeys.map(toDescriptor)
       // Allow the widest possible range of authenticators
       val authenticatorAttachment: AuthenticatorAttachment = null
-      val requireResidentKey = true
       val authenticatorSelection = new AuthenticatorSelectionCriteria(
         authenticatorAttachment,
-        requireResidentKey,
-        ResidentKeyRequirement.REQUIRED,
+        ResidentKeyRequirement.DISCOURAGED, // Don't allow passkeys unknown to the server to be discovered at authentication time
         UserVerificationRequirement.REQUIRED
       )
       val hints = Seq(CLIENT_DEVICE, SECURITY_KEY, HYBRID)
