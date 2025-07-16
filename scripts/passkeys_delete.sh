@@ -79,11 +79,11 @@ ITEMS=$(aws dynamodb scan \
     --output json)
 
 # Extract credentialId values and delete each item
-echo "$ITEMS" | jq -r '.Items[] | .credentialId.S' | while read -r CREDENTIAL_ID; do
+echo "$ITEMS" | jq -r '.Items[] | "\(.credentialId.S) \(.passkeyName.S // "Unknown")"' | while read -r CREDENTIAL_ID PASSKEY_NAME; do
     if [ "$DRY_RUN" = true ]; then
-        echo "[DRY RUN] Would delete item with credentialId: $CREDENTIAL_ID"
+        echo "[DRY RUN] Would delete item with credentialId: $CREDENTIAL_ID (passkeyName: $PASSKEY_NAME)"
     else
-        echo "Deleting item with credentialId: $CREDENTIAL_ID"
+        echo "Deleting item with credentialId: $CREDENTIAL_ID (passkeyName: $PASSKEY_NAME)"
         aws dynamodb delete-item \
             --table-name Passkeys \
             --key '{"credentialId": {"S": "'$CREDENTIAL_ID'"}, "username": {"S": "'$USERNAME'"}}' \
