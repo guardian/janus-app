@@ -7,6 +7,11 @@ import com.webauthn4j.converter.exception.DataConversionException
 import com.webauthn4j.credential.{CredentialRecord, CredentialRecordImpl}
 import com.webauthn4j.data.*
 import com.webauthn4j.data.AttestationConveyancePreference.DIRECT
+import com.webauthn4j.data.PublicKeyCredentialHints.{
+  CLIENT_DEVICE,
+  HYBRID,
+  SECURITY_KEY
+}
 import com.webauthn4j.data.PublicKeyCredentialType.PUBLIC_KEY
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
@@ -21,7 +26,7 @@ import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
 import scala.concurrent.duration.{Duration, SECONDS}
 import scala.jdk.CollectionConverters.*
-import scala.util.{Failure, Try}
+import scala.util.Try
 
 /** Logic for registration of passkeys and authentication using them. */
 object Passkey {
@@ -58,14 +63,12 @@ object Passkey {
   ): PublicKeyCredentialDescriptor = {
     val credType = PUBLIC_KEY
     val id = Base64UrlUtil.decode(passkey.id)
-    // Include common transport types to help the authenticator find the right credential
-    val transports = Set(
-      AuthenticatorTransport.INTERNAL, // Platform authenticators
-      AuthenticatorTransport.HYBRID, // QR code and proximity-based
-      AuthenticatorTransport.USB, // USB security keys
-      AuthenticatorTransport.NFC // NFC-based authenticators
+    val transports: Option[Set[AuthenticatorTransport]] = None
+    new PublicKeyCredentialDescriptor(
+      credType,
+      id,
+      transports.map(_.asJava).orNull
     )
-    new PublicKeyCredentialDescriptor(credType, id, transports.asJava)
   }
 
   /** Creates registration options for a new passkey. This is required by a
@@ -112,9 +115,9 @@ object Passkey {
       val authenticatorSelection = new AuthenticatorSelectionCriteria(
         authenticatorAttachment,
         ResidentKeyRequirement.DISCOURAGED, // Don't allow passkeys unknown to the server to be discovered at authentication time
-        UserVerificationRequirement.REQUIRED // Always require user verification
+        UserVerificationRequirement.REQUIRED
       )
-      val hints: Seq[PublicKeyCredentialHints] = Nil
+      val hints = Seq(CLIENT_DEVICE, SECURITY_KEY, HYBRID)
       val attestation = DIRECT
       val extensions: AuthenticationExtensionsClientInputs[
         RegistrationExtensionClientInput
@@ -151,7 +154,7 @@ object Passkey {
       val rpId = URI.create(appHost).getHost
       val allowCredentials = existingPasskeys.map(toDescriptor)
       val userVerification = UserVerificationRequirement.REQUIRED
-      val hints = Nil
+      val hints = Seq(CLIENT_DEVICE, SECURITY_KEY, HYBRID)
       val extensions: AuthenticationExtensionsClientInputs[
         AuthenticationExtensionClientInput
       ] = null
