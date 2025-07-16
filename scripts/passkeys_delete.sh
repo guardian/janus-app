@@ -6,6 +6,7 @@ set -euo pipefail
 # from the production Janus Passkeys table.
 # It's designed to be run locally when there's a problem with someone's passkeys.
 # Removing all their passkeys so that they can start again is the easiest solution to most problems.
+# By default, it will do nothing but show what it would do if applied.
 #
 # Requirements:
 # - AWS CLI installed
@@ -15,7 +16,7 @@ set -euo pipefail
 #
 # Arguments:
 # - username whose passkeys to delete
-# - --dry-run (optional): show what would be deleted without actually deleting
+# - --apply (optional): perform the deletion
 #
 
 check_dependencies() {
@@ -36,17 +37,15 @@ check_dependencies() {
     fi
 }
 
-# Check dependencies first
 check_dependencies
 
-# Parse arguments
-DRY_RUN=false
+DRY_RUN=true
 USERNAME=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --dry-run)
-            DRY_RUN=true
+        --apply)
+            DRY_RUN=false
             shift
             ;;
         *)
@@ -56,9 +55,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Check if username argument is provided
 if [ -z "$USERNAME" ]; then
-    echo "Usage: $0 <username> [--dry-run]"
+    echo "Usage: $0 <username> [--apply]"
     exit 1
 fi
 
