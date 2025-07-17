@@ -14,6 +14,7 @@
   "source": [
     "janus.js",
     "snow.js",
+    "passkeys-auth.js",
     "main.css"
   ],
   "repository": {

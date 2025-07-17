@@ -1,7 +1,7 @@
-import { createAndSubmitForm } from "./utils/formUtils.js";
-import { getPasskeyNameFromUser } from "./utils/modalUtils.js";
-import { showConfirmationModal } from "./utils/modalUtils.js";
-import { displayToast, messageType } from "./utils/toastMessages.js";
+import { createAndSubmitForm } from "./formUtils.js";
+import { getPasskeyNameFromUser } from "./modalUtils.js";
+import { showConfirmationModal } from "./modalUtils.js";
+import { displayToast, messageType } from "./toastMessages.js";
 
 const passkeyApi = {
   // Common function to handle fetch with CSRF token

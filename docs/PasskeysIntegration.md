@@ -68,7 +68,7 @@ The web service or app that has an endpoint to protect.  We would say that Janus
 
 The integration is encapsulated in the following files:
 
-### [frontend/passkeys.js](/frontend/passkeys.js)
+### [frontend/utils/passkeys.js](/frontend/utils/passkeys.js)
 Authentication takes place in the browser and the functions in this file control interactions between the server and
 the authenticator.
 
@@ -80,7 +80,7 @@ Also model <-> Json marshalling rules.
 This holds actions for registration of passkeys and for providing registration and authentication options to browsers
 at the beginning of registration and authentication flows respectively. 
 
-### [controllers/PasskeyAuthFilter](/app/controllers/PasskeyAuthFilter.scala)
+### [filters/PasskeyAuthFilter](/app/filters/PasskeyAuthFilter.scala)
 A filter for actions that are protected by passkey authentication.
 
 ### [logic/Passkey](/app/logic/Passkey.scala)
