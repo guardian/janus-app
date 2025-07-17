@@ -122,6 +122,7 @@ class AppComponents(context: ApplicationLoader.Context)
       janusData,
       controllerComponents,
       authAction,
+      passkeyAuthAction,
       host,
       Clients.stsClient,
       configuration,

@@ -134,7 +134,10 @@ const passkeyApi = {
   async getUserCredential(authOptionsJson) {
     const credentialGetOptions =
       PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsJson);
-    return await navigator.credentials.get({ publicKey: credentialGetOptions });
+    return await navigator.credentials.get({
+      publicKey: credentialGetOptions,
+      mediation: "required",
+    });
   },
 
   // Handle common error scenarios
