@@ -1,7 +1,7 @@
-import { createAndSubmitForm } from "./utils/formUtils.js";
-import { getPasskeyNameFromUser } from "./utils/modalUtils.js";
-import { showConfirmationModal } from "./utils/modalUtils.js";
-import { displayToast, messageType } from "./utils/toastMessages.js";
+import { createAndSubmitForm } from "./formUtils.js";
+import { getPasskeyNameFromUser } from "./modalUtils.js";
+import { showConfirmationModal } from "./modalUtils.js";
+import { displayToast, messageType } from "./toastMessages.js";
 
 const passkeyApi = {
   // Common function to handle fetch with CSRF token
@@ -251,14 +251,6 @@ export async function authenticatePasskey(targetHref, csrfToken) {
     });
   } catch (err) {
     passkeyApi.handlePasskeyError(err, "authentication");
-  }
-}
-
-export async function bypassPasskeyAuthentication(targetHref, csrfToken) {
-  try {
-    createAndSubmitForm(targetHref, { csrfToken });
-  } catch (err) {
-    console.error("Error during bypass of passkey authentication:", err);
   }
 }
 
