@@ -7,14 +7,11 @@ import logic.Owners
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 
-import java.time.Duration
-
 class Utility(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
-    configuration: Configuration,
-    passkeysEnablingCookieName: String
+    configuration: Configuration
 )(using mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
@@ -37,29 +34,5 @@ class Utility(
           .warn(s"Couldn't lookup account number for ${account.name}", err)
       }
     Ok(views.html.accounts(accountData, request.user, janusData))
-  }
-
-  def gone: Action[AnyContent] = authAction { implicit request =>
-    logger.warn(
-      s"410 response served for request '${request.method} ${request.path}' from user ${request.user.username}"
-    )
-    Gone(views.html.gone(request.user, janusData))
-  }
-
-  /** Temporary action to opt in to the passkeys integration */
-  def optInToPasskeys: Action[AnyContent] = authAction { _ =>
-    Redirect(routes.Janus.userAccount).withCookies(
-      Cookie(
-        name = passkeysEnablingCookieName,
-        value = "true",
-        maxAge = Some(Duration.ofDays(30).toSeconds.intValue)
-      )
-    )
-  }
-
-  /** Temporary action to opt out of the passkeys integration */
-  def optOutOfPasskeys: Action[AnyContent] = authAction { _ =>
-    Redirect(routes.Janus.userAccount)
-      .discardingCookies(DiscardingCookie(passkeysEnablingCookieName))
   }
 }

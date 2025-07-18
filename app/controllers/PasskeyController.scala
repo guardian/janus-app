@@ -19,6 +19,7 @@ import play.api.mvc.*
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
+import java.time.Duration
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
@@ -31,7 +32,9 @@ class PasskeyController(
       AnyContent
     ],
     host: String,
-    janusData: JanusData
+    janusData: JanusData,
+    passkeysEnabled: Boolean,
+    enablingCookieName: String
 )(using dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
@@ -94,6 +97,20 @@ class PasskeyController(
               } yield "Passkey was registered successfully"
             }
         )
+  }
+
+  /** Protected routes are served an interstitial where the passkey auth flow
+    * takes place. If clientside authentication is successful, the request will
+    * be redirected to a POST of the same path where the passkey will be
+    * verified.
+    */
+  def showAuthPage: Action[AnyContent] = authAction { implicit request =>
+    val enablingCookieIsPresent =
+      request.cookies.get(enablingCookieName).isDefined
+    if passkeysEnabled && enablingCookieIsPresent then {
+      Gone(views.html.gone(request.user, janusData))
+      // TODO
+    } else NotImplemented("TODO")
   }
 
   /** See
@@ -187,6 +204,23 @@ class PasskeyController(
         }
       )
     }
+
+  /** Temporary action to opt in to the passkeys integration */
+  def optInToPasskeys: Action[AnyContent] = authAction { _ =>
+    Redirect(routes.Janus.userAccount).withCookies(
+      Cookie(
+        name = enablingCookieName,
+        value = "true",
+        maxAge = Some(Duration.ofDays(30).toSeconds.intValue)
+      )
+    )
+  }
+
+  /** Temporary action to opt out of the passkeys integration */
+  def optOutOfPasskeys: Action[AnyContent] = authAction { _ =>
+    Redirect(routes.Janus.userAccount)
+      .discardingCookies(DiscardingCookie(enablingCookieName))
+  }
 
   /*
    * Validation rules for input fields to the 'register' route.

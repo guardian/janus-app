@@ -20,7 +20,7 @@
                     @if(request.cookies.get(passkeysEnablingCookieName).isDefined) {
                     <div class="card-panel green lighten-4" role="status" aria-live="polite">
                         <p><i class="material-icons" aria-hidden="true">check_circle</i> You are currently <strong>opted in</strong> to passkey authentication.</p>
-                        <div><a href="@routes.Utility.optOutOfPasskeys"
+                        <div><a href="@routes.PasskeyController.optOutOfPasskeys"
                         class="btn red waves-effect waves-light"
                         role="button"
                         aria-describedby="passkey-status-heading">
@@ -32,7 +32,7 @@
                     <div class="card-panel grey lighten-4" role="status" aria-live="polite">
                         <p><i class="material-icons" aria-hidden="true">info</i> You are currently <strong>opted out</strong> of passkey authentication.</p>
                         <div> 
-                            <a href="@routes.Utility.optInToPasskeys"
+                            <a href="@routes.PasskeyController.optInToPasskeys"
                             class="btn green waves-effect waves-light"
                             role="button"
                             aria-describedby="passkey-status-heading">
