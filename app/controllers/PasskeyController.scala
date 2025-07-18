@@ -108,7 +108,7 @@ class PasskeyController(
     val enablingCookieIsPresent =
       request.cookies.get(enablingCookieName).isDefined
     if passkeysEnabled && enablingCookieIsPresent then {
-      Gone(views.html.gone(request.user, janusData))
+      Ok(views.html.passkeyAuth(request.user, janusData))
       // TODO
     } else NotImplemented("TODO")
   }
