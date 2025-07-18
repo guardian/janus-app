@@ -2,6 +2,7 @@ package controllers
 
 import aws.{AuditTrailDB, Federation, PasskeyDB}
 import cats.syntax.all.*
+import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.*
 import com.webauthn4j.data.attestation.authenticator.AAGUID
@@ -22,6 +23,7 @@ class Janus(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
+    passkeyAuthAction: ActionBuilder[UserIdentityRequest, AnyContent],
     host: String,
     stsClient: StsClient,
     configuration: Configuration,
@@ -141,7 +143,7 @@ class Janus(
   }
 
   def consoleLogin(permissionId: String): Action[AnyContent] =
-    authAction { implicit request =>
+    passkeyAuthAction { implicit request =>
       (for {
         (credentials, _) <- assumeRole(
           request.user,
@@ -162,7 +164,7 @@ class Janus(
     }
 
   def consoleUrl(permissionId: String): Action[AnyContent] =
-    authAction { implicit request =>
+    passkeyAuthAction { implicit request =>
       (for {
         (credentials, permission) <- assumeRole(
           request.user,
@@ -191,7 +193,7 @@ class Janus(
     }
 
   def credentials(permissionId: String): Action[AnyContent] =
-    authAction { implicit request =>
+    passkeyAuthAction { implicit request =>
       (for {
         (credentials, permission) <- assumeRole(
           request.user,
@@ -218,7 +220,7 @@ class Janus(
     }
 
   def multiCredentials(rawPermissionIds: String): Action[AnyContent] =
-    authAction { implicit request =>
+    passkeyAuthAction { implicit request =>
       val permissionIds = splitQuerystringParam(rawPermissionIds)
       (for {
         accountCredentials <- multiAccountAssumption(
