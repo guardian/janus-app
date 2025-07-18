@@ -125,7 +125,6 @@ class AppComponents(context: ApplicationLoader.Context)
       host,
       Clients.stsClient,
       configuration,
-      passkeysEnabled,
       passkeysEnablingCookieName,
       passkeyAuthenticatorMetadata
     ),
