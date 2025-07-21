@@ -8,6 +8,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       getCsrfTokenFromMetaTag(),
     );
   } catch (error) {
-    console.error("Failed to authenticate passkey on gone page:", error);
+    console.error("Unexpected failure in authenticatePasskey:", error);
   }
 });
