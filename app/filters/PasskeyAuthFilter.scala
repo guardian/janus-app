@@ -26,8 +26,12 @@ import software.amazon.awssdk.services.dynamodb.model.GetItemResponse
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-/** Performs passkey verification and only allows an action to continue if
-  * verification is successful.
+/** Handles passkey authentication by:
+  *   1. Displaying the passkey authentication page for GET requests.
+  *   1. Performing passkey verification for POST requests and only allowing an
+  *      action to continue if verification is successful.
+  *   1. Allowing the action to continue when passkeys are disabled for a
+  *      request.
   *
   * See
   * [[https://webauthn4j.github.io/webauthn4j/en/#webauthn-assertion-verification-and-post-processing]].
