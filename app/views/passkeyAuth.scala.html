@@ -5,13 +5,9 @@
 
 @(user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
-@main("Gone", Some(user), janusData) {
+@main("Passkey authentication", Some(user), janusData) {
     <div class="container">
-        <h1 class="header orange-text">Resource Gone</h1>
-        <div class="card-panel">
-            <p><strong>The <code>@req.path</code> link has been updated!</strong></p>
-            <p>Please go back to the <a href="@routes.Janus.index">home page</a> and follow the new link from there.</p>
-        </div>
+        <h1 class="header orange-text">Authenticating ...</h1>
     </div>
 
     @if(mode == Mode.Dev) {

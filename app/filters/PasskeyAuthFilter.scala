@@ -3,18 +3,21 @@ package filters
 import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.UserIdentity
+import com.gu.janus.model.JanusData
 import com.webauthn4j.data.AuthenticationData
+import controllers.AssetsFinder
 import logic.Passkey
 import models.JanusException
 import models.JanusException.throwableWrites
 import models.PasskeyFlow.Authentication
-import play.api.Logging
+import play.api.{Logging, Mode}
 import play.api.libs.json.Json.toJson
-import play.api.mvc.Results.{InternalServerError, Status}
+import play.api.mvc.Results.{InternalServerError, MethodNotAllowed, Ok, Status}
 import play.api.mvc.{
   ActionFilter,
   AnyContentAsFormUrlEncoded,
   AnyContentAsText,
+  RequestHeader,
   Result
 }
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -23,34 +26,50 @@ import software.amazon.awssdk.services.dynamodb.model.GetItemResponse
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-/** Performs passkey authentication and only allows an action to continue if
-  * authentication is successful.
+/** Performs passkey verification and only allows an action to continue if
+  * verification is successful.
   *
   * See
   * [[https://webauthn4j.github.io/webauthn4j/en/#webauthn-assertion-verification-and-post-processing]].
   */
 class PasskeyAuthFilter(
     host: String,
+    janusData: JanusData,
     passkeysEnabled: Boolean,
     enablingCookieName: String
 )(using
     dynamoDb: DynamoDbClient,
-    ec: ExecutionContext
+    val executionContext: ExecutionContext,
+    mode: Mode,
+    assetsFinder: AssetsFinder
 ) extends ActionFilter[UserIdentityRequest]
     with Logging {
 
-  // TODO: Consider a separate EC for passkey processing
-  def executionContext: ExecutionContext = ec
-
   def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] = {
+    implicit val r: RequestHeader = request
     val enablingCookieIsPresent =
       request.cookies.get(enablingCookieName).isDefined
     if (passkeysEnabled && enablingCookieIsPresent) {
+      request.method match {
+        case "GET" =>
+          logger.info(
+            s"Showing passkey auth page to ${request.user.username} ..."
+          )
+          Future(Some(Ok(views.html.passkeyAuth(request.user, janusData))))
+        case "POST" =>
+          logger.info(
+            s"Verifying passkey for user ${request.user.username} ..."
+          )
+          Future(apiResponse(authenticatePasskey(request)))
+        case _ =>
+          Future(Some(MethodNotAllowed(request.method)))
+      }
+    } else {
       logger.info(
-        s"Authenticating passkey for user ${request.user.username} ..."
+        s"Passing through request for '${request.method} ${request.path}' by ${request.user.username}"
       )
-      Future(apiResponse(authenticatePasskey(request)))
-    } else Future.successful(None)
+      Future.successful(None)
+    }
   }
 
   private def authenticatePasskey[A](
@@ -81,7 +100,7 @@ class PasskeyAuthFilter(
     _ <- PasskeyChallengeDB.delete(request.user, Authentication)
     _ <- PasskeyDB.updateCounter(request.user, verifiedAuthData)
     _ <- PasskeyDB.updateLastUsedTime(request.user, verifiedAuthData)
-    _ = logger.info(s"Authenticated passkey for user ${request.user.username}")
+    _ = logger.info(s"Verified passkey for user ${request.user.username}")
   } yield ()
 
   private def apiResponse(auth: => Try[Unit]): Option[Result] =

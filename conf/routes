@@ -10,13 +10,13 @@ GET     /user-account               controllers.Janus.userAccount
 POST    /favourite                  controllers.Janus.favourite()
 
 # Passkey-protected routes
-GET     /console                    controllers.PasskeyController.showAuthPage
+GET     /console                    controllers.Janus.consoleLogin(permissionId: String)
 POST    /console                    controllers.Janus.consoleLogin(permissionId: String)
-GET     /consoleUrl                 controllers.PasskeyController.showAuthPage
+GET     /consoleUrl                 controllers.Janus.consoleUrl(permissionId: String)
 POST    /consoleUrl                 controllers.Janus.consoleUrl(permissionId: String)
-GET     /credentials                controllers.PasskeyController.showAuthPage
+GET     /credentials                controllers.Janus.credentials(permissionId: String)
 POST    /credentials                controllers.Janus.credentials(permissionId: String)
-GET     /multi-credentials          controllers.PasskeyController.showAuthPage
+GET     /multi-credentials          controllers.Janus.multiCredentials(permissionIds: String)
 POST    /multi-credentials          controllers.Janus.multiCredentials(permissionIds: String)
 
 GET     /audit/user/:username       controllers.Audit.byUser(username: String)
@@ -41,8 +41,8 @@ POST    /passkey/register                   controllers.PasskeyController.regist
 DELETE  /passkey/:passkeyId                 controllers.PasskeyController.deletePasskey(passkeyId: String)
 
 # Tmp routes for passkey trial
-GET     /opt/in/passkeys            controllers.PasskeyController.optInToPasskeys
-GET     /opt/out/passkeys           controllers.PasskeyController.optOutOfPasskeys
+GET     /opt/in/passkeys            controllers.Utility.optInToPasskeys
+GET     /opt/out/passkeys           controllers.Utility.optOutOfPasskeys
 
 GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts
