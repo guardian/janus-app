@@ -6,7 +6,7 @@
 @(accountAccesses: List[AwsAccountAccess],
   activeSupportUsers: Option[(Instant, (Option[String], Option[String]))],
     nextSupportUsers: Option[(Instant, (Option[String], Option[String]))],
-  futureSupportDates: List[(Instant, String)], user: UserIdentity, janusData: JanusData, passkeysEnabled: Boolean
+  futureSupportDates: List[(Instant, String)], user: UserIdentity, janusData: JanusData
 )(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Support", Some(user), janusData) {
@@ -30,6 +30,6 @@
             </div>
         </div>
 
-        @fragments.awsAccounts(accountAccesses, allowFavs = false, passkeysEnabled = passkeysEnabled)
+        @fragments.awsAccounts(accountAccesses, allowFavs = false)
     </div>
 }

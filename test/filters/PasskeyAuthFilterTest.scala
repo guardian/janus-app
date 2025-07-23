@@ -1,7 +1,6 @@
-package controllers
+package filters
 
 import com.gu.googleauth.{AuthAction, UserIdentity}
-import filters.PasskeyAuthFilter
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -66,11 +65,12 @@ class PasskeyAuthFilterTest
   )
 
   "PasskeyAuthFilter" - {
+
     "bypass authentication when disabled" in {
       val filter = new PasskeyAuthFilter(
+        host = testHost,
         passkeysEnabled = false,
-        enablingCookieName = testCookieName,
-        host = testHost
+        enablingCookieName = testCookieName
       )
 
       val request = createRequestWithCookie(validFormBody)
@@ -81,9 +81,9 @@ class PasskeyAuthFilterTest
 
     "bypass authentication when enabling cookie is not present" in {
       val filter = new PasskeyAuthFilter(
+        host = testHost,
         passkeysEnabled = true,
-        enablingCookieName = testCookieName,
-        host = testHost
+        enablingCookieName = testCookieName
       )
 
       val request = createRequestWithoutCookie(validFormBody)

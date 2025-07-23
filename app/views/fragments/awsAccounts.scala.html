@@ -3,7 +3,7 @@
 @import models.DisplayMode
 @import models.DisplayMode.*
 
-@(accountAccesses: List[AwsAccountAccess], allowFavs: Boolean, displayMode: DisplayMode = Normal, passkeysEnabled: Boolean)
+@(accountAccesses: List[AwsAccountAccess], allowFavs: Boolean, displayMode: DisplayMode = Normal)
 
 <div class="row">
     @for((accountAccess, i) <- accountAccesses.zipWithIndex) {
@@ -40,22 +40,19 @@
                         <div class="card-action-group__row row">
                             <div class="card-action-group col m6 s12">
                                 <a href="/console?permissionId=@permission.id"
-                                    class="waves-effect waves-light btn federation__link federation__link--cta federation__link--@if(permission.shortTerm) {short} else {standard} card-action-link--spaced"
-                                    data-passkey-protected="@passkeysEnabled"
+                                   class="waves-effect waves-light btn federation__link federation__link--cta federation__link--@if(permission.shortTerm) {short} else {standard} card-action-link--spaced"
                                 >
                                     <i class="material-icons">cloud</i>
                                 </a>
                                 <a href="/consoleUrl?permissionId=@permission.id"
-                                    class="right waves-effect waves-light btn-flat federation__link janus-btn--flat card-action-link--tight federation__link--@if(permission.shortTerm) {short} else {standard}"
-                                    data-passkey-protected="@passkeysEnabled"
+                                   class="right waves-effect waves-light btn-flat federation__link janus-btn--flat card-action-link--tight federation__link--@if(permission.shortTerm) {short} else {standard}"
                                 >
                                     <i class="material-icons black-text">link</i>
                                 </a>
                             </div>
                             <div class="card-action-group card-action-group--divider col m6 s12">
                                 <a href="/credentials?permissionId=@permission.id"
-                                    class="waves-effect waves-light btn federation__link federation__link--cta federation__link--credentials federation__link--@if(permission.shortTerm) {short} else {standard}"
-                                    data-passkey-protected="@passkeysEnabled"
+                                   class="waves-effect waves-light btn federation__link federation__link--cta federation__link--credentials federation__link--@if(permission.shortTerm) {short} else {standard}"
                                 >
                                     <i class="material-icons">vpn_key</i>
                                 </a>
