@@ -98,7 +98,7 @@ class PasskeyController(
         )
   }
 
-  def showAuthPage: Action[Unit] = authAction(parse.empty) { implicit request =>
+  def showAuthPage: Action[AnyContent] = authAction { implicit request =>
     val enablingCookieIsPresent =
       request.cookies.get(enablingCookieName).isDefined
     Ok(
