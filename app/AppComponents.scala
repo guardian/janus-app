@@ -110,7 +110,6 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeyAuthFilter =
     new PasskeyAuthFilter(
       host,
-      janusData,
       passkeysEnabled,
       passkeysEnablingCookieName
     )
@@ -134,6 +133,16 @@ class AppComponents(context: ApplicationLoader.Context)
       passkeysEnablingCookieName,
       passkeyAuthenticatorMetadata
     ),
+    new PasskeyController(
+      controllerComponents,
+      authAction,
+      passkeyAuthAction,
+      passkeyRegistrationAuthAction,
+      host,
+      janusData,
+      passkeysEnabled,
+      passkeysEnablingCookieName
+    ),
     new Audit(janusData, controllerComponents, authAction),
     new RevokePermissions(
       janusData,
@@ -148,14 +157,6 @@ class AppComponents(context: ApplicationLoader.Context)
       googleAuthConfig,
       googleGroupChecker,
       requiredGoogleGroups
-    ),
-    new PasskeyController(
-      controllerComponents,
-      authAction,
-      passkeyAuthAction,
-      passkeyRegistrationAuthAction,
-      host,
-      janusData
     ),
     new Utility(
       janusData,

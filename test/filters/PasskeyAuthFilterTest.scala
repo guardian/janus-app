@@ -1,17 +1,13 @@
 package filters
 
 import com.gu.googleauth.{AuthAction, UserIdentity}
-import com.gu.janus.model.{ACL, JanusData, SupportACL}
-import controllers.AssetsFinder
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import play.api.Mode
 import play.api.mvc.{AnyContentAsFormUrlEncoded, Cookie, Results}
 import play.api.test.{FakeHeaders, FakeRequest}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
-import java.time.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class PasskeyAuthFilterTest
@@ -69,27 +65,10 @@ class PasskeyAuthFilterTest
   )
 
   "PasskeyAuthFilter" - {
-    given mode: Mode = Mode.Test
-
-    given assetsFinder: AssetsFinder = new AssetsFinder {
-      override def assetsBasePath: String = "assetsBasePath"
-      override def assetsUrlPrefix: String = "assetsUrlPrefix"
-      override def findAssetPath(basePath: String, rawPath: String): String =
-        "assetPath"
-    }
-
-    val janusData = JanusData(
-      accounts = Set.empty,
-      ACL(Map.empty),
-      ACL(Map.empty),
-      SupportACL.create(Map.empty, Set.empty, Duration.ofDays(7)),
-      Some("https://example.com/")
-    )
 
     "bypass authentication when disabled" in {
       val filter = new PasskeyAuthFilter(
         host = testHost,
-        janusData = janusData,
         passkeysEnabled = false,
         enablingCookieName = testCookieName
       )
@@ -103,7 +82,6 @@ class PasskeyAuthFilterTest
     "bypass authentication when enabling cookie is not present" in {
       val filter = new PasskeyAuthFilter(
         host = testHost,
-        janusData = janusData,
         passkeysEnabled = true,
         enablingCookieName = testCookieName
       )

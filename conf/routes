@@ -10,13 +10,13 @@ GET     /user-account               controllers.Janus.userAccount
 POST    /favourite                  controllers.Janus.favourite()
 
 # Passkey-protected routes
-GET     /console                    controllers.Janus.consoleLogin(permissionId: String)
+GET     /console                    controllers.PasskeyController.showAuthPage
 POST    /console                    controllers.Janus.consoleLogin(permissionId: String)
-GET     /consoleUrl                 controllers.Janus.consoleUrl(permissionId: String)
+GET     /consoleUrl                 controllers.PasskeyController.showAuthPage
 POST    /consoleUrl                 controllers.Janus.consoleUrl(permissionId: String)
-GET     /credentials                controllers.Janus.credentials(permissionId: String)
+GET     /credentials                controllers.PasskeyController.showAuthPage
 POST    /credentials                controllers.Janus.credentials(permissionId: String)
-GET     /multi-credentials          controllers.Janus.multiCredentials(permissionIds: String)
+GET     /multi-credentials          controllers.PasskeyController.showAuthPage
 POST    /multi-credentials          controllers.Janus.multiCredentials(permissionIds: String)
 
 GET     /audit/user/:username       controllers.Audit.byUser(username: String)

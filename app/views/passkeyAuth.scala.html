@@ -3,10 +3,10 @@
 @import play.api.Mode
 @import views.html.helper.CSPNonce
 
-@(user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(user: UserIdentity, janusData: JanusData, passkeysEnabled: Boolean)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Passkey authentication", Some(user), janusData) {
-    <div class="container">
+    <div class="container" data-passkeys-enabled="@passkeysEnabled">
         <h1 class="header orange-text">Authenticating ...</h1>
     </div>
 
