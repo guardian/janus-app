@@ -9,6 +9,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
     const targetUrl = window.location.pathname + window.location.search;
     const csrfToken = getCsrfTokenFromMetaTag();
+    if (!csrfToken) {
+      console.error("CSRF token is missing. Aborting operation.");
+      return;
+    }
 
     if (passkeysEnabled) {
       await authenticatePasskey(targetUrl, csrfToken);
