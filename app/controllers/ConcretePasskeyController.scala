@@ -10,8 +10,16 @@ import play.api.mvc.{ActionBuilder, AnyContent, ControllerComponents}
 import scala.concurrent.ExecutionContext
 
 given RequestHelper[UserIdentityRequest] with {
-  def findUserId[A](request: UserIdentityRequest[A]): Option[String] = ???
-  def findCreationData[A](request: UserIdentityRequest[A]): Option[String] = ???
+  def findUserId[A](request: UserIdentityRequest[A]): Option[String] = Some(
+    request.user.username
+  )
+  def findCreationData[A](request: UserIdentityRequest[A]): Option[String] = {
+    request.body match {
+      case content: AnyContent =>
+        content.asFormUrlEncoded.flatMap(_.get("passkey").flatMap(_.headOption))
+      case _ => None
+    }
+  }
   def findAuthenticationData[A](
       request: UserIdentityRequest[A]
   ): Option[AuthenticationData] = ???
