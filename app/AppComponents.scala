@@ -1,8 +1,15 @@
 import aws.Clients
+import aws.PasskeyDB
 import com.gu.googleauth.AuthAction
+import com.gu.googleauth.UserIdentity
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
+import com.gu.playpasskeyauth.models.HostApp
+import com.gu.playpasskeyauth.services.{PasskeyChallengeRepository, PasskeyRepository, PasskeyVerificationServiceImpl}
 import com.typesafe.config.ConfigException
+import com.webauthn4j.credential.CredentialRecord
+import com.webauthn4j.data.AuthenticationData
+import com.webauthn4j.data.client.challenge.Challenge
 import conf.Config
 import controllers.*
 import filters.{HstsFilter, PasskeyAuthFilter, PasskeyRegistrationAuthFilter}
@@ -20,6 +27,7 @@ import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.time.Duration
+import scala.concurrent.Future
 import scala.util.chaining.scalaUtilChainingOps
 
 class AppComponents(context: ApplicationLoader.Context)
@@ -120,6 +128,85 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeyRegistrationAuthAction =
     authAction.andThen(passkeyRegistrationAuthFilter)
 
+  private val pkRepo = new PasskeyRepository {
+    override def loadCredentialRecord(userId: String, passkeyId: Array[Byte]): Future[Option[CredentialRecord]] = {
+      val userIdentity = UserIdentity(
+        sub = userId,
+        email = userId,
+        firstName = userId,
+        lastName = "",
+        exp = 0L,
+        avatarUrl = None
+      )
+      Future.fromTry(
+        PasskeyDB.loadCredential(userIdentity, passkeyId).flatMap { response =>
+          if (response.hasItem) {
+            PasskeyDB.extractCredential(response, userIdentity).map(Some(_))
+          } else {
+            scala.util.Success(None)
+          }
+        }
+      )
+    }
+
+    override def loadPasskeyIds(userId: String): Future[List[String]] = {
+      val userIdentity = UserIdentity(
+        sub = userId,
+        email = userId,
+        firstName = userId,
+        lastName = "",
+        exp = 0L,
+        avatarUrl = None
+      )
+      Future.fromTry(
+        PasskeyDB.loadCredentials(userIdentity).map { response =>
+          PasskeyDB.extractMetadata(response).map(_.id).toList
+        }
+      )
+    }
+
+    override def updateAuthenticationCounter(userId: String, authData: AuthenticationData): Future[Unit] = {
+      val userIdentity = UserIdentity(
+        sub = userId,
+        email = userId,
+        firstName = userId,
+        lastName = "",
+        exp = 0L,
+        avatarUrl = None
+      )
+      Future.fromTry(PasskeyDB.updateCounter(userIdentity, authData))
+    }
+
+    override def updateLastUsedTime(userId: String, authData: AuthenticationData): Future[Unit] = {
+      val userIdentity = UserIdentity(
+        sub = userId,
+        email = userId,
+        firstName = userId,
+        lastName = "",
+        exp = 0L,
+        avatarUrl = None
+      )
+      Future.fromTry(PasskeyDB.updateLastUsedTime(userIdentity, authData))
+    }
+  }
+
+  val pkChallRepo = new PasskeyChallengeRepository {
+    override def loadAuthenticationChallenge(userId: String): Future[Option[Challenge]] = ???
+
+    override def deleteAuthenticationChallenge(userId: String): Future[Unit] = ???
+  }
+
+  private val hostApp = HostApp(
+    name = ???,
+    uri = ???
+  )
+  private val pkService =
+    new PasskeyVerificationServiceImpl(
+      app = hostApp,
+      passkeyRepo = pkRepo,
+      challengeRepo = pkChallRepo
+    )
+
   override def router: Router = new Routes(
     httpErrorHandler,
     new Janus(
@@ -158,6 +245,15 @@ class AppComponents(context: ApplicationLoader.Context)
       googleGroupChecker,
       requiredGoogleGroups
     ),
+    new PasskeyController(
+      controllerComponents,
+      authAction,
+      passkeyAuthAction,
+      passkeyRegistrationAuthAction,
+      host,
+      janusData
+    ),
+    new ConcretePasskeyController(controllerComponents, authAction, pkService),
     new Utility(
       janusData,
       controllerComponents,
