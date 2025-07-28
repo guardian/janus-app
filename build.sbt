@@ -144,7 +144,7 @@ lazy val configTools = (project in file("configTools"))
       scalaVersion.value
     ),
     libraryDependencies ++= commonDependencies ++ Seq(
-      "com.typesafe" % "config" % "1.4.3",
+      "com.typesafe" % "config" % "1.4.4",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
