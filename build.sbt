@@ -37,8 +37,8 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.19.1"
-val jacksonDatabindVersion = "2.19.1"
+val jacksonVersion = "2.19.2"
+val jacksonDatabindVersion = "2.19.2"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core",
@@ -144,7 +144,7 @@ lazy val configTools = (project in file("configTools"))
       scalaVersion.value
     ),
     libraryDependencies ++= commonDependencies ++ Seq(
-      "com.typesafe" % "config" % "1.4.3",
+      "com.typesafe" % "config" % "1.4.4",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
