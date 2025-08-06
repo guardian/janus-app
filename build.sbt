@@ -37,8 +37,8 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.19.1"
-val jacksonDatabindVersion = "2.19.1"
+val jacksonVersion = "2.19.2"
+val jacksonDatabindVersion = "2.19.2"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core",
@@ -83,9 +83,9 @@ lazy val root: Project = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "24.1.2",
-      "com.gu.play-secret-rotation" %% "play-v30" % "14.3.4",
-      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "14.3.4",
+      "com.gu.play-googleauth" %% "play-v30" % "25.1.0",
+      "com.gu.play-secret-rotation" %% "play-v30" % "14.4.1",
+      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "14.4.1",
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
@@ -144,7 +144,7 @@ lazy val configTools = (project in file("configTools"))
       scalaVersion.value
     ),
     libraryDependencies ++= commonDependencies ++ Seq(
-      "com.typesafe" % "config" % "1.4.3",
+      "com.typesafe" % "config" % "1.4.4",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
