@@ -39,13 +39,6 @@ class Utility(
     Ok(views.html.accounts(accountData, request.user, janusData))
   }
 
-  def gone: Action[AnyContent] = authAction { implicit request =>
-    logger.warn(
-      s"410 response served for request '${request.method} ${request.path}' from user ${request.user.username}"
-    )
-    Gone(views.html.gone(request.user, janusData))
-  }
-
   /** Temporary action to opt in to the passkeys integration */
   def optInToPasskeys: Action[AnyContent] = authAction { _ =>
     Redirect(routes.Janus.userAccount).withCookies(

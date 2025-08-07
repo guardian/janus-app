@@ -23,10 +23,10 @@ class Janus(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
+    passkeyAuthAction: ActionBuilder[UserIdentityRequest, AnyContent],
     host: String,
     stsClient: StsClient,
     configuration: Configuration,
-    passkeysEnabledGlobally: Boolean,
     passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator]
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
@@ -52,8 +52,7 @@ class Janus(
               awsAccountAccess,
               request.user,
               janusData,
-              displayMode,
-              passkeysEnabledGlobally && passkeysEnabledForRequest(request)
+              displayMode
             )
         )
       }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
@@ -69,8 +68,7 @@ class Janus(
           views.html.admin(
             awsAccountAccess,
             request.user,
-            janusData,
-            passkeysEnabledGlobally && passkeysEnabledForRequest(request)
+            janusData
           )
         )
       }) getOrElse Ok(
@@ -101,8 +99,7 @@ class Janus(
             supportUsersInNextPeriod,
             currentUserFutureSupportPeriods,
             request.user,
-            janusData,
-            passkeysEnabledGlobally && passkeysEnabledForRequest(request)
+            janusData
           )
         )
       }) getOrElse Ok(
@@ -146,7 +143,7 @@ class Janus(
   }
 
   def consoleLogin(permissionId: String): Action[AnyContent] =
-    authAction { implicit request =>
+    passkeyAuthAction { implicit request =>
       (for {
         (credentials, _) <- assumeRole(
           request.user,
@@ -167,7 +164,7 @@ class Janus(
     }
 
   def consoleUrl(permissionId: String): Action[AnyContent] =
-    authAction { implicit request =>
+    passkeyAuthAction { implicit request =>
       (for {
         (credentials, permission) <- assumeRole(
           request.user,
@@ -196,7 +193,7 @@ class Janus(
     }
 
   def credentials(permissionId: String): Action[AnyContent] =
-    authAction { implicit request =>
+    passkeyAuthAction { implicit request =>
       (for {
         (credentials, permission) <- assumeRole(
           request.user,
@@ -223,7 +220,7 @@ class Janus(
     }
 
   def multiCredentials(rawPermissionIds: String): Action[AnyContent] =
-    authAction { implicit request =>
+    passkeyAuthAction { implicit request =>
       val permissionIds = splitQuerystringParam(rawPermissionIds)
       (for {
         accountCredentials <- multiAccountAssumption(
@@ -322,9 +319,4 @@ class Janus(
       })
       .sequence
   }
-
-  private def passkeysEnabledForRequest(
-      request: UserIdentityRequest[AnyContent]
-  ): Boolean =
-    request.cookies.get(passkeysEnablingCookieName).isDefined
 }

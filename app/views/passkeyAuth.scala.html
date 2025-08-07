@@ -1,0 +1,18 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+@import play.api.Mode
+@import views.html.helper.CSPNonce
+
+@(user: UserIdentity, janusData: JanusData, passkeysEnabled: Boolean)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@main("Passkey authentication", Some(user), janusData) {
+    <div class="container" data-passkeys-enabled="@passkeysEnabled">
+        <h1 class="header orange-text">Authenticating ...</h1>
+    </div>
+
+    @if(mode == Mode.Dev) {
+        <script src="https://janus-frontend.local.dev-gutools.co.uk/passkeys-auth.js" @{CSPNonce.attr}></script>
+    } else {
+        <script src="@assetsFinder.path("frontend/passkeys-auth.js")" @{CSPNonce.attr}></script>
+    }
+}
