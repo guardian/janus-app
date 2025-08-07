@@ -1,11 +1,7 @@
 import DOMPurify from "dompurify";
 import M from "materialize-css";
-import {
-  authenticatePasskey,
-  bypassPasskeyAuthentication,
-  deletePasskey,
-  registerPasskey,
-} from "./passkeys.js";
+import { getCsrfTokenFromMetaTag } from "./utils/csrf.js";
+import { deletePasskey, registerPasskey } from "./utils/passkeys.js";
 import {
   displayFlashMessages,
   displayToast,
@@ -15,17 +11,7 @@ import {
 document.addEventListener("DOMContentLoaded", function () {
   "use strict";
 
-  // Get CSRF token from meta tag
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
-  if (!csrfToken) {
-    console.error("CSRF token not available");
-    displayToast(
-      "Security token not available. Please refresh the page.",
-      messageType.error,
-    );
-    return;
-  }
+  const csrfToken = getCsrfTokenFromMetaTag();
 
   //Initialise Materialize elements
   const sidenavElems = document.querySelectorAll(".sidenav");
@@ -444,38 +430,9 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  /**
-   * Sets up protected links that require passkey authentication
-   * @param {NodeList|HTMLElement[]} links - Collection of link elements to protect
-   * @param {string} csrfToken - CSRF token for security verification
-   */
-  function setUpProtectedLinks(links, csrfToken) {
-    links.forEach((link) => {
-      link.addEventListener("click", function (e) {
-        e.preventDefault();
-        const targetHref = link.href;
-        if (link.dataset.passkeyProtected === "false") {
-          bypassPasskeyAuthentication(targetHref, csrfToken).catch(
-            function (err) {
-              console.error("Error setting up bypass of protected link:", err);
-            },
-          );
-        } else {
-          authenticatePasskey(targetHref, csrfToken).catch(function (err) {
-            console.error("Error setting up protected link:", err);
-          });
-        }
-      });
-    });
-  }
-
   try {
     setUpRegisterPasskeyButton("#register-passkey", csrfToken);
     setUpDeletePasskeyButtons(".delete-passkey-btn", csrfToken);
-    const protectedLinks = document.querySelectorAll(
-      "[data-passkey-protected]",
-    );
-    setUpProtectedLinks(protectedLinks, csrfToken);
   } catch (error) {
     console.error("Error setting up passkey functionality:", error);
   }
