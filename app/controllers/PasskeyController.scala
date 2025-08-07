@@ -31,7 +31,9 @@ class PasskeyController(
       AnyContent
     ],
     host: String,
-    janusData: JanusData
+    janusData: JanusData,
+    passkeysEnabled: Boolean,
+    enablingCookieName: String
 )(using dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
@@ -94,6 +96,18 @@ class PasskeyController(
               } yield "Passkey was registered successfully"
             }
         )
+  }
+
+  def showAuthPage: Action[AnyContent] = authAction { implicit request =>
+    val enablingCookieIsPresent =
+      request.cookies.get(enablingCookieName).isDefined
+    Ok(
+      views.html.passkeyAuth(
+        request.user,
+        janusData,
+        passkeysEnabled && enablingCookieIsPresent
+      )
+    )
   }
 
   /** See

@@ -23,8 +23,9 @@ import software.amazon.awssdk.services.dynamodb.model.GetItemResponse
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
-/** Performs passkey authentication and only allows an action to continue if
-  * authentication is successful.
+/** Verifies passkeys and only allows an action to continue if verification is
+  * successful. If passkeys are disabled globally or for the current request,
+  * the action is allowed to continue.
   *
   * See
   * [[https://webauthn4j.github.io/webauthn4j/en/#webauthn-assertion-verification-and-post-processing]].
@@ -33,24 +34,22 @@ class PasskeyAuthFilter(
     host: String,
     passkeysEnabled: Boolean,
     enablingCookieName: String
-)(using
-    dynamoDb: DynamoDbClient,
-    ec: ExecutionContext
-) extends ActionFilter[UserIdentityRequest]
+)(using dynamoDb: DynamoDbClient, val executionContext: ExecutionContext)
+    extends ActionFilter[UserIdentityRequest]
     with Logging {
-
-  // TODO: Consider a separate EC for passkey processing
-  def executionContext: ExecutionContext = ec
 
   def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] = {
     val enablingCookieIsPresent =
       request.cookies.get(enablingCookieName).isDefined
     if (passkeysEnabled && enablingCookieIsPresent) {
-      logger.info(
-        s"Authenticating passkey for user ${request.user.username} ..."
-      )
+      logger.info(s"Verifying passkey for user ${request.user.username} ...")
       Future(apiResponse(authenticatePasskey(request)))
-    } else Future.successful(None)
+    } else {
+      logger.info(
+        s"Passing through request for '${request.method} ${request.path}' by ${request.user.username}"
+      )
+      Future.successful(None)
+    }
   }
 
   private def authenticatePasskey[A](
@@ -81,7 +80,7 @@ class PasskeyAuthFilter(
     _ <- PasskeyChallengeDB.delete(request.user, Authentication)
     _ <- PasskeyDB.updateCounter(request.user, verifiedAuthData)
     _ <- PasskeyDB.updateLastUsedTime(request.user, verifiedAuthData)
-    _ = logger.info(s"Authenticated passkey for user ${request.user.username}")
+    _ = logger.info(s"Verified passkey for user ${request.user.username}")
   } yield ()
 
   private def apiResponse(auth: => Try[Unit]): Option[Result] =
