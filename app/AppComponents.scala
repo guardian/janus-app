@@ -3,11 +3,7 @@ import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.gu.playpasskeyauth.models.HostApp
-import com.gu.playpasskeyauth.services.{
-  PasskeyChallengeRepository,
-  PasskeyRepository,
-  PasskeyVerificationServiceImpl
-}
+import com.gu.playpasskeyauth.services.{PasskeyChallengeRepository, PasskeyRepository, PasskeyVerificationServiceImpl}
 import com.typesafe.config.ConfigException
 import com.webauthn4j.credential.CredentialRecord
 import com.webauthn4j.data.AuthenticationData
@@ -204,6 +200,31 @@ class AppComponents(context: ApplicationLoader.Context)
   }
 
   private val pkChallRepo = new PasskeyChallengeRepository {
+
+    def loadRegistrationChallenge(userId: String): Future[Option[Challenge]] = {
+      val userIdentity = UserIdentity(
+        sub = userId,
+        email = userId,
+        firstName = userId,
+        lastName = "",
+        exp = 0L,
+        avatarUrl = None
+      )
+      Future.fromTry(
+        PasskeyChallengeDB
+          .loadChallenge(userIdentity, PasskeyFlow.Registration)
+          .flatMap { response =>
+            if (response.hasItem) {
+              PasskeyChallengeDB
+                .extractChallenge(response, userIdentity)
+                .map(Some(_))
+            } else {
+              Success(None)
+            }
+          }
+      )
+    }
+
     override def loadAuthenticationChallenge(
         userId: String
     ): Future[Option[Challenge]] = {
@@ -229,6 +250,22 @@ class AppComponents(context: ApplicationLoader.Context)
           }
       )
     }
+
+    def insertRegistrationChallenge(userId: String, challenge: Challenge): Future[Unit] = {
+      val userIdentity = UserIdentity(
+        sub = userId,
+        email = userId,
+        firstName = userId,
+        lastName = "",
+        exp = 0L,
+        avatarUrl = None
+      )
+      Future.fromTry(PasskeyChallengeDB.insert(PasskeyChallengeDB.UserChallenge(userIdentity, PasskeyFlow.Registration, challenge)))
+    }
+
+    def insertAuthenticationChallenge(userId: String, challenge: Challenge): Future[Unit] = ???
+
+    def deleteRegistrationChallenge(userId: String): Future[Unit] = ???
 
     override def deleteAuthenticationChallenge(userId: String): Future[Unit] = {
       val userIdentity = UserIdentity(
@@ -298,14 +335,6 @@ class AppComponents(context: ApplicationLoader.Context)
       googleAuthConfig,
       googleGroupChecker,
       requiredGoogleGroups
-    ),
-    new PasskeyController(
-      controllerComponents,
-      authAction,
-      passkeyAuthAction,
-      passkeyRegistrationAuthAction,
-      host,
-      janusData
     ),
     new ConcretePasskeyController(controllerComponents, authAction, pkService),
     new Utility(

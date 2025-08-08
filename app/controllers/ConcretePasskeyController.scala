@@ -3,13 +3,13 @@ package controllers
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.playpasskeyauth.controllers.BasePasskeyController
 import com.gu.playpasskeyauth.services.PasskeyVerificationService
-import com.gu.playpasskeyauth.web.RequestHelper
+import com.gu.playpasskeyauth.web.RequestExtractor
 import com.webauthn4j.data.AuthenticationData
 import play.api.mvc.{ActionBuilder, AnyContent, ControllerComponents}
 
 import scala.concurrent.ExecutionContext
 
-given RequestHelper[UserIdentityRequest] with {
+given RequestExtractor[UserIdentityRequest] with {
   def findUserId[A](request: UserIdentityRequest[A]): Option[String] = Some(
     request.user.username
   )
