@@ -2,6 +2,7 @@ import aws.{Clients, PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
+import com.gu.playpasskeyauth.filters.PasskeyVerificationFilter
 import com.gu.playpasskeyauth.models.HostApp
 import com.gu.playpasskeyauth.services.{PasskeyChallengeRepository, PasskeyRepository, PasskeyVerificationServiceImpl}
 import com.typesafe.config.ConfigException
@@ -123,19 +124,6 @@ class AppComponents(context: ApplicationLoader.Context)
       )
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
-
-  private val passkeyAuthFilter =
-    new PasskeyAuthFilter(
-      host,
-      passkeysEnabled,
-      passkeysEnablingCookieName
-    )
-  private val passkeyRegistrationAuthFilter =
-    new PasskeyRegistrationAuthFilter(passkeyAuthFilter)
-
-  private val passkeyAuthAction = authAction.andThen(passkeyAuthFilter)
-  private val passkeyRegistrationAuthAction =
-    authAction.andThen(passkeyRegistrationAuthFilter)
 
   private val pkRepo = new PasskeyRepository {
     override def loadCredentialRecord(
@@ -317,13 +305,31 @@ class AppComponents(context: ApplicationLoader.Context)
       challengeRepo = pkChallRepo
     )
 
+  import controllers.given
+  private val passkeyVerificationFilter =
+    new PasskeyVerificationFilter(
+      pkService
+    )
+  private val passkeyAuthFilter =
+    new PasskeyAuthFilter(
+      host,
+      passkeysEnabled,
+      passkeysEnablingCookieName
+    )
+  private val passkeyRegistrationAuthFilter =
+    new PasskeyRegistrationAuthFilter(passkeyAuthFilter)
+
+  private val passkeyVerificationAction = authAction.andThen(passkeyVerificationFilter)
+  private val passkeyRegistrationAuthAction =
+    authAction.andThen(passkeyRegistrationAuthFilter)
+
   override def router: Router = new Routes(
     httpErrorHandler,
     new Janus(
       janusData,
       controllerComponents,
       authAction,
-      passkeyAuthAction,
+      passkeyVerificationAction,
       host,
       Clients.stsClient,
       configuration,
@@ -333,7 +339,7 @@ class AppComponents(context: ApplicationLoader.Context)
     new PasskeyController(
       controllerComponents,
       authAction,
-      passkeyAuthAction,
+      passkeyVerificationAction,
       passkeyRegistrationAuthAction,
       host,
       janusData,
