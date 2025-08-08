@@ -99,7 +99,7 @@ lazy val root: Project = (project in file("."))
       ws,
       filters,
       "com.gu.play-googleauth" %% "play-v30" % "34.0.0",
-      "com.gu" %% "play-passkeyauth" % "0.1.4-SNAPSHOT",
+      "com.gu" %% "play-passkeyauth" % "0.1.2-SNAPSHOT",
       "com.gu.play-secret-rotation" %% "play-v30" % "17.0.1",
       "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "17.0.1",
       "software.amazon.awssdk" % "arns" % awsSdkVersion,
