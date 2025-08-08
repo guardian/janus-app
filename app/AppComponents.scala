@@ -263,7 +263,17 @@ class AppComponents(context: ApplicationLoader.Context)
       Future.fromTry(PasskeyChallengeDB.insert(PasskeyChallengeDB.UserChallenge(userIdentity, PasskeyFlow.Registration, challenge)))
     }
 
-    def insertAuthenticationChallenge(userId: String, challenge: Challenge): Future[Unit] = ???
+    def insertAuthenticationChallenge(userId: String, challenge: Challenge): Future[Unit] = {
+      val userIdentity = UserIdentity(
+        sub = userId,
+        email = userId,
+        firstName = userId,
+        lastName = "",
+        exp = 0L,
+        avatarUrl = None
+      )
+      Future.fromTry(PasskeyChallengeDB.insert(PasskeyChallengeDB.UserChallenge(userIdentity, PasskeyFlow.Authentication, challenge)))
+    }
 
     def deleteRegistrationChallenge(userId: String): Future[Unit] = ???
 
