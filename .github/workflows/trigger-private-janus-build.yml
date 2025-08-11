@@ -84,7 +84,7 @@ jobs:
       run: echo START_TIME=$(date "+%Y-%m-%dT%H:%M:%S") >> $GITHUB_ENV
 
     - name: Exchange GitHub App for GitHub Token
-      uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+      uses: actions/create-github-app-token@0f859bf9e69e887678d5bbfbee594437cb440ffe # v2.1.0
       id: app-token
       with:
         # These values are for the GitHub App guardian-janus-ci
@@ -168,7 +168,7 @@ jobs:
     if: ${{ github.ref == 'refs/heads/main' }}
     steps:
     - name: Exchange GitHub App for GitHub Token
-      uses: actions/create-github-app-token@df432ceedc7162793a195dd1713ff69aefc7379e # v2.0.6
+      uses: actions/create-github-app-token@0f859bf9e69e887678d5bbfbee594437cb440ffe # v2.1.0
       id: app-token
       with:
         # These values are for the GitHub App guardian-janus-ci
