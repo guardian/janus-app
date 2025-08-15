@@ -34,30 +34,6 @@ lazy val commonSettings = Seq(
 )
 
 /*
-Workaround for CVE-2020-36518 in Jackson
-@see https://github.com/orgs/playframework/discussions/11222
- */
-val jacksonVersion = "2.19.2"
-val jacksonDatabindVersion = "2.19.2"
-
-val jacksonOverrides = Seq(
-  "com.fasterxml.jackson.core" % "jackson-core",
-  "com.fasterxml.jackson.core" % "jackson-annotations",
-  "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8",
-  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310"
-).map(_ % jacksonVersion)
-
-val jacksonDatabindOverrides = Seq(
-  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion
-)
-
-val pekkoSerializationJacksonOverrides = Seq(
-  "com.fasterxml.jackson.dataformat" % "jackson-dataformat-cbor",
-  "com.fasterxml.jackson.module" % "jackson-module-parameter-names",
-  "com.fasterxml.jackson.module" %% "jackson-module-scala"
-).map(_ % jacksonVersion)
-
-/*
  * To decide when to remove any dependency from this list:
  * 1. Comment out the dependency
  * 2. Run 'sbt Runtime/dependencyList'
@@ -93,22 +69,16 @@ lazy val root: Project = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "25.1.0",
-      "com.gu.play-secret-rotation" %% "play-v30" % "14.5.1",
-      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "14.5.1",
+      "com.gu.play-googleauth" %% "play-v30" % "25.2.1",
+      "com.gu.play-secret-rotation" %% "play-v30" % "14.5.2",
+      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "14.5.2",
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
-      "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
+      "net.logstash.logback" % "logstash-logback-encoder" % "8.1", // scala-steward:off
       "com.webauthn4j" % "webauthn4j-core" % "0.29.5.RELEASE",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
-    ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides ++ safeTransitiveDeps,
-    dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
-    // See https://github.com/guardian/janus-app/security/dependabot/19
-    excludeDependencies += ExclusionRule(
-      organization = "net.sourceforge.htmlunit",
-      name = "htmlunit"
-    ),
+    ) ++ safeTransitiveDeps,
 
     // local development
     playDefaultPort := 9100,
@@ -159,7 +129,7 @@ lazy val configTools = (project in file("configTools"))
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
       "io.circe" %% "circe-config" % "0.10.2"
-    ) ++ jacksonDatabindOverrides,
+    ),
     name := "janus-config-tools",
     description := "Library for reading and writing Janus configuration files"
   )
