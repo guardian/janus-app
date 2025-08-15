@@ -58,8 +58,10 @@ val pekkoSerializationJacksonOverrides = Seq(
 ).map(_ % jacksonVersion)
 
 /*
-Workaround for CVE-2020-36518 in Jackson
-@see https://github.com/orgs/playframework/discussions/11222
+ * To decide when to remove any dependency from this list:
+ * 1. Comment out the dependency
+ * 2. Run 'sbt Runtime/dependencyList'
+ * If an earlier version of the dependency does NOT appear in the output it's safe to remove from this list.
  */
 val safeTransitiveDeps = Seq(
   "io.netty" % "netty-codec-http2" % "4.1.124.Final" % Runtime
