@@ -26,6 +26,8 @@ jobs:
         with:
           fail-on-severity: low
           comment-summary-in-pr: always
+          retry-on-snapshot-warnings: true
+          retry-on-snapshot-warnings-timeout: 60
 
       - name: 'List dependencies'
         # make sure this step runs even if the previous failed
