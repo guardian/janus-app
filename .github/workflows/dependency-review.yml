@@ -23,7 +23,12 @@ jobs:
 #      - uses: guardian/setup-scala@cc7b39e238d789370aa98fa5f07e609b6527657d # v1.1.0
       - uses: sbt/setup-sbt@v1
       - uses: scalacenter/sbt-dependency-submission@64084844d2b0a9b6c3765f33acde2fbe3f5ae7d3 # v3.1.0
-      
+
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
+
       - id: review
 #        uses: actions/dependency-review-action@da24556b548a50705dd671f47852072ea4c105d9 # v4.7.1
         uses: actions/dependency-review-action@3b139cfc5fae8b618d3eae3675e383bb1769c019 # v4.5.0
@@ -34,8 +39,6 @@ jobs:
 #          retry-on-snapshot-warnings-timeout: 60
 
       - name: 'List dependencies'
-        # make sure this step runs even if the previous failed
-#        if: ${{ failure() && steps.review.conclusion == 'failure' }}
         shell: bash
         env: # store JSON data in an environment variable
           CHANGES: ${{ steps.review.outputs.dependency-changes }}
