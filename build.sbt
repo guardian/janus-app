@@ -8,7 +8,7 @@ import sbtversionpolicy.withsbtrelease.ReleaseVersion
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.32.21"
+val awsSdkVersion = "2.32.26"
 val circeVersion = "0.14.14"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
@@ -57,16 +57,6 @@ val pekkoSerializationJacksonOverrides = Seq(
   "com.fasterxml.jackson.module" %% "jackson-module-scala"
 ).map(_ % jacksonVersion)
 
-/*
- * To decide when to remove any dependency from this list:
- * 1. Comment out the dependency
- * 2. Run 'sbt Runtime/dependencyList'
- * If an earlier version of the dependency does NOT appear in the output it's safe to remove from this list.
- */
-val safeTransitiveDeps = Seq(
-  "io.netty" % "netty-codec-http2" % "4.1.124.Final" % Runtime
-)
-
 lazy val root: Project = (project in file("."))
   .enablePlugins(PlayScala, JDebPackaging, SystemdPlugin)
   .dependsOn(configTools % "compile->compile;test->test")
@@ -102,7 +92,7 @@ lazy val root: Project = (project in file("."))
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
       "com.webauthn4j" % "webauthn4j-core" % "0.29.5.RELEASE",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
-    ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides ++ safeTransitiveDeps,
+    ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
     // See https://github.com/guardian/janus-app/security/dependabot/19
     excludeDependencies += ExclusionRule(
