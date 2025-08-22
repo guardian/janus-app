@@ -1,4 +1,4 @@
-import aws.{Clients, PasskeyChallengeDB, PasskeyDB}
+import aws.{Clients, PasskeyChallengeDB}
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
@@ -6,12 +6,9 @@ import com.gu.playpasskeyauth.filters.PasskeyVerificationFilter
 import com.gu.playpasskeyauth.models.HostApp
 import com.gu.playpasskeyauth.services.{
   PasskeyChallengeRepository,
-  PasskeyRepository,
   PasskeyVerificationServiceImpl
 }
 import com.typesafe.config.ConfigException
-import com.webauthn4j.credential.CredentialRecord
-import com.webauthn4j.data.AuthenticationData
 import com.webauthn4j.data.client.challenge.Challenge
 import conf.Config
 import controllers.*
@@ -123,77 +120,6 @@ class AppComponents(context: ApplicationLoader.Context)
       )
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
-
-  private val pkRepo = new PasskeyRepository {
-    override def loadCredentialRecord(
-        userId: String,
-        passkeyId: Array[Byte]
-    ): Future[Option[CredentialRecord]] = {
-      val userIdentity = UserIdentity(
-        sub = userId,
-        email = userId,
-        firstName = userId,
-        lastName = "",
-        exp = 0L,
-        avatarUrl = None
-      )
-      Future.fromTry(
-        PasskeyDB.loadCredential(userIdentity, passkeyId).flatMap { response =>
-          if (response.hasItem) {
-            PasskeyDB.extractCredential(response, userIdentity).map(Some(_))
-          } else {
-            Success(None)
-          }
-        }
-      )
-    }
-
-    override def loadPasskeyIds(userId: String): Future[List[String]] = {
-      val userIdentity = UserIdentity(
-        sub = userId,
-        email = userId,
-        firstName = userId,
-        lastName = "",
-        exp = 0L,
-        avatarUrl = None
-      )
-      Future.fromTry(
-        PasskeyDB.loadCredentials(userIdentity).map { response =>
-          PasskeyDB.extractMetadata(response).map(_.id).toList
-        }
-      )
-    }
-
-    override def updateAuthenticationCounter(
-        userId: String,
-        authData: AuthenticationData
-    ): Future[Unit] = {
-      val userIdentity = UserIdentity(
-        sub = userId,
-        email = userId,
-        firstName = userId,
-        lastName = "",
-        exp = 0L,
-        avatarUrl = None
-      )
-      Future.fromTry(PasskeyDB.updateCounter(userIdentity, authData))
-    }
-
-    override def updateLastUsedTime(
-        userId: String,
-        authData: AuthenticationData
-    ): Future[Unit] = {
-      val userIdentity = UserIdentity(
-        sub = userId,
-        email = userId,
-        firstName = userId,
-        lastName = "",
-        exp = 0L,
-        avatarUrl = None
-      )
-      Future.fromTry(PasskeyDB.updateLastUsedTime(userIdentity, authData))
-    }
-  }
 
   private val pkChallRepo = new PasskeyChallengeRepository {
 
@@ -322,7 +248,7 @@ class AppComponents(context: ApplicationLoader.Context)
   private val pkService =
     new PasskeyVerificationServiceImpl(
       app = hostApp,
-      passkeyRepo = pkRepo,
+      passkeyRepo = new passkey.Repository(),
       challengeRepo = pkChallRepo
     )
 
