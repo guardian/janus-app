@@ -1,15 +1,11 @@
-import aws.{Clients, PasskeyChallengeDB}
-import com.gu.googleauth.{AuthAction, UserIdentity}
+import aws.Clients
+import com.gu.googleauth.AuthAction
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.gu.playpasskeyauth.filters.PasskeyVerificationFilter
 import com.gu.playpasskeyauth.models.HostApp
-import com.gu.playpasskeyauth.services.{
-  PasskeyChallengeRepository,
-  PasskeyVerificationServiceImpl
-}
+import com.gu.playpasskeyauth.services.PasskeyVerificationServiceImpl
 import com.typesafe.config.ConfigException
-import com.webauthn4j.data.client.challenge.Challenge
 import conf.Config
 import controllers.*
 import filters.{
@@ -19,6 +15,7 @@ import filters.{
 }
 import models.*
 import models.AccountConfigStatus.*
+import passkey.given
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSComponents
 import play.api.mvc.{AnyContent, EssentialFilter}
@@ -32,8 +29,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.net.URI
 import java.time.Duration
-import scala.concurrent.Future
-import scala.util.Success
 import scala.util.chaining.scalaUtilChainingOps
 
 class AppComponents(context: ApplicationLoader.Context)
@@ -121,121 +116,6 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
 
-  private val pkChallRepo = new PasskeyChallengeRepository {
-
-    def loadRegistrationChallenge(userId: String): Future[Option[Challenge]] = {
-      val userIdentity = UserIdentity(
-        sub = userId,
-        email = userId,
-        firstName = userId,
-        lastName = "",
-        exp = 0L,
-        avatarUrl = None
-      )
-      Future.fromTry(
-        PasskeyChallengeDB
-          .loadChallenge(userIdentity, PasskeyFlow.Registration)
-          .flatMap { response =>
-            if (response.hasItem) {
-              PasskeyChallengeDB
-                .extractChallenge(response, userIdentity)
-                .map(Some(_))
-            } else {
-              Success(None)
-            }
-          }
-      )
-    }
-
-    override def loadAuthenticationChallenge(
-        userId: String
-    ): Future[Option[Challenge]] = {
-      val userIdentity = UserIdentity(
-        sub = userId,
-        email = userId,
-        firstName = userId,
-        lastName = "",
-        exp = 0L,
-        avatarUrl = None
-      )
-      Future.fromTry(
-        PasskeyChallengeDB
-          .loadChallenge(userIdentity, PasskeyFlow.Authentication)
-          .flatMap { response =>
-            if (response.hasItem) {
-              PasskeyChallengeDB
-                .extractChallenge(response, userIdentity)
-                .map(Some(_))
-            } else {
-              Success(None)
-            }
-          }
-      )
-    }
-
-    def insertRegistrationChallenge(
-        userId: String,
-        challenge: Challenge
-    ): Future[Unit] = {
-      val userIdentity = UserIdentity(
-        sub = userId,
-        email = userId,
-        firstName = userId,
-        lastName = "",
-        exp = 0L,
-        avatarUrl = None
-      )
-      Future.fromTry(
-        PasskeyChallengeDB.insert(
-          PasskeyChallengeDB.UserChallenge(
-            userIdentity,
-            PasskeyFlow.Registration,
-            challenge
-          )
-        )
-      )
-    }
-
-    def insertAuthenticationChallenge(
-        userId: String,
-        challenge: Challenge
-    ): Future[Unit] = {
-      val userIdentity = UserIdentity(
-        sub = userId,
-        email = userId,
-        firstName = userId,
-        lastName = "",
-        exp = 0L,
-        avatarUrl = None
-      )
-      Future.fromTry(
-        PasskeyChallengeDB.insert(
-          PasskeyChallengeDB.UserChallenge(
-            userIdentity,
-            PasskeyFlow.Authentication,
-            challenge
-          )
-        )
-      )
-    }
-
-    def deleteRegistrationChallenge(userId: String): Future[Unit] = ???
-
-    override def deleteAuthenticationChallenge(userId: String): Future[Unit] = {
-      val userIdentity = UserIdentity(
-        sub = userId,
-        email = userId,
-        firstName = userId,
-        lastName = "",
-        exp = 0L,
-        avatarUrl = None
-      )
-      Future.fromTry(
-        PasskeyChallengeDB.delete(userIdentity, PasskeyFlow.Authentication)
-      )
-    }
-  }
-
   private val hostApp = HostApp(
     name = mode match {
       case Mode.Dev  => "Janus-Dev"
@@ -249,10 +129,9 @@ class AppComponents(context: ApplicationLoader.Context)
     new PasskeyVerificationServiceImpl(
       app = hostApp,
       passkeyRepo = new passkey.Repository(),
-      challengeRepo = pkChallRepo
+      challengeRepo = new passkey.ChallengeRepository()
     )
 
-  import controllers.given
   private val passkeyVerificationFilter =
     new ConditionalPasskeyVerificationFilter(
       passkeysEnabled,
