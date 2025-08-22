@@ -5,7 +5,13 @@ import com.gu.playpasskeyauth.controllers.BasePasskeyController
 import com.gu.playpasskeyauth.services.PasskeyVerificationService
 import com.gu.playpasskeyauth.web.RequestExtractor
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{ActionBuilder, AnyContent, AnyContentAsFormUrlEncoded, AnyContentAsJson, ControllerComponents}
+import play.api.mvc.{
+  ActionBuilder,
+  AnyContent,
+  AnyContentAsFormUrlEncoded,
+  AnyContentAsJson,
+  ControllerComponents
+}
 
 import scala.concurrent.ExecutionContext
 
@@ -28,9 +34,9 @@ given RequestExtractor[UserIdentityRequest] with {
     request.body match {
       case AnyContentAsFormUrlEncoded(data) =>
         data.get("credentials").flatMap(_.headOption.map(Json.parse))
-        // Used in authenticate before registration context?
+      // Used in authenticate before registration context?
       case AnyContentAsJson(authData) => Some(authData)
-      case _ => None
+      case _                          => None
     }
 }
 
