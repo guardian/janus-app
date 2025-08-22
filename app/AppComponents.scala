@@ -4,14 +4,22 @@ import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.gu.playpasskeyauth.filters.PasskeyVerificationFilter
 import com.gu.playpasskeyauth.models.HostApp
-import com.gu.playpasskeyauth.services.{PasskeyChallengeRepository, PasskeyRepository, PasskeyVerificationServiceImpl}
+import com.gu.playpasskeyauth.services.{
+  PasskeyChallengeRepository,
+  PasskeyRepository,
+  PasskeyVerificationServiceImpl
+}
 import com.typesafe.config.ConfigException
 import com.webauthn4j.credential.CredentialRecord
 import com.webauthn4j.data.AuthenticationData
 import com.webauthn4j.data.client.challenge.Challenge
 import conf.Config
 import controllers.*
-import filters.{HstsFilter, PasskeyAuthFilter, PasskeyRegistrationAuthFilter}
+import filters.{
+  ConditionalPasskeyVerificationFilter,
+  HstsFilter,
+  PasskeyRegistrationAuthFilter
+}
 import models.*
 import models.AccountConfigStatus.*
 import play.api.libs.ws.WSClient
@@ -248,7 +256,10 @@ class AppComponents(context: ApplicationLoader.Context)
       )
     }
 
-    def insertRegistrationChallenge(userId: String, challenge: Challenge): Future[Unit] = {
+    def insertRegistrationChallenge(
+        userId: String,
+        challenge: Challenge
+    ): Future[Unit] = {
       val userIdentity = UserIdentity(
         sub = userId,
         email = userId,
@@ -257,10 +268,21 @@ class AppComponents(context: ApplicationLoader.Context)
         exp = 0L,
         avatarUrl = None
       )
-      Future.fromTry(PasskeyChallengeDB.insert(PasskeyChallengeDB.UserChallenge(userIdentity, PasskeyFlow.Registration, challenge)))
+      Future.fromTry(
+        PasskeyChallengeDB.insert(
+          PasskeyChallengeDB.UserChallenge(
+            userIdentity,
+            PasskeyFlow.Registration,
+            challenge
+          )
+        )
+      )
     }
 
-    def insertAuthenticationChallenge(userId: String, challenge: Challenge): Future[Unit] = {
+    def insertAuthenticationChallenge(
+        userId: String,
+        challenge: Challenge
+    ): Future[Unit] = {
       val userIdentity = UserIdentity(
         sub = userId,
         email = userId,
@@ -269,7 +291,15 @@ class AppComponents(context: ApplicationLoader.Context)
         exp = 0L,
         avatarUrl = None
       )
-      Future.fromTry(PasskeyChallengeDB.insert(PasskeyChallengeDB.UserChallenge(userIdentity, PasskeyFlow.Authentication, challenge)))
+      Future.fromTry(
+        PasskeyChallengeDB.insert(
+          PasskeyChallengeDB.UserChallenge(
+            userIdentity,
+            PasskeyFlow.Authentication,
+            challenge
+          )
+        )
+      )
     }
 
     def deleteRegistrationChallenge(userId: String): Future[Unit] = ???
@@ -307,19 +337,16 @@ class AppComponents(context: ApplicationLoader.Context)
 
   import controllers.given
   private val passkeyVerificationFilter =
-    new PasskeyVerificationFilter(
-      pkService
-    )
-  private val passkeyAuthFilter =
-    new PasskeyAuthFilter(
-      host,
+    new ConditionalPasskeyVerificationFilter(
       passkeysEnabled,
-      passkeysEnablingCookieName
+      passkeysEnablingCookieName,
+      new PasskeyVerificationFilter(pkService)
     )
   private val passkeyRegistrationAuthFilter =
-    new PasskeyRegistrationAuthFilter(passkeyAuthFilter)
+    new PasskeyRegistrationAuthFilter(passkeyVerificationFilter)
 
-  private val passkeyVerificationAction = authAction.andThen(passkeyVerificationFilter)
+  private val passkeyVerificationAction =
+    authAction.andThen(passkeyVerificationFilter)
   private val passkeyRegistrationAuthAction =
     authAction.andThen(passkeyRegistrationAuthFilter)
 
