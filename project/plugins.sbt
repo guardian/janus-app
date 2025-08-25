@@ -1,7 +1,7 @@
 resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releases/"
 
 addSbtPlugin(
-  "com.github.sbt" % "sbt-native-packager" % "1.11.1"
+  "com.github.sbt" % "sbt-native-packager" % "1.11.3"
 )
 
 // The Play plugin
