@@ -37,18 +37,22 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.20"
-val jacksonDatabindVersion = "2.20"
+val jacksonVersion = "2.20.0"
 
 val jacksonOverrides = Seq(
-  "com.fasterxml.jackson.core" % "jackson-core",
-  "com.fasterxml.jackson.core" % "jackson-annotations",
-  "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8",
-  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310"
-).map(_ % jacksonVersion)
+  "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % jacksonVersion,
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
+  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+
+  // The version numbering of jackson-annotations has diverged
+  // See https://github.com/FasterXML/jackson-annotations/issues/307
+  // and https://github.com/FasterXML/jackson-future-ideas/wiki/JSTEP-1#handling-of-jackson-annotations
+  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.20"
+)
 
 val jacksonDatabindOverrides = Seq(
-  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion
+  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion
 )
 
 val pekkoSerializationJacksonOverrides = Seq(
