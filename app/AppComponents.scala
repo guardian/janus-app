@@ -2,20 +2,14 @@ import aws.Clients
 import com.gu.googleauth.AuthAction
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
-import com.gu.playpasskeyauth.filters.PasskeyVerificationFilter
 import com.gu.playpasskeyauth.models.HostApp
-import com.gu.playpasskeyauth.services.PasskeyVerificationServiceImpl
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
-import filters.{
-  ConditionalPasskeyVerificationFilter,
-  HstsFilter,
-  PasskeyRegistrationAuthFilter
-}
+import filters.{HstsFilter, PasskeyAuthFilter, PasskeyRegistrationAuthFilter}
 import models.*
 import models.AccountConfigStatus.*
-import passkey.given
+import passkey.{ChallengeRepository, Repository}
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSComponents
 import play.api.mvc.{AnyContent, EssentialFilter}
@@ -116,35 +110,29 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
 
-  private val hostApp = HostApp(
-    name = mode match {
-      case Mode.Dev  => "Janus-Dev"
-      case Mode.Test => "Janus-Test"
-      case Mode.Prod => "Janus-Prod"
-    },
-    uri = URI.create(host)
-  )
-
-  private val pkService =
-    new PasskeyVerificationServiceImpl(
-      app = hostApp,
-      passkeyRepo = new passkey.Repository(),
-      challengeRepo = new passkey.ChallengeRepository()
-    )
-
-  private val passkeyVerificationFilter =
-    new ConditionalPasskeyVerificationFilter(
+  private val passkeyAuthFilter =
+    new PasskeyAuthFilter(
+      host,
       passkeysEnabled,
-      passkeysEnablingCookieName,
-      new PasskeyVerificationFilter(pkService)
+      passkeysEnablingCookieName
     )
   private val passkeyRegistrationAuthFilter =
-    new PasskeyRegistrationAuthFilter(passkeyVerificationFilter)
+    new PasskeyRegistrationAuthFilter(passkeyAuthFilter)
 
-  private val passkeyVerificationAction =
-    authAction.andThen(passkeyVerificationFilter)
+  private val passkeyAuthAction = authAction.andThen(passkeyAuthFilter)
   private val passkeyRegistrationAuthAction =
     authAction.andThen(passkeyRegistrationAuthFilter)
+
+  // =====
+  import com.gu.playpasskeyauth.PasskeyAuth
+  private val passkeyAuth = new PasskeyAuth(
+    app = HostApp(name = host, uri = URI.create(host)),
+    passkeyRepo = new Repository(),
+    challengeRepo = new ChallengeRepository()
+  )
+  private val newPasskeyController =
+    passkeyAuth.controller(controllerComponents, authAction, ???)
+  // =====
 
   override def router: Router = new Routes(
     httpErrorHandler,
@@ -152,7 +140,7 @@ class AppComponents(context: ApplicationLoader.Context)
       janusData,
       controllerComponents,
       authAction,
-      passkeyVerificationAction,
+      passkeyAuthAction,
       host,
       Clients.stsClient,
       configuration,
@@ -162,7 +150,7 @@ class AppComponents(context: ApplicationLoader.Context)
     new PasskeyController(
       controllerComponents,
       authAction,
-      passkeyVerificationAction,
+      passkeyAuthAction,
       passkeyRegistrationAuthAction,
       host,
       janusData,
@@ -184,7 +172,7 @@ class AppComponents(context: ApplicationLoader.Context)
       googleGroupChecker,
       requiredGoogleGroups
     ),
-    new ConcretePasskeyController(controllerComponents, authAction, pkService),
+    newPasskeyController,
     new Utility(
       janusData,
       controllerComponents,
