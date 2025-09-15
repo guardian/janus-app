@@ -8,14 +8,14 @@ import com.webauthn4j.data.AuthenticationData
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import scala.concurrent.Future
-import scala.util.Success
+import scala.util.Failure
 
 class Repository(using DynamoDbClient) extends PasskeyRepository {
 
   override def loadCredentialRecord(
       userId: String,
       passkeyId: Array[Byte]
-  ): Future[Option[CredentialRecord]] = {
+  ): Future[CredentialRecord] = {
     val userIdentity = UserIdentity(
       sub = userId,
       email = userId,
@@ -27,10 +27,13 @@ class Repository(using DynamoDbClient) extends PasskeyRepository {
     Future.fromTry(
       PasskeyDB.loadCredential(userIdentity, passkeyId).flatMap { response =>
         if (response.hasItem) {
-          PasskeyDB.extractCredential(response, userIdentity).map(Some(_))
-        } else {
-          Success(None)
-        }
+          PasskeyDB.extractCredential(response, userIdentity)
+        } else
+          Failure(
+            RuntimeException(
+              s"Failed to load credential record for user: $userId"
+            )
+          )
       }
     )
   }
@@ -48,6 +51,24 @@ class Repository(using DynamoDbClient) extends PasskeyRepository {
       PasskeyDB.loadCredentials(userIdentity).map { response =>
         PasskeyDB.extractMetadata(response).map(_.id).toList
       }
+    )
+  }
+
+  def insertCredentialRecord(
+      userId: String,
+      passkeyName: String,
+      credentialRecord: CredentialRecord
+  ): Future[Unit] = {
+    val userIdentity = UserIdentity(
+      sub = "",
+      email = "",
+      firstName = userId,
+      lastName = "",
+      exp = 0L,
+      avatarUrl = None
+    )
+    Future.fromTry(
+      PasskeyDB.insert(userIdentity, credentialRecord, passkeyName)
     )
   }
 

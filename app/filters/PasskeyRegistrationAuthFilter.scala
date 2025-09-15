@@ -16,17 +16,15 @@ import scala.concurrent.{ExecutionContext, Future}
   *   - If the user already has passkey credentials, the request is delegated to
   *     the standard PasskeyAuthFilter
   *
-  * @param verificationFilter
-  *   The passkey verification filter to delegate to if the user already has
+  * @param authFilter
+  *   The passkey authentication filter to delegate to if the user already has
   *   credentials
   * @param dynamoDb
   *   The AWS DynamoDB client for database access
   * @param ec
   *   Execution context for asynchronous operations
   */
-class PasskeyRegistrationAuthFilter(
-    verificationFilter: ConditionalPasskeyVerificationFilter
-)(using
+class PasskeyRegistrationAuthFilter(authFilter: PasskeyAuthFilter)(using
     dynamoDb: DynamoDbClient,
     ec: ExecutionContext
 ) extends ActionFilter[UserIdentityRequest]
@@ -66,7 +64,7 @@ class PasskeyRegistrationAuthFilter(
           )
         },
         dbResponse =>
-          if !dbResponse.items.isEmpty then verificationFilter.filter(request)
+          if !dbResponse.items.isEmpty then authFilter.filter(request)
           else Future.successful(None)
       )
 }

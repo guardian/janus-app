@@ -34,8 +34,8 @@ GET           /loginError                               controllers.AuthControll
 GET           /oauthCallback                            controllers.AuthController.oauthCallback
 GET           /logout                                   controllers.AuthController.logout
 
-POST          /passkey/registration-options             controllers.ConcretePasskeyController.creationOptions
-POST          /passkey/auth-options                     controllers.ConcretePasskeyController.authenticationOptions
+POST          /passkey/registration-options             com.gu.playpasskeyauth.controllers.BasePasskeyController.creationOptions
+POST          /passkey/auth-options                     com.gu.playpasskeyauth.controllers.BasePasskeyController.authenticationOptions
 POST          /passkey/registration-auth-options        controllers.PasskeyController.registrationAuthenticationOptions
 POST          /passkey/register                         controllers.PasskeyController.register
 DELETE        /passkey/:passkeyId                       controllers.PasskeyController.deletePasskey(passkeyId: String)
