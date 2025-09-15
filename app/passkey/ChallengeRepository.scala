@@ -8,12 +8,12 @@ import models.PasskeyFlow
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import scala.concurrent.Future
-import scala.util.Success
+import scala.util.Failure
 
 class ChallengeRepository(using DynamoDbClient)
     extends PasskeyChallengeRepository {
 
-  def loadRegistrationChallenge(userId: String): Future[Option[Challenge]] = {
+  def loadRegistrationChallenge(userId: String): Future[Challenge] = {
     val userIdentity = UserIdentity(
       sub = userId,
       email = userId,
@@ -29,9 +29,12 @@ class ChallengeRepository(using DynamoDbClient)
           if (response.hasItem) {
             PasskeyChallengeDB
               .extractChallenge(response, userIdentity)
-              .map(Some(_))
           } else {
-            Success(None)
+            Failure(
+              RuntimeException(
+                s"Failed to load registration challenge for user: $userId"
+              )
+            )
           }
         }
     )
@@ -39,7 +42,7 @@ class ChallengeRepository(using DynamoDbClient)
 
   override def loadAuthenticationChallenge(
       userId: String
-  ): Future[Option[Challenge]] = {
+  ): Future[Challenge] = {
     val userIdentity = UserIdentity(
       sub = userId,
       email = userId,
@@ -55,9 +58,12 @@ class ChallengeRepository(using DynamoDbClient)
           if (response.hasItem) {
             PasskeyChallengeDB
               .extractChallenge(response, userIdentity)
-              .map(Some(_))
           } else {
-            Success(None)
+            Failure(
+              RuntimeException(
+                s"Failed to load authentication challenge for user: $userId"
+              )
+            )
           }
         }
     )
@@ -109,7 +115,19 @@ class ChallengeRepository(using DynamoDbClient)
     )
   }
 
-  def deleteRegistrationChallenge(userId: String): Future[Unit] = ???
+  def deleteRegistrationChallenge(userId: String): Future[Unit] = {
+    val userIdentity = UserIdentity(
+      sub = "",
+      email = "",
+      firstName = userId,
+      lastName = "",
+      exp = 0L,
+      avatarUrl = None
+    )
+    Future.fromTry(
+      PasskeyChallengeDB.delete(userIdentity, PasskeyFlow.Registration)
+    )
+  }
 
   override def deleteAuthenticationChallenge(userId: String): Future[Unit] = {
     val userIdentity = UserIdentity(
