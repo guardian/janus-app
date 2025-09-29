@@ -119,6 +119,10 @@ object Config {
     requiredString(config, "auth.google.2faGroupId")
   }
 
+  def devxSecurityContactLink(config: Configuration): String = {
+    requiredString(config, "devxSecurity.contact.link")
+  }
+
   private def requiredString(config: Configuration, key: String): String = {
     config.getOptional[String](key).getOrElse {
       throw new JanusConfigurationException(
