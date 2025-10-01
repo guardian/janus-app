@@ -183,7 +183,6 @@ object Loader {
               s"The support access definition includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
             )
       }
-      period = Duration.ofSeconds(configuredSupport.period.toLong)
       rota <- configuredSupport.rota.traverse {
         case ConfiguredRotaEntry(startTime, user1 :: user2 :: Nil) =>
           Right(startTime -> (user1, user2))
@@ -193,6 +192,6 @@ object Loader {
                 .mkString("`", ", ", "`")}"
           )
       }
-    } yield SupportACL.create(rota.toMap, supportAccess.toSet, period)
+    } yield SupportACL.create(rota.toMap, supportAccess.toSet)
   }
 }
