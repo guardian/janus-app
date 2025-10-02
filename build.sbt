@@ -9,13 +9,13 @@ ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
 val awsSdkVersion = "2.33.11"
-val circeVersion = "0.14.14"
+val circeVersion = "0.14.15"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-  "ch.qos.logback" % "logback-classic" % "1.5.18"
+  "ch.qos.logback" % "logback-classic" % "1.5.19"
 )
 lazy val commonSettings = Seq(
   scalaVersion := "3.3.6",
@@ -94,7 +94,7 @@ lazy val root: Project = (project in file("."))
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
-      "com.webauthn4j" % "webauthn4j-core" % "0.29.6.RELEASE",
+      "com.webauthn4j" % "webauthn4j-core" % "0.29.7.RELEASE",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
     ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
