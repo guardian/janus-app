@@ -4,7 +4,15 @@
 @import play.api.Mode
 @import java.time.Instant
 
-@(user: UserIdentity, janusData: JanusData, passkeys: Seq[models.PasskeyMetadata], dateFormat: Instant => String, timeFormat: Instant => String, passkeysEnablingCookieName: String)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(
+        user: UserIdentity,
+        janusData: JanusData,
+        passkeys: Seq[models.PasskeyMetadata],
+        dateFormat: Instant => String,
+        timeFormat: Instant => String,
+        passkeysEnablingCookieName: String,
+        devxSecurityContactLink: String
+)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("User account", Some(user), janusData) {
 
@@ -52,6 +60,8 @@
             your AWS accounts.
             One should be on-device (e.g. Mac Touch ID or Windows Hello)
             and the other off-device (e.g. security key or phone).</p>
+        <p>Please contact the <a href="@devxSecurityContactLink">DevX Security team</a> if you have any problems
+            registering or using passkeys.</p>
 
         <div class="row">
             <h4 class="header orange-text">Registered passkeys</h4>
