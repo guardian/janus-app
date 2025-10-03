@@ -3,7 +3,11 @@ import com.gu.googleauth.AuthAction
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.gu.playpasskeyauth.models.HostApp
-import com.gu.playpasskeyauth.web.{CreationDataExtractor, PasskeyNameExtractor}
+import com.gu.playpasskeyauth.web.{
+  AuthenticationDataExtractor,
+  CreationDataExtractor,
+  PasskeyNameExtractor
+}
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
@@ -130,7 +134,6 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeyRegistrationAuthFilter =
     new PasskeyRegistrationAuthFilter(passkeyAuthFilter)
 
-  private val passkeyAuthAction = authAction.andThen(passkeyAuthFilter)
   private val passkeyRegistrationAuthAction =
     authAction.andThen(passkeyRegistrationAuthFilter)
 
@@ -139,12 +142,27 @@ class AppComponents(context: ApplicationLoader.Context)
   import com.gu.playpasskeyauth.PasskeyAuth
 
   private val creationDataExtractor = new CreationDataExtractor {
-    def findCreationData[A](request: UserIdentityRequest[A]): Option[JsValue] = {
+    def findCreationData[A](
+        request: UserIdentityRequest[A]
+    ): Option[JsValue] = {
       request.body match {
-        case AnyContentAsFormUrlEncoded(formData) =>
-          formData.get("passkey").flatMap(_.headOption).map(Json.parse)
-        case _ =>
-          None
+        case AnyContentAsFormUrlEncoded(data) =>
+          data.get("passkey").flatMap(_.headOption).map(Json.parse)
+        case _ => None
+      }
+    }
+  }
+
+  private val authenticationDataExtractor = new AuthenticationDataExtractor {
+    def findAuthenticationData[A](
+        request: UserIdentityRequest[A]
+    ): Option[JsValue] = {
+      request.body match {
+        case AnyContentAsFormUrlEncoded(data) =>
+          data.get("credentials").flatMap(_.headOption).map(Json.parse)
+        case AnyContentAsText(data) =>
+          Option(data).map(Json.parse)
+        case _ => None
       }
     }
   }
@@ -152,24 +170,29 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeyNameExtractor = new PasskeyNameExtractor {
     def findPasskeyName[A](request: UserIdentityRequest[A]): Option[String] = {
       request.body match {
-        case AnyContentAsFormUrlEncoded(formData) =>
-          formData.get("passkeyName").flatMap(_.headOption)
-        case _ =>
-          None
+        case AnyContentAsFormUrlEncoded(data) =>
+          data.get("passkeyName").flatMap(_.headOption)
+        case _ => None
       }
     }
   }
 
   private val passkeyAuth = new PasskeyAuth(
     app = HostApp(name = host, uri = URI.create(host)),
+    authAction,
     passkeyRepo = new Repository(),
-    challengeRepo = new ChallengeRepository(),
+    challengeRepo = new ChallengeRepository()
+  )
+
+  private val newPasskeyController = passkeyAuth.controller(
+    controllerComponents,
     creationDataExtractor,
     passkeyNameExtractor,
     registrationRedirect = routes.Janus.userAccount
   )
 
-  private val newPasskeyController = passkeyAuth.controller(controllerComponents, authAction)
+  private val passkeyVerificationAction =
+    passkeyAuth.verificationAction(authenticationDataExtractor)
   // =====
 
   override def router: Router = new Routes(
@@ -178,7 +201,7 @@ class AppComponents(context: ApplicationLoader.Context)
       janusData,
       controllerComponents,
       authAction,
-      passkeyAuthAction,
+      passkeyVerificationAction,
       host,
       Clients.stsClient,
       configuration,
@@ -188,7 +211,7 @@ class AppComponents(context: ApplicationLoader.Context)
     new PasskeyController(
       controllerComponents,
       authAction,
-      passkeyAuthAction,
+      passkeyVerificationAction,
       passkeyRegistrationAuthAction,
       host,
       janusData,
