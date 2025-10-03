@@ -87,13 +87,19 @@ class ChallengeRepository(using DynamoDbClient)
 
   def deleteRegistrationChallenge(userId: String): Future[Unit] = {
     Future.fromTry(
-      PasskeyChallengeDB.delete(toUserIdentity(userId), PasskeyFlow.Registration)
+      PasskeyChallengeDB.delete(
+        toUserIdentity(userId),
+        PasskeyFlow.Registration
+      )
     )
   }
 
   override def deleteAuthenticationChallenge(userId: String): Future[Unit] = {
     Future.fromTry(
-      PasskeyChallengeDB.delete(toUserIdentity(userId), PasskeyFlow.Authentication)
+      PasskeyChallengeDB.delete(
+        toUserIdentity(userId),
+        PasskeyFlow.Authentication
+      )
     )
   }
 

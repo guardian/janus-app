@@ -2,9 +2,9 @@ package controllers
 
 import aws.{AuditTrailDB, Federation, PasskeyDB}
 import cats.syntax.all.*
-import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.*
+import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import logic.PlayHelpers.splitQuerystringParam
@@ -23,7 +23,7 @@ class Janus(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
-    passkeyAuthAction: ActionBuilder[UserIdentityRequest, AnyContent],
+    passkeyAuthAction: ActionBuilder[RequestWithAuthenticationData, AnyContent],
     host: String,
     stsClient: StsClient,
     configuration: Configuration,
