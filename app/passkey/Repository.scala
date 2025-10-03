@@ -16,14 +16,7 @@ class Repository(using DynamoDbClient) extends PasskeyRepository {
       userId: String,
       passkeyId: Array[Byte]
   ): Future[CredentialRecord] = {
-    val userIdentity = UserIdentity(
-      sub = userId,
-      email = userId,
-      firstName = userId,
-      lastName = "",
-      exp = 0L,
-      avatarUrl = None
-    )
+    val userIdentity = toUserIdentity(userId)
     Future.fromTry(
       PasskeyDB.loadCredential(userIdentity, passkeyId).flatMap { response =>
         if (response.hasItem) {
@@ -39,16 +32,8 @@ class Repository(using DynamoDbClient) extends PasskeyRepository {
   }
 
   override def loadPasskeyIds(userId: String): Future[List[String]] = {
-    val userIdentity = UserIdentity(
-      sub = userId,
-      email = userId,
-      firstName = userId,
-      lastName = "",
-      exp = 0L,
-      avatarUrl = None
-    )
     Future.fromTry(
-      PasskeyDB.loadCredentials(userIdentity).map { response =>
+      PasskeyDB.loadCredentials(toUserIdentity(userId)).map { response =>
         PasskeyDB.extractMetadata(response).map(_.id).toList
       }
     )
@@ -59,46 +44,30 @@ class Repository(using DynamoDbClient) extends PasskeyRepository {
       passkeyName: String,
       credentialRecord: CredentialRecord
   ): Future[Unit] = {
-    val userIdentity = UserIdentity(
-      sub = "",
-      email = "",
-      firstName = userId,
-      lastName = "",
-      exp = 0L,
-      avatarUrl = None
-    )
-    Future.fromTry(
-      PasskeyDB.insert(userIdentity, credentialRecord, passkeyName)
-    )
+    Future.fromTry(PasskeyDB.insert(toUserIdentity(userId), credentialRecord, passkeyName))
   }
 
   override def updateAuthenticationCounter(
       userId: String,
       authData: AuthenticationData
   ): Future[Unit] = {
-    val userIdentity = UserIdentity(
-      sub = userId,
-      email = userId,
-      firstName = userId,
-      lastName = "",
-      exp = 0L,
-      avatarUrl = None
-    )
-    Future.fromTry(PasskeyDB.updateCounter(userIdentity, authData))
+    Future.fromTry(PasskeyDB.updateCounter(toUserIdentity(userId), authData))
   }
 
   override def updateLastUsedTime(
       userId: String,
       authData: AuthenticationData
   ): Future[Unit] = {
-    val userIdentity = UserIdentity(
-      sub = userId,
+    Future.fromTry(PasskeyDB.updateLastUsedTime(toUserIdentity(userId), authData))
+  }
+
+  private def toUserIdentity(userId: String) =
+     UserIdentity(
+      sub = "",
       email = userId,
-      firstName = userId,
+      firstName = "",
       lastName = "",
       exp = 0L,
       avatarUrl = None
     )
-    Future.fromTry(PasskeyDB.updateLastUsedTime(userIdentity, authData))
-  }
 }
