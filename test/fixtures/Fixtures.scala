@@ -1,5 +1,6 @@
 package fixtures
 
+import com.gu.janus.model.SessionType.{User, Workload}
 import com.gu.janus.model.{AwsAccount, Permission}
 import com.gu.janus.policy.Iam.Policy
 
@@ -22,21 +23,21 @@ object Fixtures {
   val quxDev = developerPermission(quxAct)
   val quxCf = accountAdminPermission(quxAct)
 
-  val fooBespoke =
+  val fooWorkload =
     Permission(
       fooAct,
       "bespoke-permission-f",
-      "Foo account permission with overriden profile name",
+      "Foo account workload permission",
       Policy(Seq.empty),
-      overrideProfileName = true
+      sessionType = Workload
     )
-  val barBespoke =
+  val barWorkload =
     Permission(
       barAct,
       "bespoke-permission-b",
-      "Bar account permission with overriden profile name",
+      "Bar account workload permission",
       Policy(Seq.empty),
-      overrideProfileName = true
+      sessionType = Workload
     )
 
   val allTestPerms =

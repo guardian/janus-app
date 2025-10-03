@@ -1,6 +1,7 @@
 package com.gu.janus.config
 
-import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.model.SessionType.{User, Workload}
+import com.gu.janus.model.{AwsAccount, Permission, SessionType}
 import com.gu.janus.testutils.{HaveMatchers, RightValues}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.OptionValues
@@ -69,6 +70,17 @@ class LoaderTest
       val permissions = result.value
       permissions.map(_.id) should contain("main-account-test-permission")
     }
+
+    "a permission lacking the sessionType field should be loaded as a User permission" in {
+      val accounts = Loader.loadAccounts(testConfig).value
+      val result = Loader.loadPermissions(testConfig, accounts)
+      val permissions = result.value
+      val legacyPermissionSessionType = permissions
+        .find(_.id == "website-s3-manager")
+        .value
+        .sessionType
+      legacyPermissionSessionType shouldEqual SessionType.User
+    }
   }
 
   "loadAccess" - {
@@ -91,7 +103,7 @@ class LoaderTest
               )
             ),
             shortTerm = false,
-            overrideProfileName = false
+            sessionType = User
           )
         )
       }
@@ -166,6 +178,28 @@ class LoaderTest
           ),
           "shortTerm" as false
         )
+      }
+
+      "properly extracts a permission with session type User" in {
+        val accounts = Loader.loadAccounts(testConfig).value
+        val permissions = Loader.loadPermissions(testConfig, accounts).value
+        val result = Loader.loadAccess(testConfig, permissions)
+        val access = result.value
+        val userPermissions = access.userAccess.get("employee1").value
+        val websiteDeveloperPermission =
+          userPermissions.find(p => p.id == "website-developer").value
+        websiteDeveloperPermission.sessionType shouldEqual User
+      }
+
+      "properly extracts a permission with session type Workload" in {
+        val accounts = Loader.loadAccounts(testConfig).value
+        val permissions = Loader.loadPermissions(testConfig, accounts).value
+        val result = Loader.loadAccess(testConfig, permissions)
+        val access = result.value
+        val userPermissions = access.userAccess.get("employee2").value
+        val websiteDeveloperPermission =
+          userPermissions.find(p => p.id == "website-web-workload").value
+        websiteDeveloperPermission.sessionType shouldEqual Workload
       }
     }
   }

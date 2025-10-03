@@ -77,6 +77,17 @@ object Loader {
               .toRight(
                 s"Account `${configuredPermission.account}` is referenced in a permission (${configuredPermission.label}) but is not defined in the list of AwsAccounts"
               )
+            sessionType <- configuredPermission.sessionType match {
+              case Some("user") =>
+                Right(SessionType.User)
+              case Some("workload") =>
+                Right(SessionType.Workload)
+              case Some(unexpectedSessionType) =>
+                Left(
+                  s"Unknown session type '$unexpectedSessionType' in permission ${configuredPermission.label}"
+                )
+              case None => Right(SessionType.User)
+            }
           } yield {
             Permission(
               account = account,
@@ -85,8 +96,7 @@ object Loader {
               policy = configuredPermission.policy,
               managedPolicyArns = configuredPermission.managedPolicyArns,
               shortTerm = configuredPermission.shortTerm,
-              overrideProfileName =
-                configuredPermission.overrideProfileName.getOrElse(false)
+              sessionType = sessionType
             )
           }
       }

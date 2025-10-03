@@ -19,9 +19,8 @@ case class ConfiguredPermission(
     policy: Option[String],
     managedPolicyArns: Option[List[String]],
     shortTerm: Boolean = false,
-    // use the permission label as the profile name instead of the account's label
-    // this field is optional in the config representation for backwards-compatibility
-    overrideProfileName: Option[Boolean] = Some(false)
+    // this field is optional in the config representation to maintain backwards compatibility
+    sessionType: Option[String] = Some("user")
 )
 
 // helps circe-config auto-extract data

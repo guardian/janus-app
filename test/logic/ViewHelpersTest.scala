@@ -54,14 +54,14 @@ class ViewHelpersTest extends AnyFreeSpec with Matchers {
       }
 
       "uses the correct profile name" - {
-        "for an account-based permission" in {
+        "the account's authConfigKey for an User permission" in {
           shellCredentials(creds) should include(s"--profile foo")
         }
 
-        "for a permission that provides an overriden profile name" in {
-          val creds = List(fooBespoke -> fooCredential)
+        "the permission's label for a workload permission" in {
+          val creds = List(fooWorkload -> fooCredential)
           shellCredentials(creds) should include(
-            s"--profile bespoke-permission"
+            s"--profile bespoke-permission-f"
           )
         }
       }
@@ -99,25 +99,25 @@ class ViewHelpersTest extends AnyFreeSpec with Matchers {
       }
 
       "uses the correct profile name" - {
-        "uses the account name for account-based permissions" in {
+        "uses the account name for a User permissions" in {
           shellCredentials(multiCreds) should include(s"--profile foo")
           shellCredentials(multiCreds) should include(s"--profile bar")
         }
 
-        "does not use the account name for permissions that provide an overriden profile name" in {
+        "does not use the account authConfigKey for workload permissions" in {
           val creds = List(
-            fooBespoke -> fooCredential,
-            barBespoke -> barCredential
+            fooWorkload -> fooCredential,
+            barWorkload -> barCredential
           )
           shellCredentials(creds) should (
             not include s"--profile foo" and not include s"--profile bar"
           )
         }
 
-        "uses the specified profile for permissions that provide an overriden profile name" in {
+        "uses the permission's label for workload permissions" in {
           val creds = List(
-            fooBespoke -> fooCredential,
-            barBespoke -> barCredential
+            fooWorkload -> fooCredential,
+            barWorkload -> barCredential
           )
           shellCredentials(creds) should (
             include(s"--profile bespoke-permission-f") and include(
