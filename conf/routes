@@ -35,7 +35,7 @@ GET           /oauthCallback                            controllers.AuthControll
 GET           /logout                                   controllers.AuthController.logout
 
 POST          /passkey/registration-options             com.gu.playpasskeyauth.controllers.BasePasskeyController.creationOptions
-POST          /passkey/auth-options                     com.gu.playpasskeyauth.controllers.BasePasskeyController.authenticationOptions
+POST          /passkey/auth-options                     controllers.PasskeyController.authenticationOptions
 POST          /passkey/registration-auth-options        controllers.PasskeyController.registrationAuthenticationOptions
 POST          /passkey/register                         controllers.PasskeyController.register
 DELETE        /passkey/:passkeyId                       controllers.PasskeyController.deletePasskey(passkeyId: String)
