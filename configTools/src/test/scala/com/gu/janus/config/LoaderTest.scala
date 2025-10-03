@@ -81,16 +81,17 @@ class LoaderTest
         access.defaultPermissions shouldEqual Set(
           Permission(
             AwsAccount("Testing account", "aws-test-account"),
-            "default-test",
-            "Default test access",
-            None,
-            Some(
+            label = "default-test",
+            description = "Default test access",
+            policy = None,
+            managedPolicyArns = Some(
               List(
                 """arn:aws:iam::aws:policy/AmazonEC2ReadOnlyAccess""",
                 """arn:aws:iam::aws:policy/EC2InstanceConnect"""
               )
             ),
-            false
+            shortTerm = false,
+            overrideProfileName = false
           )
         )
       }

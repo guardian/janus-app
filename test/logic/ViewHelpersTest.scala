@@ -1,7 +1,8 @@
 package logic
 
-import fixtures.Fixtures._
-import logic.ViewHelpers.{shellCredentials, columnify, getColumn}
+import com.gu.janus.model.Permission
+import fixtures.Fixtures.*
+import logic.ViewHelpers.{columnify, getColumn, shellCredentials}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import software.amazon.awssdk.services.sts.model.Credentials
@@ -12,14 +13,15 @@ class ViewHelpersTest extends AnyFreeSpec with Matchers {
 
   "shellCredentials" - {
     "for a single account" - {
+      val fooCredential = Credentials
+        .builder()
+        .accessKeyId("foo-key")
+        .secretAccessKey("foo-secret")
+        .sessionToken("foo-token")
+        .expiration(Instant.now())
+        .build()
       val creds = List(
-        fooAct -> Credentials
-          .builder()
-          .accessKeyId("foo-key")
-          .secretAccessKey("foo-secret")
-          .sessionToken("foo-token")
-          .expiration(Instant.now())
-          .build()
+        fooDev -> fooCredential
       )
 
       "includes provided key" in {
@@ -36,9 +38,9 @@ class ViewHelpersTest extends AnyFreeSpec with Matchers {
         shellCredentials(creds) should include("aws_session_token foo-token")
       }
 
-      "includes account name on each command" in {
+      "includes credentials' profile name on each command" in {
         val lines = shellCredentials(creds).split('\n')
-        all(lines) should include(s"--profile ${fooAct.authConfigKey}")
+        all(lines) should include(s"--profile ${fooDev.credentialsProfile}")
       }
 
       "puts leading space on all commands to exclude from bash history" in {
@@ -50,24 +52,40 @@ class ViewHelpersTest extends AnyFreeSpec with Matchers {
         val lines = shellCredentials(creds).split('\n')
         all(lines.init) should endWith("&& \\")
       }
+
+      "uses the correct profile name" - {
+        "for an account-based permission" in {
+          shellCredentials(creds) should include(s"--profile foo")
+        }
+
+        "for a permission that provides an overriden profile name" in {
+          val creds = List(fooBespoke -> fooCredential)
+          shellCredentials(creds) should include(
+            s"--profile bespoke-permission"
+          )
+        }
+      }
     }
 
     "for multiple accounts" - {
+      val fooCredential = Credentials
+        .builder()
+        .accessKeyId("foo-key")
+        .secretAccessKey("foo-secret")
+        .sessionToken("foo-token")
+        .expiration(Instant.now())
+        .build()
+      val barCredential = Credentials
+        .builder()
+        .accessKeyId("bar-key")
+        .secretAccessKey("bar-secret")
+        .sessionToken("bar-token")
+        .expiration(Instant.now())
+        .build()
+
       val multiCreds = List(
-        fooAct -> Credentials
-          .builder()
-          .accessKeyId("foo-key")
-          .secretAccessKey("foo-secret")
-          .sessionToken("foo-token")
-          .expiration(Instant.now())
-          .build(),
-        barAct -> Credentials
-          .builder()
-          .accessKeyId("bar-key")
-          .secretAccessKey("bar-secret")
-          .sessionToken("bar-token")
-          .expiration(Instant.now())
-          .build()
+        fooDev -> fooCredential,
+        barDev -> barCredential
       )
 
       "puts leading space on all commands to exclude from bash history" in {
@@ -78,6 +96,35 @@ class ViewHelpersTest extends AnyFreeSpec with Matchers {
       "all lines except the last should end with continuation (&& \\) so command pastes properly" in {
         val lines = shellCredentials(multiCreds).split('\n')
         all(lines.init) should endWith("&& \\")
+      }
+
+      "uses the correct profile name" - {
+        "uses the account name for account-based permissions" in {
+          shellCredentials(multiCreds) should include(s"--profile foo")
+          shellCredentials(multiCreds) should include(s"--profile bar")
+        }
+
+        "does not use the account name for permissions that provide an overriden profile name" in {
+          val creds = List(
+            fooBespoke -> fooCredential,
+            barBespoke -> barCredential
+          )
+          shellCredentials(creds) should (
+            not include s"--profile foo" and not include s"--profile bar"
+          )
+        }
+
+        "uses the specified profile for permissions that provide an overriden profile name" in {
+          val creds = List(
+            fooBespoke -> fooCredential,
+            barBespoke -> barCredential
+          )
+          shellCredentials(creds) should (
+            include(s"--profile bespoke-permission-f") and include(
+              s"--profile bespoke-permission-b"
+            )
+          )
+        }
       }
     }
   }

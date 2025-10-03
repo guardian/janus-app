@@ -1,19 +1,19 @@
 package logic
 
-import com.gu.janus.model.AwsAccount
+import com.gu.janus.model.{AwsAccount, Permission}
 import software.amazon.awssdk.services.sts.model.Credentials
 
 object ViewHelpers {
   // created as Scala function to make it easier to control whitespace
   def shellCredentials(
-      accountsCredentials: List[(AwsAccount, Credentials)]
+      accountsCredentials: List[(Permission, Credentials)]
   ): String = {
     (for {
-      (account, credentials) <- accountsCredentials
+      (permission, credentials) <- accountsCredentials
     } yield {
-      s""" aws configure set aws_access_key_id ${credentials.accessKeyId} --profile ${account.authConfigKey} && \\
-         | aws configure set aws_secret_access_key ${credentials.secretAccessKey} --profile ${account.authConfigKey} && \\
-         | aws configure set aws_session_token ${credentials.sessionToken} --profile ${account.authConfigKey}""".stripMargin
+      s""" aws configure set aws_access_key_id ${credentials.accessKeyId} --profile ${permission.credentialsProfile} && \\
+         | aws configure set aws_secret_access_key ${credentials.secretAccessKey} --profile ${permission.credentialsProfile} && \\
+         | aws configure set aws_session_token ${credentials.sessionToken} --profile ${permission.credentialsProfile}""".stripMargin
     }).mkString(start = "", sep = " && \\\n", end = "\n")
   }
 

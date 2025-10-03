@@ -22,6 +22,23 @@ object Fixtures {
   val quxDev = developerPermission(quxAct)
   val quxCf = accountAdminPermission(quxAct)
 
+  val fooBespoke =
+    Permission(
+      fooAct,
+      "bespoke-permission-f",
+      "Foo account permission with overriden profile name",
+      Policy(Seq.empty),
+      overrideProfileName = true
+    )
+  val barBespoke =
+    Permission(
+      barAct,
+      "bespoke-permission-b",
+      "Bar account permission with overriden profile name",
+      Policy(Seq.empty),
+      overrideProfileName = true
+    )
+
   val allTestPerms =
     Set(fooDev, fooCf, fooS3, barDev, barCf, bazDev, bazCf, quxDev, quxCf)
 
