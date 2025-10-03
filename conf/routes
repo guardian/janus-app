@@ -37,7 +37,7 @@ GET     /logout                     controllers.AuthController.logout
 POST    /passkey/registration-options       com.gu.playpasskeyauth.controllers.BasePasskeyController.creationOptions
 POST    /passkey/auth-options               com.gu.playpasskeyauth.controllers.BasePasskeyController.authenticationOptions
 POST    /passkey/registration-auth-options  controllers.PasskeyController.registrationAuthenticationOptions
-POST    /passkey/register                   controllers.PasskeyController.register
+POST    /passkey/register                   com.gu.playpasskeyauth.controllers.BasePasskeyController.register
 DELETE  /passkey/:passkeyId                 controllers.PasskeyController.deletePasskey(passkeyId: String)
 
 # Tmp routes for passkey trial
