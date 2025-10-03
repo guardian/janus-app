@@ -3,6 +3,7 @@ import com.gu.googleauth.AuthAction
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.gu.playpasskeyauth.models.HostApp
+import com.gu.playpasskeyauth.web.RequestWithCreationData
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
@@ -12,7 +13,7 @@ import models.AccountConfigStatus.*
 import passkey.{ChallengeRepository, Repository}
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSComponents
-import play.api.mvc.{AnyContent, EssentialFilter}
+import play.api.mvc.*
 import play.api.routing.Router
 import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
@@ -24,6 +25,7 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.net.URI
 import java.time.Duration
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.chaining.scalaUtilChainingOps
 
 class AppComponents(context: ApplicationLoader.Context)
@@ -139,8 +141,15 @@ class AppComponents(context: ApplicationLoader.Context)
     passkeyRepo = new Repository(),
     challengeRepo = new ChallengeRepository()
   )
+  val userAndCreationDataAction:ActionBuilder[RequestWithCreationData, AnyContent] = new ActionBuilder[RequestWithCreationData, AnyContent] {
+    def parser: BodyParser[AnyContent] = ???
+
+    def invokeBlock[A](request: Request[A], block: RequestWithCreationData[A] => Future[Result]): Future[Result] = ???
+
+    protected def executionContext: ExecutionContext = ???
+  }
   private val newPasskeyController =
-    passkeyAuth.controller(controllerComponents, authAction, ???)
+    passkeyAuth.controller(controllerComponents, authAction, userAndCreationDataAction)
   // =====
 
   override def router: Router = new Routes(
