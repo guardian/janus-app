@@ -5,6 +5,7 @@ import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
+import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import controllers.Validation.formattedErrors
 import logic.Passkey
@@ -25,7 +26,7 @@ import scala.util.{Failure, Success, Try}
 class PasskeyController(
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
-    passkeyAuthAction: ActionBuilder[UserIdentityRequest, AnyContent],
+    passkeyAuthAction: ActionBuilder[RequestWithAuthenticationData, AnyContent],
     passkeyRegistrationAuthAction: ActionBuilder[
       UserIdentityRequest,
       AnyContent
