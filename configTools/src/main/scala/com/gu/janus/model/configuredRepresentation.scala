@@ -43,8 +43,7 @@ case class ConfiguredAdmin(
 
 case class ConfiguredSupport(
     supportAccess: List[ConfiguredAclEntry],
-    rota: List[ConfiguredRotaEntry],
-    period: Int
+    rota: List[ConfiguredRotaEntry]
 )
 
 case class ConfiguredRotaEntry(

@@ -11,8 +11,6 @@ object Support {
   // helper for adding half a rota
   val tbd = ""
 
-  private val supportPeriod = Duration.ofDays(7)
-
   /** Support rota entries.
     *
     * Entries should put the start date as the date they start support. Each
@@ -37,7 +35,7 @@ object Support {
   private val supportAccess: Set[Permission] = supportAccounts.flatMap(_.dev)
 
   val acl: SupportACL =
-    SupportACL.create(rota.toMap map convertRota, supportAccess, supportPeriod)
+    SupportACL.create(rota.toMap map convertRota, supportAccess)
 
   /** Helper so the rota can be simply hand-written.
     */
