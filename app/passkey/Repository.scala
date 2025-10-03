@@ -44,7 +44,9 @@ class Repository(using DynamoDbClient) extends PasskeyRepository {
       passkeyName: String,
       credentialRecord: CredentialRecord
   ): Future[Unit] = {
-    Future.fromTry(PasskeyDB.insert(toUserIdentity(userId), credentialRecord, passkeyName))
+    Future.fromTry(
+      PasskeyDB.insert(toUserIdentity(userId), credentialRecord, passkeyName)
+    )
   }
 
   override def updateAuthenticationCounter(
@@ -58,11 +60,13 @@ class Repository(using DynamoDbClient) extends PasskeyRepository {
       userId: String,
       authData: AuthenticationData
   ): Future[Unit] = {
-    Future.fromTry(PasskeyDB.updateLastUsedTime(toUserIdentity(userId), authData))
+    Future.fromTry(
+      PasskeyDB.updateLastUsedTime(toUserIdentity(userId), authData)
+    )
   }
 
   private def toUserIdentity(userId: String) =
-     UserIdentity(
+    UserIdentity(
       sub = "",
       email = userId,
       firstName = "",
