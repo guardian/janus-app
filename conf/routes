@@ -37,7 +37,7 @@ GET           /logout                                   controllers.AuthControll
 POST          /passkey/registration-options             com.gu.playpasskeyauth.controllers.BasePasskeyController.creationOptions
 POST          /passkey/auth-options                     com.gu.playpasskeyauth.controllers.BasePasskeyController.authenticationOptions
 POST          /passkey/registration-auth-options        controllers.PasskeyController.registrationAuthenticationOptions
-POST          /passkey/register                         controllers.PasskeyController.register
+POST          /passkey/register                         com.gu.playpasskeyauth.controllers.BasePasskeyController.register
 DELETE        /passkey/:passkeyId                       controllers.PasskeyController.deletePasskey(passkeyId: String)
 
 GET           /roles-status/account/:account            controllers.AccountsController.rolesStatusForAccount(account: String)
