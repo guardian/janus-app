@@ -3,7 +3,7 @@ import com.gu.googleauth.AuthAction
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.gu.playpasskeyauth.models.HostApp
-import com.gu.playpasskeyauth.web.RequestWithCreationData
+import com.gu.playpasskeyauth.web.{CreationDataExtractor, PasskeyNameExtractor}
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
@@ -11,6 +11,7 @@ import filters.{HstsFilter, PasskeyAuthFilter, PasskeyRegistrationAuthFilter}
 import models.*
 import models.AccountConfigStatus.*
 import passkey.{ChallengeRepository, Repository}
+import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSComponents
 import play.api.mvc.*
@@ -24,7 +25,6 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.net.URI
 import java.time.Duration
-import scala.concurrent.{ExecutionContext, Future}
 import scala.util.chaining.scalaUtilChainingOps
 
 class AppComponents(context: ApplicationLoader.Context)
@@ -126,21 +126,41 @@ class AppComponents(context: ApplicationLoader.Context)
     authAction.andThen(passkeyRegistrationAuthFilter)
 
   // =====
+  import com.gu.googleauth.AuthAction.UserIdentityRequest
   import com.gu.playpasskeyauth.PasskeyAuth
+
+  private val creationDataExtractor = new CreationDataExtractor {
+    def findCreationData[A](request: UserIdentityRequest[A]): Option[JsValue] = {
+      request.body match {
+        case AnyContentAsFormUrlEncoded(formData) =>
+          formData.get("passkey").flatMap(_.headOption).map(Json.parse)
+        case _ =>
+          None
+      }
+    }
+  }
+
+  private val passkeyNameExtractor = new PasskeyNameExtractor {
+    def findPasskeyName[A](request: UserIdentityRequest[A]): Option[String] = {
+      request.body match {
+        case AnyContentAsFormUrlEncoded(formData) =>
+          formData.get("passkeyName").flatMap(_.headOption)
+        case _ =>
+          None
+      }
+    }
+  }
+
   private val passkeyAuth = new PasskeyAuth(
     app = HostApp(name = host, uri = URI.create(host)),
     passkeyRepo = new Repository(),
-    challengeRepo = new ChallengeRepository()
+    challengeRepo = new ChallengeRepository(),
+    creationDataExtractor,
+    passkeyNameExtractor,
+    registrationRedirect = routes.Janus.userAccount
   )
-  val userAndCreationDataAction:ActionBuilder[RequestWithCreationData, AnyContent] = new ActionBuilder[RequestWithCreationData, AnyContent] {
-    def parser: BodyParser[AnyContent] = ???
 
-    def invokeBlock[A](request: Request[A], block: RequestWithCreationData[A] => Future[Result]): Future[Result] = ???
-
-    protected def executionContext: ExecutionContext = ???
-  }
-  private val newPasskeyController =
-    passkeyAuth.controller(controllerComponents, authAction, userAndCreationDataAction)
+  private val newPasskeyController = passkeyAuth.controller(controllerComponents, authAction)
   // =====
 
   override def router: Router = new Routes(

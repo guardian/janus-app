@@ -14,14 +14,7 @@ class ChallengeRepository(using DynamoDbClient)
     extends PasskeyChallengeRepository {
 
   def loadRegistrationChallenge(userId: String): Future[Challenge] = {
-    val userIdentity = UserIdentity(
-      sub = userId,
-      email = userId,
-      firstName = userId,
-      lastName = "",
-      exp = 0L,
-      avatarUrl = None
-    )
+    val userIdentity = toUserIdentity(userId)
     Future.fromTry(
       PasskeyChallengeDB
         .loadChallenge(userIdentity, PasskeyFlow.Registration)
@@ -43,14 +36,7 @@ class ChallengeRepository(using DynamoDbClient)
   override def loadAuthenticationChallenge(
       userId: String
   ): Future[Challenge] = {
-    val userIdentity = UserIdentity(
-      sub = userId,
-      email = userId,
-      firstName = userId,
-      lastName = "",
-      exp = 0L,
-      avatarUrl = None
-    )
+    val userIdentity = toUserIdentity(userId)
     Future.fromTry(
       PasskeyChallengeDB
         .loadChallenge(userIdentity, PasskeyFlow.Authentication)
@@ -73,18 +59,10 @@ class ChallengeRepository(using DynamoDbClient)
       userId: String,
       challenge: Challenge
   ): Future[Unit] = {
-    val userIdentity = UserIdentity(
-      sub = userId,
-      email = userId,
-      firstName = userId,
-      lastName = "",
-      exp = 0L,
-      avatarUrl = None
-    )
     Future.fromTry(
       PasskeyChallengeDB.insert(
         PasskeyChallengeDB.UserChallenge(
-          userIdentity,
+          toUserIdentity(userId),
           PasskeyFlow.Registration,
           challenge
         )
@@ -96,18 +74,10 @@ class ChallengeRepository(using DynamoDbClient)
       userId: String,
       challenge: Challenge
   ): Future[Unit] = {
-    val userIdentity = UserIdentity(
-      sub = userId,
-      email = userId,
-      firstName = userId,
-      lastName = "",
-      exp = 0L,
-      avatarUrl = None
-    )
     Future.fromTry(
       PasskeyChallengeDB.insert(
         PasskeyChallengeDB.UserChallenge(
-          userIdentity,
+          toUserIdentity(userId),
           PasskeyFlow.Authentication,
           challenge
         )
@@ -116,30 +86,24 @@ class ChallengeRepository(using DynamoDbClient)
   }
 
   def deleteRegistrationChallenge(userId: String): Future[Unit] = {
-    val userIdentity = UserIdentity(
-      sub = "",
-      email = "",
-      firstName = userId,
-      lastName = "",
-      exp = 0L,
-      avatarUrl = None
-    )
     Future.fromTry(
-      PasskeyChallengeDB.delete(userIdentity, PasskeyFlow.Registration)
+      PasskeyChallengeDB.delete(toUserIdentity(userId), PasskeyFlow.Registration)
     )
   }
 
   override def deleteAuthenticationChallenge(userId: String): Future[Unit] = {
-    val userIdentity = UserIdentity(
-      sub = userId,
+    Future.fromTry(
+      PasskeyChallengeDB.delete(toUserIdentity(userId), PasskeyFlow.Authentication)
+    )
+  }
+
+  private def toUserIdentity(userId: String) =
+    UserIdentity(
+      sub = "",
       email = userId,
-      firstName = userId,
+      firstName = "",
       lastName = "",
       exp = 0L,
       avatarUrl = None
     )
-    Future.fromTry(
-      PasskeyChallengeDB.delete(userIdentity, PasskeyFlow.Authentication)
-    )
-  }
 }
