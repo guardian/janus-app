@@ -2,12 +2,12 @@ package logic
 
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.{ACL, SupportACL}
-import fixtures.Fixtures._
+import fixtures.Fixtures.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{Inspectors, OptionValues}
 
-import java.time._
+import java.time.*
 
 class UserAccessTest
     extends AnyFreeSpec
@@ -68,10 +68,13 @@ class UserAccessTest
           "old.support.user",
           "another.support.user"
         ), // out of date
-        baseline -> ("support.user", "") // in effect
+        baseline -> ("support.user", ""), // in effect
+        baseline.plus(Duration.ofDays(7)) -> (
+          "next.support.user",
+          ""
+        ) // next slot
       ),
-      Set(fooCf, barCf),
-      Duration.ofDays(7)
+      Set(fooCf, barCf)
     )
     val rotaTime = ZonedDateTime
       .of(2016, 7, 22, 12, 0, 0, 0, ZoneId.of("Europe/London"))
@@ -219,8 +222,7 @@ class UserAccessTest
       def testActiveSupportAcl(user1: String, user2: String): SupportACL = {
         SupportACL.create(
           Map(rotaStartTime -> (user1, user2)),
-          Set(fooCf, barCf),
-          Duration.ofDays(7)
+          Set(fooCf, barCf)
         )
       }
 
@@ -273,14 +275,6 @@ class UserAccessTest
           user2 shouldEqual None
         }
 
-        "returns None if there are no entries for the next rota by provided date" in {
-          val acl = testActiveSupportAcl("user.1", "user.2")
-          nextSupportUsers(
-            currentTimeForNextRota.minus(Duration.ofDays(20)),
-            acl
-          ) shouldEqual None
-        }
-
         "returns the date the rota started at" in {
           val acl = testActiveSupportAcl("user.1", "user.2")
           val (startTime, _) =
@@ -300,8 +294,7 @@ class UserAccessTest
             rotaStartTime.plus(Period.ofWeeks(5)) -> ("user2", "user4"),
             rotaStartTime.plus(Period.ofWeeks(6)) -> ("user5", "user3")
           ),
-          Set(fooCf, barCf),
-          Duration.ofDays(7)
+          Set(fooCf, barCf)
         )
 
         "returns the correct set of future rota slots for user1 from currentTime" in {
@@ -357,8 +350,7 @@ class UserAccessTest
           "another.support.user"
         )
       ),
-      allTestPerms,
-      Duration.ofDays(7)
+      allTestPerms
     )
 
     "returns the permission if a user has been granted access" in {
@@ -425,8 +417,7 @@ class UserAccessTest
           "another.support.user"
         )
       ),
-      Set(fooDev),
-      Duration.ofDays(7)
+      Set(fooDev)
     )
 
     "returns true if a user has been granted explicit access" in {
@@ -459,8 +450,7 @@ class UserAccessTest
           "another.support.user"
         )
       ),
-      Set(fooCf, barDev),
-      Duration.ofDays(7)
+      Set(fooCf, barDev)
     )
 
     "returns permissions if a user has been granted explicit access" in {

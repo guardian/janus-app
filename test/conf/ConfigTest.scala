@@ -81,7 +81,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
       accounts = Set.empty,
       ACL(Map.empty),
       ACL(Map.empty),
-      SupportACL.create(Map.empty, Set.empty, Duration.ofDays(7)),
+      SupportACL.create(Map.empty, Set.empty),
       Some("https://example.com/")
     )
 
