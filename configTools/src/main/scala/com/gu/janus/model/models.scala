@@ -56,24 +56,71 @@ case class AwsAccount(
       *   - the profile name for created Janus CLI sessions in that account
       *     (assuming you use the standard mechanism of populating an AWS
       *     profile with the provided name)
+      *
+      * NOTE: This last example can be optionally overridden by a permission, in
+      * which case the permission's label will be used as the profile name.
       */
     authConfigKey: String
 )
+
 case class AwsAccountAccess(
     awsAccount: AwsAccount,
     permissions: List[Permission],
     isFavourite: Boolean
 )
 
+/** Represents the access granted to an AWS session, via the console login or as
+  * temporary credentials.
+  *
+  * Permissions are associated with an AWS account and are made up of:
+  *   - metadata (`label` and `description`)
+  *   - the policy(s) that control the session's access
+  *   - flags (`shortTerm` and `sessionType`) that modify Janus' behaviour
+  *
+  * @param account
+  *   The AWS Account that this permission accesses.
+  * @param label
+  *   Internal ID used for permission lookup, also used as the credential
+  *   profile name if `overrideProfileName` is true. This should be called
+  *   something like `key`, but the name remains for legacy reasons.
+  * @param description
+  *   Human-readable name, used to describe the permission to a user in the UI.
+  * @param policy
+  *   An AWS IAM policy that's passed inline to set the permissions for the
+  *   assumed session. This is the standard way to define permissions in Janus.
+  * @param managedPolicyArns
+  *   An AWS-managed IAM policy that specifies the access for the resulting
+  *   session.
+  * @param shortTerm
+  *   Permissions that bestow significant levels of access should set this flag
+  *   to limit session length. This reduces the risk of admin access and
+  *   discourages the use of admin permissions for day-to-day work.
+  * @param sessionType
+  *   Permissions usually use the account's authConfigKey as the AWS profile
+  *   name. This is useful as a replacement for a user's own permanent
+  *   credentials but because you can only have one active session at a time
+  *   under a given profile name this is not a good fit for carefully tailored
+  *   permissions like you might see when running a service locally. 'User'
+  *   permissions keep Janus' existing behaviour and are the default, while
+  *   'Workload' permission isolate the AWS profile name by instead using the
+  *   permission label.
+  */
 case class Permission(
     account: AwsAccount,
     label: String,
     description: String,
     policy: Option[String],
     managedPolicyArns: Option[List[String]],
-    shortTerm: Boolean
+    shortTerm: Boolean,
+    sessionType: SessionType
 ) {
   val id = s"${account.authConfigKey}-$label"
+
+  val credentialsProfile: String =
+    sessionType match {
+      case SessionType.User     => account.authConfigKey
+      case SessionType.Workload => label
+    }
 
   override def toString: String = s"Permission<$id>"
 }
@@ -90,7 +137,8 @@ object Permission {
       label: String,
       description: String,
       policy: Policy,
-      shortTerm: Boolean = false
+      shortTerm: Boolean = false,
+      sessionType: SessionType = SessionType.User
   ): Permission = {
     Permission(
       account,
@@ -98,7 +146,8 @@ object Permission {
       description,
       Some(policy.asJson.noSpaces),
       None,
-      shortTerm
+      shortTerm,
+      sessionType
     )
   }
 
@@ -117,7 +166,8 @@ object Permission {
       label: String,
       description: String,
       managedPolicyArns: List[String],
-      shortTerm: Boolean = false
+      shortTerm: Boolean = false,
+      sessionType: SessionType = SessionType.User
   ): Permission = {
     Permission(
       account,
@@ -125,7 +175,8 @@ object Permission {
       description,
       None,
       if (managedPolicyArns.nonEmpty) Some(managedPolicyArns) else None,
-      shortTerm
+      shortTerm,
+      sessionType
     )
   }
 
@@ -141,7 +192,8 @@ object Permission {
       description: String,
       inlinePolicy: Policy,
       managedPolicyArns: List[String],
-      shortTerm: Boolean = false
+      shortTerm: Boolean = false,
+      sessionType: SessionType = SessionType.User
   ): Permission = {
     Permission(
       account,
@@ -149,9 +201,16 @@ object Permission {
       description,
       Some(inlinePolicy.asJson.noSpaces),
       if (managedPolicyArns.nonEmpty) Some(managedPolicyArns) else None,
-      shortTerm
+      shortTerm,
+      sessionType
     )
   }
+}
+
+sealed trait SessionType
+object SessionType {
+  case object User extends SessionType
+  case object Workload extends SessionType
 }
 
 sealed abstract class JanusAccessType(override val toString: String)

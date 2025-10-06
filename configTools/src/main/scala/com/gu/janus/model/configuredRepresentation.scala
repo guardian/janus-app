@@ -18,7 +18,9 @@ case class ConfiguredPermission(
     description: String,
     policy: Option[String],
     managedPolicyArns: Option[List[String]],
-    shortTerm: Boolean = false
+    shortTerm: Boolean = false,
+    // this field is optional in the config representation to maintain backwards compatibility
+    sessionType: Option[String] = Some("user")
 )
 
 // helps circe-config auto-extract data
