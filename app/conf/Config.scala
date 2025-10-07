@@ -119,8 +119,14 @@ object Config {
     requiredString(config, "auth.google.2faGroupId")
   }
 
-  def devxSecurityContactLink(config: Configuration): String = {
-    requiredString(config, "devxSecurity.contact.link")
+  /** Link suitable for an HTML anchor href attribute.  E.g. a URL or an email address. */
+  def passkeysManagerLink(config: Configuration): String = {
+    requiredString(config, "passkeys.manager.contactLink")
+  }
+
+  /** Text of link. See [[passkeysManagerLink]] */
+  def passkeysManagerLinkText(config: Configuration): String = {
+    requiredString(config, "passkeys.manager.contactLinkText")
   }
 
   private def requiredString(config: Configuration, key: String): String = {

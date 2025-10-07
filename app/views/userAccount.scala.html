@@ -11,7 +11,8 @@
         dateFormat: Instant => String,
         timeFormat: Instant => String,
         passkeysEnablingCookieName: String,
-        devxSecurityContactLink: String
+        passkeyManagerLink: String,
+        passkeyManagerLinkText: String
 )(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("User account", Some(user), janusData) {
@@ -60,7 +61,7 @@
             your AWS accounts.
             One should be on-device (e.g. Mac Touch ID or Windows Hello)
             and the other off-device (e.g. security key or phone).</p>
-        <p>Please contact the <a href="@devxSecurityContactLink">DevX Security team</a> if you have any problems
+        <p>Please contact <a href="@passkeyManagerLink">@passkeyManagerLinkText</a> if you have any problems
             registering or using passkeys.</p>
 
         <div class="row">
