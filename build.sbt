@@ -27,6 +27,7 @@ lazy val commonSettings = Seq(
     case Some((3, _))  => Seq("-Werror")
     case _             => Seq.empty
   }),
+  scalafmtOnCompile := true,
   Test / testOptions ++= Seq(
     Tests.Argument(TestFrameworks.ScalaTest, "-o"),
     Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports")

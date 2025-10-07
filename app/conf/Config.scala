@@ -119,7 +119,9 @@ object Config {
     requiredString(config, "auth.google.2faGroupId")
   }
 
-  /** Link suitable for an HTML anchor href attribute.  E.g. a URL or an email address. */
+  /** Link suitable for an HTML anchor href attribute. E.g. a URL or an email
+    * address.
+    */
   def passkeysManagerLink(config: Configuration): String = {
     requiredString(config, "passkeys.manager.contactLink")
   }

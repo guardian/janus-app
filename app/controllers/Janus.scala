@@ -140,7 +140,7 @@ class Janus(
         timeFormat,
         passkeysEnablingCookieName,
         passkeysManagerLink(configuration),
-        passkeysManagerLinkText(configuration),
+        passkeysManagerLinkText(configuration)
       )
     }
   }
