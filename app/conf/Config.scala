@@ -119,6 +119,18 @@ object Config {
     requiredString(config, "auth.google.2faGroupId")
   }
 
+  /** Link suitable for an HTML anchor href attribute. E.g. a URL or an email
+    * address.
+    */
+  def passkeysManagerLink(config: Configuration): String = {
+    requiredString(config, "passkeys.manager.contactLink")
+  }
+
+  /** Text of link. See [[passkeysManagerLink]] */
+  def passkeysManagerLinkText(config: Configuration): String = {
+    requiredString(config, "passkeys.manager.contactLinkText")
+  }
+
   private def requiredString(config: Configuration, key: String): String = {
     config.getOptional[String](key).getOrElse {
       throw new JanusConfigurationException(

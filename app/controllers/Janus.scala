@@ -7,6 +7,7 @@ import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.*
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
+import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
 import models.PasskeyAuthenticator
@@ -137,7 +138,9 @@ class Janus(
         passkeys,
         dateFormat,
         timeFormat,
-        passkeysEnablingCookieName
+        passkeysEnablingCookieName,
+        passkeysManagerLink(configuration),
+        passkeysManagerLinkText(configuration)
       )
     }
   }

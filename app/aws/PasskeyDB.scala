@@ -14,7 +14,6 @@ import com.webauthn4j.data.extension.authenticator.{
 }
 import com.webauthn4j.util.Base64UrlUtil
 import models.{JanusException, PasskeyMetadata}
-import play.api.http.Status.INTERNAL_SERVER_ERROR
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.*
 
@@ -71,7 +70,7 @@ object PasskeyDB {
         )
       ),
       // see https://www.w3.org/TR/webauthn-1/#sign-counter
-      "authCounter" -> AttributeValue.fromN("0"),
+      "authCounter" -> AttributeValue.fromN(credentialRecord.getCounter.toString),
       "passkeyName" -> AttributeValue.fromS(passkeyName),
       "registrationTime" -> AttributeValue.fromS(registrationTime.toString),
       "aaguid" -> AttributeValue.fromS(
