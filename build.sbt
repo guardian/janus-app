@@ -8,14 +8,14 @@ import sbtversionpolicy.withsbtrelease.ReleaseVersion
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.32.26"
-val circeVersion = "0.14.14"
+val awsSdkVersion = "2.33.11"
+val circeVersion = "0.14.15"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
-  "org.scalacheck" %% "scalacheck" % "1.18.1" % Test,
+  "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-  "ch.qos.logback" % "logback-classic" % "1.5.18"
+  "ch.qos.logback" % "logback-classic" % "1.5.19"
 )
 lazy val commonSettings = Seq(
   scalaVersion := "3.3.6",
@@ -27,6 +27,7 @@ lazy val commonSettings = Seq(
     case Some((3, _))  => Seq("-Werror")
     case _             => Seq.empty
   }),
+  scalafmtOnCompile := true,
   Test / testOptions ++= Seq(
     Tests.Argument(TestFrameworks.ScalaTest, "-o"),
     Tests.Argument(TestFrameworks.ScalaTest, "-u", "logs/test-reports")
@@ -37,18 +38,22 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.19.2"
-val jacksonDatabindVersion = "2.19.2"
+val jacksonVersion = "2.20.0"
 
 val jacksonOverrides = Seq(
-  "com.fasterxml.jackson.core" % "jackson-core",
-  "com.fasterxml.jackson.core" % "jackson-annotations",
-  "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8",
-  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310"
-).map(_ % jacksonVersion)
+  "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jdk8" % jacksonVersion,
+  "com.fasterxml.jackson.datatype" % "jackson-datatype-jsr310" % jacksonVersion,
+  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion,
+
+  // The version numbering of jackson-annotations has diverged
+  // See https://github.com/FasterXML/jackson-annotations/issues/307
+  // and https://github.com/FasterXML/jackson-future-ideas/wiki/JSTEP-1#handling-of-jackson-annotations
+  "com.fasterxml.jackson.core" % "jackson-annotations" % "2.20"
+)
 
 val jacksonDatabindOverrides = Seq(
-  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonDatabindVersion
+  "com.fasterxml.jackson.core" % "jackson-databind" % jacksonVersion
 )
 
 val pekkoSerializationJacksonOverrides = Seq(
@@ -90,7 +95,7 @@ lazy val root: Project = (project in file("."))
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
-      "com.webauthn4j" % "webauthn4j-core" % "0.29.5.RELEASE",
+      "com.webauthn4j" % "webauthn4j-core" % "0.29.7.RELEASE",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
     ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
@@ -144,7 +149,7 @@ lazy val configTools = (project in file("configTools"))
       scalaVersion.value
     ),
     libraryDependencies ++= commonDependencies ++ Seq(
-      "com.typesafe" % "config" % "1.4.4",
+      "com.typesafe" % "config" % "1.4.5",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,

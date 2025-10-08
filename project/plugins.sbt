@@ -1,11 +1,11 @@
 resolvers += "Typesafe repository" at "https://repo.typesafe.com/typesafe/releases/"
 
 addSbtPlugin(
-  "com.github.sbt" % "sbt-native-packager" % "1.11.3"
+  "com.github.sbt" % "sbt-native-packager" % "1.11.4"
 )
 
 // The Play plugin
-addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.8")
+addSbtPlugin("org.playframework" % "sbt-plugin" % "3.0.9")
 
 addSbtPlugin("com.github.sbt" % "sbt-digest" % "2.1.0")
 
