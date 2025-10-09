@@ -11,7 +11,12 @@ import com.gu.playpasskeyauth.web.{
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
-import filters.{HstsFilter, PasskeyAuthFilter, PasskeyRegistrationAuthFilter}
+import filters.{
+  HstsFilter,
+  PasskeyAuthFilter,
+  PasskeyRegistrationAuthAction,
+  PasskeyRegistrationAuthFilter
+}
 import models.*
 import models.AccountConfigStatus.*
 import passkey.{ChallengeRepository, Repository}
@@ -134,9 +139,6 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeyRegistrationAuthFilter =
     new PasskeyRegistrationAuthFilter(passkeyAuthFilter)
 
-  private val passkeyRegistrationAuthAction =
-    authAction.andThen(passkeyRegistrationAuthFilter)
-
   // =====
   import com.gu.googleauth.AuthAction.UserIdentityRequest
   import com.gu.playpasskeyauth.PasskeyAuth
@@ -194,6 +196,10 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeyVerificationAction =
     passkeyAuth.verificationAction(authenticationDataExtractor)
   // =====
+
+  private val passkeyRegistrationAuthAction = {
+    new PasskeyRegistrationAuthAction(authAction, passkeyVerificationAction)
+  }
 
   override def router: Router = new Routes(
     httpErrorHandler,
