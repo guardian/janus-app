@@ -12,6 +12,7 @@ import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
 import filters.{
+  ConditionalPasskeyTransformer,
   HstsFilter,
   PasskeyAuthFilter,
   PasskeyRegistrationAuthAction,
@@ -195,6 +196,13 @@ class AppComponents(context: ApplicationLoader.Context)
 
   private val passkeyVerificationAction =
     passkeyAuth.verificationAction(authenticationDataExtractor)
+
+  private val conditionalPasskeyTransformer =
+    new ConditionalPasskeyTransformer(
+      passkeysEnabled,
+      passkeysEnablingCookieName,
+      authenticationDataExtractor
+    )
   // =====
 
   private val passkeyRegistrationAuthAction = {
