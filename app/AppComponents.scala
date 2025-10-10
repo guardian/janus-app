@@ -11,13 +11,7 @@ import com.gu.playpasskeyauth.web.{
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
-import filters.{
-  ConditionalPasskeyTransformer,
-  HstsFilter,
-  PasskeyAuthFilter,
-  PasskeyRegistrationAuthAction,
-  PasskeyRegistrationAuthFilter
-}
+import filters.*
 import models.*
 import models.AccountConfigStatus.*
 import passkey.{ChallengeRepository, Repository}
@@ -195,12 +189,11 @@ class AppComponents(context: ApplicationLoader.Context)
   )
 
   private val passkeyVerificationAction =
-    passkeyAuth.verificationAction(authenticationDataExtractor)
-
-  private val conditionalPasskeyTransformer =
-    new ConditionalPasskeyTransformer(
+    new ConditionalPasskeyVerificationAction(
       passkeysEnabled,
       passkeysEnablingCookieName,
+      authAction,
+      passkeyAuth.verificationAction(authenticationDataExtractor),
       authenticationDataExtractor
     )
   // =====
