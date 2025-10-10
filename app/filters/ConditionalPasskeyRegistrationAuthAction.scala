@@ -15,7 +15,8 @@ import scala.util.{Failure, Success}
   *
   * If passkeysEnabled is true AND the enabling cookie is present AND the user
   * has passkey credentials in the database, applies passkey verification.
-  * Otherwise, passes the request directly to the controller without verification.
+  * Otherwise, passes the request directly to the controller without
+  * verification.
   */
 class ConditionalPasskeyRegistrationAuthAction(
     passkeysEnabled: Boolean,
@@ -57,7 +58,9 @@ class ConditionalPasskeyRegistrationAuthAction(
                 // All conditions met: apply verification
                 verificationAction.invokeBlock(
                   request,
-                  { (_: RequestWithAuthenticationData[A]) => block(userRequest) }
+                  { (_: RequestWithAuthenticationData[A]) =>
+                    block(userRequest)
+                  }
                 )
               } else {
                 // No credentials in database: bypass verification
