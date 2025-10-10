@@ -18,11 +18,14 @@ import scala.concurrent.{ExecutionContext, Future}
   * controller without verification.
   */
 class ConditionalPasskeyVerificationAction(
-                                            passkeysEnabled: Boolean,
-                                            enablingCookieName: String,
-                                            authAction: ActionBuilder[UserIdentityRequest, AnyContent],
-                                            verificationAction: ActionBuilder[RequestWithAuthenticationData, AnyContent],
-                                            authenticationDataExtractor: AuthenticationDataExtractor
+    passkeysEnabled: Boolean,
+    enablingCookieName: String,
+    authAction: ActionBuilder[UserIdentityRequest, AnyContent],
+    verificationAction: ActionBuilder[
+      RequestWithAuthenticationData,
+      AnyContent
+    ],
+    authenticationDataExtractor: AuthenticationDataExtractor
 )(using val executionContext: ExecutionContext)
     extends ActionBuilder[RequestWithAuthenticationData, AnyContent] {
 
@@ -45,9 +48,11 @@ class ConditionalPasskeyVerificationAction(
         } else {
           // Conditions not met: pass directly to controller
           val authRequest = new RequestWithAuthenticationData(
-              authenticationDataExtractor.findAuthenticationData(userRequest).getOrElse(Json.obj()),
-              userRequest
-              )
+            authenticationDataExtractor
+              .findAuthenticationData(userRequest)
+              .getOrElse(Json.obj()),
+            userRequest
+          )
           block(authRequest)
         }
       }
