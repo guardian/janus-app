@@ -199,7 +199,12 @@ class AppComponents(context: ApplicationLoader.Context)
   // =====
 
   private val passkeyRegistrationAuthAction = {
-    new PasskeyRegistrationAuthAction(authAction, passkeyVerificationAction)
+    new ConditionalPasskeyRegistrationAuthAction(
+      passkeysEnabled,
+      passkeysEnablingCookieName,
+      authAction,
+      passkeyVerificationAction
+    )
   }
 
   override def router: Router = new Routes(
