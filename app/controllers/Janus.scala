@@ -148,7 +148,7 @@ class Janus(
   def consoleLogin(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
       (for {
-        (credentials, _) <- assumeRole(
+        (_, credentials) <- assumeRole(
           request.user,
           permissionId,
           JConsole,
@@ -169,7 +169,7 @@ class Janus(
   def consoleUrl(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
       (for {
-        (credentials, permission) <- assumeRole(
+        (permission, credentials) <- assumeRole(
           request.user,
           permissionId,
           JConsole,
@@ -198,7 +198,7 @@ class Janus(
   def credentials(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
       (for {
-        (credentials, permission) <- assumeRole(
+        (permission, credentials) <- assumeRole(
           request.user,
           permissionId,
           JCredentials,
@@ -208,7 +208,7 @@ class Janus(
         Ok(
           views.html.credentials(
             credentials.expiration,
-            List((permission.account, credentials)),
+            List((permission, credentials)),
             request.user,
             janusData
           )
@@ -226,18 +226,18 @@ class Janus(
     passkeyAuthAction { implicit request =>
       val permissionIds = splitQuerystringParam(rawPermissionIds)
       (for {
-        accountCredentials <- multiAccountAssumption(
+        allCredentials <- multiAccountAssumption(
           request.user,
           permissionIds,
           Customisation.durationParams(request)
         )
-        expiry <- accountCredentials.headOption.map { case (_, creds) =>
+        expiry <- allCredentials.headOption.map { case (_, creds) =>
           creds.expiration
         }
       } yield {
         Ok(
           views.html
-            .credentials(expiry, accountCredentials, request.user, janusData)
+            .credentials(expiry, allCredentials, request.user, janusData)
         )
           .withHeaders(CACHE_CONTROL -> "no-cache")
       }) getOrElse {
@@ -270,7 +270,7 @@ class Janus(
       permissionId: String,
       accessType: JanusAccessType,
       durationParams: (Option[Duration], Option[ZoneId])
-  ): Option[(Credentials, Permission)] = {
+  ): Option[(Permission, Credentials)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
       permission <- checkUserPermission(
@@ -306,7 +306,7 @@ class Janus(
       logger.info(
         s"$accessType access to $permissionId granted for ${username(user)}"
       )
-      (credentials, permission)
+      (permission, credentials)
     }
   }
 
@@ -314,12 +314,8 @@ class Janus(
       user: UserIdentity,
       permissionIds: List[String],
       durationParams: (Option[Duration], Option[ZoneId])
-  ): Option[List[(AwsAccount, Credentials)]] = {
+  ): Option[List[(Permission, Credentials)]] = {
     permissionIds
-      .map(assumeRole(user, _, JCredentials, durationParams))
-      .map(_.map { case (credentials, permission) =>
-        permission.account -> credentials
-      })
-      .sequence
+      .traverse(assumeRole(user, _, JCredentials, durationParams))
   }
 }
