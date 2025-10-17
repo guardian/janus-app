@@ -91,8 +91,8 @@ button .btn, .btn-large {
 
 .permissions-layout__main {
     display: flex;
-    gap: 20px;
-    padding: 20px;
+    gap: 40px;
+    padding: 0 20px 20px 20px;
     width: 100%;
 }
 
@@ -104,6 +104,7 @@ button .btn, .btn-large {
 .permissions-layout__column--accounts {
     flex: 3;
     min-width: 0; /* Allow flex item to shrink below content size */
+    padding-top: 20px;
 }
 
 .permissions-layout__column--roles {
