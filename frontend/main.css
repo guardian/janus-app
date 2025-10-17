@@ -83,6 +83,62 @@ button .btn, .btn-large {
     padding-top: 30px;
 }
 
+/* Full-width permissions layout */
+.permissions-layout {
+    width: 100%;
+    max-width: 100%;
+}
+
+.permissions-layout__main {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    width: 100%;
+}
+
+.permissions-layout__column {
+    display: flex;
+    flex-direction: column;
+}
+
+.permissions-layout__column--accounts {
+    flex: 2;
+    min-width: 0; /* Allow flex item to shrink below content size */
+}
+
+.permissions-layout__column--roles {
+    flex: 1;
+    min-width: 0;
+}
+
+.permissions-layout__heading {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.permissions-layout__footer {
+    padding: 20px;
+    text-align: center;
+    border-top: 1px solid #e0e0e0;
+}
+
+.permissions-layout__footer p {
+    margin: 0;
+}
+
+/* Responsive: stack on tablet and mobile */
+@media screen and (max-width: 992px) {
+    .permissions-layout__main {
+        flex-direction: column;
+    }
+
+    .permissions-layout__column--accounts,
+    .permissions-layout__column--roles {
+        flex: 1;
+    }
+}
+
 .logout-button {
     padding: 20px 10px 0px;
     float: right;
@@ -471,11 +527,17 @@ a.copy-text--button__small {
 
     .accounts-pane .account-card-wrapper {
         flex: 0 0 calc(50% - 5px);
+        max-width: calc(50% - 5px);
     }
 
     .roles-pane .card--role {
         width: 100%;
     }
+}
+
+/* Ensure card wrappers don't overflow their containers */
+.account-card-wrapper {
+    box-sizing: border-box;
 }
 
 /* Tablet and mobile: single column for both */
