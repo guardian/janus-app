@@ -102,13 +102,18 @@ button .btn, .btn-large {
 }
 
 .permissions-layout__column--accounts {
-    flex: 2;
+    flex: 3;
     min-width: 0; /* Allow flex item to shrink below content size */
+    border-right: 1px solid #e0e0e0;
+    padding-right: 20px;
 }
 
 .permissions-layout__column--roles {
-    flex: 1;
+    flex: 2;
     min-width: 0;
+    background-color: #f5f5f5;
+    padding: 20px;
+    margin: -20px -20px -20px 0;
 }
 
 .permissions-layout__heading {
@@ -554,7 +559,12 @@ a.copy-text--button__small {
 }
 
 .card-content--role-header {
-    padding: 3px 17px;
+    padding: 8px 17px;
+}
+
+.card-content--role-header .card-title {
+    font-size: 1.24rem;
+    margin: 0;
 }
 
 .role-body .card-action.card-action--permission {
