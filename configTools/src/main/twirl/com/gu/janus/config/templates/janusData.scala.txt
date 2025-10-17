@@ -59,14 +59,18 @@ janus {
 
     admin {
         acl {
-            @for((user, ACLEntry(permissions, _)) <- janusData.admin.userAccess){
+            @for((user, ACLEntry(permissions, adminRoles)) <- janusData.admin.userAccess){
                 "@user" = {
                     permissions = [
                         @for(permission <- permissions){
                             @permissionReference(permission),
                         }
                     ],
-                    roles = []
+                    roles = [
+                        @for(adminRole <- adminRoles){
+                            @roleReference(adminRole),
+                        }
+                    ]
                 }
             }
         }

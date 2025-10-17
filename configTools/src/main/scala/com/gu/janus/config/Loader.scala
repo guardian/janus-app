@@ -22,7 +22,7 @@ object Loader {
       permissions <- loadPermissions(config, accounts)
       roles <- loadRoles(config, permissions)
       access <- loadAccess(config, permissions, roles)
-      admin <- loadAdmin(config, permissions)
+      admin <- loadAdmin(config, permissions, roles)
       support <- loadSupport(config, permissions)
     } yield JanusData(accounts, access, admin, support, permissionsRepo)
   }
@@ -186,7 +186,8 @@ object Loader {
 
   private[config] def loadAdmin(
       config: Config,
-      permissions: Set[Permission]
+      permissions: Set[Permission],
+      roles: Set[Role]
   ): Either[String, ACL] = {
     for {
       configuredAccess <- config
@@ -208,12 +209,20 @@ object Loader {
                     s"The admin configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredPermissionReference.label}` and refers to the account with key ${configuredPermissionReference.account}"
                   )
               }
-          } yield username -> ACLEntry(userPermissions.toSet, Set.empty[Role])
+            userAdminRoles <- configuredAclEntries.roles.traverse {
+              configuredRoleReference =>
+                roles
+                  .find(_.name == configuredRoleReference.name)
+                  .toRight(
+                    s"The admin configuration for `$username` includes a role `$configuredRoleReference` that isn't defined."
+                  )
+            }
+          } yield username -> ACLEntry(userPermissions.toSet, userAdminRoles.toSet)
       }
     } yield ACL(
       acl.toMap,
       Set.empty
-    ) // TODO: maybe these shouldn't share a representation since Admin doesn't need the default permissions or "roles"
+    ) // TODO: maybe these shouldn't share a representation since Admin doesn't need the default permissions
   }
 
   private[config] def loadSupport(

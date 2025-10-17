@@ -237,8 +237,7 @@ class JanusConfigTest extends AnyFreeSpec with Matchers {
       JanusConfig.allRoles(janusData) shouldEqual Set(role1, role2)
     }
 
-    // TODO: admin doesn't yet support roles
-    "includes roles from admin ACLs" ignore {
+    "includes roles from admin ACLs" in {
       val role1 = Role("Role 1", Set.empty)
       val role2 = Role("Role 2", Set.empty)
       val janusData = JanusData(

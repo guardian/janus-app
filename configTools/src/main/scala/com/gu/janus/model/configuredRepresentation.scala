@@ -9,7 +9,6 @@ case class ConfiguredAccount(
     key: String
 ) derives Decoder
 
-// helps circe-config auto-extract data
 case class ConfiguredAccounts(
     accounts: List[ConfiguredAccount]
 ) derives Decoder
@@ -25,7 +24,6 @@ case class ConfiguredPermission(
     sessionType: Option[String] = Some("user")
 ) derives Decoder
 
-// helps circe-config auto-extract data
 case class ConfiguredPermissions(
     permissions: List[ConfiguredPermission]
 ) derives Decoder
@@ -61,7 +59,6 @@ case class ConfiguredAclEntry(
     roles: List[ConfiguredRoleReference]
 ) derives Decoder
 
-// helps circe-config auto-extract data
 case class ConfiguredAdmin(
     acl: Map[String, ConfiguredAclEntry]
 ) derives Decoder

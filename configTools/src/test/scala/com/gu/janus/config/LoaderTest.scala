@@ -1,7 +1,7 @@
 package com.gu.janus.config
 
 import com.gu.janus.model.SessionType.{User, Workload}
-import com.gu.janus.model.{AwsAccount, Permission, SessionType, ACLEntry}
+import com.gu.janus.model.{ACLEntry, AwsAccount, Permission, Role, SessionType}
 import com.gu.janus.testutils.{HaveMatchers, RightValues}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.OptionValues
@@ -217,17 +217,56 @@ class LoaderTest
         websiteDeveloperPermission.sessionType shouldEqual Workload
       }
     }
+
+    "loads roles from the ACL" in {
+      val accounts = Loader.loadAccounts(testConfig).value
+      val permissions = Loader.loadPermissions(testConfig, accounts).value
+      val roles = Loader.loadRoles(testConfig, permissions).value
+      val acl = Loader.loadAccess(testConfig, permissions, roles).value
+      val ACLEntry(_, employee1Roles) =
+        acl.userAccess.get("employee1").value
+      employee1Roles shouldEqual Set(
+        Role(
+          "Web data manager",
+          Set(
+            permissions
+              .find(_.id == "website-s3-manager")
+              .value
+          )
+        )
+      )
+    }
   }
 
   "loadAdmin" - {
-    "loads the example file's admin definition" in {
+    "loads the example file's admin access definition" in {
       val accounts = Loader.loadAccounts(testConfig).value
       val permissions = Loader.loadPermissions(testConfig, accounts).value
-      val adminAcl = Loader.loadAdmin(testConfig, permissions).value
+      val roles = Loader.loadRoles(testConfig, permissions).value
+      val adminAcl = Loader.loadAdmin(testConfig, permissions, roles).value
       val ACLEntry(adminPermissions, _) =
         adminAcl.userAccess.get("employee1").value
       adminPermissions.map(_.id) shouldEqual Set(
         "website-admin"
+      )
+    }
+
+    "loads roles bestowed via the admin ACL" in {
+      val accounts = Loader.loadAccounts(testConfig).value
+      val permissions = Loader.loadPermissions(testConfig, accounts).value
+      val roles = Loader.loadRoles(testConfig, permissions).value
+      val adminAcl = Loader.loadAdmin(testConfig, permissions, roles).value
+      val ACLEntry(_, adminRoles) =
+        adminAcl.userAccess.get("employee1").value
+      adminRoles shouldEqual Set(
+        Role(
+          "Website administrator",
+          Set(
+            permissions
+              .find(_.id == "website-admin")
+              .value
+          )
+        )
       )
     }
   }
