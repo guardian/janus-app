@@ -1,5 +1,6 @@
 package com.gu.janus.model
 
+import cats.Monoid
 import com.gu.janus.policy.Iam.Policy
 import io.circe.syntax.EncoderOps
 
@@ -21,6 +22,16 @@ case class ACLEntry(
     permissions: Set[Permission],
     roles: Set[Role]
 )
+object ACLEntry {
+  given Monoid[ACLEntry] with {
+    def empty: ACLEntry = ACLEntry(Set.empty, Set.empty)
+    def combine(a1: ACLEntry, a2: ACLEntry): ACLEntry =
+      ACLEntry(
+        a1.permissions ++ a2.permissions,
+        a1.roles ++ a2.roles
+      )
+  }
+}
 case class SupportACL private (
     rota: Map[Instant, (String, String)],
     supportAccess: Set[Permission],
@@ -221,6 +232,12 @@ case class Role(
     name: String,
     permissions: Set[Permission]
 )
+object Role {
+  def apply(
+      name: String,
+      permissions: Permission*
+  ): Role = Role(name, permissions.toSet)
+}
 
 sealed abstract class JanusAccessType(override val toString: String)
 object JCredentials extends JanusAccessType("credentials")
