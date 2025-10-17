@@ -1,10 +1,10 @@
 @import com.gu.googleauth.UserIdentity
-@import com.gu.janus.model.{AwsAccountAccess, JanusData}
+@import com.gu.janus.model.{AwsAccountAccess, JanusData, Role}
 @import helper.*
 @import models.DisplayMode
 @import play.api.Mode
 
-@(accountAccesses: List[AwsAccountAccess], user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountAccesses: List[AwsAccountAccess], roleAccess: List[Role], user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Your permissions", Some(user), janusData, displayMode) {
     <div class="container">
@@ -13,6 +13,9 @@
             @form(routes.Janus.favourite()) {
                 @CSRF.formField
                 @fragments.awsAccounts(accountAccesses, allowFavs = true, displayMode)
+            }
+            @for(role <- roleAccess){
+              @role.name
             }
         </div>
         <div class="row">

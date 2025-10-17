@@ -42,14 +42,17 @@ class Janus(
       val displayMode =
         Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
       (for {
-        permissions <- userAccess(username(request.user), janusData.access)
+        directPermissions <- userAccess(username(request.user), janusData.access)
+        roles = userRoles(username(request.user), janusData.access).getOrElse(Set.empty)
         favourites = Favourites.fromCookie(request.cookies.get("favourites"))
-        awsAccountAccess = orderedAccountAccess(permissions, favourites)
+        awsAccountAccess = orderedAccountAccess(directPermissions, favourites)
+        roleAccess = orderedRoleAccess(roles, favourites)
       } yield {
         Ok(
           views.html
             .index(
               awsAccountAccess,
+              roleAccess,
               request.user,
               janusData,
               displayMode

@@ -14,8 +14,12 @@ case class JanusData(
 )
 
 case class ACL(
-    userAccess: Map[String, Set[Permission]],
+    userAccess: Map[String, ACLEntry],
     defaultPermissions: Set[Permission] = Set.empty
+)
+case class ACLEntry(
+    permissions: Set[Permission],
+    roles: Set[Role]
 )
 case class SupportACL private (
     rota: Map[Instant, (String, String)],
@@ -212,6 +216,11 @@ object SessionType {
   case object User extends SessionType
   case object Workload extends SessionType
 }
+
+case class Role(
+    name: String,
+    permissions: Set[Permission]
+)
 
 sealed abstract class JanusAccessType(override val toString: String)
 object JCredentials extends JanusAccessType("credentials")

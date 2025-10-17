@@ -1,7 +1,7 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, AwsAccount, Permission, SupportACL}
+import com.gu.janus.model.{ACL, AwsAccount, Permission, Role, SupportACL, ACLEntry}
 
 import java.time.{Duration, Instant}
 
@@ -18,7 +18,14 @@ object UserAccess {
   def userAccess(username: String, acl: ACL): Option[Set[Permission]] = {
     acl.userAccess
       .get(username)
+      .map { case ACLEntry(directPermission, roles) => directPermission }
       .map(permissions => permissions ++ acl.defaultPermissions)
+  }
+
+  def userRoles(username: String, acl: ACL): Option[Set[Role]] = {
+    acl.userAccess
+      .get(username)
+      .map { case ACLEntry(directPermission, roles) => roles }
   }
 
   /** Checks if the username is explicitly mentioned in the provided ACL.

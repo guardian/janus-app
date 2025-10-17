@@ -1,11 +1,11 @@
 package com.gu.janus.config
 
-import cats.implicits._
-import com.gu.janus.model._
+import cats.implicits.*
+import com.gu.janus.model.*
 import com.typesafe.config.Config
 import io.circe.Decoder
-import io.circe.config.syntax._
-import io.circe.generic.auto._
+import io.circe.config.syntax.*
+import io.circe.generic.auto.*
 
 import java.time.{Duration, Instant, ZoneId, ZonedDateTime, format}
 import scala.util.Try
@@ -20,7 +20,8 @@ object Loader {
       permissionsRepo <- loadPermissionsRepo(config)
       accounts <- loadAccounts(config)
       permissions <- loadPermissions(config, accounts)
-      access <- loadAccess(config, permissions)
+      roles <- loadRoles(config, permissions)
+      access <- loadAccess(config, permissions, roles)
       admin <- loadAdmin(config, permissions)
       support <- loadSupport(config, permissions)
     } yield JanusData(accounts, access, admin, support, permissionsRepo)
@@ -103,9 +104,39 @@ object Loader {
     } yield permissions.toSet
   }
 
-  private[config] def loadAccess(
+  private[config] def loadRoles(
       config: Config,
       permissions: Set[Permission]
+  ): Either[String, Set[Role]] = {
+    for {
+      configuredRoles <- config
+        .as[ConfiguredRoles]("janus")
+        .left
+        .map(err =>
+          s"Failed to load roles from path `janus`: ${err.getMessage}"
+        )
+      // resolve all the permissions in each role here, or fail
+      roles <- configuredRoles.roles.traverse { configuredRole =>
+        for {
+          rolePermissions <- configuredRole.permissions.traverse {
+            configuredPermissionReference =>
+              permissions
+                .find(p =>
+                  configuredPermissionReference.account == p.account.authConfigKey && configuredPermissionReference.label == p.label
+                )
+                .toRight(
+                  s"The 'roles' configuration for role `${configuredRole.name}` includes a permission that doesn't appear to be defined.\nIt has label `${configuredPermissionReference.label}` and refers to the account with key ${configuredPermissionReference.account}"
+                )
+          }
+        } yield Role(configuredRole.name, rolePermissions.toSet)
+      }
+    } yield roles.toSet
+  }
+
+  private[config] def loadAccess(
+      config: Config,
+      permissions: Set[Permission],
+      roles: Set[Role]
   ): Either[String, ACL] = {
     for {
       configuredAccess <- config
@@ -115,29 +146,40 @@ object Loader {
           s"Failed to load access from path `janus.access`: ${err.getMessage}"
         )
       defaultAccess <- configuredAccess.defaultPermissions.traverse {
-        configuredAclEntry =>
+        configuredPermissionReference =>
           permissions
             .find(p =>
-              configuredAclEntry.account == p.account.authConfigKey && configuredAclEntry.label == p.label
+              configuredPermissionReference.account == p.account.authConfigKey && configuredPermissionReference.label == p.label
             )
             .toRight(
-              s"The 'default permissions' section of the access definition includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
+              s"The 'default permissions' section of the access definition includes a permission that doesn't appear to be defined.\nIt has label `${configuredPermissionReference.label}` and refers to the account with key ${configuredPermissionReference.account}"
             )
       }
       acl <- configuredAccess.acl.toList.traverse {
-        case (username, configuredAclEntries) =>
+        case (
+              username,
+              configuredAclEntries
+            ) =>
           for {
-            userPermissions <- configuredAclEntries.traverse {
-              configuredAclEntry =>
+            userPermissions <- configuredAclEntries.permissions
+              .traverse { configuredPermissionReference =>
                 permissions
                   .find(p =>
-                    configuredAclEntry.account == p.account.authConfigKey && configuredAclEntry.label == p.label
+                    configuredPermissionReference.account == p.account.authConfigKey && configuredPermissionReference.label == p.label
                   )
                   .toRight(
-                    s"The access configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
+                    s"The access configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredPermissionReference.label}` and refers to the account with key ${configuredPermissionReference.account}"
+                  )
+              }
+            userRoles <- configuredAclEntries.roles.traverse {
+              configuredRoleReference =>
+                roles
+                  .find(_.name == configuredRoleReference.name)
+                  .toRight(
+                    s"The access configuration for `$username` includes a role `$configuredRoleReference` that isn't defined."
                   )
             }
-          } yield username -> userPermissions.toSet
+          } yield username -> ACLEntry(userPermissions.toSet, userRoles.toSet)
       }
     } yield ACL(acl.toMap, defaultAccess.toSet)
   }
@@ -156,22 +198,22 @@ object Loader {
       acl <- configuredAccess.acl.toList.traverse {
         case (username, configuredAclEntries) =>
           for {
-            userPermissions <- configuredAclEntries.traverse {
-              configuredAclEntry =>
+            userPermissions <- configuredAclEntries.permissions
+              .traverse { configuredPermissionReference =>
                 permissions
                   .find(p =>
-                    configuredAclEntry.account == p.account.authConfigKey && configuredAclEntry.label == p.label
+                    configuredPermissionReference.account == p.account.authConfigKey && configuredPermissionReference.label == p.label
                   )
                   .toRight(
-                    s"The admin configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
+                    s"The admin configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredPermissionReference.label}` and refers to the account with key ${configuredPermissionReference.account}"
                   )
-            }
-          } yield username -> userPermissions.toSet
+              }
+          } yield username -> ACLEntry(userPermissions.toSet, Set.empty[Role])
       }
     } yield ACL(
       acl.toMap,
       Set.empty
-    ) // TODO: these shouldn't share a representation since Admin doesn't need the default permissions
+    ) // TODO: maybe these shouldn't share a representation since Admin doesn't need the default permissions or "roles"
   }
 
   private[config] def loadSupport(
@@ -186,13 +228,13 @@ object Loader {
           s"Failed to load support config from path `janus.support`: ${err.getMessage}"
         )
       supportAccess <- configuredSupport.supportAccess.traverse {
-        configuredAclEntry =>
+        configuredPermissionReference =>
           permissions
             .find(p =>
-              configuredAclEntry.account == p.account.authConfigKey && configuredAclEntry.label == p.label
+              configuredPermissionReference.account == p.account.authConfigKey && configuredPermissionReference.label == p.label
             )
             .toRight(
-              s"The support access definition includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
+              s"The support access definition includes a permission that doesn't appear to be defined.\nIt has label `${configuredPermissionReference.label}` and refers to the account with key ${configuredPermissionReference.account}"
             )
       }
       period = Duration.ofSeconds(configuredSupport.period.toLong)

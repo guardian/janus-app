@@ -1,6 +1,6 @@
 package logic
 
-import com.gu.janus.model.ACL
+import com.gu.janus.model.{ACL, ACLEntry}
 import fixtures.Fixtures._
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.freespec.AnyFreeSpec
@@ -19,13 +19,13 @@ class OwnersTest
   val accounts = List(fooAct, barAct, bazAct, quxAct)
   val acl = ACL(
     Map(
-      "test.user" -> Set(fooDev),
-      "test.yet-another-user" -> Set(fooDev),
-      "test.admin" -> Set(fooCf),
-      "test.all" -> Set(fooDev, fooCf),
-      "test.other" -> Set(fooS3),
-      "test.zzz-other" -> Set(fooS3),
-      "test.different-account" -> Set(barDev)
+      "test.user" -> ACLEntry(Set(fooDev), Set.empty),
+      "test.yet-another-user" -> ACLEntry(Set(fooDev), Set.empty),
+      "test.admin" -> ACLEntry(Set(fooCf), Set.empty),
+      "test.all" -> ACLEntry(Set(fooDev, fooCf), Set.empty),
+      "test.other" -> ACLEntry(Set(fooS3), Set.empty),
+      "test.zzz-other" -> ACLEntry(Set(fooS3), Set.empty),
+      "test.different-account" -> ACLEntry(Set(barDev), Set.empty)
     ),
     Set.empty
   )

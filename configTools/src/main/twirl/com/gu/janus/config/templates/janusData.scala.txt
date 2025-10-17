@@ -1,6 +1,6 @@
-@import com.gu.janus.model.{JanusData, Permission, SessionType}
+@import com.gu.janus.model.{JanusData, Permission, SessionType, Role, ACLEntry}
 
-@(janusData: JanusData, allPermissions: Set[Permission])
+@(janusData: JanusData, allPermissions: Set[Permission], allRoles: Set[Role])
 
 janus {
     @janusData.permissionsRepo.map { repoUrl =>
@@ -40,24 +40,34 @@ janus {
         ]
 
         acl {
-            @for((user, permissions) <- janusData.access.userAccess){
-                "@user" = [
-                    @for(permission <- permissions){
-                        @permissionReference(permission),
-                    }
-                ]
+            @for((user, ACLEntry(permissions, roles)) <- janusData.access.userAccess){
+                "@user" = {
+                    permissions = [
+                        @for(permission <- permissions){
+                            @permissionReference(permission),
+                        }
+                    ],
+                    roles = [
+                        @for(role <- roles){
+                            @roleReference(role),
+                        }
+                    ]
+                }
             }
         }
     }
 
     admin {
         acl {
-            @for((user, permissions) <- janusData.admin.userAccess){
-                "@user" = [
-                    @for(permission <- permissions){
-                        @permissionReference(permission),
-                    }
-                ]
+            @for((user, ACLEntry(permissions, _)) <- janusData.admin.userAccess){
+                "@user" = {
+                    permissions = [
+                        @for(permission <- permissions){
+                            @permissionReference(permission),
+                        }
+                    ],
+                    roles = []
+                }
             }
         }
     }
@@ -90,6 +100,19 @@ janus {
                     case SessionType.Workload => {"workload"}
                 }
             },
+        }
+    ]
+
+    roles = [
+        @for(role <- allRoles){
+            {
+                name = """@role.name""",
+                permissions = [
+                    @for(rolePermission <- role.permissions){
+                        @permissionReference(rolePermission),
+                    }
+                ]
+            }
         }
     ]
 }

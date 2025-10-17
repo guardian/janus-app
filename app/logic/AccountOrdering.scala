@@ -1,6 +1,6 @@
 package logic
 
-import com.gu.janus.model.{AwsAccountAccess, Permission}
+import com.gu.janus.model.{AwsAccountAccess, Permission, Role}
 
 object AccountOrdering {
 
@@ -31,6 +31,22 @@ object AccountOrdering {
           accountPerms.toList.sorted,
           favourites.contains(awsAccount.authConfigKey)
         )
+      }
+  }
+
+  def orderedRoleAccess(
+      roles: Set[Role],
+      favourites: List[String]
+  ): List[Role] = {
+    roles.toList
+      .sortBy(role => role.name.toLowerCase)
+      .sortBy { role =>
+        // find index of first favourite string (best preference) that matches one of the permissions in this role
+        val favIndex = favourites.indexWhere { favourite =>
+          role.permissions.exists(_.account.authConfigKey == favourite)
+        }
+        if (favIndex < 0) favIndex + favourites.size + 1
+        else favIndex
       }
   }
 

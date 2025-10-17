@@ -1,21 +1,17 @@
 package com.gu.janus
 
 import cats.Monoid
-import com.gu.janus.model.{JanusData, ValidationResult}
+import com.gu.janus.model.{ACL, JanusData, Permission, Role, ValidationResult}
 
 object Validation {
+
   def policySizeChecks(janusData: JanusData): ValidationResult = {
     // AWS doesn't reveal how this limit is being calculated
     // but based on trial and error it seems to be around 1050
     val sizeLimit = 1050
 
-    val allPermissions = janusData.access.defaultPermissions ++
-      janusData.access.userAccess.values.flatten.toSet ++
-      janusData.admin.userAccess.values.flatten.toSet ++
-      janusData.support.supportAccess
-
     val largePermissions = for {
-      largePermission <- allPermissions.filter { perm =>
+      largePermission <- JanusConfig.allPermissions(janusData).filter { perm =>
         // session policy limit includes the managed ARNs and inline policy document
         val totalLength =
           perm.policy // the inline policy document's size
@@ -44,12 +40,7 @@ object Validation {
     * unambiguously looked up from the URL.
     */
   def permissionUniqueness(janusData: JanusData): ValidationResult = {
-    val allPermissions = janusData.access.defaultPermissions ++
-      janusData.access.userAccess.values.flatten.toSet ++
-      janusData.admin.userAccess.values.flatten.toSet ++
-      janusData.support.supportAccess
-
-    val duplicates = allPermissions
+    val duplicates = JanusConfig.allPermissions(janusData)
       .groupBy(_.id)
       .filter { case (_, permissions) =>
         permissions.size > 1

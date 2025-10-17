@@ -1,7 +1,7 @@
 package com.gu.janus
 
 import com.gu.janus.Validation.{isClean, noErrors}
-import com.gu.janus.model._
+import com.gu.janus.model.*
 import com.gu.janus.policy.Iam.Effect.Allow
 import com.gu.janus.policy.Iam.{Action, Policy, Resource, Statement}
 import org.scalatest.freespec.AnyFreeSpec
@@ -55,7 +55,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
     "returns nothing if the provided data contains no large policies" in {
       val janusData = JanusData(
         Set(account1),
-        ACL(Map("user1" -> Set(smallPermission))),
+        ACL(Map("user1" -> ACLEntry(Set(smallPermission), Set.empty))),
         emptyAcl,
         emptySupportAcl,
         None
@@ -68,7 +68,8 @@ class ValidationTest extends AnyFreeSpec with Matchers {
         "for a large inline policy" in {
           val janusData = JanusData(
             Set(account1),
-            access = ACL(Map("user1" -> Set(largePermission))),
+            access =
+              ACL(Map("user1" -> ACLEntry(Set(largePermission), Set.empty))),
             emptyAcl,
             emptySupportAcl,
             None
@@ -80,7 +81,12 @@ class ValidationTest extends AnyFreeSpec with Matchers {
           val janusData = JanusData(
             Set(account1),
             access = ACL(
-              Map("user1" -> Set(smallPermissionWithLargeManagedPolicyArns))
+              Map(
+                "user1" -> ACLEntry(
+                  Set(smallPermissionWithLargeManagedPolicyArns),
+                  Set.empty
+                )
+              )
             ),
             emptyAcl,
             emptySupportAcl,
@@ -95,7 +101,8 @@ class ValidationTest extends AnyFreeSpec with Matchers {
           val janusData = JanusData(
             Set(account1),
             emptyAcl,
-            admin = ACL(Map("user1" -> Set(largePermission))),
+            admin =
+              ACL(Map("user1" -> ACLEntry(Set(largePermission), Set.empty))),
             emptySupportAcl,
             None
           )
@@ -107,7 +114,12 @@ class ValidationTest extends AnyFreeSpec with Matchers {
             Set(account1),
             emptyAcl,
             admin = ACL(
-              Map("user1" -> Set(smallPermissionWithLargeManagedPolicyArns))
+              Map(
+                "user1" -> ACLEntry(
+                  Set(smallPermissionWithLargeManagedPolicyArns),
+                  Set.empty
+                )
+              )
             ),
             emptySupportAcl,
             None
@@ -149,7 +161,8 @@ class ValidationTest extends AnyFreeSpec with Matchers {
       "returns an 'invalid' validation result if a warning is generated" in {
         val janusData = JanusData(
           Set(account1),
-          access = ACL(Map("user1" -> Set(largePermission))),
+          access =
+            ACL(Map("user1" -> ACLEntry(Set(largePermission), Set.empty))),
           emptyAcl,
           emptySupportAcl,
           None
@@ -178,7 +191,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
       )
       val janusData = JanusData(
         Set(account1),
-        ACL(Map("user1" -> Set(permission1, permission2))),
+        ACL(Map("user1" -> ACLEntry(Set(permission1, permission2), Set.empty))),
         emptyAcl,
         emptySupportAcl,
         None
@@ -205,7 +218,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
         )
       val janusData = JanusData(
         Set(account1),
-        ACL(Map("user1" -> Set(permission1, permission2))),
+        ACL(Map("user1" -> ACLEntry(Set(permission1, permission2), Set.empty))),
         emptyAcl,
         emptySupportAcl,
         None
@@ -232,7 +245,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
         )
       val janusData = JanusData(
         Set(account1),
-        ACL(Map("user1" -> Set(permission1, permission2))),
+        ACL(Map("user1" -> ACLEntry(Set(permission1, permission2), Set.empty))),
         emptyAcl,
         emptySupportAcl,
         None
@@ -259,7 +272,12 @@ class ValidationTest extends AnyFreeSpec with Matchers {
         )
       val janusData = JanusData(
         Set(account1),
-        ACL(Map("user1" -> Set(permission1), "user2" -> Set(permission2))),
+        ACL(
+          Map(
+            "user1" -> ACLEntry(Set(permission1), Set.empty),
+            "user2" -> ACLEntry(Set(permission2), Set.empty)
+          )
+        ),
         emptyAcl,
         emptySupportAcl,
         None

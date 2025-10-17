@@ -1,7 +1,7 @@
 package com.gu.janus.config
 
 import com.gu.janus.model.SessionType.{User, Workload}
-import com.gu.janus.model.{AwsAccount, Permission, SessionType}
+import com.gu.janus.model.{AwsAccount, Permission, SessionType, ACLEntry}
 import com.gu.janus.testutils.{HaveMatchers, RightValues}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.OptionValues
@@ -88,7 +88,8 @@ class LoaderTest
       "and extracts the default permissions" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
+        val roles = Loader.loadRoles(testConfig, permissions).value
+        val result = Loader.loadAccess(testConfig, permissions, roles)
         val access = result.value
         access.defaultPermissions shouldEqual Set(
           Permission(
@@ -111,12 +112,16 @@ class LoaderTest
       "and extracts the ACL" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
-        val access = result.value
-        access.userAccess.get("employee1").value.map(_.id) shouldEqual Set(
+        val roles = Loader.loadRoles(testConfig, permissions).value
+        val acl = Loader.loadAccess(testConfig, permissions, roles).value
+        val ACLEntry(employee2Permissions, employee2Roles) =
+          acl.userAccess.get("employee1").value
+        employee2Permissions.map(_.id) shouldEqual Set(
           "website-developer"
         )
-        access.userAccess.get("employee4").value.map(_.id) shouldEqual Set(
+        val ACLEntry(employee4Permissions, employee4Roles) =
+          acl.userAccess.get("employee4").value
+        employee4Permissions.map(_.id) shouldEqual Set(
           "website-s3-manager",
           "aws-test-account-developer"
         )
@@ -125,9 +130,11 @@ class LoaderTest
       "properly extracts a standard inline-policy permission" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
+        val roles = Loader.loadRoles(testConfig, permissions).value
+        val result = Loader.loadAccess(testConfig, permissions, roles)
         val access = result.value
-        val userPermissions = access.userAccess.get("employee1").value
+        val ACLEntry(userPermissions, userRoles) =
+          access.userAccess.get("employee1").value
         val websiteDeveloperPermission =
           userPermissions.find(p => p.id == "website-developer").value
         websiteDeveloperPermission should have(
@@ -143,9 +150,11 @@ class LoaderTest
       "properly extracts a permission with managed ARNs" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
+        val roles = Loader.loadRoles(testConfig, permissions).value
+        val result = Loader.loadAccess(testConfig, permissions, roles)
         val access = result.value
-        val userPermissions = access.userAccess.get("employee3").value
+        val ACLEntry(userPermissions, userRoles) =
+          access.userAccess.get("employee3").value
         val websiteDeveloperPermission =
           userPermissions.find(p => p.id == "website-s3-manager").value
         websiteDeveloperPermission should have(
@@ -161,9 +170,11 @@ class LoaderTest
       "properly extracts a permission with an inline policy document and managed policy ARNs" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
+        val roles = Loader.loadRoles(testConfig, permissions).value
+        val result = Loader.loadAccess(testConfig, permissions, roles)
         val access = result.value
-        val userPermissions = access.userAccess.get("employee3").value
+        val ACLEntry(userPermissions, userRoles) =
+          access.userAccess.get("employee3").value
         val websiteDeveloperPermission =
           userPermissions
             .find(p => p.id == "aws-test-account-hybrid-permission")
@@ -183,9 +194,11 @@ class LoaderTest
       "properly extracts a permission with session type User" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
+        val roles = Loader.loadRoles(testConfig, permissions).value
+        val result = Loader.loadAccess(testConfig, permissions, roles)
         val access = result.value
-        val userPermissions = access.userAccess.get("employee1").value
+        val ACLEntry(userPermissions, userRoles) =
+          access.userAccess.get("employee1").value
         val websiteDeveloperPermission =
           userPermissions.find(p => p.id == "website-developer").value
         websiteDeveloperPermission.sessionType shouldEqual User
@@ -194,9 +207,11 @@ class LoaderTest
       "properly extracts a permission with session type Workload" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
+        val roles = Loader.loadRoles(testConfig, permissions).value
+        val result = Loader.loadAccess(testConfig, permissions, roles)
         val access = result.value
-        val userPermissions = access.userAccess.get("employee2").value
+        val ACLEntry(userPermissions, userRoles) =
+          access.userAccess.get("employee2").value
         val websiteDeveloperPermission =
           userPermissions.find(p => p.id == "website-web-workload").value
         websiteDeveloperPermission.sessionType shouldEqual Workload
@@ -208,9 +223,10 @@ class LoaderTest
     "loads the example file's admin definition" in {
       val accounts = Loader.loadAccounts(testConfig).value
       val permissions = Loader.loadPermissions(testConfig, accounts).value
-      val result = Loader.loadAdmin(testConfig, permissions)
-      val adminAcl = result.value
-      adminAcl.userAccess.get("employee1").value.map(_.id) shouldEqual Set(
+      val adminAcl = Loader.loadAdmin(testConfig, permissions).value
+      val ACLEntry(adminPermissions, _) =
+        adminAcl.userAccess.get("employee1").value
+      adminPermissions.map(_.id) shouldEqual Set(
         "website-admin"
       )
     }

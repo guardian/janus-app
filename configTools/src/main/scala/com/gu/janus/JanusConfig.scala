@@ -42,6 +42,31 @@ object JanusConfig {
     )
   }
 
+  def allPermissions(janusData: JanusData): Set[Permission] = {
+    janusData.access.defaultPermissions ++
+      allAclPermissions(janusData.access) ++
+      allAclPermissions(janusData.admin) ++
+      janusData.support.supportAccess
+  }
+
+  def allRoles(janusData: JanusData): Set[Role] = {
+    (for {
+      acl <- List(janusData.access, janusData.admin)
+      (_, ACLEntry(permissions, roles)) <- acl.userAccess
+      role <- roles
+    } yield role).toSet
+  }
+
+  private[janus] def allAclPermissions(acl: ACL): Set[Permission] = {
+    val userAccessPermissions =
+      acl.userAccess.values.flatMap(_.permissions).toSet
+    val rolePermissions =
+      acl.userAccess.values.flatMap(_.roles.flatMap(_.permissions)).toSet
+    val defaultPermissions = acl.defaultPermissions
+
+    userAccessPermissions ++ rolePermissions ++ defaultPermissions
+  }
+
   class JanusConfigurationException(message: String)
       extends ConfigException(message)
 }
