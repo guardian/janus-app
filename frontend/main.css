@@ -453,3 +453,53 @@ a.copy-text--button__small {
     white-space: nowrap;
     border: 0;
 }
+
+/* Two-pane layout for accounts and roles */
+.accounts-pane,
+.roles-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Desktop layout: accounts in 2 columns, roles in 1 column */
+@media screen and (min-width: 993px) {
+    .accounts-pane {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .accounts-pane .account-card-wrapper {
+        flex: 0 0 calc(50% - 5px);
+    }
+
+    .roles-pane .card--role {
+        width: 100%;
+    }
+}
+
+/* Tablet and mobile: single column for both */
+@media screen and (max-width: 992px) {
+    .accounts-pane .account-card-wrapper,
+    .roles-pane .card--role {
+        width: 100%;
+    }
+}
+
+/* Role card styling */
+.card--role {
+    margin: 0.1rem 0 0.1rem 0;
+}
+
+.card-content--role-header {
+    padding: 3px 17px;
+}
+
+.role-body .card-action.card-action--permission {
+    padding: 2px 17px 12px 17px;
+}
+
+.role-body .card-content.card-content--permission-heading {
+    font-weight: 700;
+    padding: 12px 17px 2px 17px;
+}

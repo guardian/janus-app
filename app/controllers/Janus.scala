@@ -65,11 +65,14 @@ class Janus(
     authAction { implicit request =>
       (for {
         permissions <- userAccess(username(request.user), janusData.admin)
+        roles = userRoles(username(request.user), janusData.admin).getOrElse(Set.empty)
         awsAccountAccess = orderedAccountAccess(permissions)
+        roleAccess = orderedRoleAccess(roles, List.empty)
       } yield {
         Ok(
           views.html.admin(
             awsAccountAccess,
+            roleAccess,
             request.user,
             janusData
           )
