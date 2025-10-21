@@ -8,6 +8,17 @@
 @main("Passkey authentication", Some(user), janusData) {
     <div class="container" data-passkeys-enabled="@passkeysEnabled">
         <h1 class="header orange-text">Authenticating ...</h1>
+
+        @* Input field for conditional mediation autofill (LastPass, 1Password, etc.) *@
+        @* See https://web.dev/articles/passkey-form-autofill#annotate_form_input_field *@
+        <form style="position: absolute; left: -9999px;">
+            <input
+              type="text"
+              name="username"
+              autocomplete="username webauthn"
+              autofocus
+            />
+        </form>
     </div>
 
     @if(mode == Mode.Dev) {
