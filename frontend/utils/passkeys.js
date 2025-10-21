@@ -1,6 +1,5 @@
 import { createAndSubmitForm } from "./formUtils.js";
-import { getPasskeyNameFromUser } from "./modalUtils.js";
-import { showConfirmationModal } from "./modalUtils.js";
+import { getPasskeyNameFromUser, showConfirmationModal } from "./modalUtils.js";
 import { displayToast, messageType } from "./toastMessages.js";
 
 const passkeyApi = {
@@ -26,6 +25,40 @@ const passkeyApi = {
     }
 
     return fetch(url, options);
+  },
+
+  /**
+   * Common error handler for WebAuthn credential operations (get/create)
+   * @param {Error} err - The error to handle
+   * @param {string} operation - The operation being performed (e.g., "authentication", "creation")
+   * @returns {boolean} true if the error was handled and execution should stop, false if it should be re-thrown
+   */
+  handleCredentialError(err, operation) {
+    console.error(`Error during ${operation}:`, err);
+
+    if (err.name === "AbortError") {
+      displayToast(
+        `${operation.charAt(0).toUpperCase() + operation.slice(1)} was aborted`,
+        messageType.error,
+      );
+      return true;
+    } else if (err.name === "NotAllowedError") {
+      displayToast(
+        `${operation.charAt(0).toUpperCase() + operation.slice(1)} was cancelled or not allowed`,
+        messageType.warning,
+      );
+      return true;
+    } else if (err.name === "InvalidStateError") {
+      console.warn("Passkey already registered:", err);
+      displayToast(
+        "This passkey has already been registered.",
+        messageType.warning,
+      );
+      return true;
+    }
+
+    // For unknown errors, return false to indicate they should be re-thrown or handled differently
+    return false;
   },
 
   async getRegistrationOptions(
@@ -132,9 +165,27 @@ const passkeyApi = {
   },
 
   async getUserCredential(authOptionsJson) {
-    const credentialGetOptions =
-      PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsJson);
-    return await navigator.credentials.get({ publicKey: credentialGetOptions });
+    try {
+      const authOptions =
+        PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsJson);
+
+      return await navigator.credentials.get({
+        publicKey: authOptions,
+      });
+    } catch (err) {
+      if (err.name === "AbortError") {
+        console.debug("Modal UI was aborted (possibly by autofill UI)");
+        return null;
+      } else if (err.name === "NotAllowedError") {
+        console.debug(
+          "Modal UI was cancelled by user or not allowed by browser",
+        );
+        return null;
+      } else {
+        console.error("navigator.credentials.get (modal) failed with:", err);
+        throw err;
+      }
+    }
   },
 
   // Handle common error scenarios
@@ -153,6 +204,80 @@ const passkeyApi = {
 };
 
 /**
+ * Converts standard Base64 encoding to Base64URL encoding.
+ * LastPass and NordPass appear to give Base64 encoded credentials
+ * but the WebAuthn spec requires Base64URL (no padding, - instead of +, _ instead of /).
+ * See https://www.w3.org/TR/webauthn-3/#dom-publickeycredential-tojson
+ *
+ * @param {string} base64 - A base64 or base64url encoded string
+ * @returns {string} A base64url encoded string
+ */
+function toBase64Url(base64) {
+  if (!base64 || typeof base64 !== "string") {
+    return base64;
+  }
+  return base64
+    .replace(/\+/g, "-") // Replace + with -
+    .replace(/\//g, "_") // Replace / with _
+    .replace(/=+$/, ""); // Remove padding
+}
+
+/**
+ * Recursively normalises all base64 strings in a credential object to base64url format.
+ * This fixes issues where password managers encode in standard base64.
+ * @param {Object} obj - The credential object to normalise
+ * @returns {Object} The normalised credential object
+ */
+function normaliseCredentialJson(obj) {
+  if (!obj || typeof obj !== "object") {
+    return obj;
+  }
+
+  // Fields that should be base64url encoded according to WebAuthn spec
+  const base64UrlFields = [
+    "id",
+    "rawId",
+    "clientDataJSON",
+    "attestationObject",
+    "authenticatorData",
+    "signature",
+    "userHandle",
+  ];
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => normaliseCredentialJson(item));
+  }
+
+  const normalised = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (base64UrlFields.includes(key) && typeof value === "string") {
+      normalised[key] = toBase64Url(value);
+    } else if (value && typeof value === "object") {
+      normalised[key] = normaliseCredentialJson(value);
+    } else if (value && typeof value === "function") {
+      // ignore
+    } else {
+      normalised[key] = value;
+    }
+  }
+  return normalised;
+}
+
+/**
+ * Normalises the transports field to ensure it's an array of strings.
+ * @param {Credential} credential - Credential data containing a transports element
+ * @returns {Credential} Given credential with transports as an array of transport strings
+ */
+function normaliseTransports(credential) {
+  const transports = credential.response.transports;
+  // If transports is an object, extract its values
+  if (typeof transports === "object") {
+    credential.response.transports = Object.values(transports);
+  }
+  return credential;
+}
+
+/**
  * Registers a new passkey for the current user
  * @param {string} csrfToken - CSRF token for security verification
  * @returns {Promise<void>} A promise that resolves when registration completes
@@ -167,6 +292,7 @@ export async function registerPasskey(csrfToken) {
     }
 
     let existingCredential;
+    let createdCredential;
 
     // 2. If user has existing passkeys, use one to authenticate the registration of the new passkey
     if (authOptionsJson.allowCredentials.length > 0) {
@@ -182,8 +308,21 @@ export async function registerPasskey(csrfToken) {
         return;
       }
 
-      // Now proceed with the authentication flow
-      existingCredential = await passkeyApi.getUserCredential(authOptionsJson);
+      try {
+        // Now proceed with the authentication flow
+        existingCredential =
+          await passkeyApi.getUserCredential(authOptionsJson);
+        if (!existingCredential) {
+          console.debug("No existing credential: ", existingCredential);
+          return;
+        }
+      } catch (err) {
+        if (passkeyApi.handleCredentialError(err, "authentication")) {
+          return; // Error was handled, exit the function
+        }
+        // Re-throw other errors to be handled by the outer catch block
+        throw err;
+      }
 
       await showConfirmationModal(
         "Register new passkey",
@@ -201,9 +340,33 @@ export async function registerPasskey(csrfToken) {
     // 4. Create a new passkey
     const credentialCreationOptions =
       PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsJson);
-    const createdCredential = await navigator.credentials.create({
-      publicKey: credentialCreationOptions,
-    });
+
+    try {
+      createdCredential = await navigator.credentials.create({
+        publicKey: credentialCreationOptions,
+      });
+
+      if (!createdCredential) {
+        throw new Error("No credential was created");
+      }
+
+      console.debug("Passkey created successfully:", {
+        id: createdCredential.id,
+        type: createdCredential.type,
+        hasResponse: !!createdCredential.response,
+      });
+    } catch (err) {
+      if (passkeyApi.handleCredentialError(err, "creation")) {
+        return; // Error was handled, exit the function
+      }
+
+      // If error was not handled, display a generic error message
+      displayToast(
+        `Failed to create passkey: ${err.message}`,
+        messageType.error,
+      );
+      return;
+    }
 
     // 5. Get name for the passkey
     const passkeyName = await getPasskeyNameFromUser();
@@ -213,13 +376,19 @@ export async function registerPasskey(csrfToken) {
 
     // 6. Make the registration call - includes authentication credentials if they exist so that they can be verified
     const formData = {
-      passkey: JSON.stringify(createdCredential.toJSON()),
+      passkey: JSON.stringify(
+        normaliseCredentialJson(
+          normaliseTransports(createdCredential.toJSON()),
+        ),
+      ),
       csrfToken: csrfToken,
       passkeyName: passkeyName,
     };
 
     if (existingCredential) {
-      formData.credentials = JSON.stringify(existingCredential.toJSON());
+      formData.credentials = JSON.stringify(
+        normaliseCredentialJson(existingCredential.toJSON()),
+      );
     }
 
     createAndSubmitForm("/passkey/register", formData);
@@ -243,12 +412,19 @@ export async function authenticatePasskey(targetHref, csrfToken) {
     if (!authOptionsJson) {
       return;
     }
-    const publicKeyCredential =
-      await passkeyApi.getUserCredential(authOptionsJson);
-    createAndSubmitForm(targetHref, {
-      credentials: JSON.stringify(publicKeyCredential.toJSON()),
-      csrfToken: csrfToken,
-    });
+
+    const credential = await passkeyApi.getUserCredential(authOptionsJson);
+
+    if (credential) {
+      createAndSubmitForm(targetHref, {
+        credentials: JSON.stringify(
+          normaliseCredentialJson(credential.toJSON()),
+        ),
+        csrfToken: csrfToken,
+      });
+    } else {
+      console.error("No passkey chosen");
+    }
   } catch (err) {
     passkeyApi.handlePasskeyError(err, "authentication");
   }
@@ -279,7 +455,7 @@ export async function deletePasskey(passkeyId, csrfToken) {
       "DELETE",
       csrfToken,
       "text/plain",
-      JSON.stringify(existingCredential.toJSON()),
+      JSON.stringify(normaliseCredentialJson(existingCredential.toJSON())),
     );
 
     if (!response.ok) {
