@@ -1,6 +1,5 @@
 import { createAndSubmitForm } from "./formUtils.js";
-import { getPasskeyNameFromUser } from "./modalUtils.js";
-import { showConfirmationModal } from "./modalUtils.js";
+import { getPasskeyNameFromUser, showConfirmationModal } from "./modalUtils.js";
 import { displayToast, messageType } from "./toastMessages.js";
 
 const passkeyApi = {
@@ -26,6 +25,40 @@ const passkeyApi = {
     }
 
     return fetch(url, options);
+  },
+
+  /**
+   * Common error handler for WebAuthn credential operations (get/create)
+   * @param {Error} err - The error to handle
+   * @param {string} operation - The operation being performed (e.g., "authentication", "creation")
+   * @returns {boolean} true if the error was handled and execution should stop, false if it should be re-thrown
+   */
+  handleCredentialError(err, operation) {
+    console.error(`Error during ${operation}:`, err);
+
+    if (err.name === "AbortError") {
+      displayToast(
+        `${operation.charAt(0).toUpperCase() + operation.slice(1)} was aborted`,
+        messageType.error,
+      );
+      return true;
+    } else if (err.name === "NotAllowedError") {
+      displayToast(
+        `${operation.charAt(0).toUpperCase() + operation.slice(1)} was cancelled or not allowed`,
+        messageType.warning,
+      );
+      return true;
+    } else if (err.name === "InvalidStateError") {
+      console.warn("Passkey already registered:", err);
+      displayToast(
+        "This passkey has already been registered.",
+        messageType.warning,
+      );
+      return true;
+    }
+
+    // For unknown errors, return false to indicate they should be re-thrown or handled differently
+    return false;
   },
 
   async getRegistrationOptions(
@@ -132,9 +165,39 @@ const passkeyApi = {
   },
 
   async getUserCredential(authOptionsJson) {
-    const credentialGetOptions =
-      PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsJson);
-    return await navigator.credentials.get({ publicKey: credentialGetOptions });
+    try {
+      const authOptions =
+        PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsJson);
+
+      /* LastPass binds its own code to the credentials get call.
+       * It makes the original code available in __nativeCredentialsGet,
+       * so if that is available we use it otherwise
+       * we assume that we can use the call because it hasn't been changed.
+       * The upshot is that we only use the native passkey modal provided by the browser.
+       */
+      const credentialsGet =
+        window.__nativeCredentialsGet ||
+        navigator.credentials.get.bind(navigator.credentials);
+
+      return await credentialsGet({
+        publicKey: authOptions,
+      });
+    } catch (err) {
+      if (err.name === "AbortError") {
+        console.debug("Credentials get was aborted", err);
+        const extensionDetected = !!window.__nativeCredentialsGet;
+        console.debug("Browser extension detected: ", extensionDetected);
+        return null;
+      } else if (err.name === "NotAllowedError") {
+        console.debug(
+          "Credentials get was cancelled by user or not allowed by browser",
+        );
+        return null;
+      } else {
+        console.error("Credentials get failed with:", err);
+        throw err;
+      }
+    }
   },
 
   // Handle common error scenarios
@@ -167,6 +230,7 @@ export async function registerPasskey(csrfToken) {
     }
 
     let existingCredential;
+    let createdCredential;
 
     // 2. If user has existing passkeys, use one to authenticate the registration of the new passkey
     if (authOptionsJson.allowCredentials.length > 0) {
@@ -182,8 +246,21 @@ export async function registerPasskey(csrfToken) {
         return;
       }
 
-      // Now proceed with the authentication flow
-      existingCredential = await passkeyApi.getUserCredential(authOptionsJson);
+      try {
+        // Now proceed with the authentication flow
+        existingCredential =
+          await passkeyApi.getUserCredential(authOptionsJson);
+        if (!existingCredential) {
+          console.debug("No existing credential");
+          return;
+        }
+      } catch (err) {
+        if (passkeyApi.handleCredentialError(err, "authentication")) {
+          return; // Error was handled, exit the function
+        }
+        // Re-throw other errors to be handled by the outer catch block
+        throw err;
+      }
 
       await showConfirmationModal(
         "Register new passkey",
@@ -201,9 +278,43 @@ export async function registerPasskey(csrfToken) {
     // 4. Create a new passkey
     const credentialCreationOptions =
       PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsJson);
-    const createdCredential = await navigator.credentials.create({
-      publicKey: credentialCreationOptions,
-    });
+
+    try {
+      /* LastPass binds its own code to the credentials create call.
+       * It makes the original code available in __nativeCredentialsCreate,
+       * so if that is available we use it otherwise
+       * we assume that we can use the call because it hasn't been changed.
+       * The upshot is that we only use the native passkey modal provided by the browser.
+       */
+      const credentialsCreate =
+        window.__nativeCredentialsCreate ||
+        navigator.credentials.create.bind(navigator.credentials);
+
+      createdCredential = await credentialsCreate({
+        publicKey: credentialCreationOptions,
+      });
+
+      if (!createdCredential) {
+        throw new Error("No credential was created");
+      }
+
+      console.debug("Passkey created successfully:", {
+        id: createdCredential.id,
+        type: createdCredential.type,
+        hasResponse: !!createdCredential.response,
+      });
+    } catch (err) {
+      if (passkeyApi.handleCredentialError(err, "creation")) {
+        return; // Error was handled, exit the function
+      }
+
+      // If error was not handled, display a generic error message
+      displayToast(
+        `Failed to create passkey: ${err.message}`,
+        messageType.error,
+      );
+      return;
+    }
 
     // 5. Get name for the passkey
     const passkeyName = await getPasskeyNameFromUser();
@@ -243,12 +354,19 @@ export async function authenticatePasskey(targetHref, csrfToken) {
     if (!authOptionsJson) {
       return;
     }
-    const publicKeyCredential =
-      await passkeyApi.getUserCredential(authOptionsJson);
-    createAndSubmitForm(targetHref, {
-      credentials: JSON.stringify(publicKeyCredential.toJSON()),
-      csrfToken: csrfToken,
-    });
+
+    const credential = await passkeyApi.getUserCredential(authOptionsJson);
+
+    if (credential) {
+      createAndSubmitForm(targetHref, {
+        credentials: JSON.stringify(credential.toJSON()),
+        csrfToken: csrfToken,
+      });
+    } else {
+      console.error(
+        "Passkey authentication cancelled or no credential selected",
+      );
+    }
   } catch (err) {
     passkeyApi.handlePasskeyError(err, "authentication");
   }
