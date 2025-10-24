@@ -1,6 +1,5 @@
 import { createAndSubmitForm } from "./formUtils.js";
-import { getPasskeyNameFromUser } from "./modalUtils.js";
-import { showConfirmationModal } from "./modalUtils.js";
+import { getPasskeyNameFromUser, showConfirmationModal } from "./modalUtils.js";
 import { displayToast, messageType } from "./toastMessages.js";
 
 const passkeyApi = {
@@ -26,6 +25,40 @@ const passkeyApi = {
     }
 
     return fetch(url, options);
+  },
+
+  /**
+   * Common error handler for WebAuthn credential operations (get/create)
+   * @param {Error} err - The error to handle
+   * @param {string} operation - The operation being performed (e.g., "authentication", "creation")
+   * @returns {boolean} true if the error was handled and execution should stop, false if it should be re-thrown
+   */
+  handleCredentialError(err, operation) {
+    console.error(`Error during ${operation}:`, err);
+
+    if (err.name === "AbortError") {
+      displayToast(
+        `${operation.charAt(0).toUpperCase() + operation.slice(1)} was aborted`,
+        messageType.error,
+      );
+      return true;
+    } else if (err.name === "NotAllowedError") {
+      displayToast(
+        `${operation.charAt(0).toUpperCase() + operation.slice(1)} was cancelled or not allowed`,
+        messageType.warning,
+      );
+      return true;
+    } else if (err.name === "InvalidStateError") {
+      console.warn("Passkey already registered:", err);
+      displayToast(
+        "This passkey has already been registered.",
+        messageType.warning,
+      );
+      return true;
+    }
+
+    // For unknown errors, return false to indicate they should be re-thrown or handled differently
+    return false;
   },
 
   async getRegistrationOptions(
@@ -131,10 +164,79 @@ const passkeyApi = {
     }
   },
 
-  async getUserCredential(authOptionsJson) {
+  async getUserCredential(authOptionsJson, useConditionalUI = true) {
     const credentialGetOptions =
       PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsJson);
-    return await navigator.credentials.get({ publicKey: credentialGetOptions });
+
+    // First, try conditional mediation if requested (for autofill UI)
+    if (useConditionalUI) {
+      const abortController = new AbortController();
+
+      const options = {
+        publicKey: credentialGetOptions,
+        mediation: "conditional",
+        signal: abortController.signal,
+      };
+
+      try {
+        console.debug(
+          "Calling navigator.credentials.get with conditional mediation...",
+        );
+
+        // Race between conditional UI and a timeout
+        const timeoutMs = 500;
+        const conditionalPromise = navigator.credentials.get(options);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => {
+            abortController.abort();
+            reject(new Error("ConditionalUITimeout"));
+          }, timeoutMs),
+        );
+
+        const result = await Promise.race([conditionalPromise, timeoutPromise]);
+        console.debug("Conditional mediation returned:", !!result);
+        return result;
+      } catch (err) {
+        if (err.message === "ConditionalUITimeout") {
+          console.debug("Conditional UI timed out, falling back to modal");
+          // Fall through to modal UI below
+        } else {
+          console.error(
+            "navigator.credentials.get (conditional) failed with:",
+            err,
+          );
+          console.error("Error details:", {
+            name: err.name,
+            message: err.message,
+            stack: err.stack,
+          });
+          throw err;
+        }
+      }
+    }
+
+    // Fall back to modal UI (or use it directly if useConditionalUI is false)
+    const modalOptions = {
+      publicKey: credentialGetOptions,
+      mediation: "optional",
+    };
+
+    console.debug("Using modal UI for passkey authentication");
+
+    try {
+      console.debug("Calling navigator.credentials.get with modal UI...");
+      const result = await navigator.credentials.get(modalOptions);
+      console.debug("Modal UI returned:", !!result);
+      return result;
+    } catch (err) {
+      console.error("navigator.credentials.get (modal) failed with:", err);
+      console.error("Error details:", {
+        name: err.name,
+        message: err.message,
+        stack: err.stack,
+      });
+      throw err;
+    }
   },
 
   // Handle common error scenarios
@@ -151,6 +253,64 @@ const passkeyApi = {
     }
   },
 };
+
+/**
+ * Converts standard Base64 encoding to Base64URL encoding.
+ * LastPass appears to give Base64 encoded credentials
+ * but the WebAuthn spec requires Base64URL (no padding, - instead of +, _ instead of /).
+ * See https://www.w3.org/TR/webauthn-3/#dom-publickeycredential-tojson
+ *
+ * @param {string} base64 - A base64 or base64url encoded string
+ * @returns {string} A base64url encoded string
+ */
+function toBase64Url(base64) {
+  if (!base64 || typeof base64 !== "string") {
+    return base64;
+  }
+  return base64
+    .replace(/\+/g, "-") // Replace + with -
+    .replace(/\//g, "_") // Replace / with _
+    .replace(/=+$/, ""); // Remove padding
+}
+
+/**
+ * Recursively normalises all base64 strings in a credential object to base64url format.
+ * This fixes issues where LastPass encodes in standard base64.
+ * @param {Object} obj - The credential object to normalise
+ * @returns {Object} The normalised credential object
+ */
+function normaliseCredentialJson(obj) {
+  if (!obj || typeof obj !== "object") {
+    return obj;
+  }
+
+  // Fields that should be base64url encoded according to WebAuthn spec
+  const base64UrlFields = [
+    "id",
+    "rawId",
+    "clientDataJSON",
+    "attestationObject",
+    "authenticatorData",
+    "signature",
+    "userHandle",
+  ];
+
+  if (Array.isArray(obj)) {
+    return obj.map((item) => normaliseCredentialJson(item));
+  }
+
+  const normalised = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (base64UrlFields.includes(key) && typeof value === "string") {
+      normalised[key] = toBase64Url(value);
+    } else if (value && typeof value === "object") {
+      normalised[key] = normaliseCredentialJson(value);
+    } else {
+      normalised[key] = value;
+    }
+  }
+  return normalised;
+}
 
 /**
  * Registers a new passkey for the current user
@@ -182,8 +342,17 @@ export async function registerPasskey(csrfToken) {
         return;
       }
 
-      // Now proceed with the authentication flow
-      existingCredential = await passkeyApi.getUserCredential(authOptionsJson);
+      try {
+        // Now proceed with the authentication flow
+        existingCredential =
+          await passkeyApi.getUserCredential(authOptionsJson);
+      } catch (err) {
+        if (passkeyApi.handleCredentialError(err, "authentication")) {
+          return; // Error was handled, exit the function
+        }
+        // Re-throw other errors to be handled by the outer catch block
+        throw err;
+      }
 
       await showConfirmationModal(
         "Register new passkey",
@@ -201,9 +370,34 @@ export async function registerPasskey(csrfToken) {
     // 4. Create a new passkey
     const credentialCreationOptions =
       PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsJson);
-    const createdCredential = await navigator.credentials.create({
-      publicKey: credentialCreationOptions,
-    });
+
+    let createdCredential;
+    try {
+      createdCredential = await navigator.credentials.create({
+        publicKey: credentialCreationOptions,
+      });
+
+      if (!createdCredential) {
+        throw new Error("No credential was created");
+      }
+
+      console.debug("Passkey created successfully:", {
+        id: createdCredential.id,
+        type: createdCredential.type,
+        hasResponse: !!createdCredential.response,
+      });
+    } catch (err) {
+      if (passkeyApi.handleCredentialError(err, "creation")) {
+        return; // Error was handled, exit the function
+      }
+
+      // If error was not handled, display a generic error message
+      displayToast(
+        `Failed to create passkey: ${err.message}`,
+        messageType.error,
+      );
+      return;
+    }
 
     // 5. Get name for the passkey
     const passkeyName = await getPasskeyNameFromUser();
@@ -213,13 +407,17 @@ export async function registerPasskey(csrfToken) {
 
     // 6. Make the registration call - includes authentication credentials if they exist so that they can be verified
     const formData = {
-      passkey: JSON.stringify(createdCredential.toJSON()),
+      passkey: JSON.stringify(
+        normaliseCredentialJson(createdCredential.toJSON()),
+      ),
       csrfToken: csrfToken,
       passkeyName: passkeyName,
     };
 
     if (existingCredential) {
-      formData.credentials = JSON.stringify(existingCredential.toJSON());
+      formData.credentials = JSON.stringify(
+        normaliseCredentialJson(existingCredential.toJSON()),
+      );
     }
 
     createAndSubmitForm("/passkey/register", formData);
@@ -243,11 +441,15 @@ export async function authenticatePasskey(targetHref, csrfToken) {
     if (!authOptionsJson) {
       return;
     }
-    const publicKeyCredential =
-      await passkeyApi.getUserCredential(authOptionsJson);
-    createAndSubmitForm(targetHref, {
-      credentials: JSON.stringify(publicKeyCredential.toJSON()),
-      csrfToken: csrfToken,
+    passkeyApi.getUserCredential(authOptionsJson).then((credential) => {
+      if (credential) {
+        createAndSubmitForm(targetHref, {
+          credentials: JSON.stringify(
+            normaliseCredentialJson(credential.toJSON()),
+          ),
+          csrfToken: csrfToken,
+        });
+      }
     });
   } catch (err) {
     passkeyApi.handlePasskeyError(err, "authentication");
