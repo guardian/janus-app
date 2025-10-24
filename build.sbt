@@ -18,7 +18,7 @@ val commonDependencies = Seq(
   "ch.qos.logback" % "logback-classic" % "1.5.20"
 )
 lazy val commonSettings = Seq(
-  scalaVersion := "3.3.6",
+  scalaVersion := "3.3.7",
   scalacOptions ++= Seq(
     "-feature",
     "-release:11"
