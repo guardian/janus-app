@@ -70,7 +70,9 @@ object PasskeyDB {
         )
       ),
       // see https://www.w3.org/TR/webauthn-1/#sign-counter
-      "authCounter" -> AttributeValue.fromN(credentialRecord.getCounter.toString),
+      "authCounter" -> AttributeValue.fromN(
+        credentialRecord.getCounter.toString
+      ),
       "passkeyName" -> AttributeValue.fromS(passkeyName),
       "registrationTime" -> AttributeValue.fromS(registrationTime.toString),
       "aaguid" -> AttributeValue.fromS(

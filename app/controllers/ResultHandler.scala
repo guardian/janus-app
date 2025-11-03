@@ -26,7 +26,7 @@ private[controllers] trait ResultHandler extends Results with Logging {
         InternalServerError(toJson(err))
       case Success(result: Result) => result
       case Success(html: Html)     => Ok(html)
-      case Success(a) =>
+      case Success(a)              =>
         val json = PasskeyEncodings.mapper.writeValueAsString(a)
         Ok(json).as(MimeTypes.JSON)
     }
