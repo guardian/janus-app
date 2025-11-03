@@ -216,7 +216,7 @@ object PasskeyAuthenticator extends Logging {
       )
       authenticators <- js.validate[Map[AAGUID, PasskeyAuthenticator]] match {
         case JsSuccess(data, _) => Right(data)
-        case JsError(errors) =>
+        case JsError(errors)    =>
           Left(
             AuthenticatorError(
               JsonErrorFormatter.formatJsErrors(errors, jsonString)
