@@ -423,7 +423,9 @@ export async function authenticatePasskey(targetHref, csrfToken) {
         csrfToken: csrfToken,
       });
     } else {
-      console.error("Passkey authentication cancelled or no credential selected");
+      console.error(
+        "Passkey authentication cancelled or no credential selected",
+      );
     }
   } catch (err) {
     passkeyApi.handlePasskeyError(err, "authentication");
