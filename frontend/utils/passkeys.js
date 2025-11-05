@@ -255,7 +255,7 @@ function normaliseCredentialJson(obj) {
     } else if (value && typeof value === "object") {
       normalised[key] = normaliseCredentialJson(value);
     } else if (value && typeof value === "function") {
-      // ignore
+      // Skip function properties as they cannot be serialized to JSON
     } else {
       normalised[key] = value;
     }
