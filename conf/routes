@@ -43,6 +43,9 @@ DELETE  /passkey/:passkeyId                 controllers.PasskeyController.delete
 # Tmp routes for passkey trial
 GET     /opt/in/passkeys            controllers.Utility.optInToPasskeys
 GET     /opt/out/passkeys           controllers.Utility.optOutOfPasskeys
+GET     /test/passkey-autofill      controllers.Utility.testPasskeyAutofill
+GET     /test/passkey-button        controllers.Utility.testPasskeyButton
+GET     /test/passkey-create        controllers.Utility.testPasskeyCreate
 
 GET     /healthcheck                controllers.Utility.healthcheck
 GET     /accounts                   controllers.Utility.accounts

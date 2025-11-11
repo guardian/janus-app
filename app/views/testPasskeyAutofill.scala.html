@@ -1,0 +1,151 @@
+@import views.html.helper.CSPNonce
+
+@()(implicit request: RequestHeader)
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Passkey Autofill</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .info { background-color: #e3f2fd; }
+        .success { background-color: #e8f5e9; }
+        .error { background-color: #ffebee; }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Passkey Autofill</h1>
+    <p>This page triggers navigator.credentials.get on page load to test passkey autofill behavior.</p>
+
+    <div id="status" class="status info">Initializing...</div>
+
+    <h2>Logs:</h2>
+    <pre id="logs"></pre>
+
+    <script @{CSPNonce.attr}>
+        const statusEl = document.getElementById('status');
+        const logsEl = document.getElementById('logs');
+
+        function log(message) {
+            const timestamp = new Date().toISOString();
+            logsEl.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        // Generate a random challenge (32 bytes) and convert to Uint8Array
+        function generateChallenge() {
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            return array;
+        }
+
+        async function testCredentialGet() {
+            log('Page loaded, starting credential.get test...');
+            log('User Agent: ' + navigator.userAgent);
+            updateStatus('Testing navigator.credentials.get...', 'info');
+
+            try {
+                // Check if WebAuthn is supported
+                if (!window.PublicKeyCredential) {
+                    throw new Error('WebAuthn is not supported in this browser');
+                }
+                log('WebAuthn API is available');
+
+                // Create a proper authentication request with random challenge
+                const challenge = generateChallenge();
+                const publicKeyCredentialRequestOptions = {
+                    challenge: challenge,
+                    timeout: 60000,
+                    userVerification: 'preferred',
+                    // Don't specify rpId - let browser use current domain
+                    // rpId: window.location.hostname,
+                };
+
+                log('Calling navigator.credentials.get with options:');
+                log(JSON.stringify({
+                    challenge: `Uint8Array(32) [${Array.from(challenge.slice(0, 4)).join(', ')}...]`,
+                    timeout: publicKeyCredentialRequestOptions.timeout,
+                    userVerification: publicKeyCredentialRequestOptions.userVerification,
+                    rpId: publicKeyCredentialRequestOptions.rpId || '(browser default)',
+                }, null, 2));
+
+                log('Waiting for user interaction with passkey prompt...');
+                updateStatus('Passkey prompt shown - waiting for user action...', 'info');
+
+                // Set a timeout to log progress
+                const progressInterval = setInterval(() => {
+                    log('Still waiting for credentials.get to resolve...');
+                }, 5000);
+
+                const credential = await navigator.credentials.get({
+                    publicKey: publicKeyCredentialRequestOptions
+                });
+
+                clearInterval(progressInterval);
+
+                if (credential) {
+                    log('✅ Credential received!');
+                    log(`Credential ID: ${credential.id}`);
+                    log(`Credential Type: ${credential.type}`);
+                    log(`Credential rawId length: ${credential.rawId.byteLength} bytes`);
+                    if (credential.response) {
+                        log(`Response authenticatorData length: ${credential.response.authenticatorData?.byteLength || 'N/A'} bytes`);
+                        log(`Response signature length: ${credential.response.signature?.byteLength || 'N/A'} bytes`);
+                    }
+                    updateStatus('✅ Success! Credential received.', 'success');
+                } else {
+                    log('⚠️ No credential returned (user likely cancelled)');
+                    updateStatus('No credential returned', 'info');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.name} - ${error.message}`);
+
+                // Log specific error types
+                if (error.name === 'NotAllowedError') {
+                    log('This usually means: user cancelled, timeout, or no passkeys registered for this domain');
+                } else if (error.name === 'SecurityError') {
+                    log('This usually means: invalid rpId or HTTPS requirement not met');
+                } else if (error.name === 'AbortError') {
+                    log('This usually means: request was aborted');
+                } else if (error.name === 'NotSupportedError') {
+                    log('This usually means: WebAuthn not supported or feature disabled');
+                }
+
+                log(`Full error stack: ${error.stack || 'No stack trace'}`);
+                updateStatus(`❌ Error: ${error.name} - ${error.message}`, 'error');
+            }
+        }
+
+        // Run the test when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            log('DOMContentLoaded event fired');
+            log('Starting test in 1 second...');
+            // Small delay to ensure page is fully loaded
+            setTimeout(testCredentialGet, 1000);
+        });
+    </script>
+</body>
+</html>
