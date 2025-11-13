@@ -166,8 +166,12 @@ const passkeyApi = {
 
   async getUserCredential(authOptionsJson) {
     try {
+      console.debug("Auth options JSON: ", authOptionsJson);
+
       const authOptions =
         PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsJson);
+
+      console.debug("Auth options: ", authOptions);
 
       /* LastPass binds its own code to the credentials get call,
        * which fails in certain cases.
@@ -181,9 +185,12 @@ const passkeyApi = {
         authOptionsJson.enablePasswordManagers,
       );
       const credentialsGet =
-        extensionDetected && !authOptionsJson.enablePasswordManagers
+        !!window.__nativeCredentialsGet &&
+        !authOptionsJson.enablePasswordManagers
           ? window.__nativeCredentialsGet
           : navigator.credentials.get.bind(navigator.credentials);
+
+      console.debug("Calling credentials get...");
 
       return await credentialsGet({
         publicKey: authOptions,
@@ -191,6 +198,8 @@ const passkeyApi = {
     } catch (err) {
       if (err.name === "AbortError") {
         console.debug("Modal UI was aborted (possibly by autofill UI)");
+        const extensionDetected = !!window.__nativeCredentialsGet;
+        console.debug("Browser extension detected: ", extensionDetected);
         return null;
       } else if (err.name === "NotAllowedError") {
         console.debug(
