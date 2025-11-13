@@ -1,0 +1,239 @@
+@import views.html.helper.CSPNonce
+
+@()(implicit request: RequestHeader)
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Passkey Create</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .info { background-color: #e3f2fd; }
+        .success { background-color: #e8f5e9; }
+        .error { background-color: #ffebee; }
+        .warning { background-color: #fff3e0; }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Passkey Create</h1>
+    <p>This page triggers navigator.credentials.create on page load to test passkey registration.</p>
+
+    <div id="status" class="status info">Initializing...</div>
+
+    <h2>Logs:</h2>
+    <pre id="logs"></pre>
+
+    <script @{CSPNonce.attr}>
+        const statusEl = document.getElementById('status');
+        const logsEl = document.getElementById('logs');
+
+        function log(message) {
+            const timestamp = new Date().toISOString();
+            logsEl.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        // Generate a random challenge (32 bytes) and convert to Uint8Array
+        function generateChallenge() {
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            return array;
+        }
+
+        // Generate a random user ID
+        function generateUserId() {
+            const array = new Uint8Array(16);
+            crypto.getRandomValues(array);
+            return array;
+        }
+
+        async function testCredentialCreate() {
+            log('Page loaded, starting credential.create test...');
+            log('User Agent: ' + navigator.userAgent);
+            log('Browser: ' + (navigator.userAgent.includes('Firefox') ? 'Firefox' :
+                              navigator.userAgent.includes('Safari') ? 'Safari' :
+                              navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other'));
+            updateStatus('Testing navigator.credentials.create...', 'info');
+
+            try {
+                // Check if WebAuthn is supported
+                if (!window.PublicKeyCredential) {
+                    throw new Error('WebAuthn is not supported in this browser');
+                }
+                log('✅ WebAuthn API is available');
+
+                // Create a proper registration request
+                const challenge = generateChallenge();
+                const userId = generateUserId();
+                const userName = 'test-user-' + Date.now();
+                const userDisplayName = 'Test User';
+
+                const publicKeyCredentialCreationOptions = {
+                    challenge: challenge,
+                    rp: {
+                        name: 'Janus Test',
+                        // id will default to current domain
+                    },
+                    user: {
+                        id: userId,
+                        name: userName,
+                        displayName: userDisplayName,
+                    },
+                    pubKeyCredParams: [
+                        { alg: -7, type: 'public-key' },  // ES256
+                        { alg: -257, type: 'public-key' }, // RS256
+                    ],
+                    authenticatorSelection: {
+                        authenticatorAttachment: 'platform',
+                        userVerification: 'preferred',
+                        residentKey: 'preferred',
+                    },
+                    timeout: 60000,
+                    attestation: 'none',
+                };
+
+                log('Options prepared:');
+                log(JSON.stringify({
+                    challenge: `Uint8Array(32) [${Array.from(challenge.slice(0, 4)).join(', ')}...]`,
+                    rp: publicKeyCredentialCreationOptions.rp,
+                    user: {
+                        id: `Uint8Array(16) [${Array.from(userId.slice(0, 4)).join(', ')}...]`,
+                        name: userName,
+                        displayName: userDisplayName,
+                    },
+                    pubKeyCredParams: publicKeyCredentialCreationOptions.pubKeyCredParams,
+                    authenticatorSelection: publicKeyCredentialCreationOptions.authenticatorSelection,
+                    timeout: publicKeyCredentialCreationOptions.timeout,
+                    attestation: publicKeyCredentialCreationOptions.attestation,
+                }, null, 2));
+
+                log('');
+                log('🚀 Calling navigator.credentials.create...');
+                updateStatus('Calling credentials.create...', 'info');
+
+                // Detect if credentials API has been overridden
+                if (window.__nativeCredentialsCreate) {
+                    log('⚠️ WARNING: Credentials API has been overridden by extension');
+                    log('ℹ️ Using __nativeCredentialsCreate to bypass extension override');
+                }
+
+                log('Waiting for user interaction with passkey creation prompt...');
+                updateStatus('Passkey creation prompt shown - waiting for user action...', 'info');
+
+                // Set a timeout to log progress
+                const progressInterval = setInterval(() => {
+                    log('Still waiting for credentials.create to resolve...');
+                }, 5000);
+
+                // Use native API if available to bypass extension interference
+                // const credentialsAPI = window.__nativeCredentialsCreate || navigator.credentials.create.bind(navigator.credentials);
+                const credentialsAPI = navigator.credentials.create;
+
+                const credential = await credentialsAPI({
+                    publicKey: publicKeyCredentialCreationOptions
+                });
+
+                clearInterval(progressInterval);
+
+                if (credential) {
+                    log('✅ Credential created!');
+                    log(`Credential ID: ${credential.id}`);
+                    log(`Credential Type: ${credential.type}`);
+                    log(`Credential rawId length: ${credential.rawId.byteLength} bytes`);
+                    log(`Authenticator Attachment: ${credential.authenticatorAttachment || 'not specified'}`);
+                    if (credential.response) {
+                        log(`Response attestationObject length: ${credential.response.attestationObject?.byteLength || 'N/A'} bytes`);
+                        log(`Response clientDataJSON length: ${credential.response.clientDataJSON?.byteLength || 'N/A'} bytes`);
+
+                        // Parse and log client data
+                        try {
+                            const clientDataJSON = JSON.parse(
+                                new TextDecoder().decode(credential.response.clientDataJSON)
+                            );
+                            log(`Client Data: ${JSON.stringify(clientDataJSON, null, 2)}`);
+                        } catch (e) {
+                            log('Could not parse client data JSON');
+                        }
+                    }
+                    updateStatus('✅ Success! Passkey created.', 'success');
+                } else {
+                    log('⚠️ No credential returned (user likely cancelled)');
+                    updateStatus('No credential returned', 'warning');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.name} - ${error.message}`);
+
+                // Log specific error types
+                if (error.name === 'NotAllowedError') {
+                    log('This usually means: user cancelled or not allowed by browser');
+                } else if (error.name === 'SecurityError') {
+                    log('This usually means: invalid rpId or HTTPS requirement not met');
+                } else if (error.name === 'AbortError') {
+                    log('This usually means: request was aborted');
+                    log('');
+                    log('🔍 DEBUGGING:');
+                    if (window.__nativeCredentialsCreate || window.__nativeCredentialsGet) {
+                        log('   Extension detected - try disabling browser extensions');
+                    }
+                    log('   1. Test in Firefox/Chrome Private Window');
+                    log('   2. Disable password manager extensions');
+                    log('   3. Try a fresh browser profile');
+                } else if (error.name === 'NotSupportedError') {
+                    log('This usually means: WebAuthn not supported or feature disabled');
+                } else if (error.name === 'InvalidStateError') {
+                    log('This usually means: authenticator already contains a credential for this user');
+                    log('This is normal if you have already registered on this device');
+                }
+
+                log('');
+                log(`Full error stack: ${error.stack || 'No stack trace'}`);
+                updateStatus(`❌ Error: ${error.name} - ${error.message}`, 'error');
+            }
+        }
+
+        // Run the test when the page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            log('DOMContentLoaded event fired');
+            log('');
+
+            // Check if credentials API has been overridden by extension or library
+            if (window.__nativeCredentialsGet || window.__nativeCredentialsCreate) {
+                log('⚠️ WARNING: Credentials API has been overridden!');
+                log('Detected: window.__nativeCredentialsGet = ' + (!!window.__nativeCredentialsGet));
+                log('Detected: window.__nativeCredentialsCreate = ' + (!!window.__nativeCredentialsCreate));
+                log('');
+                log('This is likely caused by a browser extension (password manager, etc.)');
+                log('The test will use the native API to bypass the override.');
+                log('');
+            }
+
+            log('Starting test in 1 second...');
+            // Small delay to ensure page is fully loaded
+            setTimeout(testCredentialCreate, 1000);
+        });
+    </script>
+</body>
+</html>

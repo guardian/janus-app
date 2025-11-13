@@ -5,6 +5,7 @@ import aws.{PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
+import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import controllers.Validation.formattedErrors
 import logic.Passkey
@@ -33,7 +34,8 @@ class PasskeyController(
     host: String,
     janusData: JanusData,
     passkeysEnabled: Boolean,
-    enablingCookieName: String
+    enablingCookieName: String,
+    passwordManagerAaguids: Set[AAGUID]
 )(using dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
@@ -125,10 +127,15 @@ class PasskeyController(
           appHost = host,
           user = request.user,
           challenge = new DefaultChallenge(),
-          existingPasskeys = existingPasskeys
+          existingPasskeys = existingPasskeys,
+          passwordManagerAaguids
         )
         _ <- PasskeyChallengeDB.insert(
-          UserChallenge(request.user, Authentication, options.getChallenge)
+          UserChallenge(
+            request.user,
+            Authentication,
+            options.options.getChallenge
+          )
         )
         _ = logger.info(
           s"Created authentication options for user ${request.user.username}"
@@ -159,10 +166,15 @@ class PasskeyController(
             user = request.user,
             challenge = new DefaultChallenge(),
             existingPasskeys =
-              PasskeyDB.extractMetadata(loadCredentialsResponse)
+              PasskeyDB.extractMetadata(loadCredentialsResponse),
+            passwordManagerAaguids
           )
           _ <- PasskeyChallengeDB.insert(
-            UserChallenge(request.user, Authentication, options.getChallenge)
+            UserChallenge(
+              request.user,
+              Authentication,
+              options.options.getChallenge
+            )
           )
           _ = logger.info(
             s"Created registration authentication options for user ${request.user.username}"
