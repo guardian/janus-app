@@ -13,6 +13,7 @@ import com.webauthn4j.data.PublicKeyCredentialHints.{
   SECURITY_KEY
 }
 import com.webauthn4j.data.PublicKeyCredentialType.PUBLIC_KEY
+import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.attestation.statement.COSEAlgorithmIdentifier
 import com.webauthn4j.data.client.Origin
 import com.webauthn4j.data.client.challenge.Challenge
@@ -147,8 +148,9 @@ object Passkey {
       appHost: String,
       user: UserIdentity,
       challenge: Challenge,
-      existingPasskeys: Seq[PasskeyMetadata]
-  ): Try[PublicKeyCredentialRequestOptions] = {
+      existingPasskeys: Seq[PasskeyMetadata],
+      passwordManagerAaguids: Set[AAGUID]
+  ): Try[PasskeyRequestOptions] = {
     Try {
       val timeout = Duration(60, SECONDS)
       val rpId = URI.create(appHost).getHost
@@ -158,14 +160,19 @@ object Passkey {
       val extensions: AuthenticationExtensionsClientInputs[
         AuthenticationExtensionClientInput
       ] = null
-      new PublicKeyCredentialRequestOptions(
-        challenge,
-        timeout.toMillis,
-        rpId,
-        allowCredentials.asJava,
-        userVerification,
-        hints.asJava,
-        extensions
+      PasskeyRequestOptions(
+        options = new PublicKeyCredentialRequestOptions(
+          challenge,
+          timeout.toMillis,
+          rpId,
+          allowCredentials.asJava,
+          userVerification,
+          hints.asJava,
+          extensions
+        ),
+        enablePasswordManagers = existingPasskeys.exists(p =>
+          passwordManagerAaguids.contains(p.aaguid)
+        )
       )
     }.adaptError(err =>
       JanusException.invalidFieldInRequest(

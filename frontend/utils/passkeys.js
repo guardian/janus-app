@@ -169,7 +169,23 @@ const passkeyApi = {
       const authOptions =
         PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsJson);
 
-      return await navigator.credentials.get({
+      /* LastPass binds its own code to the credentials get call,
+       * which fails in certain cases.
+       * So if auth options tell us that password manager browser extensions
+       * shouldn't be enabled we fall back to the native call.
+       */
+      const extensionDetected = !!window.__nativeCredentialsGet;
+      console.debug("Browser extension detected: ", extensionDetected);
+      console.debug(
+        "Enable password managers: ",
+        authOptionsJson.enablePasswordManagers,
+      );
+      const credentialsGet =
+        extensionDetected && !authOptionsJson.enablePasswordManagers
+          ? window.__nativeCredentialsGet
+          : navigator.credentials.get.bind(navigator.credentials);
+
+      return await credentialsGet({
         publicKey: authOptions,
       });
     } catch (err) {
