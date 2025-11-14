@@ -175,6 +175,7 @@ class AppComponents(context: ApplicationLoader.Context)
   private val newPasskeyController = passkeyAuth.controller(
     controllerComponents,
     creationDataExtractor,
+    authenticationDataExtractor,
     passkeyNameExtractor,
     registrationRedirect = routes.Janus.userAccount
   )
@@ -205,9 +206,7 @@ class AppComponents(context: ApplicationLoader.Context)
     new PasskeyController(
       controllerComponents,
       authAction,
-      passkeyVerificationAction,
       newPasskeyController,
-      host,
       janusData,
       passkeysEnabled,
       passkeysEnablingCookieName
