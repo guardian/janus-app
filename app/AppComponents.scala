@@ -125,15 +125,6 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
 
-  private val passkeyAuthFilter =
-    new PasskeyAuthFilter(
-      host,
-      passkeysEnabled,
-      passkeysEnablingCookieName
-    )
-  private val passkeyRegistrationAuthFilter =
-    new PasskeyRegistrationAuthFilter(passkeyAuthFilter)
-
   // =====
   import com.gu.googleauth.AuthAction.UserIdentityRequest
   import com.gu.playpasskeyauth.PasskeyAuth
@@ -197,15 +188,6 @@ class AppComponents(context: ApplicationLoader.Context)
     )
   // =====
 
-  private val passkeyPreRegistrationVerificationAction = {
-    new ConditionalPasskeyPreRegistrationVerificationAction(
-      passkeysEnabled,
-      passkeysEnablingCookieName,
-      authAction,
-      passkeyVerificationAction
-    )
-  }
-
   override def router: Router = new Routes(
     httpErrorHandler,
     new Janus(
@@ -223,7 +205,7 @@ class AppComponents(context: ApplicationLoader.Context)
       controllerComponents,
       authAction,
       passkeyVerificationAction,
-      passkeyPreRegistrationVerificationAction,
+      newPasskeyController,
       host,
       janusData,
       passkeysEnabled,
