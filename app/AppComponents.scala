@@ -193,13 +193,12 @@ class AppComponents(context: ApplicationLoader.Context)
       passkeysEnabled,
       passkeysEnablingCookieName,
       authAction,
-      passkeyAuth.verificationAction(authenticationDataExtractor),
-      authenticationDataExtractor
+      passkeyAuth.verificationAction(authenticationDataExtractor)
     )
   // =====
 
-  private val passkeyRegistrationAuthAction = {
-    new ConditionalPasskeyRegistrationAuthAction(
+  private val passkeyPreRegistrationVerificationAction = {
+    new ConditionalPasskeyPreRegistrationVerificationAction(
       passkeysEnabled,
       passkeysEnablingCookieName,
       authAction,
@@ -224,7 +223,7 @@ class AppComponents(context: ApplicationLoader.Context)
       controllerComponents,
       authAction,
       passkeyVerificationAction,
-      passkeyRegistrationAuthAction,
+      passkeyPreRegistrationVerificationAction,
       host,
       janusData,
       passkeysEnabled,
