@@ -4,6 +4,7 @@ import aws.PasskeyDB
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
 import play.api.Logging
+import play.api.libs.json.Json
 import play.api.mvc.*
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -15,16 +16,15 @@ import scala.util.{Failure, Success}
   *
   * If passkeysEnabled is true AND the enabling cookie is present AND the user
   * has passkey credentials in the database, applies passkey verification.
-  * Otherwise, passes the request directly to the controller without
-  * verification.
+  * Otherwise, applies authAction without verification.
   */
-class ConditionalPasskeyRegistrationAuthAction(
+class ConditionalPasskeyPreRegistrationVerificationAction(
     passkeysEnabled: Boolean,
     enablingCookieName: String,
     authAction: ActionBuilder[UserIdentityRequest, AnyContent],
     verificationAction: ActionBuilder[RequestWithAuthenticationData, AnyContent]
 )(using dynamoDb: DynamoDbClient, val executionContext: ExecutionContext)
-    extends ActionBuilder[UserIdentityRequest, AnyContent]
+    extends ActionBuilder[RequestWithAuthenticationData, AnyContent]
     with Logging {
 
   override def parser: BodyParser[AnyContent] = authAction.parser
@@ -34,7 +34,7 @@ class ConditionalPasskeyRegistrationAuthAction(
   ): Either[Result, Boolean] = {
     PasskeyDB.loadCredentials(request.user) match {
       case Success(dbResponse) => Right(!dbResponse.items.isEmpty)
-      case Failure(e) =>
+      case Failure(e)          =>
         logger.error(s"Failed to load passkey credentials: ${e.getMessage}", e)
         Left(Results.InternalServerError("Failed to verify credentials"))
     }
@@ -42,7 +42,7 @@ class ConditionalPasskeyRegistrationAuthAction(
 
   def invokeBlock[A](
       request: Request[A],
-      block: UserIdentityRequest[A] => Future[Result]
+      block: RequestWithAuthenticationData[A] => Future[Result]
   ): Future[Result] = {
     authAction.invokeBlock(
       request,
@@ -52,24 +52,27 @@ class ConditionalPasskeyRegistrationAuthAction(
 
         if (shouldCheckCredentials) {
           hasPasskeyCredentials(userRequest) match {
-            case Left(errorResult) => Future.successful(errorResult)
+            case Left(errorResult)     => Future.successful(errorResult)
             case Right(hasCredentials) =>
               if (hasCredentials) {
                 // All conditions met: apply verification
-                verificationAction.invokeBlock(
-                  request,
-                  { (_: RequestWithAuthenticationData[A]) =>
-                    block(userRequest)
-                  }
-                )
+                verificationAction.invokeBlock(request, block)
               } else {
                 // No credentials in database: bypass verification
-                block(userRequest)
+                val authRequest = new RequestWithAuthenticationData(
+                  Json.obj(),
+                  userRequest
+                )
+                block(authRequest)
               }
           }
         } else {
           // Config disabled or cookie not present: bypass verification
-          block(userRequest)
+          val authRequest = new RequestWithAuthenticationData(
+            Json.obj(),
+            userRequest
+          )
+          block(authRequest)
         }
       }
     )
