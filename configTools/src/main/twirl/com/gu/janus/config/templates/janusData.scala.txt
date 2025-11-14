@@ -1,4 +1,4 @@
-@import com.gu.janus.model.{JanusData, Permission}
+@import com.gu.janus.model.{JanusData, Permission, SessionType}
 
 @(janusData: JanusData, allPermissions: Set[Permission])
 
@@ -84,6 +84,10 @@ janus {
                 ]
                     }
                     case None => {}
+                }
+                sessionType = @permission.sessionType match {
+                    case SessionType.User => {"user"}
+                    case SessionType.Workload => {"workload"}
                 }
             },
         }

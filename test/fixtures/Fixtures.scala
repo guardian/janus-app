@@ -1,5 +1,6 @@
 package fixtures
 
+import com.gu.janus.model.SessionType.{User, Workload}
 import com.gu.janus.model.{AwsAccount, Permission}
 import com.gu.janus.policy.Iam.Policy
 
@@ -21,6 +22,23 @@ object Fixtures {
 
   val quxDev = developerPermission(quxAct)
   val quxCf = accountAdminPermission(quxAct)
+
+  val fooWorkload =
+    Permission(
+      fooAct,
+      "bespoke-permission-f",
+      "Foo account workload permission",
+      Policy(Seq.empty),
+      sessionType = Workload
+    )
+  val barWorkload =
+    Permission(
+      barAct,
+      "bespoke-permission-b",
+      "Bar account workload permission",
+      Policy(Seq.empty),
+      sessionType = Workload
+    )
 
   val allTestPerms =
     Set(fooDev, fooCf, fooS3, barDev, barCf, bazDev, bazCf, quxDev, quxCf)
