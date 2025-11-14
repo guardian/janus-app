@@ -65,6 +65,12 @@ class Repository(using DynamoDbClient) extends PasskeyRepository {
     )
   }
 
+  override def deleteCredentialRecord(
+      userId: String,
+      passkeyId: String
+  ): Future[Unit] =
+    Future.fromTry(PasskeyDB.deleteById(toUserIdentity(userId), passkeyId))
+
   private def toUserIdentity(userId: String) =
     UserIdentity(
       sub = "",
