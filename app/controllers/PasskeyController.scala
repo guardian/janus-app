@@ -21,7 +21,14 @@ import scala.util.{Failure, Success, Try}
 class PasskeyController(
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
-    passkeyAuthAction: ActionBuilder[RequestWithAuthenticationData, AnyContent],
+    passkeyVerificationAction: ActionBuilder[
+      RequestWithAuthenticationData,
+      AnyContent
+    ],
+    passkeyPreRegistrationVerificationAction: ActionBuilder[
+      RequestWithAuthenticationData,
+      AnyContent
+    ],
     host: String,
     janusData: JanusData,
     passkeysEnabled: Boolean,
@@ -54,8 +61,8 @@ class PasskeyController(
     * @return
     *   Authentication options containing credentials and challenge data
     */
-  // TODO remove this
-  def registrationAuthenticationOptions: Action[Unit] =
+  // TODO remove this - required because of verifyHasAccess condition
+  def preRegistrationAuthenticationOptions: Action[Unit] =
     authAction(parse.empty) { request =>
       apiResponse(
         for {
@@ -79,8 +86,9 @@ class PasskeyController(
     }
 
   /** Deletes a passkey from the user's account */
+  // TODO - replace with lib action
   def deletePasskey(passkeyId: String): Action[AnyContent] =
-    passkeyAuthAction { implicit request =>
+    passkeyVerificationAction { implicit request =>
       apiResponse(
         for {
           // Look up the passkey before deleting to include the name in the success message

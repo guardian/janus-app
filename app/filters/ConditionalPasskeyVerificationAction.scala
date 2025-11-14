@@ -1,12 +1,9 @@
 package filters
 
 import com.gu.googleauth.AuthAction.UserIdentityRequest
-import com.gu.playpasskeyauth.web.{
-  AuthenticationDataExtractor,
-  RequestWithAuthenticationData
-}
+import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
 import play.api.libs.json.Json
-import play.api.mvc.{ActionBuilder, AnyContent, BodyParser, Request, Result}
+import play.api.mvc.*
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -14,8 +11,8 @@ import scala.concurrent.{ExecutionContext, Future}
   * configuration and cookie presence.
   *
   * If both passkeysEnabled is true and the enabling cookie is present, applies
-  * passkey verification. Otherwise, passes the request directly to the
-  * controller without verification.
+  * applies passkey verification. Otherwise, applies authAction without
+  * verification.
   */
 class ConditionalPasskeyVerificationAction(
     passkeysEnabled: Boolean,
@@ -24,12 +21,11 @@ class ConditionalPasskeyVerificationAction(
     verificationAction: ActionBuilder[
       RequestWithAuthenticationData,
       AnyContent
-    ],
-    authenticationDataExtractor: AuthenticationDataExtractor
+    ]
 )(using val executionContext: ExecutionContext)
     extends ActionBuilder[RequestWithAuthenticationData, AnyContent] {
 
-  override def parser: BodyParser[AnyContent] = verificationAction.parser
+  override def parser: BodyParser[AnyContent] = authAction.parser
 
   override def invokeBlock[A](
       request: Request[A],
@@ -43,14 +39,12 @@ class ConditionalPasskeyVerificationAction(
           .isDefined
 
         if (shouldVerify) {
-          // Both conditions met: refine to RequestWithAuthenticationData and verify
+          // Both conditions met: apply verification action
           verificationAction.invokeBlock(request, block)
         } else {
-          // Conditions not met: pass directly to controller
+          // Conditions not met: wrap in RequestWithAuthenticationData without verification
           val authRequest = new RequestWithAuthenticationData(
-            authenticationDataExtractor
-              .findAuthenticationData(userRequest)
-              .getOrElse(Json.obj()),
+            Json.obj(),
             userRequest
           )
           block(authRequest)
