@@ -1,20 +1,18 @@
 package controllers
 
-import aws.PasskeyChallengeDB.UserChallenge
-import aws.{PasskeyChallengeDB, PasskeyDB}
+import aws.PasskeyDB
+import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
 import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
-import com.webauthn4j.data.client.challenge.DefaultChallenge
-import logic.Passkey
 import logic.UserAccess.hasAccess
 import models.JanusException
-import models.PasskeyFlow.Authentication
 import play.api.libs.json.Json
 import play.api.mvc.*
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
+import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling niche Janus-specific passkey operations. */
@@ -25,10 +23,7 @@ class PasskeyController(
       RequestWithAuthenticationData,
       AnyContent
     ],
-    passkeyPreRegistrationVerificationAction: ActionBuilder[
-      RequestWithAuthenticationData,
-      AnyContent
-    ],
+    basePasskeyController: com.gu.playpasskeyauth.controllers.BasePasskeyController,
     host: String,
     janusData: JanusData,
     passkeysEnabled: Boolean,
@@ -52,36 +47,27 @@ class PasskeyController(
 
   /** Creates authentication options during the passkey registration flow.
     *
-    * This method generates the necessary challenge data for authenticating a
-    * user who already has passkeys registered before they can register a new
-    * passkey. It loads the user's existing credentials, creates authentication
-    * options with a new challenge, and stores this challenge in the database
-    * for future verification.
+    * This method first verifies the user has access, then generates challenge
+    * data.
     *
     * @return
     *   Authentication options containing credentials and challenge data
     */
-  // TODO remove this - required because of verifyHasAccess condition
   def preRegistrationAuthenticationOptions: Action[Unit] =
-    authAction(parse.empty) { request =>
-      apiResponse(
-        for {
-          _ <- verifyHasAccess(request.user)
-          loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
-          options <- Passkey.authenticationOptions(
-            appHost = host,
-            user = request.user,
-            challenge = new DefaultChallenge(),
-            existingPasskeys =
-              PasskeyDB.extractMetadata(loadCredentialsResponse)
-          )
-          _ <- PasskeyChallengeDB.insert(
-            UserChallenge(request.user, Authentication, options.getChallenge)
-          )
-          _ = logger.info(
-            s"Created registration authentication options for user ${request.user.username}"
-          )
-        } yield options
+    Action.async(parse.empty) { request =>
+      authAction.invokeBlock(
+        request,
+        { (userRequest: UserIdentityRequest[Unit]) =>
+          verifyHasAccess(userRequest.user) match {
+            case Success(_) =>
+              // Delegate to the library's authenticationOptions action
+              basePasskeyController.authenticationOptions()(userRequest)
+            case Failure(e) =>
+              Future.successful(
+                Forbidden(Json.obj("error" -> e.getMessage))
+              )
+          }
+        }
       )
     }
 
