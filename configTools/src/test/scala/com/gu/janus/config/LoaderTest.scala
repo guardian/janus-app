@@ -8,7 +8,7 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 
 import java.time.ZoneOffset.UTC
-import java.time.{Duration, ZonedDateTime}
+import java.time.ZonedDateTime
 
 class LoaderTest
     extends AnyFreeSpec
@@ -100,10 +100,18 @@ class LoaderTest
         val permissions = Loader.loadPermissions(testConfig, accounts).value
         val result = Loader.loadAccess(testConfig, permissions)
         val access = result.value
-        access.userAccess.get("employee1").value.map(_.id) shouldEqual Set(
+        access.userAccess
+          .get("employee1")
+          .value
+          .collect { case p: Permission => p }
+          .map(_.id) shouldEqual Set(
           "website-developer"
         )
-        access.userAccess.get("employee4").value.map(_.id) shouldEqual Set(
+        access.userAccess
+          .get("employee4")
+          .value
+          .collect { case p: Permission => p }
+          .map(_.id) shouldEqual Set(
           "website-s3-manager",
           "aws-test-account-developer"
         )
@@ -116,7 +124,10 @@ class LoaderTest
         val access = result.value
         val userPermissions = access.userAccess.get("employee1").value
         val websiteDeveloperPermission =
-          userPermissions.find(p => p.id == "website-developer").value
+          userPermissions
+            .collect { case p: Permission => p }
+            .find(p => p.id == "website-developer")
+            .value
         websiteDeveloperPermission should have(
           "description" as "Developer access",
           "policy" as Some(
@@ -134,7 +145,10 @@ class LoaderTest
         val access = result.value
         val userPermissions = access.userAccess.get("employee3").value
         val websiteDeveloperPermission =
-          userPermissions.find(p => p.id == "website-s3-manager").value
+          userPermissions
+            .collect { case p: Permission => p }
+            .find(p => p.id == "website-s3-manager")
+            .value
         websiteDeveloperPermission should have(
           "description" as "Read and write access to S3",
           "managedPolicyArns" as Some(
@@ -153,6 +167,7 @@ class LoaderTest
         val userPermissions = access.userAccess.get("employee3").value
         val websiteDeveloperPermission =
           userPermissions
+            .collect { case p: Permission => p }
             .find(p => p.id == "aws-test-account-hybrid-permission")
             .value
         websiteDeveloperPermission should have(
@@ -175,7 +190,11 @@ class LoaderTest
       val permissions = Loader.loadPermissions(testConfig, accounts).value
       val result = Loader.loadAdmin(testConfig, permissions)
       val adminAcl = result.value
-      adminAcl.userAccess.get("employee1").value.map(_.id) shouldEqual Set(
+      adminAcl.userAccess
+        .get("employee1")
+        .value
+        .collect { case p: Permission => p }
+        .map(_.id) shouldEqual Set(
         "website-admin"
       )
     }

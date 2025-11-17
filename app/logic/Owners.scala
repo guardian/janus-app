@@ -23,7 +23,8 @@ object Owners {
       acl: ACL
   ): List[(String, Set[Permission])] = {
     acl.userAccess
-      .flatMap { case (username, permissions) =>
+      .flatMap { case (username, access) =>
+        val permissions = access.collect { case p: Permission => p }
         if (permissions.exists(_.account == account))
           Some(username -> permissions.filter(_.account == account))
         else None
