@@ -12,7 +12,7 @@ import java.time.Duration
 class ValidationTest extends AnyFreeSpec with Matchers {
   val account1 = AwsAccount("Test 1", "test1")
   val account2 = AwsAccount("Test 2", "test2")
-  val emptyAcl = ACL(Map.empty, Set.empty)
+  val emptyAcl = ACL(Map.empty, Map.empty, Set.empty)
   val emptySupportAcl =
     SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100))
   val simpleStatement = Statement(
@@ -55,7 +55,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
     "returns nothing if the provided data contains no large policies" in {
       val janusData = JanusData(
         Set(account1),
-        ACL(Map("user1" -> Set(smallPermission))),
+        ACL(Map("user1" -> Set(smallPermission)), Map.empty),
         emptyAcl,
         emptySupportAcl,
         None
@@ -68,7 +68,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
         "for a large inline policy" in {
           val janusData = JanusData(
             Set(account1),
-            access = ACL(Map("user1" -> Set(largePermission))),
+            access = ACL(Map("user1" -> Set(largePermission)), Map.empty),
             emptyAcl,
             emptySupportAcl,
             None
@@ -80,7 +80,8 @@ class ValidationTest extends AnyFreeSpec with Matchers {
           val janusData = JanusData(
             Set(account1),
             access = ACL(
-              Map("user1" -> Set(smallPermissionWithLargeManagedPolicyArns))
+              Map("user1" -> Set(smallPermissionWithLargeManagedPolicyArns)),
+              Map.empty
             ),
             emptyAcl,
             emptySupportAcl,
@@ -95,7 +96,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
           val janusData = JanusData(
             Set(account1),
             emptyAcl,
-            admin = ACL(Map("user1" -> Set(largePermission))),
+            admin = ACL(Map("user1" -> Set(largePermission)), Map.empty),
             emptySupportAcl,
             None
           )
@@ -107,7 +108,8 @@ class ValidationTest extends AnyFreeSpec with Matchers {
             Set(account1),
             emptyAcl,
             admin = ACL(
-              Map("user1" -> Set(smallPermissionWithLargeManagedPolicyArns))
+              Map("user1" -> Set(smallPermissionWithLargeManagedPolicyArns)),
+              Map.empty
             ),
             emptySupportAcl,
             None
@@ -149,7 +151,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
       "returns an 'invalid' validation result if a warning is generated" in {
         val janusData = JanusData(
           Set(account1),
-          access = ACL(Map("user1" -> Set(largePermission))),
+          access = ACL(Map("user1" -> Set(largePermission)), Map.empty),
           emptyAcl,
           emptySupportAcl,
           None
@@ -178,7 +180,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
       )
       val janusData = JanusData(
         Set(account1),
-        ACL(Map("user1" -> Set(permission1, permission2))),
+        ACL(Map("user1" -> Set(permission1, permission2)), Map.empty),
         emptyAcl,
         emptySupportAcl,
         None
@@ -205,7 +207,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
         )
       val janusData = JanusData(
         Set(account1),
-        ACL(Map("user1" -> Set(permission1, permission2))),
+        ACL(Map("user1" -> Set(permission1, permission2)), Map.empty),
         emptyAcl,
         emptySupportAcl,
         None
@@ -232,7 +234,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
         )
       val janusData = JanusData(
         Set(account1),
-        ACL(Map("user1" -> Set(permission1, permission2))),
+        ACL(Map("user1" -> Set(permission1, permission2)), Map.empty),
         emptyAcl,
         emptySupportAcl,
         None
@@ -259,7 +261,10 @@ class ValidationTest extends AnyFreeSpec with Matchers {
         )
       val janusData = JanusData(
         Set(account1),
-        ACL(Map("user1" -> Set(permission1), "user2" -> Set(permission2))),
+        ACL(
+          Map("user1" -> Set(permission1), "user2" -> Set(permission2)),
+          Map.empty
+        ),
         emptyAcl,
         emptySupportAcl,
         None

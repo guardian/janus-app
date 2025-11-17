@@ -22,8 +22,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
     "returns nothing for an empty JanusData" in {
       val janusData = JanusData(
         Set.empty,
-        access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        access = ACL(Map.empty, Map.empty, Set.empty),
+        admin = ACL(Map.empty, Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
         None
       )
@@ -35,8 +35,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Permission(account1, "perm1", "Test permission", simplePolicy, false)
       val janusData = JanusData(
         Set.empty,
-        access = ACL(Map.empty, Set(permission)),
-        admin = ACL(Map.empty, Set.empty),
+        access = ACL(Map.empty, Map.empty, Set(permission)),
+        admin = ACL(Map.empty, Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
         None
       )
@@ -48,8 +48,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Permission(account1, "perm1", "Test permission", simplePolicy, false)
       val janusData = JanusData(
         Set.empty,
-        access = ACL(Map("user1" -> Set(permission)), Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        access = ACL(Map("user1" -> Set(permission)), Map.empty, Set.empty),
+        admin = ACL(Map.empty, Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
         None
       )
@@ -68,9 +68,10 @@ class WriterTest extends AnyFreeSpec with Matchers {
             "user1" -> Set(permission1),
             "user2" -> Set(permission2)
           ),
+          Map.empty,
           Set.empty
         ),
-        admin = ACL(Map.empty, Set.empty),
+        admin = ACL(Map.empty, Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
         None
       )
@@ -84,12 +85,13 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Permission(account1, "perm2", "Test permission 2", simplePolicy, false)
       val janusData = JanusData(
         Set.empty,
-        access = ACL(Map.empty, Set.empty),
+        access = ACL(Map.empty, Map.empty, Set.empty),
         admin = ACL(
           Map(
             "admin1" -> Set(permission1),
             "admin2" -> Set(permission2)
           ),
+          Map.empty,
           Set.empty
         ),
         SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
@@ -103,8 +105,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Permission(account1, "perm", "Test permission", simplePolicy, false)
       val janusData = JanusData(
         Set.empty,
-        access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        access = ACL(Map.empty, Map.empty, Set.empty),
+        admin = ACL(Map.empty, Map.empty, Set.empty),
         support = SupportACL
           .create(Map.empty, Set(permission), Duration.ofSeconds(100)),
         None
@@ -130,6 +132,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
             "user1" -> Set(permission1),
             "user2" -> Set(permission2)
           ),
+          Map.empty,
           Set.empty
         ),
         admin = ACL(
@@ -137,6 +140,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
             "admin1" -> Set(permission3),
             "admin2" -> Set(permission4)
           ),
+          Map.empty,
           Set.empty
         ),
         SupportACL.create(Map.empty, Set(permission5), Duration.ofSeconds(100)),
@@ -156,8 +160,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
     "includes the support period" in {
       val janusData = JanusData(
         Set.empty,
-        access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        access = ACL(Map.empty, Map.empty, Set.empty),
+        admin = ACL(Map.empty, Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(123456789)),
         None
       )
@@ -167,8 +171,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
     "includes the support period even if it was specified using a non-second period" in {
       val janusData = JanusData(
         Set.empty,
-        access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        access = ACL(Map.empty, Map.empty, Set.empty),
+        admin = ACL(Map.empty, Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty, Duration.ofDays(7)),
         None
       )
@@ -178,8 +182,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
     "includes the permissionsRepo" in {
       val janusData = JanusData(
         Set.empty,
-        access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        access = ACL(Map.empty, Map.empty, Set.empty),
+        admin = ACL(Map.empty, Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty, Duration.ofDays(7)),
         Some("https://example.com/")
       )
@@ -191,8 +195,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
     "excludes permissionsRepo entry if it is empty" in {
       val janusData = JanusData(
         Set.empty,
-        access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        access = ACL(Map.empty, Map.empty, Set.empty),
+        admin = ACL(Map.empty, Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty, Duration.ofDays(7)),
         None
       )
@@ -209,8 +213,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
       )
       val janusData = JanusData(
         Set(account1),
-        access = ACL(Map("user1" -> Set(permission)), Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        access = ACL(Map("user1" -> Set(permission)), Map.empty, Set.empty),
+        admin = ACL(Map.empty, Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
         None
       )
@@ -229,8 +233,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
       )
       val janusData = JanusData(
         Set(account1),
-        access = ACL(Map("user1" -> Set(permission)), Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        access = ACL(Map("user1" -> Set(permission)), Map.empty, Set.empty),
+        admin = ACL(Map.empty, Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100)),
         None
       )

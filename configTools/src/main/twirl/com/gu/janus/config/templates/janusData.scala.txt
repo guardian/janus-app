@@ -46,6 +46,16 @@ janus {
                         @permissionReference(permission),
                     }
                 ]
+            },
+        }
+
+        roles {
+            @for((user, roles) <- janusData.access.userRoles){
+                "@user" = [
+                    @for(role <- roles){
+                        @roleReference(role),
+                    }
+                ]
             }
         }
     }

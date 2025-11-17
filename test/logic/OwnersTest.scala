@@ -1,8 +1,7 @@
 package logic
 
 import com.gu.janus.model.ACL
-import fixtures.Fixtures._
-import org.scalacheck.{Arbitrary, Gen}
+import fixtures.Fixtures.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -14,7 +13,7 @@ class OwnersTest
     extends AnyFreeSpec
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
-  import Owners._
+  import Owners.*
 
   val accounts = List(fooAct, barAct, bazAct, quxAct)
   val acl = ACL(
@@ -27,6 +26,7 @@ class OwnersTest
       "test.zzz-other" -> Set(fooS3),
       "test.different-account" -> Set(barDev)
     ),
+    Map.empty,
     Set.empty
   )
 
