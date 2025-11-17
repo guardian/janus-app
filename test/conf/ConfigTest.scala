@@ -1,9 +1,8 @@
 package conf
 
-import com.gu.janus.model._
+import com.gu.janus.model.*
 import com.typesafe.config.ConfigFactory
-import fixtures.Fixtures._
-import models.AccountConfigStatus
+import fixtures.Fixtures.*
 import models.AccountConfigStatus.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -79,8 +78,8 @@ class ConfigTest extends AnyFreeSpec with Matchers {
   "validateAccountConfig" - {
     val testJanusData = JanusData(
       accounts = Set.empty,
-      ACL(Map.empty),
-      ACL(Map.empty),
+      ACL(Map.empty, Map.empty),
+      ACL(Map.empty, Map.empty),
       SupportACL.create(Map.empty, Set.empty),
       Some("https://example.com/")
     )

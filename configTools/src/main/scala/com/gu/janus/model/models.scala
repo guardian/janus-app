@@ -15,6 +15,7 @@ case class JanusData(
 
 case class ACL(
     userAccess: Map[String, Set[Permission]],
+    userRoles: Map[String, Set[ProvisionedRole]],
     defaultPermissions: Set[Permission] = Set.empty
 )
 case class SupportACL private (
@@ -150,6 +151,11 @@ object Permission {
     )
   }
 }
+
+case class ProvisionedRole(
+    account: AwsAccount,
+    iamRoleName: String
+)
 
 sealed abstract class JanusAccessType(override val toString: String)
 object JCredentials extends JanusAccessType("credentials")
