@@ -165,36 +165,43 @@ const passkeyApi = {
   },
 
   async getUserCredential(authOptionsJson) {
-    try {
-      console.debug("Auth options JSON: ", authOptionsJson);
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => {
+      console.debug("getUserCredential timed out");
+      abortController.abort();
+    }, 10000);
 
+    try {
       const authOptions =
         PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsJson);
-
-      console.debug("Auth options: ", authOptions);
 
       /* LastPass binds its own code to the credentials get call,
        * which fails in certain cases.
        * So if auth options tell us that password manager browser extensions
        * shouldn't be enabled we fall back to the native call.
        */
-      const extensionDetected = !!window.__nativeCredentialsGet;
+      const extensionDetected = await this.detectExtension();
       console.debug("Browser extension detected: ", extensionDetected);
       console.debug(
         "Enable password managers: ",
         authOptionsJson.enablePasswordManagers,
       );
-      const credentialsGet =
-        !!window.__nativeCredentialsGet &&
-        !authOptionsJson.enablePasswordManagers
-          ? window.__nativeCredentialsGet
-          : navigator.credentials.get.bind(navigator.credentials);
+      const useAutofill =
+        extensionDetected && authOptionsJson.enablePasswordManagers;
+      console.debug("Use autofill UI: ", useAutofill);
 
-      console.debug("Calling credentials get...");
+      const credentialsGet = useAutofill
+        ? navigator.credentials.get.bind(navigator.credentials) // Use regular API for autofill
+        : window.__nativeCredentialsGet ||
+          navigator.credentials.get.bind(navigator.credentials);
 
-      return await credentialsGet({
+      const credentials = await credentialsGet({
         publicKey: authOptions,
+        signal: abortController.signal,
       });
+
+      clearTimeout(timeoutId);
+      return credentials;
     } catch (err) {
       if (err.name === "AbortError") {
         console.debug("Modal UI was aborted (possibly by autofill UI)");
@@ -211,6 +218,45 @@ const passkeyApi = {
         throw err;
       }
     }
+  },
+
+  /**
+   * Detects browser extension without blocking the main thread
+   * @returns {Promise<boolean>} true if extension detected
+   */
+  async detectExtension() {
+    // Check if already present
+    if (window.__nativeCredentialsGet) {
+      console.debug("Extension detected immediately");
+      return true;
+    }
+
+    // Wait up to 3 seconds, checking every 100ms
+    return new Promise((resolve) => {
+      const maxAttempts = 30; // 30 * 100ms = 3 seconds
+      let attempts = 0;
+
+      const check = () => {
+        if (window.__nativeCredentialsGet) {
+          resolve(true);
+          return;
+        }
+
+        console.debug("Trying to detect extension again...");
+
+        attempts++;
+        if (attempts >= maxAttempts) {
+          resolve(false);
+          return;
+        }
+
+        // Schedule next check after 100ms without blocking
+        setTimeout(check, 100);
+      };
+
+      // Start first check on next animation frame
+      check();
+    });
   },
 
   // Handle common error scenarios
