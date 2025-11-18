@@ -68,6 +68,16 @@ janus {
                 ]
             }
         }
+
+        roles {
+            @for((user, roles) <- janusData.admin.userRoles){
+                "@user" = [
+                    @for(role <- roles){
+                        @roleReference(role),
+                    }
+                ]
+            }
+        }
     }
 
     permissions = [
