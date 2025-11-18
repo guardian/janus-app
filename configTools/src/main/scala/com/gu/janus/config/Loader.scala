@@ -127,7 +127,7 @@ object Loader {
             }
           } yield username -> userPermissions.toSet
       }
-    } yield ACL(acl.toMap, defaultAccess.toSet)
+    } yield ACL(acl.toMap, Map.empty, defaultAccess.toSet)
   }
 
   private[config] def loadAdmin(
@@ -158,6 +158,7 @@ object Loader {
       }
     } yield ACL(
       acl.toMap,
+      Map.empty,
       Set.empty
     ) // TODO: these shouldn't share a representation since Admin doesn't need the default permissions
   }
