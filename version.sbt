@@ -1,1 +1,1 @@
-ThisBuild / version := "5.0.1-SNAPSHOT"
+ThisBuild / version := "6.0.0-PREVIEW.kcprovisioned.2025-11-18T1532.d6939a2c"
