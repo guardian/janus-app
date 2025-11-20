@@ -165,42 +165,23 @@ const passkeyApi = {
   },
 
   async getUserCredential(authOptionsJson) {
-    const abortController = new AbortController();
-    const timeoutId = setTimeout(() => {
-      console.debug("getUserCredential timed out");
-      abortController.abort();
-    }, 10000);
-
     try {
       const authOptions =
         PublicKeyCredential.parseRequestOptionsFromJSON(authOptionsJson);
 
-      /* LastPass binds its own code to the credentials get call,
-       * which fails in certain cases.
-       * So if auth options tell us that password manager browser extensions
-       * shouldn't be enabled we fall back to the native call.
+      /* LastPass binds its own code to the credentials get call.
+       * It makes the original code available in __nativeCredentialsGet,
+       * so if that is available we use it otherwise
+       * we assume that we can use the call because it hasn't been changed.
+       * The upshot is that we only use the native passkey modal provided by the browser.
        */
-      const extensionDetected = await this.detectExtension();
-      console.debug("Browser extension detected: ", extensionDetected);
-      console.debug(
-        "Enable password managers: ",
-        authOptionsJson.enablePasswordManagers,
-      );
-      const useAutofill =
-        extensionDetected && authOptionsJson.enablePasswordManagers;
-      console.debug("Use autofill UI: ", useAutofill);
+      const credentialsGet =
+        window.__nativeCredentialsGet ||
+        navigator.credentials.get.bind(navigator.credentials);
 
-      const credentialsGet = useAutofill
-        ? navigator.credentials.get.bind(navigator.credentials)
-        : window.__nativeCredentialsGet;
-
-      const credentials = await credentialsGet({
+      return await credentialsGet({
         publicKey: authOptions,
-        signal: abortController.signal,
       });
-
-      clearTimeout(timeoutId);
-      return credentials;
     } catch (err) {
       if (err.name === "AbortError") {
         console.debug("Modal UI was aborted (possibly by autofill UI)");
@@ -412,7 +393,17 @@ export async function registerPasskey(csrfToken) {
       PublicKeyCredential.parseCreationOptionsFromJSON(regOptionsJson);
 
     try {
-      createdCredential = await navigator.credentials.create({
+      /* LastPass binds its own code to the credentials create call.
+       * It makes the original code available in __nativeCredentialsCreate,
+       * so if that is available we use it otherwise
+       * we assume that we can use the call because it hasn't been changed.
+       * The upshot is that we only use the native passkey modal provided by the browser.
+       */
+      const credentialsCreate =
+        window.__nativeCredentialsCreate ||
+        navigator.credentials.create.bind(navigator.credentials);
+
+      createdCredential = await credentialsCreate({
         publicKey: credentialCreationOptions,
       });
 
