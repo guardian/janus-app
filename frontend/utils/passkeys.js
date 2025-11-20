@@ -191,9 +191,8 @@ const passkeyApi = {
       console.debug("Use autofill UI: ", useAutofill);
 
       const credentialsGet = useAutofill
-        ? navigator.credentials.get.bind(navigator.credentials) // Use regular API for autofill
-        : window.__nativeCredentialsGet ||
-          navigator.credentials.get.bind(navigator.credentials);
+        ? navigator.credentials.get.bind(navigator.credentials)
+        : window.__nativeCredentialsGet;
 
       const credentials = await credentialsGet({
         publicKey: authOptions,
