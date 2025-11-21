@@ -24,6 +24,11 @@ case class PasskeyMetadata(
     authenticator: Option[PasskeyAuthenticator]
 )
 
+case class PasskeyRequestOptions(
+    options: PublicKeyCredentialRequestOptions,
+    enablePasswordManagers: Boolean
+)
+
 enum PasskeyFlow:
   case Registration, Authentication
 
@@ -37,6 +42,27 @@ object PasskeyEncodings {
   val mapper: ObjectMapper = {
     val mapper = new ObjectMapper()
     val module = new SimpleModule()
+
+    module.addSerializer(
+      classOf[PasskeyRequestOptions],
+      (
+          options: PasskeyRequestOptions,
+          gen: JsonGenerator,
+          serializers: SerializerProvider
+      ) => {
+        gen.writeStartObject()
+        val unwrappingSerializer = serializers
+          .findValueSerializer(options.options.getClass)
+          .unwrappingSerializer(null)
+        unwrappingSerializer.serialize(options.options, gen, serializers)
+        gen.writeBooleanField(
+          "enablePasswordManagers",
+          options.enablePasswordManagers
+        )
+        gen.writeEndObject()
+      }
+    )
+
     /*
      * Serialize just the value of the challenge instead of a nested object.
      * Not sure why this hasn't been encoded in the form the webauthn spec expects.

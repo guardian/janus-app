@@ -135,12 +135,14 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
       )
       val challenge = new DefaultChallenge("challenge".getBytes(UTF_8))
       val emptyPasskeys = Seq.empty[PasskeyMetadata]
+      val passwordManagerAaguids = Set.empty[AAGUID]
 
       val options = Passkey.authenticationOptions(
         appHost,
         testUser,
         challenge,
-        emptyPasskeys
+        emptyPasskeys,
+        passwordManagerAaguids
       )
       val json = PasskeyEncodings.mapper
         .writerWithDefaultPrettyPrinter()
@@ -153,7 +155,8 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
           |  "allowCredentials" : [ ],
           |  "userVerification" : "required",
           |  "hints" : [ "client-device", "security-key", "hybrid" ],
-          |  "extensions" : null
+          |  "extensions" : null,
+          |  "enablePasswordManagers" : false
           |}""".stripMargin
     }
 
@@ -178,12 +181,14 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
           authenticator = None
         )
       )
+      val passwordManagerAaguids = Set.empty[AAGUID]
 
       val options = Passkey.authenticationOptions(
         appHost,
         testUser,
         challenge,
-        existingPasskeys
+        existingPasskeys,
+        passwordManagerAaguids
       )
       val json = PasskeyEncodings.mapper
         .writerWithDefaultPrettyPrinter()
@@ -199,7 +204,8 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
           |  } ],
           |  "userVerification" : "required",
           |  "hints" : [ "client-device", "security-key", "hybrid" ],
-          |  "extensions" : null
+          |  "extensions" : null,
+          |  "enablePasswordManagers" : false
           |}""".stripMargin
     }
   }

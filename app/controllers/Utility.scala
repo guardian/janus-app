@@ -55,4 +55,24 @@ class Utility(
     Redirect(routes.Janus.userAccount)
       .discardingCookies(DiscardingCookie(passkeysEnablingCookieName))
   }
+
+  /** Test endpoint for passkey autofill behavior - INSECURE, for testing only
+    */
+  def testPasskeyAutofill: Action[AnyContent] = Action { implicit request =>
+    Ok(views.html.testPasskeyAutofill())
+  }
+
+  /** Test endpoint for button-triggered passkey behavior - INSECURE, for
+    * testing only
+    */
+  def testPasskeyButton: Action[AnyContent] = Action { implicit request =>
+    Ok(views.html.testPasskeyButton())
+  }
+
+  /** Test endpoint for passkey creation on page load - INSECURE, for testing
+    * only
+    */
+  def testPasskeyCreate: Action[AnyContent] = Action { implicit request =>
+    Ok(views.html.testPasskeyCreate())
+  }
 }

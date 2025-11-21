@@ -96,6 +96,7 @@ class AppComponents(context: ApplicationLoader.Context)
     PasskeyAuthenticator.fromResource(
       "passkeys_aaguid_descriptions.json"
     )
+  private val passwordManagers = Set("LastPass")
 
   private val passkeysEnabled: Boolean =
     configuration
@@ -141,7 +142,12 @@ class AppComponents(context: ApplicationLoader.Context)
       host,
       janusData,
       passkeysEnabled,
-      passkeysEnablingCookieName
+      passkeysEnablingCookieName,
+      passkeyAuthenticatorMetadata.collect {
+        case (aaguid, authenticator)
+            if passwordManagers.contains(authenticator.description) =>
+          aaguid
+      }.toSet
     ),
     new Audit(janusData, controllerComponents, authAction),
     new RevokePermissions(

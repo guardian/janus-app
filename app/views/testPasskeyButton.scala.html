@@ -1,0 +1,203 @@
+@import views.html.helper.CSPNonce
+
+@()(implicit request: RequestHeader)
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Passkey Button</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .info { background-color: #e3f2fd; }
+        .success { background-color: #e8f5e9; }
+        .error { background-color: #ffebee; }
+        .warning { background-color: #fff3e0; }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .button-container {
+            margin: 20px 0;
+        }
+        button {
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover:not(:disabled) {
+            background-color: #1976D2;
+        }
+        button:disabled {
+            background-color: #BDBDBD;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Passkey Button</h1>
+    <p>This page has a button that triggers navigator.credentials.get when clicked.</p>
+
+    <div class="button-container">
+        <button id="testButton">Click to Test Passkey</button>
+    </div>
+
+    <div id="status" class="status info">Ready. Click the button to start the test.</div>
+
+    <h2>Logs:</h2>
+    <pre id="logs"></pre>
+
+    <script @{CSPNonce.attr}>
+        const statusEl = document.getElementById('status');
+        const logsEl = document.getElementById('logs');
+        const testButton = document.getElementById('testButton');
+
+        function log(message) {
+            const timestamp = new Date().toISOString();
+            logsEl.textContent += `[${timestamp}] ${message}\n`;
+            console.log(message);
+        }
+
+        function updateStatus(message, type = 'info') {
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+        }
+
+        // Generate a random challenge (32 bytes) and convert to Uint8Array
+        function generateChallenge() {
+            const array = new Uint8Array(32);
+            crypto.getRandomValues(array);
+            return array;
+        }
+
+        async function testCredentialGet() {
+            log('Button clicked, starting credential.get test...');
+            log('User Agent: ' + navigator.userAgent);
+            log('Browser: ' + (navigator.userAgent.includes('Firefox') ? 'Firefox' :
+                              navigator.userAgent.includes('Safari') ? 'Safari' :
+                              navigator.userAgent.includes('Chrome') ? 'Chrome' : 'Other'));
+            updateStatus('Testing navigator.credentials.get...', 'info');
+
+            // Disable button during test
+            testButton.disabled = true;
+            testButton.textContent = 'Testing...';
+
+            try {
+                // Check if WebAuthn is supported
+                if (!window.PublicKeyCredential) {
+                    throw new Error('WebAuthn is not supported in this browser');
+                }
+                log('✅ WebAuthn API is available');
+
+                // Check if conditional mediation is available (for debugging)
+                if (window.PublicKeyCredential.isConditionalMediationAvailable) {
+                    const conditionalAvailable = await PublicKeyCredential.isConditionalMediationAvailable();
+                    log(`Conditional mediation available: ${conditionalAvailable}`);
+                }
+
+                // Create a proper authentication request with random challenge
+                const challenge = generateChallenge();
+                const publicKeyCredentialRequestOptions = {
+                    challenge: challenge,
+                    timeout: 60000,
+                    userVerification: 'preferred',
+                    // Don't specify rpId - let browser use current domain
+                };
+
+                log('Options prepared:');
+                log(JSON.stringify({
+                    challenge: `Uint8Array(32) [${Array.from(challenge.slice(0, 4)).join(', ')}...]`,
+                    timeout: publicKeyCredentialRequestOptions.timeout,
+                    userVerification: publicKeyCredentialRequestOptions.userVerification,
+                    rpId: publicKeyCredentialRequestOptions.rpId || '(browser default - current origin)',
+                }, null, 2));
+
+                log('🚀 Calling navigator.credentials.get (MODAL UI)...');
+                updateStatus('Calling credentials.get...', 'info');
+
+                // IMPORTANT: Call credentials.get immediately to preserve user gesture
+                // Firefox is strict - any delay can cause AbortError
+                const credentialPromise = navigator.credentials.get({
+                    publicKey: publicKeyCredentialRequestOptions
+                    // NO mediation property - this will use modal UI, not conditional/autofill
+                });
+
+                log('✅ credentials.get called successfully');
+                log('Waiting for user interaction with passkey prompt...');
+                updateStatus('Passkey prompt shown - waiting for user action...', 'info');
+
+                // Set a timeout to log progress
+                const progressInterval = setInterval(() => {
+                    log('Still waiting for credentials.get to resolve...');
+                }, 5000);
+
+                const credential = await credentialPromise;
+
+                clearInterval(progressInterval);
+
+                if (credential) {
+                    log('✅ Credential received!');
+                    log(`Credential ID: ${credential.id}`);
+                    log(`Credential Type: ${credential.type}`);
+                    log(`Credential rawId length: ${credential.rawId.byteLength} bytes`);
+                    if (credential.response) {
+                        log(`Response authenticatorData length: ${credential.response.authenticatorData?.byteLength || 'N/A'} bytes`);
+                        log(`Response signature length: ${credential.response.signature?.byteLength || 'N/A'} bytes`);
+                    }
+                    updateStatus('✅ Success! Credential received.', 'success');
+                } else {
+                    log('⚠️ No credential returned (user likely cancelled)');
+                    updateStatus('No credential returned', 'warning');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.name} - ${error.message}`);
+
+                // Log specific error types
+                if (error.name === 'NotAllowedError') {
+                    log('This usually means: user cancelled, timeout, or no passkeys registered for this domain');
+                } else if (error.name === 'SecurityError') {
+                    log('This usually means: invalid rpId or HTTPS requirement not met');
+                } else if (error.name === 'AbortError') {
+                    log('This usually means: request was aborted');
+                } else if (error.name === 'NotSupportedError') {
+                    log('This usually means: WebAuthn not supported or feature disabled');
+                }
+
+                log(`Full error stack: ${error.stack || 'No stack trace'}`);
+                updateStatus(`❌ Error: ${error.name} - ${error.message}`, 'error');
+            } finally {
+                // Re-enable button after test
+                testButton.disabled = false;
+                testButton.textContent = 'Click to Test Passkey';
+            }
+        }
+
+        // Add click event listener to button
+        testButton.addEventListener('click', testCredentialGet);
+
+        // Log when page is ready
+        window.addEventListener('DOMContentLoaded', () => {
+            log('Page loaded and ready');
+            log('Click the button above to trigger credentials.get');
+        });
+    </script>
+</body>
+</html>
