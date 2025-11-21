@@ -194,14 +194,6 @@ class LoaderTest
         )
       }
 
-      "extracts the support period" in {
-        val accounts = Loader.loadAccounts(testConfig).value
-        val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadSupport(testConfig, permissions)
-        val supportAcl = result.value
-        supportAcl.supportPeriod shouldEqual Duration.ofSeconds(604800L)
-      }
-
       "extracts the rota" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
