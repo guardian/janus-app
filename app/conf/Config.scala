@@ -30,7 +30,7 @@ object Config {
       role <- Try(roleArn(awsAccountAuthConfigKey, config))
       accountNumber <- role match {
         case AwsAccountId(accountId) => Success(accountId)
-        case _ =>
+        case _                       =>
           Failure(
             new JanusConfigurationException(
               s"Could not extract account number from role ARN $role",

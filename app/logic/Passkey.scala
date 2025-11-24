@@ -202,11 +202,11 @@ object Passkey {
     Try {
       val regData = webAuthnManager.parseRegistrationResponseJSON(jsonResponse)
       val regParams = new RegistrationParameters(
-        new ServerProperty(
-          Origin.create(appHost),
-          URI.create(appHost).getHost,
-          challenge
-        ),
+        ServerProperty.builder
+          .origin(Origin.create(appHost))
+          .rpId(URI.create(appHost).getHost)
+          .challenge(challenge)
+          .build(),
         publicKeyCredentialParameters.asJava,
         userVerificationRequired
       )
@@ -265,11 +265,11 @@ object Passkey {
   ): Try[AuthenticationData] =
     Try {
       val authParams = new AuthenticationParameters(
-        new ServerProperty(
-          Origin.create(appHost),
-          URI.create(appHost).getHost,
-          challenge
-        ),
+        ServerProperty.builder
+          .origin(Origin.create(appHost))
+          .rpId(URI.create(appHost).getHost)
+          .challenge(challenge)
+          .build(),
         credentialRecord,
         List(authenticationData.getCredentialId).asJava,
         userVerificationRequired
