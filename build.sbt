@@ -15,7 +15,7 @@ val commonDependencies = Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-  "ch.qos.logback" % "logback-classic" % "1.5.20"
+  "ch.qos.logback" % "logback-classic" % "1.5.21"
 )
 lazy val commonSettings = Seq(
   scalaVersion := "3.3.7",
@@ -88,9 +88,9 @@ lazy val root: Project = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "28.2.0",
-      "com.gu.play-secret-rotation" %% "play-v30" % "15.2.4",
-      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "15.2.4",
+      "com.gu.play-googleauth" %% "play-v30" % "29.0.0",
+      "com.gu.play-secret-rotation" %% "play-v30" % "15.2.5",
+      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "15.2.5",
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
