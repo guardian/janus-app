@@ -4,12 +4,10 @@ import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.{ACL, SupportACL}
 import fixtures.Fixtures.*
 import org.scalacheck.Gen
-import org.scalatest.Inspectors.forAll as forAllItems
+import org.scalatest.{Inspectors, OptionValues}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import org.scalatest.{Inspectors, OptionValues}
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks.forAll as forAllCases
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import java.time.*
 
@@ -17,8 +15,7 @@ class UserAccessTest
     extends AnyFreeSpec
     with Matchers
     with OptionValues
-    with Inspectors
-    with ScalaCheckPropertyChecks {
+    with ScalaCheckDrivenPropertyChecks {
 
   import UserAccess.*
 
@@ -234,12 +231,6 @@ class UserAccessTest
 
       val engineers = List("eng1", "eng2", "eng3", "eng4", "eng5")
 
-      val genEngineerPair = for {
-        e1 <- Gen.oneOf(engineers)
-        e2 <- Gen.oneOf(engineers.filter(_ != e1))
-      } yield (e1, e2)
-      val genSupportSlotCount = Gen.choose(min = 3, max = 10)
-
       def genInstant(min: Instant, max: Instant) = Gen
         .choose(
           min = min.toEpochMilli,
@@ -248,7 +239,7 @@ class UserAccessTest
         .map(Instant.ofEpochMilli)
 
       val genRota = for {
-        slotCount <- genSupportSlotCount
+        slotCount <- Gen.choose(min = 3, max = 10)
         dates <- Gen.listOfN(
           slotCount,
           genInstant(
@@ -256,7 +247,10 @@ class UserAccessTest
             max = Instant.parse("2026-04-30T01:00:00Z")
           )
         )
-        pairs <- Gen.listOfN(slotCount, genEngineerPair)
+        pairs <- Gen.listOfN(
+          slotCount,
+          Gen.pick(2, engineers).map(engs => (engs(0), engs(1)))
+        )
       } yield dates.zip(pairs).toMap
 
       val rotaAndTimeBeforeRotaTimespan = for {
@@ -309,30 +303,22 @@ class UserAccessTest
           startTime shouldEqual rotaStartTime
         }
 
-        "should always be defined if the support rota has a slot before the given time" in {
-          forAllCases(rotaAndTimeWithinRotaTimespan) {
+        "there should always be active support engineers on any rota that begins before a given start time" in {
+          forAll(rotaAndTimeWithinRotaTimespan) {
             case (acl: SupportACL, time: Instant) =>
               activeSupportUsers(time, acl).isDefined shouldBe true
           }
         }
 
-        "should never be defined if the support rota has no slots before the given time" in {
-          forAllCases(rotaAndTimeBeforeRotaTimespan) {
+        "there should never be active support engineers on any rota that begins after a given start time" in {
+          forAll(rotaAndTimeBeforeRotaTimespan) {
             case (acl: SupportACL, time: Instant) =>
               activeSupportUsers(time, acl).isEmpty shouldBe true
           }
         }
 
-        "should always be in a support slot that became active before the given time" in {
-          forAllCases(rotaAndTimeWithinRotaTimespan) {
-            case (acl: SupportACL, time: Instant) =>
-              val (slotStartTime, _) = activeSupportUsers(time, acl).value
-              slotStartTime.isBefore(time) shouldBe true
-          }
-        }
-
-        "should always be in the most recent support slot before the given time" in {
-          forAllCases(rotaAndTimeWithinRotaTimespan) {
+        "the active support slot should always be the most recent slot on the rota" in {
+          forAll(rotaAndTimeWithinRotaTimespan) {
             case (acl: SupportACL, time: Instant) =>
               val (slotStartTime, _) = activeSupportUsers(time, acl).value
               val pastStartTimes = acl.rota.keys.filter(_.isBefore(time))
@@ -341,8 +327,8 @@ class UserAccessTest
           }
         }
 
-        "should always be in the last support slot on the rota if the given time is after the last slot" in {
-          forAllCases(rotaAndTimeAfterRotaTimespan) {
+        "the active support slot should always be the last on the rota for any given start time after the last slot" in {
+          forAll(rotaAndTimeAfterRotaTimespan) {
             case (acl: SupportACL, time: Instant) =>
               val (slotStartTime, _) = activeSupportUsers(time, acl).value
               val last = acl.rota.keys.max
@@ -377,23 +363,16 @@ class UserAccessTest
           startTime shouldEqual rotaStartTime
         }
 
-        "should always be defined at any time within the timespan of the support rota" in {
-          forAllCases(rotaAndTimeWithinRotaTimespan) {
-            case (acl: SupportACL, time: Instant) =>
-              nextSupportUsers(time, acl).isDefined shouldBe true
-          }
-        }
-
-        "should always be after the given time" in {
-          forAllCases(rotaAndTimeWithinRotaTimespan) {
+        "the next support slot should always be after any given start time" in {
+          forAll(rotaAndTimeWithinRotaTimespan) {
             case (acl: SupportACL, time: Instant) =>
               val (slotStartTime, _) = nextSupportUsers(time, acl).value
               slotStartTime.isAfter(time) shouldBe true
           }
         }
 
-        "should be undefined for any time after the end of the support rota" in {
-          forAllCases(rotaAndTimeAfterRotaTimespan) {
+        "there should be no next support engineers for any given start time after the end of the rota" in {
+          forAll(rotaAndTimeAfterRotaTimespan) {
             case (acl: SupportACL, time: Instant) =>
               nextSupportUsers(time, acl).isEmpty shouldBe true
           }
@@ -450,7 +429,7 @@ class UserAccessTest
         }
 
         "should always be after the given time for all engineers" in {
-          forAllCases(rotaAndTimeWithinRotaTimespan) {
+          forAll(rotaAndTimeWithinRotaTimespan) {
             case (acl: SupportACL, time: Instant) =>
               engineers.forall { eng =>
                 val slots = futureRotaSlotsForUser(time, acl, eng)
@@ -460,7 +439,7 @@ class UserAccessTest
         }
 
         "should always be after the next slot" in {
-          forAllCases(rotaAndTimeWithinRotaTimespan) {
+          forAll(rotaAndTimeWithinRotaTimespan) {
             case (acl: SupportACL, time: Instant) =>
               val isAlwaysAfterNextSlot =
                 nextSupportUsers(time, acl).forall((nextSlotStartTime, _) =>
@@ -476,7 +455,7 @@ class UserAccessTest
         }
 
         "should be empty for all engineers after the end of the rota" in {
-          forAllCases(rotaAndTimeAfterRotaTimespan) {
+          forAll(rotaAndTimeAfterRotaTimespan) {
             case (acl: SupportACL, time: Instant) =>
               engineers.forall { eng =>
                 futureRotaSlotsForUser(time, acl, eng).isEmpty
@@ -517,7 +496,7 @@ class UserAccessTest
     }
 
     "returns the permission if it has been granted via admin access" in {
-      forAllItems(allTestPerms) { adminPermission =>
+      Inspectors.forAll(allTestPerms) { adminPermission =>
         checkUserPermission(
           "admin",
           adminPermission.id,
@@ -530,7 +509,7 @@ class UserAccessTest
     }
 
     "returns the permission if it has been granted via support access" in {
-      forAllItems(supportAcl.supportAccess) { supportPermission =>
+      Inspectors.forAll(supportAcl.supportAccess) { supportPermission =>
         checkUserPermission(
           "support.user",
           supportPermission.id,
