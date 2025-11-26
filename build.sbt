@@ -116,7 +116,6 @@ lazy val root: Project = (project in file("."))
     releaseVersion := ReleaseVersion
       .fromAggregatedAssessedCompatibilityWithLatestRelease()
       .value,
-    releaseCrossBuild := true,
     releaseProcess := Seq[ReleaseStep](
       checkSnapshotDependencies,
       inquireVersions,
@@ -144,10 +143,6 @@ lazy val configTools = (project in file("configTools"))
   .enablePlugins(SbtTwirl)
   .settings(
     commonSettings,
-    crossScalaVersions := Seq(
-      "2.13.16",
-      scalaVersion.value
-    ),
     libraryDependencies ++= commonDependencies ++ Seq(
       "com.typesafe" % "config" % "1.4.5",
       "io.circe" %% "circe-core" % circeVersion,
