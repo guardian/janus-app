@@ -1,0 +1,4 @@
+@import com.gu.janus.model.ProvisionedRole
+
+@(role: ProvisionedRole)
+{ account = "@role.account.authConfigKey", iamRole = "@role.iamRoleName" }
