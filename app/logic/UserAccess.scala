@@ -3,7 +3,7 @@ package logic
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.{ACL, AwsAccount, Permission, SupportACL}
 
-import java.time.{Duration, Instant}
+import java.time.Instant
 
 object UserAccess {
 
@@ -50,30 +50,39 @@ object UserAccess {
     }
   }
 
-  /** Returns the usernames of the current support personnel, converting empty
-    * (TBD) users to None.
+  /** Returns the usernames of the support personnel at the given instant,
+    * converting empty (TBD) users to None.
     */
   def activeSupportUsers(
       date: Instant,
       supportACL: SupportACL
   ): Option[(Instant, (Option[String], Option[String]))] = {
-    supportACL.rota.find { case (startTime, _) =>
-      date.isAfter(startTime) && date.isBefore(
-        startTime.plus(supportACL.supportPeriod)
-      )
-    } map { case (startTime, (user1, user2)) =>
-      startTime -> (
-        if (user1.isEmpty) None else Some(user1),
-        if (user2.isEmpty) None else Some(user2)
-      )
-    }
+    supportACL.rota.toList
+      .sortBy((startTime, _) => startTime)
+      // Last slot start-time before given instant
+      .findLast((startTime, _) => startTime.isBefore(date))
+      .map { case (startTime, (user1, user2)) =>
+        startTime -> (
+          if (user1.isEmpty) None else Some(user1),
+          if (user2.isEmpty) None else Some(user2)
+        )
+      }
   }
 
   def nextSupportUsers(
       date: Instant,
       supportACL: SupportACL
   ): Option[(Instant, (Option[String], Option[String]))] = {
-    activeSupportUsers(date.plus(Duration.ofDays(7)), supportACL)
+    supportACL.rota.toList
+      .sortBy((startTime, _) => startTime)
+      // First slot start-time after or at given instant
+      .find((startTime, _) => startTime.isAfter(date))
+      .map { case (startTime, (user1, user2)) =>
+        startTime -> (
+          if (user1.isEmpty) None else Some(user1),
+          if (user2.isEmpty) None else Some(user2)
+        )
+      }
   }
 
   /** Returns the start and end times of future (after active and next) slots
@@ -86,15 +95,22 @@ object UserAccess {
       supportACL: SupportACL,
       user: String
   ): List[(Instant, String)] = {
-    supportACL.rota.toList
-      .sortBy(_._1.toEpochMilli)
-      .collect {
-        case (startTime, (user1, user2)) if user1 == user || user2 == user =>
-          (startTime, if (user1 == user) user2 else user1)
+    val nextSlotStartTime =
+      nextSupportUsers(date, supportACL).map((startTime, _) => startTime)
+    nextSlotStartTime
+      .map { nextSlot =>
+        supportACL.rota.toList
+          .sortBy((startTime, _) => startTime)
+          // Collecting all slots after the 'next' slot for the given user
+          .collect {
+            case (startTime, (user1, user2))
+                if startTime.isAfter(
+                  nextSlot
+                ) && (user1 == user || user2 == user) =>
+              (startTime, if (user1 == user) user2 else user1)
+          }
       }
-      .filter { case (start, _) =>
-        start.isAfter(date.plus(supportACL.supportPeriod))
-      }
+      .getOrElse(Nil)
   }
 
   /** Combine a user's permissions from all sources to work out everything they

@@ -28,8 +28,6 @@ janus {
                 },
             }
         ]
-
-        period = @janusData.support.supportPeriod.getSeconds
     }
 
     access {

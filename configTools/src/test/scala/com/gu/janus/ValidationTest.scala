@@ -14,7 +14,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
   val account2 = AwsAccount("Test 2", "test2")
   val emptyAcl = ACL(Map.empty, Set.empty)
   val emptySupportAcl =
-    SupportACL.create(Map.empty, Set.empty, Duration.ofSeconds(100))
+    SupportACL.create(Map.empty, Set.empty)
   val simpleStatement = Statement(
     Allow,
     Seq(Action("sts:GetCallerIdentity")),
@@ -123,7 +123,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
             emptyAcl,
             emptyAcl,
             support = SupportACL
-              .create(Map.empty, Set(largePermission), Duration.ofSeconds(100)),
+              .create(Map.empty, Set(largePermission)),
             None
           )
           Validation.policySizeChecks(janusData).warnings should not be empty
@@ -134,12 +134,10 @@ class ValidationTest extends AnyFreeSpec with Matchers {
             Set(account1),
             emptyAcl,
             emptyAcl,
-            support = SupportACL
-              .create(
-                Map.empty,
-                Set(smallPermissionWithLargeManagedPolicyArns),
-                Duration.ofSeconds(100)
-              ),
+            support = SupportACL.create(
+              Map.empty,
+              Set(smallPermissionWithLargeManagedPolicyArns)
+            ),
             None
           )
           Validation.policySizeChecks(janusData).warnings should not be empty
