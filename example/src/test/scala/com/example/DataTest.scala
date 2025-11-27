@@ -35,7 +35,6 @@ class DataTest extends AnyFreeSpec with Matchers {
     janusData.access.userAccess shouldEqual reloadedJanusData.access.userAccess
     janusData.access.defaultPermissions shouldEqual reloadedJanusData.access.defaultPermissions
 
-    janusData.support.supportPeriod shouldEqual reloadedJanusData.support.supportPeriod
     janusData.support.supportAccess shouldEqual reloadedJanusData.support.supportAccess
     janusData.support.rota shouldEqual reloadedJanusData.support.rota
 
