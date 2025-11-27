@@ -51,11 +51,11 @@ jobs:
 
       - run: >
           sbt 
-          +compile 
-          +Test/compile 
+          compile 
+          Test/compile 
           scalafmtCheckAll 
           scalafmtSbtCheck 
-          +test
+          test
 
       - name: Test Report for Janus-App
         uses: dorny/test-reporter@7b7927aa7da8b82e81e755810cb51f39941a2cc7 # v2.2.0
