@@ -170,6 +170,11 @@ configuration file containing the data Janus expects. While it is
 possible to write such a configuration file directly, Janus provides a
 library `janus-config-tools` for reading and writing this file format.
 
+> [!NOTE]
+> The final release of the `janus-config-tools` library for Scala 2.13 was
+> [v6.0.0](https://mvnrepository.com/artifact/com.gu/janus-config-tools_2.13/6.0.0).    
+> Subsequent releases are for Scala 3 only.
+
 The recommended way to create your Janus Data file is to create a
 separate (private) Git repository that contains a Scala
 application. This application can use the `janus-config-tools` library
