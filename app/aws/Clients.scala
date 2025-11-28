@@ -2,7 +2,10 @@ package aws
 
 import software.amazon.awssdk.auth.credentials._
 import software.amazon.awssdk.regions.Region.EU_WEST_1
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.{
+  DynamoDbAsyncClient,
+  DynamoDbClient
+}
 import software.amazon.awssdk.services.ssm.SsmClient
 import software.amazon.awssdk.services.sts.StsClient
 
@@ -62,5 +65,23 @@ object Clients {
       )
       .region(EU_WEST_1)
       .endpointOverride(URI.create("http://localhost:8000"))
+      .build()
+
+  def localDbAsync: DynamoDbAsyncClient =
+    DynamoDbAsyncClient
+      .builder()
+      .credentialsProvider(
+        StaticCredentialsProvider.create(
+          AwsBasicCredentials.create("fakeMyKeyId", "fakeSecretAccessKey")
+        )
+      )
+      .region(EU_WEST_1)
+      .endpointOverride(URI.create("http://localhost:8000"))
+      .build()
+
+  lazy val dynamoDbAsync: DynamoDbAsyncClient =
+    DynamoDbAsyncClient
+      .builder()
+      .region(EU_WEST_1)
       .build()
 }
