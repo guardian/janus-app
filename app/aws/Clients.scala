@@ -113,4 +113,22 @@ object Clients {
       .region(EU_WEST_1)
       .endpointOverride(URI.create("http://localhost:8000"))
       .build()
+
+  def localDbAsync: DynamoDbAsyncClient =
+    DynamoDbAsyncClient
+      .builder()
+      .credentialsProvider(
+        StaticCredentialsProvider.create(
+          AwsBasicCredentials.create("fakeMyKeyId", "fakeSecretAccessKey")
+        )
+      )
+      .region(EU_WEST_1)
+      .endpointOverride(URI.create("http://localhost:8000"))
+      .build()
+
+  lazy val dynamoDbAsync: DynamoDbAsyncClient =
+    DynamoDbAsyncClient
+      .builder()
+      .region(EU_WEST_1)
+      .build()
 }
