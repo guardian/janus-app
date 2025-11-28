@@ -166,26 +166,25 @@ class AppComponents(context: ApplicationLoader.Context)
   }
 
   private val passkeyAuth = new PasskeyAuth(
+    controllerComponents,
     app = HostApp(name = host, uri = URI.create(host)),
     authAction,
     passkeyRepo = new Repository(),
-    challengeRepo = new ChallengeRepository()
-  )
-
-  private val newPasskeyController = passkeyAuth.controller(
-    controllerComponents,
+    challengeRepo = new ChallengeRepository(),
     creationDataExtractor,
     authenticationDataExtractor,
     passkeyNameExtractor,
     registrationRedirect = routes.Janus.userAccount
   )
 
+  private val newPasskeyController = passkeyAuth.controller()
+
   private val passkeyVerificationAction =
     new ConditionalPasskeyVerificationAction(
       passkeysEnabled,
       passkeysEnablingCookieName,
       authAction,
-      passkeyAuth.verificationAction(authenticationDataExtractor)
+      passkeyAuth.verificationAction()
     )
   // =====
 

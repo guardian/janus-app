@@ -45,7 +45,7 @@ class PasskeyController(
     * @return
     *   Authentication options containing credentials and challenge data
     */
-  def preRegistrationAuthenticationOptions: Action[Unit] =
+  def preRegistrationAuthenticationOptions: Action[Unit] = {
     Action.async(parse.empty) { request =>
       authAction.invokeBlock(
         request,
@@ -62,6 +62,9 @@ class PasskeyController(
         }
       )
     }
+  }
+
+  def delete(passkeyId: String) = TODO
 
   private def verifyHasAccess(
       user: UserIdentity

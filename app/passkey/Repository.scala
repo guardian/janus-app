@@ -1,18 +1,27 @@
 package passkey
 
 import aws.PasskeyDB
+import cats.implicits.catsSyntaxMonadError
 import com.gu.googleauth.UserIdentity
 import com.gu.playpasskeyauth.services.PasskeyRepository
 import com.webauthn4j.credential.CredentialRecord
-import com.webauthn4j.data.AuthenticationData
+import com.webauthn4j.util.Base64UrlUtil
+import models.JanusException
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model.{
+  AttributeValue,
+  UpdateItemRequest
+}
 
+import java.time.Instant
 import scala.concurrent.Future
-import scala.util.Failure
+import scala.jdk.CollectionConverters.*
+import scala.util.{Failure, Try}
 
+// TODO simplify
 class Repository(using DynamoDbClient) extends PasskeyRepository {
 
-  override def loadCredentialRecord(
+  override def loadPasskey(
       userId: String,
       passkeyId: Array[Byte]
   ): Future[CredentialRecord] = {
@@ -39,7 +48,7 @@ class Repository(using DynamoDbClient) extends PasskeyRepository {
     )
   }
 
-  def insertCredentialRecord(
+  override def insertPasskey(
       userId: String,
       passkeyName: String,
       credentialRecord: CredentialRecord
@@ -49,23 +58,39 @@ class Repository(using DynamoDbClient) extends PasskeyRepository {
     )
   }
 
-  override def updateAuthenticationCounter(
+  override def updateAuthenticationCount(
       userId: String,
-      authData: AuthenticationData
+      credentialId: Array[Byte],
+      signCount: Long
   ): Future[Unit] = {
-    Future.fromTry(PasskeyDB.updateCounter(toUserIdentity(userId), authData))
+    Future.fromTry(
+      updateAttribute(
+        toUserIdentity(userId),
+        credentialId,
+        "authCounter",
+        AttributeValue.fromN(
+          String.valueOf(signCount)
+        )
+      )
+    )
   }
 
   override def updateLastUsedTime(
       userId: String,
-      authData: AuthenticationData
+      passkeyId: Array[Byte],
+      timestamp: Instant
   ): Future[Unit] = {
     Future.fromTry(
-      PasskeyDB.updateLastUsedTime(toUserIdentity(userId), authData)
+      updateAttribute(
+        toUserIdentity(userId),
+        passkeyId,
+        "lastUsedTime",
+        AttributeValue.fromS(timestamp.toString)
+      )
     )
   }
 
-  override def deleteCredentialRecord(
+  def deletePasskey(
       userId: String,
       passkeyId: String
   ): Future[String] =
@@ -84,4 +109,33 @@ class Repository(using DynamoDbClient) extends PasskeyRepository {
       exp = 0L,
       avatarUrl = None
     )
+
+  private val tableName = "Passkeys"
+
+  private def updateAttribute(
+      user: UserIdentity,
+      credentialId: Array[Byte],
+      attribName: String,
+      attribValue: AttributeValue
+  )(using
+      dynamoDB: DynamoDbClient
+  ): Try[Unit] = Try {
+    val key = Map(
+      "username" -> AttributeValue.fromS(user.username),
+      "credentialId" -> AttributeValue.fromS(
+        Base64UrlUtil.encodeToString(credentialId)
+      )
+    )
+    val update = Map(s":${attribName}Value" -> attribValue)
+    val request = UpdateItemRequest.builder
+      .tableName(tableName)
+      .key(key.asJava)
+      .updateExpression(s"SET $attribName = :${attribName}Value")
+      .expressionAttributeValues(update.asJava)
+      .build()
+    dynamoDB.updateItem(request)
+    ()
+  }.adaptError(err =>
+    JanusException.failedToUpdateDbItem(user, tableName, attribName, err)
+  )
 }
