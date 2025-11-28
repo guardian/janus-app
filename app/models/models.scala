@@ -88,59 +88,59 @@ object JanusException {
   )
 
   def failedToLoadDbItem(
-      user: UserIdentity,
+      userName: String,
       tableName: String,
       cause: Throwable
   ): JanusException = JanusException(
     userMessage = s"Failed to load item from $tableName table",
     engineerMessage =
-      s"Failed to load item from $tableName table for user ${user.username}: ${cause.getMessage}",
+      s"Failed to load item from $tableName table for user $userName: ${cause.getMessage}",
     httpCode = INTERNAL_SERVER_ERROR,
     causedBy = Some(cause)
   )
 
   def failedToCreateDbItem(
-      user: UserIdentity,
+      userName: String,
       tableName: String,
       cause: Throwable
   ): JanusException = JanusException(
     userMessage = s"Failed to store item in $tableName table",
     engineerMessage =
-      s"Failed to store item in $tableName table for user ${user.username}: ${cause.getMessage}",
+      s"Failed to store item in $tableName table for user $userName: ${cause.getMessage}",
     httpCode = INTERNAL_SERVER_ERROR,
     causedBy = Some(cause)
   )
 
   def failedToUpdateDbItem(
-      user: UserIdentity,
+      userName: String,
       tableName: String,
       attribName: String,
       cause: Throwable
   ): JanusException = JanusException(
     userMessage = s"Failed to update $tableName.$attribName",
     engineerMessage =
-      s"Failed to update $tableName.$attribName for user ${user.username}: ${cause.getMessage}",
+      s"Failed to update $tableName.$attribName for user $userName: ${cause.getMessage}",
     httpCode = INTERNAL_SERVER_ERROR,
     causedBy = Some(cause)
   )
 
   def failedToDeleteDbItem(
-      user: UserIdentity,
+      userName: String,
       tableName: String,
       cause: Throwable
   ): JanusException = JanusException(
     userMessage = s"Failed to delete from $tableName table",
     engineerMessage =
-      s"Failed to delete from $tableName table for user ${user.username}: ${cause.getMessage}",
+      s"Failed to delete from $tableName table for user $userName: ${cause.getMessage}",
     httpCode = INTERNAL_SERVER_ERROR,
     causedBy = Some(cause)
   )
 
-  def missingItemInDb(user: UserIdentity, tableName: String): JanusException =
+  def missingItemInDb(userName: String, tableName: String): JanusException =
     JanusException(
       userMessage = s"Item missing in $tableName table",
       engineerMessage =
-        s"Item not found in $tableName table for user ${user.username}",
+        s"Item not found in $tableName table for user $userName",
       httpCode = INTERNAL_SERVER_ERROR,
       causedBy = None
     )

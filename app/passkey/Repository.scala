@@ -44,17 +44,10 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       userId: String,
       passkeyId: Array[Byte]
   ): Future[CredentialRecord] = {
-    val userIdentity = toUserIdentity(userId)
-    val key = Map(
-      "username" -> AttributeValue.fromS(userIdentity.username),
-      "credentialId" -> AttributeValue.fromS(
-        Base64UrlUtil.encodeToString(passkeyId)
-      )
-    )
     val request = GetItemRequest
       .builder()
       .tableName(tableName)
-      .key(key.asJava)
+      .key(toKey(userId, passkeyId).asJava)
       .build()
 
     dynamoDb
@@ -63,7 +56,7 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       .flatMap { response =>
         if (response.hasItem) {
           Future.fromTry(
-            extractCredential(response.item().asScala.toMap, userIdentity)
+            extractCredential(userId, response.item().asScala.toMap)
           )
         } else {
           Future.failed(
@@ -75,15 +68,14 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       }
       .recoverWith { case err =>
         Future.failed(
-          JanusException.failedToLoadDbItem(userIdentity, tableName, err)
+          JanusException.failedToLoadDbItem(userId, tableName, err)
         )
       }
   }
 
-  override def loadPasskeyIds(userId: String): Future[List[String]] = {
-    val userIdentity = toUserIdentity(userId)
+  override def loadPasskeyIds(userName: String): Future[List[String]] = {
     val expressionValues = Map(
-      ":username" -> AttributeValue.fromS(userIdentity.username)
+      ":username" -> AttributeValue.fromS(userName)
     )
     val request = QueryRequest
       .builder()
@@ -104,20 +96,19 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       }
       .recoverWith { case err =>
         Future.failed(
-          JanusException.failedToLoadDbItem(userIdentity, tableName, err)
+          JanusException.failedToLoadDbItem(userName, tableName, err)
         )
       }
   }
 
   override def insertPasskey(
-      userId: String,
+      userName: String,
       passkeyName: String,
       credentialRecord: CredentialRecord
   ): Future[Unit] = {
-    val userIdentity = toUserIdentity(userId)
     val registrationTime = Instant.now()
     val item = Map(
-      "username" -> AttributeValue.fromS(userIdentity.username),
+      "username" -> AttributeValue.fromS(userName),
       "credentialId" -> AttributeValue.fromS(
         Base64UrlUtil.encodeToString(
           credentialRecord.getAttestedCredentialData.getCredentialId
@@ -165,50 +156,73 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       .map(_ => ())
       .recoverWith { case err =>
         Future.failed(
-          JanusException.failedToCreateDbItem(userIdentity, tableName, err)
+          JanusException.failedToCreateDbItem(userName, tableName, err)
         )
       }
   }
 
   override def updateAuthenticationCount(
-      userId: String,
-      credentialId: Array[Byte],
+      userName: String,
+      passkeyId: Array[Byte],
       signCount: Long
   ): Future[Unit] = {
-    updateAttribute(
-      toUserIdentity(userId),
-      credentialId,
-      "authCounter",
-      AttributeValue.fromN(String.valueOf(signCount))
+    val update = Map(
+      ":authCounterValue" -> AttributeValue.fromN(String.valueOf(signCount))
     )
+    val request = UpdateItemRequest.builder
+      .tableName(tableName)
+      .key(toKey(userName, passkeyId).asJava)
+      .updateExpression("SET authCounter = :authCounterValue")
+      .expressionAttributeValues(update.asJava)
+      .build()
+
+    dynamoDb
+      .updateItem(request)
+      .asScala
+      .map(_ => ())
+      .recoverWith { case err =>
+        Future.failed(
+          JanusException
+            .failedToUpdateDbItem(userName, tableName, "authCounter", err)
+        )
+      }
   }
 
   override def updateLastUsedTime(
-      userId: String,
+      userName: String,
       passkeyId: Array[Byte],
       timestamp: Instant
   ): Future[Unit] = {
-    updateAttribute(
-      toUserIdentity(userId),
-      passkeyId,
-      "lastUsedTime",
-      AttributeValue.fromS(timestamp.toString)
+    val update = Map(
+      ":lastUsedTimeValue" -> AttributeValue.fromS(timestamp.toString)
     )
+    val request = UpdateItemRequest.builder
+      .tableName(tableName)
+      .key(toKey(userName, passkeyId).asJava)
+      .updateExpression("SET lastUsedTime = :lastUsedTimeValue")
+      .expressionAttributeValues(update.asJava)
+      .build()
+
+    dynamoDb
+      .updateItem(request)
+      .asScala
+      .map(_ => ())
+      .recoverWith { case err =>
+        Future.failed(
+          JanusException
+            .failedToUpdateDbItem(userName, tableName, "lastUsedTime", err)
+        )
+      }
   }
 
   def deletePasskey(
-      userId: String,
-      passkeyId: String
+      userName: String,
+      passkeyId: Array[Byte]
   ): Future[String] = {
-    val userIdentity = toUserIdentity(userId)
-    val key = Map(
-      "username" -> AttributeValue.fromS(userIdentity.username),
-      "credentialId" -> AttributeValue.fromS(passkeyId)
-    )
     val request = DeleteItemRequest
       .builder()
       .tableName(tableName)
-      .key(key.asJava)
+      .key(toKey(userName, passkeyId).asJava)
       .build()
 
     dynamoDb
@@ -217,9 +231,22 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       .map(_ => "TODOPasskeyname")
       .recoverWith { case err =>
         Future.failed(
-          JanusException.failedToDeleteDbItem(userIdentity, tableName, err)
+          JanusException.failedToDeleteDbItem(userName, tableName, err)
         )
       }
+  }
+
+  private def toKey(
+      userId: String,
+      passkeyId: Array[Byte]
+  ): Map[String, AttributeValue] = {
+    val user = toUserIdentity(userId)
+    Map(
+      "username" -> AttributeValue.fromS(user.username),
+      "credentialId" -> AttributeValue.fromS(
+        Base64UrlUtil.encodeToString(passkeyId)
+      )
+    )
   }
 
   private def toUserIdentity(userId: String) =
@@ -232,40 +259,9 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       avatarUrl = None
     )
 
-  private def updateAttribute(
-      user: UserIdentity,
-      credentialId: Array[Byte],
-      attribName: String,
-      attribValue: AttributeValue
-  ): Future[Unit] = {
-    val key = Map(
-      "username" -> AttributeValue.fromS(user.username),
-      "credentialId" -> AttributeValue.fromS(
-        Base64UrlUtil.encodeToString(credentialId)
-      )
-    )
-    val update = Map(s":${attribName}Value" -> attribValue)
-    val request = UpdateItemRequest.builder
-      .tableName(tableName)
-      .key(key.asJava)
-      .updateExpression(s"SET $attribName = :${attribName}Value")
-      .expressionAttributeValues(update.asJava)
-      .build()
-
-    dynamoDb
-      .updateItem(request)
-      .asScala
-      .map(_ => ())
-      .recoverWith { case err =>
-        Future.failed(
-          JanusException.failedToUpdateDbItem(user, tableName, attribName, err)
-        )
-      }
-  }
-
   private def extractCredential(
-      item: Map[String, AttributeValue],
-      user: UserIdentity
+      userName: String,
+      item: Map[String, AttributeValue]
   ): Try[CredentialRecord] = Try {
     val attestationStmt = objConverter.getCborConverter.readValue(
       Base64UrlUtil.decode(item("attestationStatement").s()),
@@ -293,5 +289,7 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       null,
       null
     )
-  }.adaptError(err => JanusException.failedToLoadDbItem(user, tableName, err))
+  }.adaptError(err =>
+    JanusException.failedToLoadDbItem(userName, tableName, err)
+  )
 }
