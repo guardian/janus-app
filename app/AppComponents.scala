@@ -26,10 +26,14 @@ import play.filters.csp.CSPComponents
 import router.Routes
 import services.ProvisionedRoleCachingService
 import software.amazon.awssdk.regions.Region.EU_WEST_1
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.{
+  DynamoDbAsyncClient,
+  DynamoDbClient
+}
 
 import java.net.URI
 import java.time.Duration
+import scala.concurrent.ExecutionContext
 import scala.util.chaining.scalaUtilChainingOps
 
 class AppComponents(context: ApplicationLoader.Context)
@@ -75,10 +79,18 @@ class AppComponents(context: ApplicationLoader.Context)
     Config.googleSettings(configuration, secretStateSupplier)
   val googleGroupChecker = Config.googleGroupChecker(configuration)
   val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
+
   given dynamodDB: DynamoDbClient =
     if (context.environment.mode == play.api.Mode.Prod)
       DynamoDbClient.builder().region(EU_WEST_1).build()
     else Clients.localDb
+
+  val dynamoDbAsync: DynamoDbAsyncClient =
+    if (context.environment.mode == play.api.Mode.Prod)
+      Clients.dynamoDbAsync
+    else Clients.localDbAsync
+
+  given ExecutionContext = executionContext
 
   val janusData = Config.janusData(configuration)
 
@@ -169,7 +181,7 @@ class AppComponents(context: ApplicationLoader.Context)
     controllerComponents,
     app = HostApp(name = host, uri = URI.create(host)),
     authAction,
-    passkeyRepo = new Repository(),
+    passkeyRepo = new Repository(dynamoDbAsync),
     challengeRepo = new ChallengeRepository(),
     creationDataExtractor,
     authenticationDataExtractor,
