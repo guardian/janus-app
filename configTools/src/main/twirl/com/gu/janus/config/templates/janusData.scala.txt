@@ -1,4 +1,4 @@
-@import com.gu.janus.model.{JanusData, Permission}
+@import com.gu.janus.model.{JanusData, Permission, ProvisionedRole}
 
 @(janusData: JanusData, allPermissions: Set[Permission])
 
@@ -40,21 +40,18 @@ janus {
         acl {
             @for((user, permissions) <- janusData.access.userAccess){
                 "@user" = [
-                    @for(permission <- permissions){
-                        @permissionReference(permission),
+                    @for(accessLevel <- permissions) {
+                        @accessLevel match {
+                            case permission: Permission => {
+                                @permissionReference(permission)
+                            }
+                            case role: ProvisionedRole => {
+                                { account = "@role.account.authConfigKey", iamRoleTag = "@role.iamRoleTag" }
+                            }
+                        }
                     }
                 ]
             },
-        }
-
-        roles {
-            @for((user, roles) <- janusData.access.userRoles){
-                "@user" = [
-                    @for(role <- roles){
-                        @roleReference(role),
-                    }
-                ]
-            }
         }
     }
 
@@ -62,18 +59,15 @@ janus {
         acl {
             @for((user, permissions) <- janusData.admin.userAccess){
                 "@user" = [
-                    @for(permission <- permissions){
-                        @permissionReference(permission),
-                    }
-                ]
-            }
-        }
-
-        roles {
-            @for((user, roles) <- janusData.admin.userRoles){
-                "@user" = [
-                    @for(role <- roles){
-                        @roleReference(role),
+                    @for(accessLevel <- permissions) {
+                        @accessLevel match {
+                            case permission: Permission => {
+                                @permissionReference(permission)
+                            }
+                            case role: ProvisionedRole => {
+                                { account = "@role.account.authConfigKey", iamRoleTag = "@role.iamRoleTag" }
+                            }
+                        }
                     }
                 ]
             }

@@ -1,6 +1,6 @@
 package fixtures
 
-import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.model.{AwsAccount, Permission, ProvisionedRole}
 import com.gu.janus.policy.Iam.Policy
 
 object Fixtures {
@@ -22,8 +22,10 @@ object Fixtures {
   val quxDev = developerPermission(quxAct)
   val quxCf = accountAdminPermission(quxAct)
 
-  val allTestPerms =
+  val allTestPerms: Set[Permission] =
     Set(fooDev, fooCf, fooS3, barDev, barCf, bazDev, bazCf, quxDev, quxCf)
+  val allTestPerms2: Set[Permission | ProvisionedRole] =
+    allTestPerms.map(p => p: Permission | ProvisionedRole)
 
   // utilities (hard-coded conventions for now)
   def developerPermission(awsAccount: AwsAccount) =

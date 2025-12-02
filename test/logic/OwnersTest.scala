@@ -26,7 +26,6 @@ class OwnersTest
       "test.zzz-other" -> Set(fooS3),
       "test.different-account" -> Set(barDev)
     ),
-    Map.empty,
     Set.empty
   )
 

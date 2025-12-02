@@ -1,5 +1,9 @@
 package com.gu.janus.model
 
+import cats.implicits.toFunctorOps
+import io.circe.Decoder
+import io.circe.generic.auto.deriveDecoder
+
 import java.time.Instant
 
 case class ConfiguredAccount(
@@ -31,14 +35,27 @@ case class ConfiguredAclEntry(
     label: String
 )
 
+case class ConfiguredRoleAclEntry(
+    account: String,
+    iamRoleTag: String
+)
+
+given Decoder[ConfiguredAclEntry | ConfiguredRoleAclEntry] =
+  Decoder[ConfiguredAclEntry]
+    .widen[ConfiguredAclEntry | ConfiguredRoleAclEntry]
+    .or(
+      Decoder[ConfiguredRoleAclEntry]
+        .widen[ConfiguredAclEntry | ConfiguredRoleAclEntry]
+    )
+
 case class ConfiguredAccess(
     defaultPermissions: List[ConfiguredAclEntry],
-    acl: Map[String, List[ConfiguredAclEntry]]
+    acl: Map[String, List[ConfiguredAclEntry | ConfiguredRoleAclEntry]]
 )
 
 // helps circe-config auto-extract data
 case class ConfiguredAdmin(
-    acl: Map[String, List[ConfiguredAclEntry]]
+    acl: Map[String, List[ConfiguredAclEntry | ConfiguredRoleAclEntry]]
 )
 
 case class ConfiguredSupport(

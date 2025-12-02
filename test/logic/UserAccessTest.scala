@@ -1,7 +1,7 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, SupportACL}
+import com.gu.janus.model.{ACL, Permission, ProvisionedRole, SupportACL}
 import fixtures.Fixtures.*
 import org.scalacheck.Gen
 import org.scalatest.{Inspectors, OptionValues}
@@ -23,7 +23,6 @@ class UserAccessTest
     val testAccess =
       ACL(
         Map("test.user" -> Set(fooDev, barDev)),
-        Map.empty,
         Set(bazDev, quxDev)
       )
 
@@ -44,8 +43,9 @@ class UserAccessTest
     }
 
     "deduplicates a user's permissions" in {
-      val permissions = Set(fooDev, barDev, fooDev, barDev)
-      val access = ACL(Map("test.user" -> permissions), Map.empty, Set.empty)
+      val permissions: Set[Permission | ProvisionedRole] =
+        Set(fooDev, barDev, fooDev, barDev)
+      val access = ACL(Map("test.user" -> permissions), Set.empty)
       userAccess(
         "test.user",
         access
@@ -55,7 +55,10 @@ class UserAccessTest
 
   "hasAccess" - {
     val adminACL =
-      ACL(Map("test.user" -> Set(fooDev, barDev)), Map.empty, allTestPerms)
+      ACL(
+        Map("test.user" -> Set(fooDev, barDev)),
+        allTestPerms
+      )
 
     "returns true when given a user that has an entry" in {
       hasAccess("test.user", adminACL) shouldEqual true
@@ -476,10 +479,10 @@ class UserAccessTest
       Map(
         "user" -> Set(fooDev)
       ),
-      Map.empty,
       Set.empty
     )
-    val adminAcl = ACL(Map("admin" -> allTestPerms), Map.empty)
+    val adminAcl =
+      ACL(Map("admin" -> allTestPerms2))
     val supportAcl = SupportACL.create(
       Map(
         Instant.now().minus(Duration.ofDays(1)) -> (
@@ -544,18 +547,7 @@ class UserAccessTest
       Map(
         "user" -> Set(fooDev)
       ),
-      Map.empty,
       Set.empty
-    )
-    val adminAcl = ACL(Map("admin" -> Set(fooDev)), Map.empty)
-    val supportAcl = SupportACL.create(
-      Map(
-        Instant.now().minus(Duration.ofDays(1)) -> (
-          "support.user",
-          "another.support.user"
-        )
-      ),
-      Set(fooDev)
     )
 
     "returns true if a user has been granted explicit access" in {
@@ -578,10 +570,9 @@ class UserAccessTest
         "admin" -> Set.empty,
         "support.user" -> Set.empty
       ),
-      Map.empty,
       Set.empty
     )
-    val admins = ACL(Map("admin" -> Set(fooCf, barDev)), Map.empty)
+    val admins = ACL(Map("admin" -> Set(fooCf, barDev)))
     val supportAcl = SupportACL.create(
       Map(
         Instant.now().minus(Period.ofDays(1)) -> (

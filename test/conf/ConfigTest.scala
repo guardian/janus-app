@@ -8,7 +8,6 @@ import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.Configuration
 
-import java.time.Duration
 import scala.util.Success
 
 class ConfigTest extends AnyFreeSpec with Matchers {
@@ -78,8 +77,8 @@ class ConfigTest extends AnyFreeSpec with Matchers {
   "validateAccountConfig" - {
     val testJanusData = JanusData(
       accounts = Set.empty,
-      ACL(Map.empty, Map.empty),
-      ACL(Map.empty, Map.empty),
+      ACL(Map.empty),
+      ACL(Map.empty),
       SupportACL.create(Map.empty, Set.empty),
       Some("https://example.com/")
     )

@@ -14,8 +14,7 @@ case class JanusData(
 )
 
 case class ACL(
-    userAccess: Map[String, Set[Permission]],
-    userRoles: Map[String, Set[ProvisionedRole]],
+    userAccess: Map[String, Set[Permission | ProvisionedRole]],
     defaultPermissions: Set[Permission] = Set.empty
 )
 case class SupportACL private (
@@ -150,11 +149,31 @@ object Permission {
       shortTerm
     )
   }
+
+  def allPermissions(janusData: JanusData): Set[Permission] = {
+    def perms(
+        access: Map[String, Set[Permission | ProvisionedRole]]
+    ): Set[Permission] =
+      access.values.flatMap(_.collect { case p: Permission => p }).toSet
+
+    janusData.access.defaultPermissions ++
+      perms(janusData.access.userAccess) ++
+      perms(janusData.admin.userAccess) ++
+      janusData.support.supportAccess
+  }
 }
 
+/** A set of provisioned IAM roles that Janus can discover by tag lookup.
+  */
 case class ProvisionedRole(
     account: AwsAccount,
-    iamRoleName: String
+
+    /*
+     * Hook that will allow us to discover the IAM roles included in this set.
+     * Relevant roles will be found by tags identifying them as roles that can be assumed by engineers
+     * for local dev work.
+     */
+    iamRoleTag: String
 )
 
 sealed abstract class JanusAccessType(override val toString: String)
