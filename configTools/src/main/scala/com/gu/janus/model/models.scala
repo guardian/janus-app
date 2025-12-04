@@ -170,8 +170,8 @@ case class ProvisionedRole(
 
     /*
      * Hook that will allow us to discover the IAM roles included in this set.
-     * Relevant roles will be found by tags identifying them as roles that can be assumed by engineers
-     * for local dev work.
+     * Each relevant role will be found by a tag identifying it as a Janus role
+     * and a tag that matches this value.
      */
     iamRoleTag: String
 )
