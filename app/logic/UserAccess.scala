@@ -18,10 +18,7 @@ object UserAccess {
   def userAccess(username: String, acl: ACL): Option[Set[Permission]] = {
     acl.userAccess
       .get(username)
-      .map { access =>
-        val permissions = access.collect { case p: Permission => p }
-        permissions ++ acl.defaultPermissions
-      }
+      .map(_.collect { case p: Permission => p } ++ acl.defaultPermissions)
   }
 
   /** Checks if the username is explicitly mentioned in the provided ACL.

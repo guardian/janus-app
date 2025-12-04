@@ -1,11 +1,13 @@
 package com.gu.janus
 
 import com.gu.janus.Validation.{isClean, noErrors}
-import com.gu.janus.model.*
+import com.gu.janus.model._
 import com.gu.janus.policy.Iam.Effect.Allow
 import com.gu.janus.policy.Iam.{Action, Policy, Resource, Statement}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+
+import java.time.Duration
 
 class ValidationTest extends AnyFreeSpec with Matchers {
   val account1 = AwsAccount("Test 1", "test1")
@@ -255,9 +257,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
         )
       val janusData = JanusData(
         Set(account1),
-        ACL(
-          Map("user1" -> Set(permission1), "user2" -> Set(permission2))
-        ),
+        ACL(Map("user1" -> Set(permission1), "user2" -> Set(permission2))),
         emptyAcl,
         emptySupportAcl,
         None

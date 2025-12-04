@@ -21,10 +21,7 @@ class UserAccessTest
 
   "userAccess" - {
     val testAccess =
-      ACL(
-        Map("test.user" -> Set(fooDev, barDev)),
-        Set(bazDev, quxDev)
-      )
+      ACL(Map("test.user" -> Set(fooDev, barDev)), Set(bazDev, quxDev))
 
     "returns None if the user doesn't have any permissions" in {
       userAccess("username.does.not.exist", testAccess) should equal(None)
@@ -54,11 +51,7 @@ class UserAccessTest
   }
 
   "hasAccess" - {
-    val adminACL =
-      ACL(
-        Map("test.user" -> Set(fooDev, barDev)),
-        allTestPerms
-      )
+    val adminACL = ACL(Map("test.user" -> Set(fooDev, barDev)), allTestPerms)
 
     "returns true when given a user that has an entry" in {
       hasAccess("test.user", adminACL) shouldEqual true
@@ -481,8 +474,7 @@ class UserAccessTest
       ),
       Set.empty
     )
-    val adminAcl =
-      ACL(Map("admin" -> allTestPerms2))
+    val adminAcl = ACL(Map("admin" -> allTestPermsAndRoles))
     val supportAcl = SupportACL.create(
       Map(
         Instant.now().minus(Duration.ofDays(1)) -> (
@@ -548,6 +540,16 @@ class UserAccessTest
         "user" -> Set(fooDev)
       ),
       Set.empty
+    )
+    val adminAcl = ACL(Map("admin" -> Set(fooDev)))
+    val supportAcl = SupportACL.create(
+      Map(
+        Instant.now().minus(Duration.ofDays(1)) -> (
+          "support.user",
+          "another.support.user"
+        )
+      ),
+      Set(fooDev)
     )
 
     "returns true if a user has been granted explicit access" in {

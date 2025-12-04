@@ -24,7 +24,7 @@ object Fixtures {
 
   val allTestPerms: Set[Permission] =
     Set(fooDev, fooCf, fooS3, barDev, barCf, bazDev, bazCf, quxDev, quxCf)
-  val allTestPerms2: Set[Permission | ProvisionedRole] =
+  val allTestPermsAndRoles: Set[Permission | ProvisionedRole] =
     allTestPerms.map(p => p: Permission | ProvisionedRole)
 
   // utilities (hard-coded conventions for now)

@@ -1,13 +1,15 @@
 package conf
 
-import com.gu.janus.model.*
+import com.gu.janus.model._
 import com.typesafe.config.ConfigFactory
-import fixtures.Fixtures.*
+import fixtures.Fixtures._
+import models.AccountConfigStatus
 import models.AccountConfigStatus.*
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.Configuration
 
+import java.time.Duration
 import scala.util.Success
 
 class ConfigTest extends AnyFreeSpec with Matchers {
