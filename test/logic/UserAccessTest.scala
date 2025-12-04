@@ -1,7 +1,7 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, SupportACL}
+import com.gu.janus.model.{ACL, Permission, ProvisionedRole, SupportACL}
 import fixtures.Fixtures.*
 import org.scalacheck.Gen
 import org.scalatest.{Inspectors, OptionValues}
@@ -40,7 +40,8 @@ class UserAccessTest
     }
 
     "deduplicates a user's permissions" in {
-      val permissions = Set(fooDev, barDev, fooDev, barDev)
+      val permissions: Set[Permission | ProvisionedRole] =
+        Set(fooDev, barDev, fooDev, barDev)
       val access = ACL(Map("test.user" -> permissions), Set.empty)
       userAccess(
         "test.user",
@@ -473,7 +474,7 @@ class UserAccessTest
       ),
       Set.empty
     )
-    val adminAcl = ACL(Map("admin" -> allTestPerms))
+    val adminAcl = ACL(Map("admin" -> allTestPermsAndRoles))
     val supportAcl = SupportACL.create(
       Map(
         Instant.now().minus(Duration.ofDays(1)) -> (
