@@ -62,6 +62,17 @@ val pekkoSerializationJacksonOverrides = Seq(
   "com.fasterxml.jackson.module" %% "jackson-module-scala"
 ).map(_ % jacksonVersion)
 
+/*
+ * To test whether any of these entries are redundant:
+ * 1. Comment it out
+ * 2. Run `sbt Runtime/dependencyList`
+ * 3. If no earlier version appears in the dependency list, the entry can be removed.
+ */
+val safeTransitiveDependencies = Seq(
+  // See https://github.com/guardian/janus-app/security/dependabot/69
+  "at.yawk.lz4" % "lz4-java" % "1.10.0" % Runtime
+)
+
 lazy val root: Project = (project in file("."))
   .enablePlugins(PlayScala, JDebPackaging, SystemdPlugin)
   .dependsOn(configTools % "compile->compile;test->test")
@@ -97,12 +108,19 @@ lazy val root: Project = (project in file("."))
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
       "com.webauthn4j" % "webauthn4j-core" % "0.30.0.RELEASE",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
-    ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides,
+    ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides ++ safeTransitiveDependencies,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
-    // See https://github.com/guardian/janus-app/security/dependabot/19
-    excludeDependencies += ExclusionRule(
-      organization = "net.sourceforge.htmlunit",
-      name = "htmlunit"
+    excludeDependencies ++= Seq(
+      // See https://github.com/guardian/janus-app/security/dependabot/19
+      ExclusionRule(
+        organization = "net.sourceforge.htmlunit",
+        name = "htmlunit"
+      ),
+      // See https://github.com/guardian/janus-app/security/dependabot/69
+      ExclusionRule(
+        organization = "org.lz4",
+        name = "lz4-java"
+      )
     ),
 
     // local development
