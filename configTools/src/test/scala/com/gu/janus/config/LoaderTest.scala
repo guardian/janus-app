@@ -103,14 +103,14 @@ class LoaderTest
         access.userAccess
           .get("employee1")
           .value
-          .collect { case p: Permission => p }
+          .permissions
           .map(_.id) shouldEqual Set(
           "website-developer"
         )
         access.userAccess
           .get("employee4")
           .value
-          .collect { case p: Permission => p }
+          .permissions
           .map(_.id) shouldEqual Set(
           "website-s3-manager",
           "aws-test-account-developer"
@@ -124,8 +124,7 @@ class LoaderTest
         val access = result.value
         val userPermissions = access.userAccess.get("employee1").value
         val websiteDeveloperPermission =
-          userPermissions
-            .collect { case p: Permission => p }
+          userPermissions.permissions
             .find(p => p.id == "website-developer")
             .value
         websiteDeveloperPermission should have(
@@ -145,8 +144,7 @@ class LoaderTest
         val access = result.value
         val userPermissions = access.userAccess.get("employee3").value
         val websiteDeveloperPermission =
-          userPermissions
-            .collect { case p: Permission => p }
+          userPermissions.permissions
             .find(p => p.id == "website-s3-manager")
             .value
         websiteDeveloperPermission should have(
@@ -166,8 +164,7 @@ class LoaderTest
         val access = result.value
         val userPermissions = access.userAccess.get("employee3").value
         val websiteDeveloperPermission =
-          userPermissions
-            .collect { case p: Permission => p }
+          userPermissions.permissions
             .find(p => p.id == "aws-test-account-hybrid-permission")
             .value
         websiteDeveloperPermission should have(
@@ -193,7 +190,7 @@ class LoaderTest
       adminAcl.userAccess
         .get("employee1")
         .value
-        .collect { case p: Permission => p }
+        .permissions
         .map(_.id) shouldEqual Set(
         "website-admin"
       )

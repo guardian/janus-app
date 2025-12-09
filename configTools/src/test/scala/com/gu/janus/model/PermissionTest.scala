@@ -44,7 +44,8 @@ class PermissionTest extends AnyFreeSpec with Matchers {
         Permission(account1, "perm1", "Test permission", simplePolicy, false)
       val janusData = JanusData(
         Set.empty,
-        access = ACL(Map("user1" -> Set(permission)), Set.empty),
+        access =
+          ACL(Map("user1" -> ACLEntry(Set(permission), Set.empty)), Set.empty),
         admin = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None
@@ -61,8 +62,8 @@ class PermissionTest extends AnyFreeSpec with Matchers {
         Set.empty,
         access = ACL(
           Map(
-            "user1" -> Set(permission1),
-            "user2" -> Set(permission2)
+            "user1" -> ACLEntry(Set(permission1), Set.empty),
+            "user2" -> ACLEntry(Set(permission2), Set.empty)
           ),
           Set.empty
         ),
@@ -86,8 +87,8 @@ class PermissionTest extends AnyFreeSpec with Matchers {
         access = ACL(Map.empty, Set.empty),
         admin = ACL(
           Map(
-            "admin1" -> Set(permission1),
-            "admin2" -> Set(permission2)
+            "admin1" -> ACLEntry(Set(permission1), Set.empty),
+            "admin2" -> ACLEntry(Set(permission2), Set.empty)
           ),
           Set.empty
         ),
@@ -129,15 +130,15 @@ class PermissionTest extends AnyFreeSpec with Matchers {
         Set.empty,
         access = ACL(
           Map(
-            "user1" -> Set(permission1),
-            "user2" -> Set(permission2)
+            "user1" -> ACLEntry(Set(permission1), Set.empty),
+            "user2" -> ACLEntry(Set(permission2), Set.empty)
           ),
           Set.empty
         ),
         admin = ACL(
           Map(
-            "admin1" -> Set(permission3),
-            "admin2" -> Set(permission4)
+            "admin1" -> ACLEntry(Set(permission3), Set.empty),
+            "admin2" -> ACLEntry(Set(permission4), Set.empty)
           ),
           Set.empty
         ),

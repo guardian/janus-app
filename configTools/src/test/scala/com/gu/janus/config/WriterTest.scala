@@ -51,7 +51,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
       )
       val janusData = JanusData(
         Set(account1),
-        access = ACL(Map("user1" -> Set(permission)), Set.empty),
+        access =
+          ACL(Map("user1" -> ACLEntry(Set(permission), Set.empty)), Set.empty),
         admin = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None
@@ -71,7 +72,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
       )
       val janusData = JanusData(
         Set(account1),
-        access = ACL(Map("user1" -> Set(permission)), Set.empty),
+        access =
+          ACL(Map("user1" -> ACLEntry(Set(permission), Set.empty)), Set.empty),
         admin = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None

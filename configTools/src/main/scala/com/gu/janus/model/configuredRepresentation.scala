@@ -36,7 +36,6 @@ case class ConfiguredAclEntry(
 )
 
 case class ConfiguredRoleAclEntry(
-    account: String,
     iamRoleTag: String
 )
 

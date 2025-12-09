@@ -135,34 +135,38 @@ object Loader {
   private def parseAclEntries(
       acl: Map[String, List[ConfiguredAclEntry | ConfiguredRoleAclEntry]],
       permissions: Set[Permission]
-  ): Either[String, List[(String, Set[Permission | ProvisionedRole])]] =
+  ): Either[String, List[(String, ACLEntry)]] =
     acl.toList.traverse { case (username, configuredAclEntries) =>
-      for {
-        userPermissions <- configuredAclEntries.traverse {
-
-          case configuredAclEntry: ConfiguredAclEntry =>
-            permissions
-              .find(p =>
-                configuredAclEntry.account == p.account.authConfigKey && configuredAclEntry.label == p.label
-              )
-              .map(p => p: Permission | ProvisionedRole)
-              .toRight(
-                s"The access configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
-              )
-
-          case entry: ConfiguredRoleAclEntry =>
-            permissions
-              .find(p => entry.account == p.account.authConfigKey)
-              .map(p =>
-                ProvisionedRole(p.account, entry.iamRoleTag): Permission |
-                  ProvisionedRole
-              )
-              .toRight(
-                s"The access configuration for `$username` includes an account with key ${entry.account} that doesn't appear to be defined."
-              )
-        }
-      } yield username -> userPermissions.toSet
+      configuredAclEntries
+        .traverse(parseConfiguredEntry(_, username, permissions))
+        .map(entries =>
+          username -> entries.foldLeft(ACLEntry(Set.empty, Set.empty)) {
+            case (acc, perm: Permission) =>
+              acc.copy(permissions = acc.permissions + perm)
+            case (acc, role: ProvisionedRole) =>
+              acc.copy(roles = acc.roles + role)
+          }
+        )
     }
+
+  private def parseConfiguredEntry(
+      entry: ConfiguredAclEntry | ConfiguredRoleAclEntry,
+      username: String,
+      permissions: Set[Permission]
+  ): Either[String, Permission | ProvisionedRole] = entry match {
+    case configuredAclEntry: ConfiguredAclEntry =>
+      permissions
+        .find(p =>
+          configuredAclEntry.account == p.account.authConfigKey &&
+            configuredAclEntry.label == p.label
+        )
+        .toRight(
+          s"The access configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
+        )
+
+    case entry: ConfiguredRoleAclEntry =>
+      Right(ProvisionedRole(entry.iamRoleTag))
+  }
 
   private[config] def loadSupport(
       config: Config,

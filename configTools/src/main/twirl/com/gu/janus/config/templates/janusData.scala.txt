@@ -38,17 +38,13 @@ janus {
         ]
 
         acl {
-            @for((user, permissions) <- janusData.access.userAccess){
+            @for((user, aclEntry) <- janusData.access.userAccess){
                 "@user" = [
-                    @for(accessLevel <- permissions) {
-                        @accessLevel match {
-                            case permission: Permission => {
-                                @permissionReference(permission)
-                            }
-                            case role: ProvisionedRole => {
-                                { account = "@role.account.authConfigKey", iamRoleTag = "@role.iamRoleTag" }
-                            }
-                        }
+                    @for(permission <- aclEntry.permissions) {
+                        @permissionReference(permission)
+                    }
+                    @for(role <- aclEntry.roles) {
+                        { iamRoleTag = "@role.iamRoleTag" }
                     }
                 ]
             },
@@ -57,17 +53,13 @@ janus {
 
     admin {
         acl {
-            @for((user, permissions) <- janusData.admin.userAccess){
+            @for((user, aclEntry) <- janusData.admin.userAccess){
                 "@user" = [
-                    @for(accessLevel <- permissions) {
-                        @accessLevel match {
-                            case permission: Permission => {
-                                @permissionReference(permission)
-                            }
-                            case role: ProvisionedRole => {
-                                { account = "@role.account.authConfigKey", iamRoleTag = "@role.iamRoleTag" }
-                            }
-                        }
+                    @for(permission <- aclEntry.permissions) {
+                        @permissionReference(permission)
+                    }
+                    @for(role <- aclEntry.roles) {
+                        { iamRoleTag = "@role.iamRoleTag" }
                     }
                 ]
             }
