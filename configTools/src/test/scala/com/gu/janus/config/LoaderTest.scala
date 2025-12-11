@@ -1,11 +1,11 @@
 package com.gu.janus.config
 
-import com.gu.janus.model.{AwsAccount, Permission}
-import com.gu.janus.testutils.{HaveMatchers, RightValues}
+import com.gu.janus.model.*
+import com.gu.janus.testutils.HaveMatchers
 import com.typesafe.config.ConfigFactory
-import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatest.{EitherValues, OptionValues}
 
 import java.time.ZoneOffset.UTC
 import java.time.ZonedDateTime
@@ -13,8 +13,8 @@ import java.time.ZonedDateTime
 class LoaderTest
     extends AnyFreeSpec
     with Matchers
-    with RightValues
     with OptionValues
+    with EitherValues
     with HaveMatchers {
   val testConfig = ConfigFactory.load("example.conf")
   val testConfigWithoutPermissionsRepo =
@@ -253,6 +253,218 @@ class LoaderTest
             )
             .toInstant -> ("employee2", "employee5")
         )
+      }
+    }
+  }
+
+  "parseAclEntries" - {
+    val testAccount = AwsAccount("Test Account", "test-account")
+    val testAccount2 = AwsAccount("Test Account 2", "test-account-2")
+    val testPermission = Permission(
+      testAccount,
+      "test-permission",
+      "Test permission",
+      Some("""{"Version":"2012-10-17","Statement":[]}"""),
+      None,
+      false
+    )
+    val anotherPermission = Permission(
+      testAccount,
+      "another-permission",
+      "Another permission",
+      None,
+      Some(List("arn:aws:iam::aws:policy/ReadOnlyAccess")),
+      false
+    )
+    val anotherPermission2 = Permission(
+      testAccount2,
+      "another-permission",
+      "Another permission",
+      None,
+      Some(List("arn:aws:iam::aws:policy/ReadOnlyAccess")),
+      false
+    )
+    val permissions = Set(testPermission, anotherPermission, anotherPermission2)
+
+    "returns empty list for empty ACL" in {
+      val result = Loader.parseAclEntries(Map.empty, permissions)
+      result.value shouldEqual List.empty
+    }
+
+    "parses a single user with a single permission" - {
+      val acl = Map(
+        "user1" -> List(ConfiguredAclEntry("test-account", "test-permission"))
+      )
+      val result = Loader.parseAclEntries(acl, permissions)
+      val entries = result.value
+
+      "returns a single entry" in {
+        entries should have size 1
+      }
+
+      "returns correct permissions" in {
+        entries.head._2.permissions shouldEqual Set(testPermission)
+      }
+
+      "returns no roles" in {
+        entries.head._2.roles shouldBe empty
+      }
+    }
+
+    "parses a single user with multiple permissions" - {
+      val acl = Map(
+        "user1" -> List(
+          ConfiguredAclEntry("test-account", "test-permission"),
+          ConfiguredAclEntry("test-account-2", "another-permission")
+        )
+      )
+      val result = Loader.parseAclEntries(acl, permissions)
+      val entries = result.value
+
+      "returns single entry" in {
+        entries should have size 1
+      }
+
+      "returns correct permissions" in {
+        entries.flatMap(_._2.permissions).toSet shouldEqual Set(
+          testPermission,
+          anotherPermission2
+        )
+      }
+    }
+
+    "parses multiple users" - {
+      val acl = Map(
+        "user1" -> List(ConfiguredAclEntry("test-account", "test-permission")),
+        "user2" -> List(
+          ConfiguredAclEntry("test-account", "another-permission")
+        )
+      )
+      val result = Loader.parseAclEntries(acl, permissions)
+      val entries = result.value
+
+      "returns two entries" in {
+        entries should have size 2
+      }
+
+      "returns correct user names" in {
+        entries.map(_._1).toSet shouldEqual Set("user1", "user2")
+      }
+
+      "returns correct permissions" in {
+        entries.flatMap(_._2.permissions).toSet shouldEqual Set(
+          testPermission,
+          anotherPermission
+        )
+      }
+    }
+
+    "parses a single role-based ACL entry" - {
+      val acl = Map(
+        "user1" -> List(ConfiguredRoleAclEntry("MyRole", "role-tag"))
+      )
+      val result = Loader.parseAclEntries(acl, permissions)
+      val entries = result.value
+
+      "returns single entry" in {
+        entries should have size 1
+      }
+
+      "returns no permissions" in {
+        entries.head._2.permissions shouldBe empty
+      }
+
+      "returns correct role" in {
+        entries.head._2.roles shouldEqual Set(
+          ProvisionedRole("MyRole", "role-tag")
+        )
+      }
+    }
+
+    "parses a multiple-role-based ACL entry" - {
+      val acl = Map(
+        "user1" -> List(
+          ConfiguredRoleAclEntry("MyRole", "role-tag"),
+          ConfiguredRoleAclEntry("MyRole2", "role-tag-2")
+        )
+      )
+      val result = Loader.parseAclEntries(acl, permissions)
+      val entries = result.value
+
+      "returns single entry" in {
+        entries should have size 1
+      }
+
+      "returns no permissions" in {
+        entries.head._2.permissions shouldBe empty
+      }
+
+      "returns correct roles" in {
+        entries.head._2.roles shouldEqual Set(
+          ProvisionedRole("MyRole", "role-tag"),
+          ProvisionedRole("MyRole2", "role-tag-2")
+        )
+      }
+    }
+
+    "parses mixed permission and role entries for same user" - {
+      val acl = Map(
+        "user1" -> List(
+          ConfiguredAclEntry("test-account", "test-permission"),
+          ConfiguredRoleAclEntry("MyRole", "role-tag")
+        )
+      )
+      val result = Loader.parseAclEntries(acl, permissions)
+      val entries = result.value
+
+      "returns single entry" in {
+        entries should have size 1
+      }
+
+      "returns correct permissions" in {
+        entries.flatMap(_._2.permissions).toSet shouldEqual Set(
+          testPermission
+        )
+      }
+
+      "returns correct roles" in {
+        entries.flatMap(_._2.roles).toSet shouldEqual Set(
+          ProvisionedRole("MyRole", "role-tag")
+        )
+      }
+    }
+
+    "fails when permission doesn't exist" - {
+      val acl = Map(
+        "user1" -> List(
+          ConfiguredAclEntry("test-account", "nonexistent-permission")
+        )
+      )
+      val result = Loader.parseAclEntries(acl, permissions)
+
+      "returns failure value" in {
+        result.isLeft shouldBe true
+      }
+
+      "failure value is correct" in {
+        result.left.value should include("nonexistent-permission")
+      }
+    }
+
+    "fails when account doesn't exist" - {
+      val acl = Map(
+        "user1" -> List(
+          ConfiguredAclEntry("nonexistent-account", "test-permission")
+        )
+      )
+      val result = Loader.parseAclEntries(acl, permissions)
+
+      "returns failure value" in {
+        result.isLeft shouldBe true
+      }
+
+      "failure value is correct" in {
+        result.left.value should include("nonexistent-account")
       }
     }
   }
