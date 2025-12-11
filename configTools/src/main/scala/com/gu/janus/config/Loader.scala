@@ -165,7 +165,7 @@ object Loader {
         )
 
     case entry: ConfiguredRoleAclEntry =>
-      Right(ProvisionedRole(entry.iamRoleTag))
+      Right(ProvisionedRole(entry.provisionedRoleName, entry.iamRoleTag))
   }
 
   private[config] def loadSupport(

@@ -170,14 +170,15 @@ object Permission {
   }
 }
 
-/** A set of provisioned IAM roles that Janus can discover by tag lookup.
-  */
+/** A set of provisioned IAM roles that Janus can discover by tag lookup. */
 case class ProvisionedRole(
-    /*
-     * Hook that will allow us to discover the IAM roles included in this set.
-     * Each relevant role will be found by a tag identifying it as a Janus role
-     * and a tag that matches this value.
-     */
+    /** A friendly name to identify this in a UI or elsewhere. */
+    name: String,
+
+    /** Hook that will allow us to discover the IAM roles included in this set.
+      * Each relevant role will be found by a tag identifying it as a Janus role
+      * and a tag that matches this value.
+      */
     iamRoleTag: String
 )
 

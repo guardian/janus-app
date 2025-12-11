@@ -36,6 +36,7 @@ case class ConfiguredAclEntry(
 )
 
 case class ConfiguredRoleAclEntry(
+    provisionedRoleName: String,
     iamRoleTag: String
 )
 

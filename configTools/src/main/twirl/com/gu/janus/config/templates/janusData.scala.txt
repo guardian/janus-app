@@ -44,7 +44,7 @@ janus {
                         @permissionReference(permission)
                     }
                     @for(role <- aclEntry.roles) {
-                        { iamRoleTag = "@role.iamRoleTag" }
+                        { provisionedRoleName = "@role.name", iamRoleTag = "@role.iamRoleTag" }
                     }
                 ]
             },
@@ -59,7 +59,7 @@ janus {
                         @permissionReference(permission)
                     }
                     @for(role <- aclEntry.roles) {
-                        { iamRoleTag = "@role.iamRoleTag" }
+                        { provisionedRoleName = "@role.name", iamRoleTag = "@role.iamRoleTag" }
                     }
                 ]
             }
