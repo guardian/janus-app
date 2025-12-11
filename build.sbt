@@ -70,7 +70,7 @@ val pekkoSerializationJacksonOverrides = Seq(
  */
 val safeTransitiveDependencies = Seq(
   // See https://github.com/guardian/janus-app/security/dependabot/69
-  "at.yawk.lz4" % "lz4-java" % "1.10.0" % Runtime
+  "at.yawk.lz4" % "lz4-java" % "1.10.1" % Runtime
 )
 
 lazy val root: Project = (project in file("."))
