@@ -44,7 +44,7 @@ janus {
                         @permissionReference(permission)
                     }
                     @for(role <- aclEntry.roles) {
-                        { provisionedRoleName = "@role.name", iamRoleTag = "@role.iamRoleTag" }
+                        { provisionedRoleName = """@role.name""", iamRoleTag = "@role.iamRoleTag" }
                     }
                 ]
             },
@@ -59,7 +59,7 @@ janus {
                         @permissionReference(permission)
                     }
                     @for(role <- aclEntry.roles) {
-                        { provisionedRoleName = "@role.name", iamRoleTag = "@role.iamRoleTag" }
+                        { provisionedRoleName = """@role.name""", iamRoleTag = "@role.iamRoleTag" }
                     }
                 ]
             }
@@ -71,7 +71,7 @@ janus {
             {
                 account = "@permission.account.authConfigKey"
                 label = "@permission.label"
-                description = "@permission.description"
+                description = """@permission.description"""
                 shortTerm = @if(permission.shortTerm) {true} else {false}
                 @permission.policy match {
                     case Some(policy) => {
