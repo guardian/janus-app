@@ -68,7 +68,8 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       }
       .recoverWith { case err =>
         Future.failed(
-          JanusException.failedToLoadDbItem(userId, tableName, err)
+          JanusException
+            .failedToLoadDbItem(toUserIdentity(userId), tableName, err)
         )
       }
   }
@@ -96,7 +97,8 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       }
       .recoverWith { case err =>
         Future.failed(
-          JanusException.failedToLoadDbItem(userName, tableName, err)
+          JanusException
+            .failedToLoadDbItem(toUserIdentity(userName), tableName, err)
         )
       }
   }
@@ -156,7 +158,8 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       .map(_ => ())
       .recoverWith { case err =>
         Future.failed(
-          JanusException.failedToCreateDbItem(userName, tableName, err)
+          JanusException
+            .failedToCreateDbItem(toUserIdentity(userName), tableName, err)
         )
       }
   }
@@ -183,7 +186,12 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       .recoverWith { case err =>
         Future.failed(
           JanusException
-            .failedToUpdateDbItem(userName, tableName, "authCounter", err)
+            .failedToUpdateDbItem(
+              toUserIdentity(userName),
+              tableName,
+              "authCounter",
+              err
+            )
         )
       }
   }
@@ -210,7 +218,12 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       .recoverWith { case err =>
         Future.failed(
           JanusException
-            .failedToUpdateDbItem(userName, tableName, "lastUsedTime", err)
+            .failedToUpdateDbItem(
+              toUserIdentity(userName),
+              tableName,
+              "lastUsedTime",
+              err
+            )
         )
       }
   }
@@ -231,7 +244,8 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       .map(_ => "TODOPasskeyname")
       .recoverWith { case err =>
         Future.failed(
-          JanusException.failedToDeleteDbItem(userName, tableName, err)
+          JanusException
+            .failedToDeleteDbItem(toUserIdentity(userName), tableName, err)
         )
       }
   }
@@ -290,6 +304,6 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       null
     )
   }.adaptError(err =>
-    JanusException.failedToLoadDbItem(userName, tableName, err)
+    JanusException.failedToLoadDbItem(toUserIdentity(userName), tableName, err)
   )
 }
