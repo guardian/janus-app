@@ -1,6 +1,6 @@
 package aws
 
-import software.amazon.awssdk.auth.credentials._
+import software.amazon.awssdk.auth.credentials.*
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.{
   DynamoDbAsyncClient,
