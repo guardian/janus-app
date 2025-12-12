@@ -182,7 +182,7 @@ class AppComponents(context: ApplicationLoader.Context)
     app = HostApp(name = host, uri = URI.create(host)),
     authAction,
     passkeyRepo = new Repository(dynamoDbAsync),
-    challengeRepo = new ChallengeRepository(),
+    challengeRepo = new ChallengeRepository(dynamoDbAsync),
     creationDataExtractor,
     authenticationDataExtractor,
     passkeyNameExtractor,
