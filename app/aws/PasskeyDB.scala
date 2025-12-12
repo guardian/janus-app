@@ -245,18 +245,6 @@ object PasskeyDB {
     JanusException.failedToUpdateDbItem(user, tableName, attribName, err)
   )
 
-  private def f(userId: String): QueryRequest = {
-    val expressionValues = Map(
-      ":username" -> AttributeValue.fromS(userId)
-    )
-    QueryRequest
-      .builder()
-      .tableName(tableName)
-      .keyConditionExpression("username = :username")
-      .expressionAttributeValues(expressionValues.asJava)
-      .build()
-  }
-
   def deleteById(
       user: UserIdentity,
       credentialId: String
