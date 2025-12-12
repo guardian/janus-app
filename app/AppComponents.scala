@@ -216,6 +216,7 @@ class AppComponents(context: ApplicationLoader.Context)
     new PasskeyController(
       controllerComponents,
       authAction,
+      passkeyAuth.verificationAction(),
       newPasskeyController,
       janusData,
       passkeysEnabled,
