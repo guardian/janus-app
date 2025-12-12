@@ -83,7 +83,7 @@ class PasskeyController(
             .find(_.id == passkeyId)
             .map(_.name)
             .toRight(
-              JanusException.missingItemInDb(request.user.username, "Passkeys")
+              JanusException.missingItemInDb(request.user, "Passkeys")
             )
             .toTry
           _ <- PasskeyDB.deleteById(request.user, passkeyId)
