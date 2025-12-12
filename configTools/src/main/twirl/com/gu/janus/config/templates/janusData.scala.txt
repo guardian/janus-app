@@ -1,4 +1,4 @@
-@import com.gu.janus.model.{JanusData, Permission}
+@import com.gu.janus.model.{JanusData, Permission, ProvisionedRole}
 
 @(janusData: JanusData, allPermissions: Set[Permission])
 
@@ -38,22 +38,28 @@ janus {
         ]
 
         acl {
-            @for((user, permissions) <- janusData.access.userAccess){
+            @for((user, aclEntry) <- janusData.access.userAccess){
                 "@user" = [
-                    @for(permission <- permissions){
-                        @permissionReference(permission),
+                    @for(permission <- aclEntry.permissions) {
+                        @permissionReference(permission)
+                    }
+                    @for(role <- aclEntry.roles) {
+                        { provisionedRoleName = """@role.name""", iamRoleTag = "@role.iamRoleTag" }
                     }
                 ]
-            }
+            },
         }
     }
 
     admin {
         acl {
-            @for((user, permissions) <- janusData.admin.userAccess){
+            @for((user, aclEntry) <- janusData.admin.userAccess){
                 "@user" = [
-                    @for(permission <- permissions){
-                        @permissionReference(permission),
+                    @for(permission <- aclEntry.permissions) {
+                        @permissionReference(permission)
+                    }
+                    @for(role <- aclEntry.roles) {
+                        { provisionedRoleName = """@role.name""", iamRoleTag = "@role.iamRoleTag" }
                     }
                 ]
             }
@@ -65,7 +71,7 @@ janus {
             {
                 account = "@permission.account.authConfigKey"
                 label = "@permission.label"
-                description = "@permission.description"
+                description = """@permission.description"""
                 shortTerm = @if(permission.shortTerm) {true} else {false}
                 @permission.policy match {
                     case Some(policy) => {

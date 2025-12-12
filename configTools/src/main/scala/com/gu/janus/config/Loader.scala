@@ -1,15 +1,13 @@
 package com.gu.janus.config
 
-import cats.implicits._
-import com.gu.janus.model._
+import cats.implicits.*
+import com.gu.janus.model.*
+import com.gu.janus.model.given
 import com.typesafe.config.Config
-import io.circe.Decoder
-import io.circe.config.syntax._
-import io.circe.generic.auto._
+import io.circe.config.syntax.*
+import io.circe.generic.auto.*
 
-import java.time.{Duration, Instant, ZoneId, ZonedDateTime, format}
 import scala.util.Try
-import scala.util.control.NonFatal
 
 /** Loads an instance of JanusData from a Typesafe Config definition. If it
   * fails, a description of the failure is made available.
@@ -112,21 +110,7 @@ object Loader {
               s"The 'default permissions' section of the access definition includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
             )
       }
-      acl <- configuredAccess.acl.toList.traverse {
-        case (username, configuredAclEntries) =>
-          for {
-            userPermissions <- configuredAclEntries.traverse {
-              configuredAclEntry =>
-                permissions
-                  .find(p =>
-                    configuredAclEntry.account == p.account.authConfigKey && configuredAclEntry.label == p.label
-                  )
-                  .toRight(
-                    s"The access configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
-                  )
-            }
-          } yield username -> userPermissions.toSet
-      }
+      acl <- parseAclEntries(configuredAccess.acl, permissions)
     } yield ACL(acl.toMap, defaultAccess.toSet)
   }
 
@@ -141,25 +125,47 @@ object Loader {
         .map(err =>
           s"Failed to load admin config from path `janus.admin`: ${err.getMessage}"
         )
-      acl <- configuredAccess.acl.toList.traverse {
-        case (username, configuredAclEntries) =>
-          for {
-            userPermissions <- configuredAclEntries.traverse {
-              configuredAclEntry =>
-                permissions
-                  .find(p =>
-                    configuredAclEntry.account == p.account.authConfigKey && configuredAclEntry.label == p.label
-                  )
-                  .toRight(
-                    s"The admin configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${configuredAclEntry.label}` and refers to the account with key ${configuredAclEntry.account}"
-                  )
-            }
-          } yield username -> userPermissions.toSet
-      }
+      acl <- parseAclEntries(configuredAccess.acl, permissions)
     } yield ACL(
       acl.toMap,
       Set.empty
     ) // TODO: these shouldn't share a representation since Admin doesn't need the default permissions
+  }
+
+  private[config] def parseAclEntries(
+      acl: Map[String, List[ConfiguredAclEntry | ConfiguredRoleAclEntry]],
+      permissions: Set[Permission]
+  ): Either[String, List[(String, ACLEntry)]] = {
+    val permsMap =
+      permissions.map(p => (p.account.authConfigKey, p.label) -> p).toMap
+    acl.toList.traverse { case (username, configuredAclEntries) =>
+      configuredAclEntries
+        .foldLeft[Either[String, ACLEntry]](
+          Right(ACLEntry(Set.empty, Set.empty))
+        ) {
+          case (acc, entry: ConfiguredAclEntry) =>
+            for {
+              current <- acc
+              permission <- permsMap
+                .get((entry.account, entry.label))
+                .toRight(
+                  s"The access configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${entry.label}` and refers to the account with key ${entry.account}"
+                )
+            } yield ACLEntry(current.permissions + permission, current.roles)
+
+          case (acc, entry: ConfiguredRoleAclEntry) =>
+            acc.map(current =>
+              ACLEntry(
+                current.permissions,
+                current.roles + ProvisionedRole(
+                  entry.provisionedRoleName,
+                  entry.iamRoleTag
+                )
+              )
+            )
+        }
+        .map(username -> _)
+    }
   }
 
   private[config] def loadSupport(
