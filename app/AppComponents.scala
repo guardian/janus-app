@@ -1,7 +1,9 @@
 import aws.Clients
 import com.gu.googleauth.AuthAction
+import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
+import com.gu.playpasskeyauth.PasskeyAuth
 import com.gu.playpasskeyauth.models.HostApp
 import com.gu.playpasskeyauth.web.{
   AuthenticationDataExtractor,
@@ -79,7 +81,6 @@ class AppComponents(context: ApplicationLoader.Context)
     Config.googleSettings(configuration, secretStateSupplier)
   val googleGroupChecker = Config.googleGroupChecker(configuration)
   val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
-
   given dynamodDB: DynamoDbClient =
     if (context.environment.mode == play.api.Mode.Prod)
       DynamoDbClient.builder().region(EU_WEST_1).build()
@@ -136,10 +137,6 @@ class AppComponents(context: ApplicationLoader.Context)
       )
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
-
-  // =====
-  import com.gu.googleauth.AuthAction.UserIdentityRequest
-  import com.gu.playpasskeyauth.PasskeyAuth
 
   private val creationDataExtractor = new CreationDataExtractor {
     def findCreationData[A](
@@ -198,7 +195,6 @@ class AppComponents(context: ApplicationLoader.Context)
       authAction,
       passkeyAuth.verificationAction()
     )
-  // =====
 
   override def router: Router = new Routes(
     httpErrorHandler,
