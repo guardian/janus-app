@@ -19,7 +19,7 @@ jobs:
 
       # Required because Dependabot Alerts doesn't natively support Scala
       - uses: guardian/setup-scala@cc7b39e238d789370aa98fa5f07e609b6527657d # v1.1.0
-      - uses: scalacenter/sbt-dependency-submission@64084844d2b0a9b6c3765f33acde2fbe3f5ae7d3 # v3.1.0
+      - uses: scalacenter/sbt-dependency-submission@768f9b6dc79b0f5f2d103a706681fa6e206b86bc # v3.2.0
       
       - uses: actions/dependency-review-action@3c4e3dcb1aa7874d2c16be7d79418e9b7efd6261 # v4.8.2
         with:
