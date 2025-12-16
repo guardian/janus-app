@@ -15,11 +15,10 @@ object UserAccess {
   /** A user's basic access. Note that default permissions are available for
     * anyone mentioned in the Access list.
     */
-  def userAccess(username: String, acl: ACL): Option[Set[Permission]] = {
+  def userAccess(username: String, acl: ACL): Option[Set[Permission]] =
     acl.userAccess
       .get(username)
-      .map(permissions => permissions ++ acl.defaultPermissions)
-  }
+      .map(_.permissions ++ acl.defaultPermissions)
 
   /** Checks if the username is explicitly mentioned in the provided ACL.
     */

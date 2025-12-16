@@ -1,6 +1,7 @@
 package com.gu.janus.config
 
-import com.gu.janus.model.{JanusData, Permission}
+import com.gu.janus.model.JanusData
+import com.gu.janus.model.Permission.allPermissions
 
 object Writer {
   def toConfig(janusData: JanusData): String = {
@@ -8,13 +9,6 @@ object Writer {
     stripWhitespace(
       templates.txt.janusData(janusData, uniquePermissions).toString
     )
-  }
-
-  private[config] def allPermissions(janusData: JanusData): Set[Permission] = {
-    janusData.access.defaultPermissions ++
-      janusData.access.userAccess.values.flatten.toSet ++
-      janusData.admin.userAccess.values.flatten.toSet ++
-      janusData.support.supportAccess
   }
 
   /** Twirl is designed for HTML, not plain text. As a result it's tricky to

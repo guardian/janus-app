@@ -1,12 +1,10 @@
 package com.gu.janus.config
 
-import com.gu.janus.model._
-import com.gu.janus.policy.Iam.{Action, Policy, Resource, Statement}
+import com.gu.janus.model.*
 import com.gu.janus.policy.Iam.Effect.Allow
+import com.gu.janus.policy.Iam.{Action, Policy, Resource, Statement}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-
-import java.time.Duration
 
 class WriterTest extends AnyFreeSpec with Matchers {
   val account1 = AwsAccount("Test 1", "test1")
@@ -17,140 +15,6 @@ class WriterTest extends AnyFreeSpec with Matchers {
     Seq(Resource("*"))
   )
   val simplePolicy = Policy(Seq(simpleStatement))
-
-  "allPermissions" - {
-    "returns nothing for an empty JanusData" in {
-      val janusData = JanusData(
-        Set.empty,
-        access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty),
-        None
-      )
-      Writer.allPermissions(janusData) shouldBe empty
-    }
-
-    "includes default access permissions" in {
-      val permission =
-        Permission(account1, "perm1", "Test permission", simplePolicy, false)
-      val janusData = JanusData(
-        Set.empty,
-        access = ACL(Map.empty, Set(permission)),
-        admin = ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty),
-        None
-      )
-      Writer.allPermissions(janusData) shouldEqual Set(permission)
-    }
-
-    "includes access permissions" in {
-      val permission =
-        Permission(account1, "perm1", "Test permission", simplePolicy, false)
-      val janusData = JanusData(
-        Set.empty,
-        access = ACL(Map("user1" -> Set(permission)), Set.empty),
-        admin = ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty),
-        None
-      )
-      Writer.allPermissions(janusData) shouldEqual Set(permission)
-    }
-
-    "includes access permissions from mulitple users" in {
-      val permission1 =
-        Permission(account1, "perm1", "Test permission 1", simplePolicy, false)
-      val permission2 =
-        Permission(account1, "perm2", "Test permission 2", simplePolicy, false)
-      val janusData = JanusData(
-        Set.empty,
-        access = ACL(
-          Map(
-            "user1" -> Set(permission1),
-            "user2" -> Set(permission2)
-          ),
-          Set.empty
-        ),
-        admin = ACL(Map.empty, Set.empty),
-        SupportACL.create(Map.empty, Set.empty),
-        None
-      )
-      Writer.allPermissions(janusData) shouldEqual Set(permission1, permission2)
-    }
-
-    "includes admin permissions" in {
-      val permission1 =
-        Permission(account1, "perm1", "Test permission 1", simplePolicy, false)
-      val permission2 =
-        Permission(account1, "perm2", "Test permission 2", simplePolicy, false)
-      val janusData = JanusData(
-        Set.empty,
-        access = ACL(Map.empty, Set.empty),
-        admin = ACL(
-          Map(
-            "admin1" -> Set(permission1),
-            "admin2" -> Set(permission2)
-          ),
-          Set.empty
-        ),
-        SupportACL.create(Map.empty, Set.empty),
-        None
-      )
-      Writer.allPermissions(janusData) shouldEqual Set(permission1, permission2)
-    }
-
-    "includes support permissions" in {
-      val permission =
-        Permission(account1, "perm", "Test permission", simplePolicy, false)
-      val janusData = JanusData(
-        Set.empty,
-        access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
-        support = SupportACL
-          .create(Map.empty, Set(permission)),
-        None
-      )
-      Writer.allPermissions(janusData) shouldEqual Set(permission)
-    }
-
-    "includes permissions from all sources" in {
-      val permission1 =
-        Permission(account1, "perm1", "Test permission 1", simplePolicy, false)
-      val permission2 =
-        Permission(account1, "perm2", "Test permission 2", simplePolicy, false)
-      val permission3 =
-        Permission(account1, "perm3", "Test permission 3", simplePolicy, false)
-      val permission4 =
-        Permission(account1, "perm4", "Test permission 4", simplePolicy, false)
-      val permission5 =
-        Permission(account1, "perm5", "Test permission 5", simplePolicy, false)
-      val janusData = JanusData(
-        Set.empty,
-        access = ACL(
-          Map(
-            "user1" -> Set(permission1),
-            "user2" -> Set(permission2)
-          ),
-          Set.empty
-        ),
-        admin = ACL(
-          Map(
-            "admin1" -> Set(permission3),
-            "admin2" -> Set(permission4)
-          ),
-          Set.empty
-        ),
-        SupportACL.create(Map.empty, Set(permission5)),
-        None
-      )
-      Writer.allPermissions(janusData) shouldEqual Set(
-        permission1,
-        permission2,
-        permission3,
-        permission4,
-        permission5
-      )
-    }
-  }
 
   "toConfig" - {
     "includes the permissionsRepo" in {
@@ -187,7 +51,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
       )
       val janusData = JanusData(
         Set(account1),
-        access = ACL(Map("user1" -> Set(permission)), Set.empty),
+        access =
+          ACL(Map("user1" -> ACLEntry(Set(permission), Set.empty)), Set.empty),
         admin = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None
@@ -207,7 +72,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
       )
       val janusData = JanusData(
         Set(account1),
-        access = ACL(Map("user1" -> Set(permission)), Set.empty),
+        access =
+          ACL(Map("user1" -> ACLEntry(Set(permission), Set.empty)), Set.empty),
         admin = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None
@@ -215,6 +81,214 @@ class WriterTest extends AnyFreeSpec with Matchers {
       Writer.toConfig(janusData) should include(
         """arn:aws:iam::aws:policy/ReadOnlyAccess"""
       )
+    }
+
+    "access section" - {
+      val permission = Permission(
+        account1,
+        "accessPerm",
+        "Access permission",
+        simplePolicy,
+        false
+      )
+      val provisionedRole = ProvisionedRole("TestRole", "test-role-tag")
+
+      "includes user in ACL" in {
+        val janusData = JanusData(
+          Set(account1),
+          access = ACL(
+            Map("testuser" -> ACLEntry(Set(permission), Set.empty)),
+            Set.empty
+          ),
+          admin = ACL(Map.empty, Set.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        )
+        Writer.toConfig(janusData) should include(""""testuser"""")
+      }
+
+      "includes provisioned role name in ACL entry" in {
+        val janusData = JanusData(
+          Set(account1),
+          access = ACL(
+            Map("testuser" -> ACLEntry(Set.empty, Set(provisionedRole))),
+            Set.empty
+          ),
+          admin = ACL(Map.empty, Set.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        )
+        Writer.toConfig(janusData) should include(
+          s"provisionedRoleName = \"\"\"TestRole\"\"\""
+        )
+      }
+
+      "includes provisioned role iamRoleTag in ACL entry" in {
+        val janusData = JanusData(
+          Set(account1),
+          access = ACL(
+            Map("testuser" -> ACLEntry(Set.empty, Set(provisionedRole))),
+            Set.empty
+          ),
+          admin = ACL(Map.empty, Set.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        )
+        Writer.toConfig(janusData) should include(
+          """iamRoleTag = "test-role-tag""""
+        )
+      }
+
+      "includes multiple provisioned roles for a single user" in {
+        val role1 = ProvisionedRole("Role1", "role-1-tag")
+        val role2 = ProvisionedRole("Role2", "role-2-tag")
+        val janusData = JanusData(
+          Set(account1),
+          access = ACL(
+            Map("testuser" -> ACLEntry(Set.empty, Set(role1, role2))),
+            Set.empty
+          ),
+          admin = ACL(Map.empty, Set.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        )
+        val config = Writer.toConfig(janusData)
+        config should include(s"provisionedRoleName = \"\"\"Role1\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"Role2\"\"\"")
+      }
+
+      "includes multiple permissions and multiple roles for a single user" in {
+        val perm1 =
+          Permission(account1, "perm1", "Permission 1", simplePolicy, false)
+        val perm2 =
+          Permission(account1, "perm2", "Permission 2", simplePolicy, false)
+        val role1 = ProvisionedRole("Role1", "role-1-tag")
+        val role2 = ProvisionedRole("Role2", "role-2-tag")
+        val janusData = JanusData(
+          Set(account1),
+          access = ACL(
+            Map("testuser" -> ACLEntry(Set(perm1, perm2), Set(role1, role2))),
+            Set.empty
+          ),
+          admin = ACL(Map.empty, Set.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        )
+        val config = Writer.toConfig(janusData)
+        config should include("""label = "perm1"""")
+        config should include("""label = "perm2"""")
+        config should include(s"provisionedRoleName = \"\"\"Role1\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"Role2\"\"\"")
+      }
+    }
+
+    "admin section" - {
+      val permission = Permission(
+        account1,
+        "adminPerm",
+        "Admin permission",
+        simplePolicy,
+        false
+      )
+      val provisionedRole = ProvisionedRole("AdminRole", "admin-role-tag")
+
+      "includes user in admin ACL" in {
+        val janusData = JanusData(
+          Set(account1),
+          access = ACL(Map.empty, Set.empty),
+          admin = ACL(
+            Map("adminuser" -> ACLEntry(Set(permission), Set.empty)),
+            Set.empty
+          ),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        )
+        Writer.toConfig(janusData) should include(""""adminuser"""")
+      }
+
+      "includes provisioned role in admin ACL entry" in {
+        val janusData = JanusData(
+          Set(account1),
+          access = ACL(Map.empty, Set.empty),
+          admin = ACL(
+            Map("adminuser" -> ACLEntry(Set.empty, Set(provisionedRole))),
+            Set.empty
+          ),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        )
+        Writer.toConfig(janusData) should include(
+          s"provisionedRoleName = \"\"\"AdminRole\"\"\""
+        )
+      }
+
+      "includes provisioned role iamRoleTag in admin ACL entry" in {
+        val janusData = JanusData(
+          Set(account1),
+          access = ACL(Map.empty, Set.empty),
+          admin = ACL(
+            Map("adminuser" -> ACLEntry(Set.empty, Set(provisionedRole))),
+            Set.empty
+          ),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        )
+        Writer.toConfig(janusData) should include(
+          """iamRoleTag = "admin-role-tag""""
+        )
+      }
+
+      "includes multiple provisioned roles for a single user" in {
+        val role1 = ProvisionedRole("AdminRole1", "admin-role-1-tag")
+        val role2 = ProvisionedRole("AdminRole2", "admin-role-2-tag")
+        val janusData = JanusData(
+          Set(account1),
+          access = ACL(Map.empty, Set.empty),
+          admin = ACL(
+            Map("adminuser" -> ACLEntry(Set.empty, Set(role1, role2))),
+            Set.empty
+          ),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        )
+        val config = Writer.toConfig(janusData)
+        config should include(s"provisionedRoleName = \"\"\"AdminRole1\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"AdminRole2\"\"\"")
+      }
+
+      "includes multiple permissions and multiple roles for a single user" in {
+        val perm1 = Permission(
+          account1,
+          "adminPerm1",
+          "Admin Permission 1",
+          simplePolicy,
+          false
+        )
+        val perm2 = Permission(
+          account1,
+          "adminPerm2",
+          "Admin Permission 2",
+          simplePolicy,
+          false
+        )
+        val role1 = ProvisionedRole("AdminRole1", "admin-role-1-tag")
+        val role2 = ProvisionedRole("AdminRole2", "admin-role-2-tag")
+        val janusData = JanusData(
+          Set(account1),
+          access = ACL(Map.empty, Set.empty),
+          admin = ACL(
+            Map("adminuser" -> ACLEntry(Set(perm1, perm2), Set(role1, role2))),
+            Set.empty
+          ),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        )
+        val config = Writer.toConfig(janusData)
+        config should include("""label = "adminPerm1"""")
+        config should include("""label = "adminPerm2"""")
+        config should include(s"provisionedRoleName = \"\"\"AdminRole1\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"AdminRole2\"\"\"")
+      }
     }
   }
 }

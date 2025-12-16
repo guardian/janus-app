@@ -14,9 +14,16 @@ case class JanusData(
 )
 
 case class ACL(
-    userAccess: Map[String, Set[Permission]],
+    userAccess: Map[String, ACLEntry],
     defaultPermissions: Set[Permission] = Set.empty
 )
+
+/** Access available to a single user. */
+case class ACLEntry(
+    permissions: Set[Permission],
+    roles: Set[ProvisionedRole]
+)
+
 case class SupportACL private (
     rota: Map[Instant, (String, String)],
     supportAccess: Set[Permission]
@@ -149,7 +156,31 @@ object Permission {
       shortTerm
     )
   }
+
+  def allPermissions(janusData: JanusData): Set[Permission] = {
+    def perms(
+        access: Map[String, ACLEntry]
+    ): Set[Permission] =
+      access.values.flatMap(_.permissions).toSet
+
+    janusData.access.defaultPermissions ++
+      perms(janusData.access.userAccess) ++
+      perms(janusData.admin.userAccess) ++
+      janusData.support.supportAccess
+  }
 }
+
+/** A set of provisioned IAM roles that Janus can discover by tag lookup. */
+case class ProvisionedRole(
+    /** A friendly name to identify this in a UI or elsewhere. */
+    name: String,
+
+    /** Hook that will allow us to discover the IAM roles included in this set.
+      * Each relevant role will be found by a tag identifying it as a Janus role
+      * and a tag that matches this value.
+      */
+    iamRoleTag: String
+)
 
 sealed abstract class JanusAccessType(override val toString: String)
 object JCredentials extends JanusAccessType("credentials")
