@@ -1,8 +1,8 @@
 package com.example
 
-import Accounts._
-import Policies.AccountExtensions
-import com.gu.janus.model._
+import com.example.Accounts.*
+import com.example.Policies.AccountExtensions
+import com.gu.janus.model.*
 
 object Admin {
 
@@ -12,11 +12,11 @@ object Admin {
     "sherlock.holmes"
   )
   private val fullAdminAccess = allAccounts.flatMap(_.accountAdmin)
-  private val fullAdmin: Map[String, Set[Permission]] = {
-    fullAdminUsers
-      .map(adminUser => (adminUser, fullAdminAccess))
-      .toMap
-  }
+  private val fullAdmin = fullAdminUsers
+    .map(adminUser =>
+      adminUser -> ACLEntry(permissions = fullAdminAccess, roles = Set.empty)
+    )
+    .toMap
 
   val acl = ACL(fullAdmin)
 }

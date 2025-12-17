@@ -24,6 +24,12 @@ object Access {
   // Default permissions are granted to every developer that is named below
   private val defaultPermissions = Production.billing ++ Staging.billing
 
-  val acl = ACL(users.toMap, defaultPermissions)
-
+  val acl = ACL(
+    users
+      .map((user, permissions) =>
+        user -> ACLEntry(permissions, roles = Set.empty)
+      )
+      .toMap,
+    defaultPermissions
+  )
 }
