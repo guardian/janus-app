@@ -1,13 +1,16 @@
-import aws.Clients
+import aws.{Clients, ProvisionedRoleFetcher}
+import cats.effect.unsafe.implicits.global
 import com.gu.googleauth.AuthAction
-import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
+import com.gu.play.secretrotation.*
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
+import data.ProvisionedRoleCache
 import filters.{HstsFilter, PasskeyAuthFilter, PasskeyRegistrationAuthFilter}
 import models.*
 import models.AccountConfigStatus.*
+import play.api.Mode.Prod
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSComponents
 import play.api.mvc.{AnyContent, EssentialFilter}
@@ -20,6 +23,7 @@ import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.time.Duration
+import scala.concurrent.duration.FiniteDuration
 import scala.util.chaining.scalaUtilChainingOps
 
 class AppComponents(context: ApplicationLoader.Context)
@@ -85,6 +89,26 @@ class AppComponents(context: ApplicationLoader.Context)
       )
     case ConfigSuccess =>
   }
+
+  private val provisionedRoleCache = new ProvisionedRoleCache()
+  private val provisionedRoleFetchingCancellationToken = {
+    val accounts = mode match {
+      case Prod => janusData.accounts
+      case _    =>
+        janusData.accounts.filter(_.authConfigKey == "developerPlayground")
+    }
+    val fetcher = new ProvisionedRoleFetcher(
+      accounts,
+      config = configuration,
+      sts = Clients.stsClient,
+      cache = provisionedRoleCache,
+      fetchRate = configuration.get[FiniteDuration]("provisionedRole.fetchRate")
+    )
+    fetcher.startPolling().compile.drain.unsafeRunCancelable()
+  }
+  applicationLifecycle.addStopHook(() =>
+    provisionedRoleFetchingCancellationToken()
+  )
 
   val authAction = new AuthAction[AnyContent](
     googleAuthConfig,
@@ -163,7 +187,8 @@ class AppComponents(context: ApplicationLoader.Context)
       controllerComponents,
       authAction,
       configuration,
-      passkeysEnablingCookieName
+      passkeysEnablingCookieName,
+      provisionedRoleCache
     ),
     assets
   )

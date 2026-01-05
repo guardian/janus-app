@@ -3,6 +3,7 @@ package controllers
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import conf.Config
+import data.ProvisionedRoleCache
 import logic.Owners
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
@@ -14,7 +15,8 @@ class Utility(
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
     configuration: Configuration,
-    passkeysEnablingCookieName: String
+    passkeysEnablingCookieName: String,
+    provisionedRoleCache: ProvisionedRoleCache
 )(using mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
@@ -37,6 +39,17 @@ class Utility(
           .warn(s"Couldn't lookup account number for ${account.name}", err)
       }
     Ok(views.html.accounts(accountData, request.user, janusData))
+  }
+
+  def provisionedRoleStatus: Action[AnyContent] = authAction {
+    implicit request =>
+      Ok(
+        views.html.provisionedRoleStatus(
+          provisionedRoleCache.getAll.values.flatten.toList,
+          request.user,
+          janusData
+        )
+      )
   }
 
   /** Temporary action to opt in to the passkeys integration */
