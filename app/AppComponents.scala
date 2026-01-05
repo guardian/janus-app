@@ -5,6 +5,7 @@ import com.gu.play.secretrotation.aws.parameterstore
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
+import data.{IamRoleCache, IamRoleStreamProcessor}
 import filters.{HstsFilter, PasskeyAuthFilter, PasskeyRegistrationAuthFilter}
 import models.*
 import models.AccountConfigStatus.*
@@ -18,8 +19,10 @@ import play.filters.csp.CSPComponents
 import router.Routes
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.iam.IamClient
 
 import java.time.Duration
+import scala.concurrent.Future
 import scala.util.chaining.scalaUtilChainingOps
 
 class AppComponents(context: ApplicationLoader.Context)
@@ -84,6 +87,17 @@ class AppComponents(context: ApplicationLoader.Context)
         s"One or more accounts are missing from config: ${accounts.mkString(", ")}"
       )
     case ConfigSuccess =>
+  }
+
+  private val iamClient = IamClient.builder().build()
+  private val iamRoleCache = new IamRoleCache()
+  private val processor = new IamRoleStreamProcessor(iamRoleCache, iamClient)
+  private val fiber = processor.startPolling.compile.drain.unsafeRunCancelable()
+
+  applicationLifecycle.addStopHook { () =>
+    fiber()
+    iamClient.close()
+    Future.successful(())
   }
 
   val authAction = new AuthAction[AnyContent](
