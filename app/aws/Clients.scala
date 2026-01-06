@@ -1,8 +1,9 @@
 package aws
 
-import software.amazon.awssdk.auth.credentials._
+import software.amazon.awssdk.auth.credentials.*
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.iam.IamClient
 import software.amazon.awssdk.services.ssm.SsmClient
 import software.amazon.awssdk.services.sts.StsClient
 
@@ -49,6 +50,12 @@ object Clients {
   lazy val ssm: SsmClient = SsmClient
     .builder()
     .credentialsProvider(securityCredentialsProviderChain)
+    .region(EU_WEST_1)
+    .build()
+
+  lazy val iam: IamClient = IamClient
+    .builder()
+    .credentialsProvider(janusCredentialsProviderChain)
     .region(EU_WEST_1)
     .build()
 

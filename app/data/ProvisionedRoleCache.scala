@@ -1,14 +1,10 @@
 package data
 
+import models.IamRoleInfo
+
 import java.util.concurrent.atomic.AtomicReference
 
-case class IamRoleInfo(
-    roleName: String,
-    roleArn: String,
-    tags: Map[String, String]
-)
-
-class IamRoleCache {
+class ProvisionedRoleCache {
   private val cache =
     new AtomicReference[Map[String, List[IamRoleInfo]]](Map.empty)
 
