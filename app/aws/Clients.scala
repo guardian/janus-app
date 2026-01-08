@@ -39,6 +39,8 @@ object Clients {
 
   private lazy val securityCredentialsProviderChain =
     makeCredentialsProviderChain(securityProfileName)
+  private lazy val testCredentialsProviderChain =
+    makeCredentialsProviderChain("developerPlayground")
 
   lazy val stsClient: StsClient =
     StsClient
@@ -55,7 +57,8 @@ object Clients {
 
   lazy val iam: IamClient = IamClient
     .builder()
-    .credentialsProvider(janusCredentialsProviderChain)
+//    .credentialsProvider(securityCredentialsProviderChain)
+    .credentialsProvider(testCredentialsProviderChain)
     .region(EU_WEST_1)
     .build()
 

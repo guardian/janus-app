@@ -1,9 +1,10 @@
+// TODO move to aws
 package data
 
 import cats.effect.IO
 import fs2.Stream
 import models.IamRoleInfo
-import play.api.inject.ApplicationLifecycle
+import play.api.Logging
 import software.amazon.awssdk.services.iam.IamClient
 import software.amazon.awssdk.services.iam.model.*
 
@@ -11,52 +12,66 @@ import scala.concurrent.duration.*
 import scala.jdk.CollectionConverters.*
 
 class ProvisionedRoleFetcher(
-    lifecycle: ApplicationLifecycle,
     iam: IamClient,
     cache: ProvisionedRoleCache,
-    fetchRate: FiniteDuration,
-    isJanusRoleTag: String = "janus:discoverable",
-    janusRoleTag: String = "janus:permission"
-) {
+    fetchRate: FiniteDuration
+) extends Logging {
 
-  import cats.effect.unsafe.implicits.global
-  lifecycle.addStopHook(startPolling.compile.drain.unsafeRunCancelable())
+  /** All roles that are discoverable by Janus have this path. */
+//  private val discoverableRolePath: String = "/gu/janus/discoverable/"
+  private val discoverableRolePath: String = "/gu-janus-discoverable/"
 
-  private def startPolling: Stream[IO, Unit] = {
+  /** Tag attached to a role that is part of a
+    * [[com.gu.janus.model.ProvisionedRole]].
+    */
+  private val provisionedRoleTag: String = "gu:janus:permission"
+
+  // TODO polling shouldn't stack up - so if one is missed it should be lost - test this
+  def startPolling(): Stream[IO, Unit] =
     Stream
-      .awakeEvery[IO](fetchRate)
-      .evalMap(_ => IO(fetchAndGroupRoles()))
+      // do first fetch immediately
+      .emit(())
+      // then periodically
+      .append(Stream.awakeEvery[IO](fetchRate))
+      .evalTap(_ => IO(logger.info("Refreshing provisioned role cache...")))
+      .evalMap(_ => IO.blocking(fetchRoles()))
+      .evalMap(roles => IO.blocking(fetchRoleTags(roles)))
+      .evalMap(roleTags =>
+        IO(IamRoleInfo.groupIamRolesByTag(roleTags, provisionedRoleTag))
+      )
       .evalMap(roles => IO(cache.update(roles)))
-  }
+      .evalTap(_ =>
+        IO(
+          logger.info(
+            s"Refresh of provisioned role cache complete.  Now holds ${cache.getAll.size} entries"
+          )
+        )
+      )
+      .handleErrorWith { err =>
+        Stream.eval(
+          IO(logger.error("Failed to refresh provisioned role cache", err))
+        )
+      }
 
   // TODO: fetch across all accounts
-  private def fetchAndGroupRoles(): Map[String, List[IamRoleInfo]] = {
-    // Fetches a page of roles rather than a complete set
-    val response = iam.listRoles()
-    val allRoles = response.roles().asScala.toList
-
-    allRoles
-      .flatMap { role =>
-        val tags = fetchRoleTags(role.roleName())
-        // Only include roles that have the isJanusRole tag
-        if (tags.contains(isJanusRoleTag)) {
-          // Group by janusRole tag value if it exists
-          tags.get(janusRoleTag).map { tagValue =>
-            IamRoleInfo(
-              role.roleName(),
-              role.arn(),
-              tags
-            ) -> tagValue
-          }
-        } else None
-      }
-      .groupMap(_._2)(_._1)
+  private def fetchRoles(): List[Role] = {
+    val request =
+      ListRolesRequest.builder.pathPrefix(discoverableRolePath).build()
+    iam
+      .listRolesPaginator(request)
+      .asScala
+      .foldLeft(List.empty[Role])((acc, page) =>
+        acc ++ page.roles.asScala.toList
+      )
   }
 
-  // TODO fetch all tags for all roles at once?
-  private def fetchRoleTags(roleName: String): Map[String, String] = {
-    val request = ListRoleTagsRequest.builder().roleName(roleName).build()
-    val response = iam.listRoleTags(request)
-    response.tags().asScala.map(tag => tag.key() -> tag.value()).toMap
-  }
+  private def fetchRoleTags(roles: List[Role]): Map[Role, Set[Tag]] =
+    roles.map { role =>
+      val request = ListRoleTagsRequest.builder.roleName(role.roleName).build()
+      role -> iam
+        .listRoleTags(request)
+        .tags()
+        .asScala
+        .toSet
+    }.toMap
 }

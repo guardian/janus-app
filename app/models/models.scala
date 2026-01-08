@@ -175,9 +175,3 @@ object JanusException {
       causedBy = None
     )
 }
-
-case class IamRoleInfo(
-    roleName: String,
-    roleArn: String,
-    tags: Map[String, String]
-)

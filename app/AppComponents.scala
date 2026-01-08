@@ -91,11 +91,15 @@ class AppComponents(context: ApplicationLoader.Context)
   private val provisionedRoleCache = new ProvisionedRoleCache()
   private val provisionedRoleFetcher =
     new ProvisionedRoleFetcher(
-      applicationLifecycle,
       Clients.iam,
       provisionedRoleCache,
       fetchRate = 1.minute // TODO config
     )
+  // TODO better runtime
+  import cats.effect.unsafe.implicits.global
+  applicationLifecycle.addStopHook(
+    provisionedRoleFetcher.startPolling().compile.drain.unsafeRunCancelable()
+  )
 
   val authAction = new AuthAction[AnyContent](
     googleAuthConfig,
@@ -174,7 +178,8 @@ class AppComponents(context: ApplicationLoader.Context)
       controllerComponents,
       authAction,
       configuration,
-      passkeysEnablingCookieName
+      passkeysEnablingCookieName,
+      provisionedRoleCache
     ),
     assets
   )
