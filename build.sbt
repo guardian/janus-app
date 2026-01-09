@@ -114,7 +114,7 @@ lazy val root: Project = (project in file("."))
       ExclusionRule(
         organization = "net.sourceforge.htmlunit",
         name = "htmlunit"
-      ),
+      )
     ),
 
     // local development
