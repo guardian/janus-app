@@ -37,7 +37,9 @@
                             @rolesStatus.roleArn
                             </td>
                             <td>
-                            @rolesStatus.tags.map(kv => s"${kv._1} -> ${kv._2}").mkString(", ")
+                              @for((key, value) <- rolesStatus.tags) {
+                                  @{s"$key -> $value"} <br/>
+                              }
                             </td>
                         </tr>
                     }

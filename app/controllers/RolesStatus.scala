@@ -15,7 +15,7 @@ import software.amazon.awssdk.arns.Arn
 import software.amazon.awssdk.services.sts.StsClient
 
 import scala.jdk.OptionConverters.*
-import scala.util.Try
+import scala.util.{Try, Success, Failure}
 
 class RolesStatus(
     janusData: JanusData,
@@ -34,14 +34,11 @@ class RolesStatus(
       federationConfig => {
         federationConfig.keys
           .flatMap(k => {
-            println(k);
-            println(federationConfig.get[String](k));
             Arn.fromString(federationConfig.get[String](k)).accountId().toScala
           })
           .toList
       }
     )
-    _ = println(account)
     i <- (1 to (Math.random() * 10 + 1).toInt)
   } yield {
     val tags = (1 to (Math.random() * 3 + 1).toInt)
@@ -72,10 +69,11 @@ class RolesStatus(
     val matchingAccountMaybe: Option[Try[String]] = accountOwnersLookup
       .find(_._1.name == account)
       .map(_._3)
+
     val rolesForThisAccount = matchingAccountMaybe match {
-      case Some(accountIdTry) if accountIdTry.isSuccess =>
+      case Some(Success(accountId)) =>
         rolesStatuses.filter(roleStatus =>
-          roleStatus.roleArn.accountId().toScala.contains(accountIdTry.get)
+          roleStatus.roleArn.accountId().toScala.contains(accountId)
         )
       case _ => Set.empty
     }
