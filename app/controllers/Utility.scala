@@ -46,10 +46,43 @@ class Utility(
       Ok(
         views.html.provisionedRoleStatus(
           provisionedRoleStatusManager.getCacheStatus,
+
+  def rolesStatus: Action[AnyContent] = authAction { implicit request =>
+    Ok(
+      views.html
+        .rolesStatus("All", rolesStatuses, request.user, janusData)
+    )
+  }
+
+  private val accountOwnersLookup = Owners
+    .accountOwnerInformation(
+      janusData.accounts.toList,
+      janusData.access
+    )(account => Config.accountNumber(account.authConfigKey, configuration))
+
+  def rolesStatusForAccount(account: String): Action[AnyContent] = {
+    val matchingAccountMaybe: Option[Try[String]] = accountOwnersLookup
+      .find(_._1.name == account)
+      .map(_._3)
+
+    val rolesForThisAccount = matchingAccountMaybe match {
+      case Some(Success(accountId)) =>
+        rolesStatuses.filter(roleStatus =>
+          roleStatus.roleArn.accountId().toScala.contains(accountId)
+        )
+      case _ => Set.empty
+    }
+
+    authAction { implicit request =>
+      Ok(
+        views.html.rolesStatus(
+          account,
+          rolesForThisAccount,
           request.user,
           janusData
         )
       )
+    }
   }
 
   /** Temporary action to opt in to the passkeys integration */
