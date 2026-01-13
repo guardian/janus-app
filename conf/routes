@@ -29,8 +29,8 @@ GET           /revoke-request                           controllers.RevokePermis
 POST          /revoke-request                           controllers.RevokePermissions.revokeAccount(accountId: String)
 GET           /revoke-confirmation                      controllers.RevokePermissions.revokeConfirmation(accountId: Option[String])
 
-GET           /rolesStatus                              controllers.RolesStatus.rolesStatus
-GET           /rolesStatus/account/:accountName         controllers.RolesStatus.rolesStatusForAccount(accountName: String)
+GET           /roles-status                             controllers.RolesStatus.rolesStatus
+GET           /roles-status/account/:account            controllers.RolesStatus.rolesStatusForAccount(account: String)
 
 GET           /login                                    controllers.AuthController.login
 GET           /loginError                               controllers.AuthController.loginError
