@@ -1,5 +1,6 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.{AwsAccount, JanusData}
+@import models.IamRoleInfo
 @import play.api.Mode
 
 @(accountName: String, rolesStatuses: Set[IamRoleInfo], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)

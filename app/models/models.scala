@@ -8,6 +8,7 @@ import play.api.http.Status.{
   UNAUTHORIZED
 }
 import play.api.libs.json.{Json, Writes}
+import software.amazon.awssdk.arns.Arn
 
 enum AccountConfigStatus:
   case FederationConfigError(causedBy: Throwable)
@@ -175,3 +176,9 @@ object JanusException {
       causedBy = None
     )
 }
+
+case class IamRoleInfo(
+    roleName: String,
+    roleArn: Arn,
+    tags: Map[String, String]
+)

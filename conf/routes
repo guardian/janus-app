@@ -29,9 +29,6 @@ GET           /revoke-request                           controllers.RevokePermis
 POST          /revoke-request                           controllers.RevokePermissions.revokeAccount(accountId: String)
 GET           /revoke-confirmation                      controllers.RevokePermissions.revokeConfirmation(accountId: Option[String])
 
-GET           /roles-status                             controllers.RolesStatus.rolesStatus
-GET           /roles-status/account/:account            controllers.RolesStatus.rolesStatusForAccount(account: String)
-
 GET           /login                                    controllers.AuthController.login
 GET           /loginError                               controllers.AuthController.loginError
 GET           /oauthCallback                            controllers.AuthController.oauthCallback
@@ -42,6 +39,9 @@ POST          /passkey/auth-options                     controllers.PasskeyContr
 POST          /passkey/registration-auth-options        controllers.PasskeyController.registrationAuthenticationOptions
 POST          /passkey/register                         controllers.PasskeyController.register
 DELETE        /passkey/:passkeyId                       controllers.PasskeyController.deletePasskey(passkeyId: String)
+
+GET           /roles-status                             controllers.Utility.rolesStatus
+GET           /roles-status/account/:account            controllers.Utility.rolesStatusForAccount(account: String)
 
 # Tmp routes for passkey trial
 GET           /opt/in/passkeys                          controllers.Utility.optInToPasskeys
