@@ -3,49 +3,52 @@
 # ~~~~
 
 # Home page
-GET     /                           controllers.Janus.index
-GET     /superuser                  controllers.Janus.admin
-GET     /support                    controllers.Janus.support
-GET     /user-account               controllers.Janus.userAccount
-POST    /favourite                  controllers.Janus.favourite()
+GET           /                                         controllers.Janus.index
+GET           /superuser                                controllers.Janus.admin
+GET           /support                                  controllers.Janus.support
+GET           /user-account                             controllers.Janus.userAccount
+POST          /favourite                                controllers.Janus.favourite()
 
 # Passkey-protected routes
-GET     /console                    controllers.PasskeyController.showAuthPage
-POST    /console                    controllers.Janus.consoleLogin(permissionId: String)
-GET     /consoleUrl                 controllers.PasskeyController.showAuthPage
-POST    /consoleUrl                 controllers.Janus.consoleUrl(permissionId: String)
-GET     /credentials                controllers.PasskeyController.showAuthPage
-POST    /credentials                controllers.Janus.credentials(permissionId: String)
-GET     /multi-credentials          controllers.PasskeyController.showAuthPage
-POST    /multi-credentials          controllers.Janus.multiCredentials(permissionIds: String)
+GET           /console                                  controllers.PasskeyController.showAuthPage
+POST          /console                                  controllers.Janus.consoleLogin(permissionId: String)
+GET           /consoleUrl                               controllers.PasskeyController.showAuthPage
+POST          /consoleUrl                               controllers.Janus.consoleUrl(permissionId: String)
+GET           /credentials                              controllers.PasskeyController.showAuthPage
+POST          /credentials                              controllers.Janus.credentials(permissionId: String)
+GET           /multi-credentials                        controllers.PasskeyController.showAuthPage
+POST          /multi-credentials                        controllers.Janus.multiCredentials(permissionIds: String)
 
-GET     /audit/user/:username       controllers.Audit.byUser(username: String)
-POST    /audit/user/:username       controllers.Audit.changeUserDate(username: String)
-GET     /audit/account/:account     controllers.Audit.byAccount(account: String)
-POST    /audit/account/:account     controllers.Audit.changeAccountDate(account: String)
+GET           /audit/user/:username                     controllers.Audit.byUser(username: String)
+POST          /audit/user/:username                     controllers.Audit.changeUserDate(username: String)
+GET           /audit/account/:account                   controllers.Audit.byAccount(account: String)
+POST          /audit/account/:account                   controllers.Audit.changeAccountDate(account: String)
 
-GET     /revoke                     controllers.RevokePermissions.revoke
-GET     /revoke-request             controllers.RevokePermissions.revokeRequest(accountId: String)
-POST    /revoke-request             controllers.RevokePermissions.revokeAccount(accountId: String)
-GET     /revoke-confirmation        controllers.RevokePermissions.revokeConfirmation(accountId: Option[String])
+GET           /revoke                                   controllers.RevokePermissions.revoke
+GET           /revoke-request                           controllers.RevokePermissions.revokeRequest(accountId: String)
+POST          /revoke-request                           controllers.RevokePermissions.revokeAccount(accountId: String)
+GET           /revoke-confirmation                      controllers.RevokePermissions.revokeConfirmation(accountId: Option[String])
 
-GET     /login                      controllers.AuthController.login
-GET     /loginError                 controllers.AuthController.loginError
-GET     /oauthCallback              controllers.AuthController.oauthCallback
-GET     /logout                     controllers.AuthController.logout
+GET           /rolesStatus                              controllers.RolesStatus.rolesStatus
+GET           /rolesStatus/account/:accountName         controllers.RolesStatus.rolesStatusForAccount(accountName: String)
 
-POST    /passkey/registration-options       controllers.PasskeyController.registrationOptions
-POST    /passkey/auth-options               controllers.PasskeyController.authenticationOptions
-POST    /passkey/registration-auth-options  controllers.PasskeyController.registrationAuthenticationOptions
-POST    /passkey/register                   controllers.PasskeyController.register
-DELETE  /passkey/:passkeyId                 controllers.PasskeyController.deletePasskey(passkeyId: String)
+GET           /login                                    controllers.AuthController.login
+GET           /loginError                               controllers.AuthController.loginError
+GET           /oauthCallback                            controllers.AuthController.oauthCallback
+GET           /logout                                   controllers.AuthController.logout
+
+POST          /passkey/registration-options             controllers.PasskeyController.registrationOptions
+POST          /passkey/auth-options                     controllers.PasskeyController.authenticationOptions
+POST          /passkey/registration-auth-options        controllers.PasskeyController.registrationAuthenticationOptions
+POST          /passkey/register                         controllers.PasskeyController.register
+DELETE        /passkey/:passkeyId                       controllers.PasskeyController.deletePasskey(passkeyId: String)
 
 # Tmp routes for passkey trial
-GET     /opt/in/passkeys            controllers.Utility.optInToPasskeys
-GET     /opt/out/passkeys           controllers.Utility.optOutOfPasskeys
+GET           /opt/in/passkeys                          controllers.Utility.optInToPasskeys
+GET           /opt/out/passkeys                         controllers.Utility.optOutOfPasskeys
 
-GET     /healthcheck                controllers.Utility.healthcheck
-GET     /accounts                   controllers.Utility.accounts
+GET           /healthcheck                              controllers.Utility.healthcheck
+GET           /accounts                                 controllers.Utility.accounts
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.versioned(file)
+GET           /assets/*file                             controllers.Assets.versioned(file)

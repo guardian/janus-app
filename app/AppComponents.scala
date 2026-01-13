@@ -151,6 +151,13 @@ class AppComponents(context: ApplicationLoader.Context)
       Clients.stsClient,
       configuration
     ),
+    new RolesStatus(
+      janusData,
+      controllerComponents,
+      authAction,
+      Clients.stsClient,
+      configuration
+    ),
     new AuthController(
       janusData,
       controllerComponents,
