@@ -68,9 +68,9 @@ class RolesStatus(
       janusData.access
     )(account => Config.accountNumber(account.authConfigKey, configuration))
 
-  def rolesStatusForAccount(accountName: String): Action[AnyContent] = {
+  def rolesStatusForAccount(account: String): Action[AnyContent] = {
     val matchingAccountMaybe: Option[Try[String]] = accountOwnersLookup
-      .find(_._1.name == accountName)
+      .find(_._1.name == account)
       .map(_._3)
     val rolesForThisAccount = matchingAccountMaybe match {
       case Some(accountIdTry) if accountIdTry.isSuccess =>
@@ -83,7 +83,7 @@ class RolesStatus(
     authAction { implicit request =>
       Ok(
         views.html.rolesStatus(
-          accountName,
+          account,
           rolesForThisAccount,
           request.user,
           janusData
