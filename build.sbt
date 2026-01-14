@@ -69,8 +69,7 @@ val pekkoSerializationJacksonOverrides = Seq(
  * 3. If no earlier version appears in the dependency list, the entry can be removed.
  */
 val safeTransitiveDependencies = Seq(
-  // See https://github.com/guardian/janus-app/security/dependabot/69
-  "at.yawk.lz4" % "lz4-java" % "1.10.1" % Runtime
+  // add patched transitive dependencies here...
 )
 
 lazy val root: Project = (project in file("."))
@@ -106,7 +105,7 @@ lazy val root: Project = (project in file("."))
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
-      "com.webauthn4j" % "webauthn4j-core" % "0.30.1.RELEASE",
+      "com.webauthn4j" % "webauthn4j-core" % "0.30.2.RELEASE",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
     ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides ++ safeTransitiveDependencies,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
@@ -115,11 +114,6 @@ lazy val root: Project = (project in file("."))
       ExclusionRule(
         organization = "net.sourceforge.htmlunit",
         name = "htmlunit"
-      ),
-      // See https://github.com/guardian/janus-app/security/dependabot/69
-      ExclusionRule(
-        organization = "org.lz4",
-        name = "lz4-java"
       )
     ),
 
