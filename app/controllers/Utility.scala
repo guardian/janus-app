@@ -3,10 +3,10 @@ package controllers
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import conf.Config
-import data.ProvisionedRoleCache
 import logic.Owners
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
+import services.ProvisionedRoleStatusManager
 
 import java.time.Duration
 
@@ -16,7 +16,7 @@ class Utility(
     authAction: AuthAction[AnyContent],
     configuration: Configuration,
     passkeysEnablingCookieName: String,
-    provisionedRoleCache: ProvisionedRoleCache
+    provisionedRoleStatusManager: ProvisionedRoleStatusManager
 )(using mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
@@ -45,7 +45,7 @@ class Utility(
     implicit request =>
       Ok(
         views.html.provisionedRoleStatus(
-          provisionedRoleCache.getAll.values.flatten.toList,
+          provisionedRoleStatusManager.getCacheStatus,
           request.user,
           janusData
         )

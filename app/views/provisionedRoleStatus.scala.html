@@ -1,20 +1,25 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
 @import play.api.Mode
-@(provisionedRoles: List[IamRoleInfo], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@import com.gu.janus.model.AwsAccount
+@(provisionedRoleStatus: Map[AwsAccount, AwsAccountIamRoleInfoStatus], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Provisioned Role Status", Some(user), janusData) {
     <div class="container" xmlns="http://www.w3.org/1999/html">
         <h1 class="header orange-text">Provisioned Role Status</h1>
-        <ul>
-        @for(role <- provisionedRoles) {
-            <li>
-                <div>In '@role.account.name' account</div>
-                <div>@role.friendlyName</div>
-                <div>@role.description</div>
-                <div>Fetched: @role.lastFetched</div>
-            </li>
+        @for((account, status) <- provisionedRoleStatus) {
+            <div>
+                <div>In '@account.name' account</div>
+                <div>@status.roleSnapshot.map(_ => "LAST READ")</div>
+                <div>@status.roleSnapshot.map(_.timestamp)</div>
+                <div>@status.roleSnapshot.map(_.roles.map(_.provisionedRoleTagValue))</div>
+                <div>@status.roleSnapshot.map(_.roles.map(_.friendlyName))</div>
+                <div>@status.roleSnapshot.map(_.roles.map(_.description))</div>
+                <div>@status.failureStatus.map(_ => "FAILED")</div>
+                <div>@status.failureStatus.map(_.timestamp)</div>
+                <div>@status.failureStatus.map(_.failure)</div>
+            </div>
+            <br />
         }
-        </ul>
     </div>
 }

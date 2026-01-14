@@ -1,16 +1,14 @@
-import aws.{Clients, ProvisionedRoleFetcher}
+import aws.Clients
 import cats.effect.unsafe.implicits.global
 import com.gu.googleauth.AuthAction
-import com.gu.play.secretrotation.aws.parameterstore
 import com.gu.play.secretrotation.*
+import com.gu.play.secretrotation.aws.parameterstore
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
-import data.ProvisionedRoleCache
 import filters.{HstsFilter, PasskeyAuthFilter, PasskeyRegistrationAuthFilter}
 import models.*
 import models.AccountConfigStatus.*
-import play.api.Mode.Prod
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSComponents
 import play.api.mvc.{AnyContent, EssentialFilter}
@@ -19,11 +17,12 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
 import play.filters.csp.CSPComponents
 import router.Routes
+import services.ProvisionedRoleCachingService
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.time.Duration
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.Future
 import scala.util.chaining.scalaUtilChainingOps
 
 class AppComponents(context: ApplicationLoader.Context)
@@ -90,24 +89,31 @@ class AppComponents(context: ApplicationLoader.Context)
     case ConfigSuccess =>
   }
 
-  private val provisionedRoleCache = new ProvisionedRoleCache()
-  private val provisionedRoleFetchingCancellationToken = {
-    val accounts = mode match {
-      case Prod => janusData.accounts
-      case _    =>
-        janusData.accounts.filter(_.authConfigKey == "developerPlayground")
-    }
-    val fetcher = new ProvisionedRoleFetcher(
-      accounts,
-      config = configuration,
-      sts = Clients.stsClient,
-      cache = provisionedRoleCache,
-      fetchRate = configuration.get[FiniteDuration]("provisionedRole.fetchRate")
-    )
-    fetcher.startPolling().compile.drain.unsafeRunCancelable()
+  // TODO remove
+  val accounts = mode match {
+    case Mode.Prod => janusData.accounts
+    case _         =>
+      janusData.accounts.filter(acc =>
+        acc.authConfigKey == "developerPlayground" || acc.authConfigKey == "security" || acc.authConfigKey == "deployTools"
+      )
   }
+  private val provisionedRoleCachingService = new ProvisionedRoleCachingService(
+//    accounts = janusData.accounts,
+    accounts = accounts,
+    config = configuration,
+    sts = Clients.stsClient
+  )
+  private val provisionedRoleFetchingCancellationToken: () => Future[Unit] =
+    provisionedRoleCachingService
+      .startPolling()
+      .compile
+      .drain
+      .unsafeRunCancelable()
   applicationLifecycle.addStopHook(() =>
-    provisionedRoleFetchingCancellationToken()
+    for {
+      _ <- provisionedRoleFetchingCancellationToken()
+      _ <- provisionedRoleCachingService.close().unsafeToFuture()
+    } yield ()
   )
 
   val authAction = new AuthAction[AnyContent](
@@ -188,7 +194,7 @@ class AppComponents(context: ApplicationLoader.Context)
       authAction,
       configuration,
       passkeysEnablingCookieName,
-      provisionedRoleCache
+      provisionedRoleCachingService
     ),
     assets
   )
