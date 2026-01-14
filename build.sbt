@@ -69,8 +69,7 @@ val pekkoSerializationJacksonOverrides = Seq(
  * 3. If no earlier version appears in the dependency list, the entry can be removed.
  */
 val safeTransitiveDependencies = Seq(
-  // See https://github.com/guardian/janus-app/security/dependabot/69
-  "at.yawk.lz4" % "lz4-java" % "1.10.1" % Runtime
+  // add patched transitive dependencies here...
 )
 
 lazy val root: Project = (project in file("."))
@@ -115,11 +114,6 @@ lazy val root: Project = (project in file("."))
       ExclusionRule(
         organization = "net.sourceforge.htmlunit",
         name = "htmlunit"
-      ),
-      // See https://github.com/guardian/janus-app/security/dependabot/69
-      ExclusionRule(
-        organization = "org.lz4",
-        name = "lz4-java"
       )
     ),
 
