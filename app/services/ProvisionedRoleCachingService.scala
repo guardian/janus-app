@@ -4,7 +4,6 @@ import aws.{Clients, Iam}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import cats.implicits.toTraverseOps
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.gu.janus.model.{AwsAccount, ProvisionedRole}
 import fs2.Stream
 import logic.ProvisionedRoles
@@ -21,9 +20,9 @@ import software.amazon.awssdk.services.iam.model.{ListRolesRequest, Role}
 import software.amazon.awssdk.services.sts.StsClient
 
 import java.time.{Clock, Instant}
+import scala.collection.concurrent.TrieMap
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
-import scala.jdk.CollectionConverters.*
 
 /** For use where we just need to know which IAM roles are part of a particular
   * [[ProvisionedRole]].
@@ -52,7 +51,6 @@ trait ProvisionedRoleStatusManager {
   * @param clock
   *   Gives us definite time
   */
-// TODO: caffeine go
 class ProvisionedRoleCachingService(
     accounts: Set[AwsAccount],
     config: Configuration,
@@ -77,10 +75,7 @@ class ProvisionedRoleCachingService(
       config.get("provisionedRole.discoverablePath")
     )
 
-  private val cache =
-    Caffeine.newBuilder
-      .maximumSize(1000)
-      .build[AwsAccount, AwsAccountIamRoleInfoStatus]
+  private val cache = new TrieMap[AwsAccount, AwsAccountIamRoleInfoStatus]()
 
   private val accountIams: Map[AwsAccount, IamAsyncClient] =
     accounts.map { account =>
@@ -98,9 +93,9 @@ class ProvisionedRoleCachingService(
       .evalMap { _ =>
         fetchFromAllAccounts().flatMap { fetched =>
           IO {
-            cache.invalidateAll()
-            cache.putAll(fetched.asJava)
-          }
+            cache.clear()
+            cache.addAll(fetched)
+          }.void
         }
       }
       .handleErrorWith { err =>
@@ -112,12 +107,12 @@ class ProvisionedRoleCachingService(
 
   def getIamRolesByProvisionedRole(role: ProvisionedRole): List[IamRoleInfo] =
     ProvisionedRoles.getIamRolesByProvisionedRole(
-      cache.asMap().asScala.toMap,
+      cache.readOnlySnapshot().toMap,
       role
     )
 
   def getCacheStatus: Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
-    cache.asMap().asScala.toMap
+    cache.readOnlySnapshot().toMap
 
   def shutdown(): IO[Unit] =
     accountIams.values.toList.traverse(iam => IO(iam.close())).map(_ => ())
@@ -161,8 +156,7 @@ class ProvisionedRoleCachingService(
     }.handleErrorWith(err =>
       IO(
         AwsAccountIamRoleInfoStatus.failure(
-          cachedRoleSnapshot =
-            Option(cache.getIfPresent(account)).flatMap(_.roleSnapshot),
+          cachedRoleSnapshot = cache.get(account).flatMap(_.roleSnapshot),
           failureStatus = FailureSnapshot(err.getMessage, Instant.now(clock))
         )
       )

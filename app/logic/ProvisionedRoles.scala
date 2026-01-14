@@ -2,7 +2,6 @@ package logic
 
 import com.gu.janus.model.{AwsAccount, ProvisionedRole}
 import models.{AwsAccountIamRoleInfoStatus, IamRoleInfo}
-import software.amazon.awssdk.services.iam.endpoints.internal.Arn
 import software.amazon.awssdk.services.iam.model.{Role, Tag}
 
 object ProvisionedRoles {
