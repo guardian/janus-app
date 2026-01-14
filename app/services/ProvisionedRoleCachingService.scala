@@ -60,21 +60,24 @@ class ProvisionedRoleCachingService(
     with ProvisionedRoleStatusManager
     with Logging {
 
+  private val fetchEnabled =
+    config.get[Boolean]("provisionedRoles.fetch.enabled")
   private val fetchRate =
-    config.get[FiniteDuration]("provisionedRole.fetch.rate")
+    config.get[FiniteDuration]("provisionedRoles.fetch.rate")
 
   private val provisionedRoleTagKey =
-    config.get[String]("provisionedRole.tagKey")
+    config.get[String]("provisionedRoles.tagKey")
   private val friendlyNameTagKey =
-    config.get[String]("provisionedRole.friendlyNameTagKey")
+    config.get[String]("provisionedRoles.friendlyNameTagKey")
   private val descriptionTagKey =
-    config.get[String]("provisionedRole.descriptionTagKey")
+    config.get[String]("provisionedRoles.descriptionTagKey")
 
   private val roleListRequestBuilder =
     ListRolesRequest.builder.pathPrefix(
-      config.get("provisionedRole.discoverablePath")
+      config.get("provisionedRoles.discoverablePath")
     )
 
+  // TrieMap is Scala's default concurrent Map implementation
   private val cache = new TrieMap[AwsAccount, AwsAccountIamRoleInfoStatus]()
 
   private val accountIams: Map[AwsAccount, IamAsyncClient] =
@@ -84,26 +87,31 @@ class ProvisionedRoleCachingService(
       account -> iam
     }.toMap
 
-  def startPolling(): Stream[IO, Unit] = {
-    Stream
-      // do first fetch immediately
-      .emit(())
-      // then periodically
-      .append(Stream.awakeEvery[IO](fetchRate))
-      .evalMap { _ =>
-        fetchFromAllAccounts().flatMap { fetched =>
-          IO {
-            cache.clear()
-            cache.addAll(fetched)
-          }.void
+  def startPolling(): Stream[IO, Unit] =
+    if (fetchEnabled) {
+      Stream
+        // do first fetch immediately
+        .emit(())
+        // then periodically
+        .append(Stream.awakeEvery[IO](fetchRate))
+        .evalMap { _ =>
+          fetchFromAllAccounts().flatMap { fetched =>
+            // Can't replace contents of cache atomically so wrapping it in an IO
+            IO {
+              cache.clear()
+              cache.addAll(fetched)
+            }.void
+          }
         }
-      }
-      .handleErrorWith { err =>
-        Stream.eval(
-          IO(logger.error("Failed to refresh provisioned role cache", err))
-        )
-      }
-  }
+        .handleErrorWith { err =>
+          Stream.eval(
+            IO(logger.error("Failed to refresh provisioned role cache", err))
+          )
+        }
+    } else
+      Stream.eval(
+        IO(logger.warn("Provisioned role caching has been disabled!"))
+      )
 
   def getIamRolesByProvisionedRole(role: ProvisionedRole): List[IamRoleInfo] =
     ProvisionedRoles.getIamRolesByProvisionedRole(
