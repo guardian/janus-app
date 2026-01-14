@@ -8,7 +8,7 @@ import sbtversionpolicy.withsbtrelease.ReleaseVersion
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.40.10"
+val awsSdkVersion = "2.40.17"
 val circeVersion = "0.14.15"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
@@ -69,8 +69,7 @@ val pekkoSerializationJacksonOverrides = Seq(
  * 3. If no earlier version appears in the dependency list, the entry can be removed.
  */
 val safeTransitiveDependencies = Seq(
-  // See https://github.com/guardian/janus-app/security/dependabot/69
-  "at.yawk.lz4" % "lz4-java" % "1.10.1" % Runtime
+  // add patched transitive dependencies here...
 )
 
 lazy val root: Project = (project in file("."))
@@ -99,14 +98,14 @@ lazy val root: Project = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "30.1.1",
-      "com.gu.play-secret-rotation" %% "play-v30" % "15.2.7",
-      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "15.2.7",
+      "com.gu.play-googleauth" %% "play-v30" % "31.0.0",
+      "com.gu.play-secret-rotation" %% "play-v30" % "16.0.1",
+      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "16.0.1",
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
-      "com.webauthn4j" % "webauthn4j-core" % "0.30.1.RELEASE",
+      "com.webauthn4j" % "webauthn4j-core" % "0.30.2.RELEASE",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
     ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides ++ safeTransitiveDependencies,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
@@ -115,11 +114,6 @@ lazy val root: Project = (project in file("."))
       ExclusionRule(
         organization = "net.sourceforge.htmlunit",
         name = "htmlunit"
-      ),
-      // See https://github.com/guardian/janus-app/security/dependabot/69
-      ExclusionRule(
-        organization = "org.lz4",
-        name = "lz4-java"
       )
     ),
 
