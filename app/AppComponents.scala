@@ -1,5 +1,4 @@
 import aws.Clients
-import cats.effect.unsafe.implicits.global
 import com.gu.googleauth.AuthAction
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
@@ -22,7 +21,6 @@ import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import java.time.Duration
-import scala.concurrent.Future
 import scala.util.chaining.scalaUtilChainingOps
 
 class AppComponents(context: ApplicationLoader.Context)
@@ -89,32 +87,13 @@ class AppComponents(context: ApplicationLoader.Context)
     case ConfigSuccess =>
   }
 
-  // TODO remove
-  val accounts = mode match {
-    case Mode.Prod => janusData.accounts
-    case _         =>
-      janusData.accounts.filter(acc =>
-        acc.authConfigKey == "developerPlayground" || acc.authConfigKey == "security" || acc.authConfigKey == "deployTools"
-      )
-  }
-  private val provisionedRoleCachingService = new ProvisionedRoleCachingService(
-//    accounts = janusData.accounts,
-    accounts = accounts,
-    config = configuration,
-    sts = Clients.stsClient
-  )
-  private val provisionedRoleFetchingCancellationToken: () => Future[Unit] =
-    provisionedRoleCachingService
-      .startPolling()
-      .compile
-      .drain
-      .unsafeRunCancelable()
-  applicationLifecycle.addStopHook(() =>
-    for {
-      _ <- provisionedRoleFetchingCancellationToken()
-      _ <- provisionedRoleCachingService.close().unsafeToFuture()
-    } yield ()
-  )
+  private val provisionedRoleCachingService =
+    ProvisionedRoleCachingService.start(
+      applicationLifecycle,
+      accounts = janusData.accounts,
+      config = configuration,
+      sts = Clients.stsClient
+    )
 
   val authAction = new AuthAction[AnyContent](
     googleAuthConfig,

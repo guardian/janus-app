@@ -2,6 +2,7 @@ package services
 
 import aws.{Clients, Iam}
 import cats.effect.IO
+import cats.effect.unsafe.implicits.global
 import cats.implicits.toTraverseOps
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.gu.janus.model.{AwsAccount, ProvisionedRole}
@@ -13,12 +14,14 @@ import models.{
   IamRoleInfo,
   IamRoleInfoSnapshot
 }
+import play.api.inject.ApplicationLifecycle
 import play.api.{Configuration, Logging}
 import software.amazon.awssdk.services.iam.IamAsyncClient
 import software.amazon.awssdk.services.iam.model.{ListRolesRequest, Role}
 import software.amazon.awssdk.services.sts.StsClient
 
 import java.time.{Clock, Instant}
+import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.jdk.CollectionConverters.*
 
@@ -49,6 +52,7 @@ trait ProvisionedRoleStatusManager {
   * @param clock
   *   Gives us definite time
   */
+// TODO: caffeine go
 class ProvisionedRoleCachingService(
     accounts: Set[AwsAccount],
     config: Configuration,
@@ -115,7 +119,7 @@ class ProvisionedRoleCachingService(
   def getCacheStatus: Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
     cache.asMap().asScala.toMap
 
-  def close(): IO[Unit] =
+  def shutdown(): IO[Unit] =
     accountIams.values.toList.traverse(iam => IO(iam.close())).map(_ => ())
 
   private def fetchFromAllAccounts()
@@ -181,4 +185,30 @@ class ProvisionedRoleCachingService(
         )
       )
     } yield roleInfo
+}
+
+object ProvisionedRoleCachingService {
+
+  /** Convenience method to start and manage lifecycle of the caching service.
+    */
+  def start(
+      appLifecycle: ApplicationLifecycle,
+      accounts: Set[AwsAccount],
+      config: Configuration,
+      sts: StsClient
+  )(using ExecutionContext): ProvisionedRoleCachingService = {
+    val service = new ProvisionedRoleCachingService(accounts, config, sts)
+    val cancellationToken = service
+      .startPolling()
+      .compile
+      .drain
+      .unsafeRunCancelable()
+    appLifecycle.addStopHook(() =>
+      for {
+        _ <- cancellationToken()
+        _ <- service.shutdown().unsafeToFuture()
+      } yield ()
+    )
+    service
+  }
 }
