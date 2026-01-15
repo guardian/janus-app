@@ -58,7 +58,16 @@ object Clients {
     .region(EU_WEST_1)
     .build()
 
-  def accountIam(
+  /** Gives an IAM client scoped to the given account so that it can look for
+    * [[com.gu.janus.model.ProvisionedRole]] data.
+    *
+    * The client won't be able to make any calls unless the Janus user is
+    * included in the trust relationship of the Janus role being assumed in the
+    * target account. if not, building the client will succeed but it will be
+    * unable to do anything. This means that in the dev environment special
+    * configuration will be needed, which is described elsewhere.
+    */
+  def provisionedRoleReadingIam(
       account: AwsAccount,
       sts: StsClient,
       config: Configuration,

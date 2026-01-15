@@ -82,7 +82,12 @@ class ProvisionedRoleCachingService(
   private val accountIams: Map[AwsAccount, IamClient] =
     accounts.map { account =>
       val iam =
-        Clients.accountIam(account, sts, config, "ProvisionedRoleReader")
+        Clients.provisionedRoleReadingIam(
+          account,
+          sts,
+          config,
+          "ProvisionedRoleReader"
+        )
       account -> iam
     }.toMap
 
