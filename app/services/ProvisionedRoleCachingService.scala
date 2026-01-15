@@ -15,7 +15,7 @@ import models.{
 }
 import play.api.inject.ApplicationLifecycle
 import play.api.{Configuration, Logging}
-import software.amazon.awssdk.services.iam.IamAsyncClient
+import software.amazon.awssdk.services.iam.IamClient
 import software.amazon.awssdk.services.iam.model.{ListRolesRequest, Role}
 import software.amazon.awssdk.services.sts.StsClient
 
@@ -72,15 +72,14 @@ class ProvisionedRoleCachingService(
   private val descriptionTagKey =
     config.get[String]("provisionedRoles.descriptionTagKey")
 
-  private val roleListRequestBuilder =
-    ListRolesRequest.builder.pathPrefix(
-      config.get("provisionedRoles.discoverablePath")
-    )
+  private val roleListRequest = ListRolesRequest.builder
+    .pathPrefix(config.get("provisionedRoles.discoverablePath"))
+    .build()
 
   // TrieMap is Scala's default concurrent Map implementation
   private val cache = new TrieMap[AwsAccount, AwsAccountIamRoleInfoStatus]()
 
-  private val accountIams: Map[AwsAccount, IamAsyncClient] =
+  private val accountIams: Map[AwsAccount, IamClient] =
     accounts.map { account =>
       val iam =
         Clients.accountIam(account, sts, config, "ProvisionedRoleReader")
@@ -136,7 +135,7 @@ class ProvisionedRoleCachingService(
 
   private def fetchFromAccount(
       account: AwsAccount,
-      iam: IamAsyncClient
+      iam: IamClient
   ): IO[AwsAccountIamRoleInfoStatus] =
     (for {
       _ <- IO(
@@ -145,7 +144,7 @@ class ProvisionedRoleCachingService(
         )
       )
       roles <- Iam
-        .listRoles(iam, roleListRequestBuilder)
+        .listRoles(iam, roleListRequest)
         .flatMap(_.traverse(role => toRoleInfo(iam, role)))
       _ <- IO(
         logger.info(
@@ -170,7 +169,7 @@ class ProvisionedRoleCachingService(
       )
     )
 
-  private def toRoleInfo(iam: IamAsyncClient, role: Role): IO[IamRoleInfo] =
+  private def toRoleInfo(iam: IamClient, role: Role): IO[IamRoleInfo] =
     for {
       tags <- Iam.listRoleTags(iam, role)
       roleInfo <- IO.fromOption(

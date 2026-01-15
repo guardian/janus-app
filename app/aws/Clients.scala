@@ -6,7 +6,7 @@ import play.api.Configuration
 import software.amazon.awssdk.auth.credentials.*
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
-import software.amazon.awssdk.services.iam.IamAsyncClient
+import software.amazon.awssdk.services.iam.IamClient
 import software.amazon.awssdk.services.ssm.SsmClient
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.auth.StsAssumeRoleCredentialsProvider
@@ -63,7 +63,7 @@ object Clients {
       sts: StsClient,
       config: Configuration,
       roleSessionNamePrefix: String
-  ): IamAsyncClient = {
+  ): IamClient = {
     val roleArn = Config.roleArn(account.authConfigKey, config)
     val roleSessionName = s"$roleSessionNamePrefix-${account.authConfigKey}"
 
@@ -86,7 +86,7 @@ object Clients {
       )
       .build()
 
-    IamAsyncClient.builder
+    IamClient.builder
       .credentialsProvider(credentialsProvider)
       // Builder seems to need a region even though IAM is global
       .region(EU_WEST_1)
