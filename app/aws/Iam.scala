@@ -1,7 +1,6 @@
 package aws
 
 import cats.effect.IO
-import cats.syntax.traverse.*
 import software.amazon.awssdk.services.iam.IamAsyncClient
 import software.amazon.awssdk.services.iam.model.{
   ListRoleTagsRequest,
@@ -13,6 +12,7 @@ import software.amazon.awssdk.services.iam.model.{
 import scala.jdk.CollectionConverters.*
 import scala.jdk.FutureConverters.*
 
+/** For managing calls to AWS IAM services and transforming results. */
 object Iam {
 
   def listRoles(
@@ -42,14 +42,6 @@ object Iam {
 
     fetchPage(None, List.empty)
   }
-
-  def listRoleTags(
-      iam: IamAsyncClient,
-      roles: List[Role]
-  ): IO[Map[Role, Set[Tag]]] =
-    roles
-      .traverse { role => listRoleTags(iam, role).map(tags => role -> tags) }
-      .map(_.toMap)
 
   def listRoleTags(iam: IamAsyncClient, role: Role): IO[Set[Tag]] = {
     val request = ListRoleTagsRequest.builder.roleName(role.roleName).build()
