@@ -137,7 +137,7 @@ class ProvisionedRoleCachingService(
         s"Fetching provisioned roles from account '${account.name}'..."
       )
       roles <- Iam.listRoles(iam, roleListRequest)
-      roleInfos <- roles.traverse(role => toRoleInfo(iam, role))
+      roleInfos <- roles.traverse(role => fetchRoleInfo(iam, role))
       _ <- logger.info(
         s"Fetched ${roleInfos.size} provisioned roles from account '${account.name}'."
       )
@@ -156,7 +156,7 @@ class ProvisionedRoleCachingService(
         )
     )
 
-  private def toRoleInfo(iam: IamClient, role: Role): IO[IamRoleInfo] =
+  private def fetchRoleInfo(iam: IamClient, role: Role): IO[IamRoleInfo] =
     for {
       tags <- Iam.listRoleTags(iam, role)
       roleInfo <- IO.fromOption(
