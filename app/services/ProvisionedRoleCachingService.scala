@@ -113,13 +113,13 @@ class ProvisionedRoleCachingService(
         IO(logger.warn("Provisioned role caching has been disabled!"))
       )
 
-  def getIamRolesByProvisionedRole(role: ProvisionedRole): List[IamRoleInfo] =
+  override def getIamRolesByProvisionedRole(role: ProvisionedRole): List[IamRoleInfo] =
     ProvisionedRoles.getIamRolesByProvisionedRole(
       cache.readOnlySnapshot().toMap,
       role
     )
 
-  def getCacheStatus: Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
+  override def getCacheStatus: Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
     cache.readOnlySnapshot().toMap
 
   def shutdown(): IO[Unit] =
