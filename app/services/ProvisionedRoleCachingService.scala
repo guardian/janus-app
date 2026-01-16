@@ -21,7 +21,6 @@ import software.amazon.awssdk.services.iam.IamClient
 import software.amazon.awssdk.services.iam.model.{ListRolesRequest, Role}
 import software.amazon.awssdk.services.sts.StsClient
 
-import java.time.{Clock, Instant}
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
@@ -50,14 +49,11 @@ trait ProvisionedRoleStatusManager {
   *   Needed to build the role that will be assumed to fetch the data
   * @param sts
   *   Needed for cross-account access by role assumption
-  * @param clock
-  *   Gives us definite time
   */
 class ProvisionedRoleCachingService(
     accounts: Set[AwsAccount],
     config: Configuration,
-    sts: StsClient,
-    clock: Clock = Clock.systemUTC()
+    sts: StsClient
 ) extends ProvisionedRoleFinder
     with ProvisionedRoleStatusManager {
 
@@ -138,22 +134,22 @@ class ProvisionedRoleCachingService(
       )
       roles <- Iam.listRoles(iam, roleListRequest)
       roleInfos <- roles.traverse(role => fetchRoleInfo(iam, role))
+      now <- IO.realTimeInstant
       _ <- logger.info(
         s"Fetched ${roleInfos.size} provisioned roles from account '${account.name}'."
       )
     } yield AwsAccountIamRoleInfoStatus.success(
-      IamRoleInfoSnapshot(roleInfos, Instant.now(clock))
+      IamRoleInfoSnapshot(roleInfos, now)
     )).handleErrorWith(err =>
-      logger
-        .error(err)(
+      for {
+        now <- IO.realTimeInstant
+        _ <- logger.error(err)(
           s"Failed to fetch provisioned roles from account '${account.name}'"
         )
-        .as(
-          AwsAccountIamRoleInfoStatus.failure(
-            cachedRoleSnapshot = cache.get(account).flatMap(_.roleSnapshot),
-            failureStatus = FailureSnapshot(err.getMessage, Instant.now(clock))
-          )
-        )
+      } yield AwsAccountIamRoleInfoStatus.failure(
+        cachedRoleSnapshot = cache.get(account).flatMap(_.roleSnapshot),
+        failureStatus = FailureSnapshot(err.getMessage, now)
+      )
     )
 
   private def fetchRoleInfo(iam: IamClient, role: Role): IO[IamRoleInfo] =
