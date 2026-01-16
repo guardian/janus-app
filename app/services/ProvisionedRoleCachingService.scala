@@ -137,16 +137,15 @@ class ProvisionedRoleCachingService(
           s"Fetching provisioned roles from account '${account.name}'..."
         )
       )
-      roles <- Iam
-        .listRoles(iam, roleListRequest)
-        .flatMap(_.traverse(role => toRoleInfo(iam, role)))
+      roles <- Iam.listRoles(iam, roleListRequest)
+      roleInfos <- roles.traverse(role => toRoleInfo(iam, role))
       _ <- IO(
         logger.info(
-          s"Fetched ${roles.size} provisioned roles from account '${account.name}'."
+          s"Fetched ${roleInfos.size} provisioned roles from account '${account.name}'."
         )
       )
     } yield AwsAccountIamRoleInfoStatus.success(
-      IamRoleInfoSnapshot(roles, Instant.now(clock))
+      IamRoleInfoSnapshot(roleInfos, Instant.now(clock))
     )).handleErrorWith(err =>
       IO(
         logger.error(
