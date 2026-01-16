@@ -122,7 +122,7 @@ class ProvisionedRoleCachingService(
     cache.readOnlySnapshot().toMap
 
   def shutdown(): IO[Unit] =
-    accountIams.values.toList.traverse(iam => IO(iam.close())).map(_ => ())
+    accountIams.values.toList.traverse(iam => IO(iam.close())).void
 
   private def fetchFromAccount(
       account: AwsAccount,
