@@ -24,7 +24,9 @@
                             }
                         </button>
                     }
-                    <span class="card-title card-content--aws-account-header__title">@accountAccess.awsAccount.name</span>
+                    <span class="card-title card-content--aws-account-header__title">@accountAccess.awsAccount.name
+                        <a href="/account/@accountAccess.awsAccount.name"><i class="more-info small material-icons right">info</i></a>
+                    </span>
                 </div>
                 <div class="aws-account-body">
                 @for(permission <- accountAccess.permissions) {
@@ -68,10 +70,6 @@
                         </div>
                     </div>
                 }
-                </div>
-                <div class="card-action card-action--audit-log">
-                    <a class="grey-text darken-2" href="/audit/account/@accountAccess.awsAccount.authConfigKey">View audit trail <i class="material-icons">assignment</i></a>
-                    <a class="grey-text darken-2" href="/roles-status/account/@accountAccess.awsAccount.name">View role statuses <i class="material-icons">assignment</i></a>
                 </div>
             </div>
         </div>

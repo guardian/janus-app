@@ -1,32 +1,46 @@
 package logic
 
 import com.gu.janus.model.{ACL, AwsAccount, Permission}
+import models.IamRoleInfo
 
 import scala.util.{Failure, Try}
 
+case class UserPermissions(userName: String, permissions: Set[Permission])
+case class AccountInfo(
+    account: AwsAccount,
+    permissions: List[UserPermissions],
+    configuredRole: Try[String],
+    rolesStatuses: Set[IamRoleInfo]
+)
+
 object Owners {
-  def accountOwnerInformation(accounts: List[AwsAccount], access: ACL)(
-      lookupConfiguredRole: AwsAccount => Try[String]
-  ): List[(AwsAccount, List[(String, Set[Permission])], Try[String])] =
-    accounts
+  def accountOwnerInformation(accounts: Set[AwsAccount], access: ACL)(
+      lookupConfiguredRole: AwsAccount => Try[String],
+      lookupRoles: (AwsAccount, Try[String]) => Set[IamRoleInfo]
+  ): List[AccountInfo] =
+    accounts.toList
       .sortBy(_.name.toLowerCase)
       .map { awsAccount =>
-        (
+        val accountIdMaybe = lookupConfiguredRole(awsAccount)
+        AccountInfo(
           awsAccount,
           accountPermissions(awsAccount, access),
-          lookupConfiguredRole(awsAccount)
+          accountIdMaybe,
+          lookupRoles(awsAccount, accountIdMaybe)
         )
       }
 
   def accountPermissions(
       account: AwsAccount,
       acl: ACL
-  ): List[(String, Set[Permission])] = {
+  ): List[UserPermissions] = {
     acl.userAccess
       .flatMap { case (username, aclEntry) =>
         val permissions = aclEntry.permissions
         if (permissions.exists(_.account == account))
-          Some(username -> permissions.filter(_.account == account))
+          Some(
+            UserPermissions(username, permissions.filter(_.account == account))
+          )
         else None
       }
       .toList
@@ -35,11 +49,11 @@ object Owners {
 
   def accountIdErrors(
       accountData: Seq[
-        (AwsAccount, List[(String, Set[Permission])], Try[String])
+        AccountInfo
       ]
   ): Seq[(AwsAccount, Throwable)] = {
     accountData
-      .collect { case (account, _, Failure(err)) =>
+      .collect { case AccountInfo(account, _, Failure(err), _) =>
         (account, err)
       }
   }
