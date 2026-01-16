@@ -98,15 +98,11 @@ class ProvisionedRoleCachingService(
         .emit(())
         // then periodically
         .append(Stream.awakeEvery[IO](fetchRate))
-        .evalMap { _ =>
-          fetchFromAllAccounts().flatMap { fetched =>
-            // Can't replace contents of cache atomically so wrapping it in an IO
-            IO {
-              cache.clear()
-              cache.addAll(fetched)
-            }.void
-          }
-        }
+        .flatMap(_ => Stream.emits(accounts.toList))
+        .evalMap(account =>
+          fetchFromAccount(account, accountIams(account))
+            .map(status => cache.update(account, status))
+        )
         .handleErrorWith { err =>
           Stream.eval(
             IO(logger.error("Failed to refresh provisioned role cache", err))
@@ -128,15 +124,6 @@ class ProvisionedRoleCachingService(
 
   def shutdown(): IO[Unit] =
     accountIams.values.toList.traverse(iam => IO(iam.close())).map(_ => ())
-
-  private def fetchFromAllAccounts()
-      : IO[Map[AwsAccount, AwsAccountIamRoleInfoStatus]] =
-    accounts.toList
-      .traverse { account =>
-        fetchFromAccount(account, accountIams(account))
-          .map(status => account -> status)
-      }
-      .map(_.toMap)
 
   private def fetchFromAccount(
       account: AwsAccount,
