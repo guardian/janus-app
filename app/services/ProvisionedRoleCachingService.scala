@@ -99,7 +99,7 @@ class ProvisionedRoleCachingService(
         .append(Stream.awakeEvery[IO](fetchRate))
         .flatMap(_ => Stream.emits(accounts.toList))
         .evalMap(account =>
-          fetchFromAccount(account, accountIams(account))
+          fetchFromAccount(account)
             .map(status => cache.update(account, status))
         )
         .handleErrorWith { err =>
@@ -125,12 +125,14 @@ class ProvisionedRoleCachingService(
     accountIams.values.toList.traverse(iam => IO(iam.close())).map(_ => ())
 
   private def fetchFromAccount(
-      account: AwsAccount,
-      iam: IamClient
+      account: AwsAccount
   ): IO[AwsAccountIamRoleInfoStatus] =
     (for {
       _ <- logger.info(
         s"Fetching provisioned roles from account '${account.name}'..."
+      )
+      iam <- IO.fromOption(accountIams.get(account))(
+        new Exception(s"IAM client for account '${account.name}' not found")
       )
       roles <- Iam.listRoles(iam, roleListRequest)
       roleInfos <- roles.traverse(role => fetchRoleInfo(iam, role))
