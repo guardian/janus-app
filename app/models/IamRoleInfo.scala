@@ -1,6 +1,6 @@
 package models
 
-import software.amazon.awssdk.services.iam.endpoints.internal.Arn
+import software.amazon.awssdk.arns.Arn
 
 import java.time.Instant
 
@@ -30,8 +30,7 @@ object IamRoleInfo {
       friendlyName: Option[String],
       description: Option[String]
   ): IamRoleInfo = IamRoleInfo(
-    // Let's assume that the ARN given is valid
-    Arn.parse(roleArnString).get,
+    Arn.fromString(roleArnString),
     provisionedRoleTagValue,
     friendlyName,
     description
