@@ -6,6 +6,7 @@ import conf.Config
 import logic.Owners
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
+import services.ProvisionedRoleStatusManager
 
 import java.time.Duration
 
@@ -14,7 +15,8 @@ class Utility(
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
     configuration: Configuration,
-    passkeysEnablingCookieName: String
+    passkeysEnablingCookieName: String,
+    provisionedRoleStatusManager: ProvisionedRoleStatusManager
 )(using mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
@@ -37,6 +39,17 @@ class Utility(
           .warn(s"Couldn't lookup account number for ${account.name}", err)
       }
     Ok(views.html.accounts(accountData, request.user, janusData))
+  }
+
+  def provisionedRoleStatus: Action[AnyContent] = authAction {
+    implicit request =>
+      Ok(
+        views.html.provisionedRoleStatus(
+          provisionedRoleStatusManager.getCacheStatus,
+          request.user,
+          janusData
+        )
+      )
   }
 
   /** Temporary action to opt in to the passkeys integration */

@@ -16,6 +16,7 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
 import play.filters.csp.CSPComponents
 import router.Routes
+import services.ProvisionedRoleCachingService
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -85,6 +86,14 @@ class AppComponents(context: ApplicationLoader.Context)
       )
     case ConfigSuccess =>
   }
+
+  private val provisionedRoleCachingService =
+    ProvisionedRoleCachingService.start(
+      applicationLifecycle,
+      accounts = janusData.accounts,
+      config = configuration,
+      sts = Clients.stsClient
+    )
 
   val authAction = new AuthAction[AnyContent](
     googleAuthConfig,
@@ -163,7 +172,8 @@ class AppComponents(context: ApplicationLoader.Context)
       controllerComponents,
       authAction,
       configuration,
-      passkeysEnablingCookieName
+      passkeysEnablingCookieName,
+      provisionedRoleCachingService
     ),
     assets
   )

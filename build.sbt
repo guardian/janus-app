@@ -8,7 +8,7 @@ import sbtversionpolicy.withsbtrelease.ReleaseVersion
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.40.17"
+val awsSdkVersion = "2.41.4"
 val circeVersion = "0.14.15"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
@@ -101,11 +101,14 @@ lazy val root: Project = (project in file("."))
       "com.gu.play-googleauth" %% "play-v30" % "31.0.0",
       "com.gu.play-secret-rotation" %% "play-v30" % "16.0.1",
       "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "16.0.1",
+      "software.amazon.awssdk" % "arns" % awsSdkVersion,
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
       "com.webauthn4j" % "webauthn4j-core" % "0.30.2.RELEASE",
+      "co.fs2" %% "fs2-core" % "3.12.2",
+      "org.typelevel" %% "log4cats-slf4j" % "2.7.1",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
     ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides ++ safeTransitiveDependencies,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
