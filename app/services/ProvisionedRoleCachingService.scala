@@ -113,7 +113,9 @@ class ProvisionedRoleCachingService(
         IO(logger.warn("Provisioned role caching has been disabled!"))
       )
 
-  override def getIamRolesByProvisionedRole(role: ProvisionedRole): List[IamRoleInfo] =
+  override def getIamRolesByProvisionedRole(
+      role: ProvisionedRole
+  ): List[IamRoleInfo] =
     ProvisionedRoles.getIamRolesByProvisionedRole(
       cache.readOnlySnapshot().toMap,
       role
@@ -145,15 +147,13 @@ class ProvisionedRoleCachingService(
       )
     } yield AwsAccountIamRoleInfoStatus.success(
       IamRoleInfoSnapshot(roles, Instant.now(clock))
-    )).onError { case err =>
+    )).handleErrorWith(err =>
       IO(
         logger.error(
           s"Failed to fetch provisioned roles from account '${account.name}'",
           err
         )
-      )
-    }.handleErrorWith(err =>
-      IO(
+      ).as(
         AwsAccountIamRoleInfoStatus.failure(
           cachedRoleSnapshot = cache.get(account).flatMap(_.roleSnapshot),
           failureStatus = FailureSnapshot(err.getMessage, Instant.now(clock))
