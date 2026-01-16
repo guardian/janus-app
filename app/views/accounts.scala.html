@@ -7,10 +7,19 @@
 @import scala.util.Failure
 @import scala.util.Success
 @import logic.ViewHelpers
-@(accountOwners: List[(AwsAccount, List[(String, Set[Permission])], Try[String])], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@import logic.AccountInfo
+@(accountOwners: List[AccountInfo], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@*
+consider changing the accounts page to include a status icon in the accordion header for each account
+(next to the account ID), and changing the expanded section to be a properly laid out summary of the
+info for that account - the Audit link, the provisioned IAM roles status (with age and status) and maybe
+(but not certainly) the list of users.
+*@
 
 @main("Accounts", Some(user), janusData) {
-    <div class="container" xmlns="http://www.w3.org/1999/html">
+  <div class="container">
+
         <h1 class="header orange-text">Accounts</h1>
         @janusData.permissionsRepo match {
           case Some(permissionsRepo) => {
@@ -22,95 +31,59 @@
               <p>Refer to Janus' configuration for full details on who has what access to each AWS account.</p>
           }
         }
-        <ul class="collapsible collapsible-accordion">
-        @for((account, owners, tryAccountNumber) <- accountOwners) {
-            <li class="owners__container">
-                <div class="owners__header collapsible-header">
-                    <span>
-                    @account.name
+        <table>
+            <tr>
+                <th>
+                    Account
+                </th>
+                <th>
+                    Account Number
+                </th>
+                <th>
+                    Owners
+                </th>
+                <th>
+                    Roles
+                </th>
+                <th>
+                    Audit
+                </th>
+            </tr>
 
-                    </span>
-                    <div class="right">
-                        <span class="chip">
+            @for(AccountInfo(account, owners, tryAccountNumber, rolesStatuses) <- accountOwners) {
+              <tr>
+
+                <td>
+                    @account.name
+                </td>
+                <td>
                             @tryAccountNumber match {
                                 case Failure(_) => {
-                                    No account number
+                                    -
                             }
                                 case Success(accountNumber) => {
                                     @accountNumber
                                 }
                             }
-                        </span>
-                        <div class="owner-count right-align">
+                </td>
+                <td>
+                        <a class="grey-text darken-2" href="/users/account/@account.name">
                             @owners.size
                             <i class="material-icons tiny minor-header-icon">person</i>
-                        </div>
-                    </div>
-                </div>
+                        </a>
+                </td>
+                <td>
+                    <a class="grey-text darken-2" href="/roles-status/account/@account.name">
+                    @rolesStatuses.size
+                    <i class="material-icons tiny minor-header-icon">handyman</i>
+                    </a>
+                </td>
+                <td>
+                        <a class="grey-text darken-2" href="/audit/account/@account.authConfigKey">View Audit Trail <i class="material-icons">assignment</i></a>
+                </td>
+              </tr>
 
-                <div class="account-summary__container collapsible-body">
-                    <div class="row">
-                        <div class="col s12">
-                            <a class="account-summary__button--audit btn grey" href="/audit/account/@account.authConfigKey">
-                                Audit trail <i class="material-icons">assignment</i>
-                            </a>
-                            @if(owners.isEmpty) {
-                                <p>There are no Janus-managed users for this account.</p>
-                            } else {
-                                @* We generate 1, 2 and 3 col versions of this and show/hide responsively *@
-                                <div class="hide-on-med-and-up">
-                                    @* 1 column on small devices *@
-                                    <div class="row">
-                                        <div class="col s12">
-                                            <ul class="collection">
-                                                @for(user <- owners) {
-                                                    <li class="collection-item">@user._1</li>
-                                                }
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="show-on-medium hide-on-large-only hide-on-small-and-down">
-                                    @* 2 columns on medium devices *@
-                                    <div class="row">
-                                        <ul class="collection col m6">
-                                            @for(user <- ViewHelpers.getColumn(2, owners, 0)) {
-                                                <li class="collection-item">@user._1</li>
-                                            }
-                                        </ul>
-                                        <ul class="collection col m6">
-                                            @for(user <- ViewHelpers.getColumn(2, owners, 1)) {
-                                                <li class="collection-item">@user._1</li>
-                                            }
-                                        </ul>
-                                    </div>
-                                </div>
-                                <div class="hide-on-med-and-down">
-                                    @* 3 columns on large devices *@
-                                    <div class="row">
-                                        <ul class="collection col l4">
-                                            @for(user <- ViewHelpers.getColumn(3, owners, 0)) {
-                                                <li class="collection-item">@user._1</li>
-                                            }
-                                        </ul>
-                                        <ul class="collection col l4">
-                                            @for(user <- ViewHelpers.getColumn(3, owners, 1)) {
-                                                <li class="collection-item">@user._1</li>
-                                            }
-                                        </ul>
-                                        <ul class="collection col l4">
-                                            @for(user <- ViewHelpers.getColumn(3, owners, 2)) {
-                                                <li class="collection-item">@user._1</li>
-                                            }
-                                        </ul>
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    </div>
-                </div>
-            </li>
         }
-        </ul>
-    </div>
+        </table>
+  </div>
 }

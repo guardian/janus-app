@@ -40,7 +40,7 @@
                             <li><a href="/support">Support</a></li>
                             @if(hasAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
-                            <li><a href="/roles-status">All Roles Statuses</a></li>
+                            <li><a href="/roles-status">Roles</a></li>
                             <li><a href="/user-account">@user.firstName @user.lastName</a></li>
                         </ul>
 
@@ -50,7 +50,7 @@
                             @if(isSupportUser(username(user), Instant.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
                             @if(hasAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
-                            <li><a href="/roles-status">All Roles Statuses</a></li>
+                            <li><a href="/roles-status">Roles</a></li>
                             <li><a href="/user-account">@user.firstName @user.lastName <i class="material-icons right">perm_identity</i></a></li>
                         </ul>
                     }

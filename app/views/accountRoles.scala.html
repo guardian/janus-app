@@ -1,0 +1,52 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.{AwsAccount, JanusData}
+@import models.IamRoleInfo
+@import play.api.Mode
+@import software.amazon.awssdk.arns.Arn
+@import scala.jdk.OptionConverters.*
+
+@(roles: Map[String, (Set[String], Set[String])], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@main(s"Roles Status", Some(user), janusData) {
+    <div class="container">
+        <div class="row">
+            <div class="col s12">
+                <h1 class="header orange-text">Roles Statuses</h1>
+            </div>
+        </div>
+
+        @if(roles.isEmpty) {
+            <p>There are no roles</p>
+        } else {
+            <div class="collection">
+                <table>
+                    <tr>
+                        <th>
+                            Role Name
+                        </th>
+                        <th>
+                            Account IDs
+                        </th>
+                        <th>
+                            Tag Names
+                        </th>
+                    </tr>
+                    @for((roleName, (arns, tags)) <- roles) {
+                        <tr>
+                            <td>
+                            @roleName
+                            </td>
+                            <td>
+                            @{arns.mkString(", ")}
+                            </td>
+                            <td>
+                            @{tags.toList.mkString(", ")}
+                            </td>
+                        </tr>
+                    }
+                </table>
+            </div>
+
+        }
+    </div>
+}

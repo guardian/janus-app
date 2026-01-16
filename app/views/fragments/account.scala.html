@@ -1,0 +1,19 @@
+@import logic.ViewHelpers
+
+@(accountName: String, authConfigKey: Option[String])
+
+<div class="account">
+
+        @for(key <- authConfigKey) {
+            <p>
+                <a class="grey-text darken-2" href="/audit/account/@key">View Audit Trail <i class="material-icons">assignment</i></a>
+            </p>
+        }
+        <p>
+            <a class="grey-text darken-2" href="/roles-status/account/@accountName">View Roles <i class="material-icons">assignment</i></a>
+        </p>
+        <p>
+            <a class="grey-text darken-2" href="/users/account/@accountName">View Users <i class="material-icons">assignment</i></a>
+        </p>
+
+</div>
