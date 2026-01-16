@@ -17,16 +17,15 @@
                         <div class="card-content">
                             <strong>LAST READ</strong>
                             <div>@snapshot.timestamp</div>
+                            <div>
+                                @for(role <- snapshot.roles) {
+                                    <div>Role Tag: @role.provisionedRoleTagValue</div>
+                                    <div>Name: @role.friendlyName</div>
+                                    <div>Description: @role.description</div>
+                                }
+                            </div>
                             @if(snapshot.roles.isEmpty) {
                                 <div>No roles found.</div>
-                            } else {
-                                <div>
-                                    @for(role <- snapshot.roles) {
-                                        <div>Role Tag: @role.provisionedRoleTagValue</div>
-                                        <div>Name: @role.friendlyName</div>
-                                        <div>Description: @role.description</div>
-                                    }
-                                </div>
                             }
                         </div>
                     </div>
