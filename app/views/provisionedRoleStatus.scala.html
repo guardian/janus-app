@@ -20,9 +20,13 @@
                             @if(snapshot.roles.isEmpty) {
                                 <div>No roles found.</div>
                             } else {
-                                <div>Role Tags: @snapshot.roles.map(_.provisionedRoleTagValue).mkString(", ")</div>
-                                <div>Names: @snapshot.roles.map(_.friendlyName).mkString(", ")</div>
-                                <div>Descriptions: @snapshot.roles.map(_.description).mkString(", ")</div>
+                                <div>
+                                    @for(role <- snapshot.roles) {
+                                        <div>Role Tag: @role.provisionedRoleTagValue</div>
+                                        <div>Name: @role.friendlyName</div>
+                                        <div>Description: @role.description</div>
+                                    }
+                                </div>
                             }
                         </div>
                     </div>
