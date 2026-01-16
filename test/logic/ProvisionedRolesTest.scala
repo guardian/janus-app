@@ -26,8 +26,8 @@ class ProvisionedRolesTest
 
   private val timestamp = Instant.now()
 
-  private def createRole(arn: String): Role =
-    Role.builder().arn(arn).build()
+  private val role: Role =
+    Role.builder().arn("arn:aws:iam::123:role/r1").build()
 
   private def createTag(key: String, value: String): Tag =
     Tag.builder().key(key).value(value).build()
@@ -210,7 +210,6 @@ class ProvisionedRolesTest
 
   "toRoleInfo" - {
     "should return None when provisioned role tag is absent" in {
-      val role = createRole("arn:aws:iam::123:role/r1")
       val tags = Set(
         createTag(friendlyNameTagKey, "Name"),
         createTag(descriptionTagKey, "Desc")
@@ -228,7 +227,6 @@ class ProvisionedRolesTest
     }
 
     "should return IamRoleInfo with only required fields when optional tags absent" in {
-      val role = createRole("arn:aws:iam::123:role/r1")
       val tags = Set(createTag(provisionedRoleTagKey, "test-role"))
 
       val result = ProvisionedRoles.toRoleInfo(
@@ -245,7 +243,6 @@ class ProvisionedRolesTest
     }
 
     "should include friendly name when present" in {
-      val role = createRole("arn:aws:iam::123:role/r1")
       val tags = Set(
         createTag(provisionedRoleTagKey, "test-role"),
         createTag(friendlyNameTagKey, "Friendly")
@@ -263,7 +260,6 @@ class ProvisionedRolesTest
     }
 
     "should include description when present" in {
-      val role = createRole("arn:aws:iam::123:role/r1")
       val tags = Set(
         createTag(provisionedRoleTagKey, "test-role"),
         createTag(descriptionTagKey, "Description")
@@ -281,7 +277,6 @@ class ProvisionedRolesTest
     }
 
     "should be case-sensitive for tag keys" in {
-      val role = createRole("arn:aws:iam::123:role/r1")
       val tags = Set(createTag("provisionedrole", "test-role"))
 
       val result = ProvisionedRoles.toRoleInfo(
@@ -296,8 +291,6 @@ class ProvisionedRolesTest
     }
 
     "should handle empty tag set" in {
-      val role = createRole("arn:aws:iam::123:role/r1")
-
       val result = ProvisionedRoles.toRoleInfo(
         role,
         Set.empty,
