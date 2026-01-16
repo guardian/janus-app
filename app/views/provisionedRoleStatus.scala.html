@@ -8,21 +8,34 @@
     <div class="container">
         <h1 class="header orange-text">Provisioned Role Status</h1>
         @for((account, status) <- provisionedRoleStatus) {
-            <div>
-                <div>In '@account.name' account</div>
-                <div>@status.roleSnapshot.map(_ => "LAST READ")</div>
-                <div>@status.roleSnapshot.map(_.timestamp)</div>
-                <div>@status.roleSnapshot.map(_.roles.map(_.provisionedRoleTagValue))</div>
-                <div>@status.roleSnapshot.map(_.roles.map(_.friendlyName))</div>
-                <div>@status.roleSnapshot.map(_.roles.map(_.description))</div>
-                <div>@status.failureStatus.map(_ => "FAILED")</div>
-                <div>@status.failureStatus.map(_.timestamp)</div>
-                <div>@status.failureStatus.map(_.failure)</div>
+            <div class="card card--aws-account">
+                <div class="card-content card-content--aws-account-header">
+                    <h5 class="card-content--aws-account-header__title">@account.name</h5>
+                </div>
+                @status.roleSnapshot.map { snapshot =>
+                    <div class="card-action">
+                        <strong>LAST READ</strong>
+                        <div>@snapshot.timestamp</div>
+                        <div>Role Tags: @snapshot.roles.map(_.provisionedRoleTagValue).mkString(", ")</div>
+                        <div>Names: @snapshot.roles.map(_.friendlyName).mkString(", ")</div>
+                        <div>Descriptions: @snapshot.roles.map(_.description).mkString(", ")</div>
+                    </div>
+                }
+                @status.failureStatus.map { failure =>
+                    <div class="card-action">
+                        <strong>FAILED</strong>
+                        <div>@failure.timestamp</div>
+                        <div>@failure.failure</div>
+                    </div>
+                }
             </div>
-            <br />
         }
         @if(provisionedRoleStatus.isEmpty) {
-          <div>Cache is empty.</div>
+            <div class="card">
+                <div class="card-content">
+                    Cache is empty.
+                </div>
+            </div>
         }
     </div>
 }
