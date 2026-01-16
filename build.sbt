@@ -107,6 +107,7 @@ lazy val root: Project = (project in file("."))
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
       "com.webauthn4j" % "webauthn4j-core" % "0.30.2.RELEASE",
       "co.fs2" %% "fs2-core" % "3.12.2",
+      "org.typelevel" %% "log4cats-slf4j" % "2.7.1",
       "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
     ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides ++ safeTransitiveDependencies,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.

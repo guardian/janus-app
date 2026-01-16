@@ -13,8 +13,10 @@ import models.{
   IamRoleInfo,
   IamRoleInfoSnapshot
 }
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
-import play.api.{Configuration, Logging}
 import software.amazon.awssdk.services.iam.IamClient
 import software.amazon.awssdk.services.iam.model.{ListRolesRequest, Role}
 import software.amazon.awssdk.services.sts.StsClient
@@ -57,8 +59,9 @@ class ProvisionedRoleCachingService(
     sts: StsClient,
     clock: Clock = Clock.systemUTC()
 ) extends ProvisionedRoleFinder
-    with ProvisionedRoleStatusManager
-    with Logging {
+    with ProvisionedRoleStatusManager {
+
+  private given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   private val fetchEnabled =
     config.get[Boolean]("provisionedRoles.fetch.enabled")
@@ -105,13 +108,11 @@ class ProvisionedRoleCachingService(
         )
         .handleErrorWith { err =>
           Stream.eval(
-            IO(logger.error("Failed to refresh provisioned role cache", err))
+            logger.error(err)("Failed to refresh provisioned role cache")
           )
         }
     } else
-      Stream.eval(
-        IO(logger.warn("Provisioned role caching has been disabled!"))
-      )
+      Stream.eval(logger.warn("Provisioned role caching has been disabled!"))
 
   override def getIamRolesByProvisionedRole(
       role: ProvisionedRole
@@ -132,32 +133,27 @@ class ProvisionedRoleCachingService(
       iam: IamClient
   ): IO[AwsAccountIamRoleInfoStatus] =
     (for {
-      _ <- IO(
-        logger.info(
-          s"Fetching provisioned roles from account '${account.name}'..."
-        )
+      _ <- logger.info(
+        s"Fetching provisioned roles from account '${account.name}'..."
       )
       roles <- Iam.listRoles(iam, roleListRequest)
       roleInfos <- roles.traverse(role => toRoleInfo(iam, role))
-      _ <- IO(
-        logger.info(
-          s"Fetched ${roleInfos.size} provisioned roles from account '${account.name}'."
-        )
+      _ <- logger.info(
+        s"Fetched ${roleInfos.size} provisioned roles from account '${account.name}'."
       )
     } yield AwsAccountIamRoleInfoStatus.success(
       IamRoleInfoSnapshot(roleInfos, Instant.now(clock))
     )).handleErrorWith(err =>
-      IO(
-        logger.error(
-          s"Failed to fetch provisioned roles from account '${account.name}'",
-          err
+      logger
+        .error(err)(
+          s"Failed to fetch provisioned roles from account '${account.name}'"
         )
-      ).as(
-        AwsAccountIamRoleInfoStatus.failure(
-          cachedRoleSnapshot = cache.get(account).flatMap(_.roleSnapshot),
-          failureStatus = FailureSnapshot(err.getMessage, Instant.now(clock))
+        .as(
+          AwsAccountIamRoleInfoStatus.failure(
+            cachedRoleSnapshot = cache.get(account).flatMap(_.roleSnapshot),
+            failureStatus = FailureSnapshot(err.getMessage, Instant.now(clock))
+          )
         )
-      )
     )
 
   private def toRoleInfo(iam: IamClient, role: Role): IO[IamRoleInfo] =
