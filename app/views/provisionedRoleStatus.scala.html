@@ -13,28 +13,34 @@
                     <h5 class="card-content--aws-account-header__title">@account.name</h5>
                 </div>
                 @status.roleSnapshot.map { snapshot =>
-                    <div class="card-action">
-                        <strong>LAST READ</strong>
-                        <div>@snapshot.timestamp</div>
-                        <div>Role Tags: @snapshot.roles.map(_.provisionedRoleTagValue).mkString(", ")</div>
-                        <div>Names: @snapshot.roles.map(_.friendlyName).mkString(", ")</div>
-                        <div>Descriptions: @snapshot.roles.map(_.description).mkString(", ")</div>
+                    <div class="card">
+                        <div class="card-content">
+                            <strong>LAST READ</strong>
+                            <div>@snapshot.timestamp</div>
+                            @if(snapshot.roles.isEmpty) {
+                                <div>No roles found.</div>
+                            } else {
+                                <div>Role Tags: @snapshot.roles.map(_.provisionedRoleTagValue).mkString(", ")</div>
+                                <div>Names: @snapshot.roles.map(_.friendlyName).mkString(", ")</div>
+                                <div>Descriptions: @snapshot.roles.map(_.description).mkString(", ")</div>
+                            }
+                        </div>
                     </div>
                 }
                 @status.failureStatus.map { failure =>
-                    <div class="card-action">
-                        <strong>FAILED</strong>
-                        <div>@failure.timestamp</div>
-                        <div>@failure.failure</div>
+                    <div class="card">
+                        <div class="card-content">
+                            <strong>FAILED</strong>
+                            <div>@failure.timestamp</div>
+                            <div>@failure.failure</div>
+                        </div>
                     </div>
                 }
             </div>
         }
         @if(provisionedRoleStatus.isEmpty) {
             <div class="card">
-                <div class="card-content">
-                    Cache is empty.
-                </div>
+                <div class="card-content">Cache is empty.</div>
             </div>
         }
     </div>
