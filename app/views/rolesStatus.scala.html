@@ -3,7 +3,7 @@
 @import models.IamRoleInfo
 @import play.api.Mode
 
-@(accountName: String, rolesStatuses: List[IamRoleInfo], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountName: String, rolesStatuses: List[IamRoleInfo], error: Option[String], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main(s"Roles Status for $accountName", Some(user), janusData) {
     <div class="container">
@@ -14,7 +14,15 @@
         </div>
 
         @if(rolesStatuses.isEmpty) {
-            <p>There are no roles for this account</p>
+          <div>
+              @{error match {
+                  case Some(errorText) => {
+                    <p>Error fetching roles for {accountName}: </p>
+                    <p class="error">{errorText}</p>
+                  }
+                  case None => <p>There are no successfully created roles for this account</p>
+              }}
+          </div>
         } else {
             <div class="collection">
                 <table>

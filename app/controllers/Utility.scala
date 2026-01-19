@@ -127,7 +127,7 @@ class Utility(
 
   def rolesStatusForAccount(account: String): Action[AnyContent] = {
 
-    val rolesForThisAccount: List[IamRoleInfo] = {
+    val successfulRolesForThisAccount: List[IamRoleInfo] = {
       rolesStatuses.find(_._1.name == account) match {
         case Some(
               _,
@@ -141,11 +141,26 @@ class Utility(
       }
     }
 
+    val error: Option[String] = {
+      rolesStatuses.find(_._1.name == account) match {
+        case Some(
+              _,
+              AwsAccountIamRoleInfoStatus(
+                _,
+                Some(FailureSnapshot(failure, _))
+              )
+            ) =>
+          Some(failure)
+        case _ => None
+      }
+    }
+
     authAction { implicit request =>
       Ok(
         views.html.rolesStatus(
           account,
-          rolesForThisAccount,
+          successfulRolesForThisAccount,
+          error,
           request.user,
           janusData
         )

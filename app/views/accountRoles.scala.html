@@ -9,15 +9,15 @@
 
 @main(s"Roles Status", Some(user), janusData) {
     <div class="container">
-        <div class="row">
-            <div class="col s12">
-                <h1 class="header orange-text">Successful Roles</h1>
-            </div>
-        </div>
 
         @if(successfulRoles.isEmpty) {
             <p>There are no successful roles</p>
         } else {
+            <div class="row">
+                <div class="col s12">
+                    <h1 class="header orange-text">Successful Roles</h1>
+                </div>
+            </div>
             <div class="collection">
                 <table>
                     <tr>
@@ -28,10 +28,10 @@
                             Provisioned Role
                         </th>
                         <th>
-                            Accounts
+                            Account(s)
                         </th>
                     </tr>
-                    @for(((r1, r2), accounts) <- successfulRoles) {
+                    @for(((r1, r2), accounts) <- successfulRoles.toList.sortBy(_._1)) {
                         <tr>
                             <td>
                                 @r1.getOrElse("No friendly name")
@@ -48,15 +48,15 @@
             </div>
 
         }
-        <div class="row">
-            <div class="col s12">
-                <h1 class="header orange-text">Failed Roles</h1>
-            </div>
-        </div>
 
-        @if(successfulRoles.isEmpty) {
+        @if(failedRoles.isEmpty) {
             <p>There are no failed roles</p>
         } else {
+            <div class="row">
+                <div class="col s12">
+                    <h1 class="header orange-text">Accounts with Failed Role Snapshots</h1>
+                </div>
+            </div>
             <div class="collection">
                 <table>
                     <tr>
@@ -64,25 +64,21 @@
                             Role Name
                         </th>
                         <th>
-                            Provisioned Role
-                        </th>
-                        <th>
-                            Accounts
+                            Error
                         </th>
                     </tr>
-                    @for((account, failureList) <- successfulRoles) {
+                    @for((account, failureList) <- failedRoles.toList.sortBy(_._1)) {
                         <tr>
                             <td>
                                 @account
                             </td>
                             <td>
-                                @{failureList.mkString(", ")}
+                                @{failureList.flatten.mkString(", ")}
                             </td>
                         </tr>
                     }
                 </table>
             </div>
-
         }
     </div>
 }
