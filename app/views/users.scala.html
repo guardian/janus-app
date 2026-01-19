@@ -10,13 +10,6 @@
 @import logic.AccountInfo
 @(account: String, users: List[String], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
-@*
-consider changing the accounts page to include a status icon in the accordion header for each account
-(next to the account ID), and changing the expanded section to be a properly laid out summary of the
-info for that account - the Audit link, the provisioned IAM roles status (with age and status) and maybe
-(but not certainly) the list of users.
-*@
-
 @main("Accounts", Some(user), janusData) {
     <div class="container" xmlns="http://www.w3.org/1999/html">
         <h1 class="header orange-text">Users for @account</h1>

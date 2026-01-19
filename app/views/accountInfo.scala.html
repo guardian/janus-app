@@ -7,10 +7,10 @@
 @import scala.util.Failure
 @import scala.util.Success
 @import logic.ViewHelpers
-@(accountName: String, authConfigKey: Option[String], accountUsers: List[String],  user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountName: String, authConfigKey: String, accountUsers: List[String],  user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main(accountName, Some(user), janusData) {
-    <div class="container" xmlns="http://www.w3.org/1999/html">
+    <div class="container">
         <h1 class="header orange-text">@accountName</h1>
         @janusData.permissionsRepo match {
           case Some(permissionsRepo) => {
