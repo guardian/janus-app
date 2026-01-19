@@ -17,9 +17,8 @@ object Owners {
   def accountOwnerInformation(accounts: Set[AwsAccount], access: ACL)(
       lookupConfiguredRole: AwsAccount => Try[String],
       lookupRoles: (AwsAccount, Try[String]) => Set[IamRoleInfo]
-  ): List[AccountInfo] =
-    accounts.toList
-      .sortBy(_.name.toLowerCase)
+  ): Set[AccountInfo] =
+    accounts
       .map { awsAccount =>
         val accountIdMaybe = lookupConfiguredRole(awsAccount)
         AccountInfo(
@@ -44,14 +43,14 @@ object Owners {
         else None
       }
       .toList
-      .sortBy(_._1)
+      .sortBy(_.userName)
   }
 
   def accountIdErrors(
-      accountData: Seq[
+      accountData: Set[
         AccountInfo
       ]
-  ): Seq[(AwsAccount, Throwable)] = {
+  ): Set[(AwsAccount, Throwable)] = {
     accountData
       .collect { case AccountInfo(account, _, Failure(err), _) =>
         (account, err)

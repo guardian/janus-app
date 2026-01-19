@@ -8,7 +8,7 @@
 @import scala.util.Success
 @import logic.ViewHelpers
 @import logic.AccountInfo
-@(accountOwners: List[AccountInfo], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountOwners: Set[AccountInfo], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @*
 consider changing the accounts page to include a status icon in the accordion header for each account
@@ -50,7 +50,7 @@ info for that account - the Audit link, the provisioned IAM roles status (with a
                 </th>
             </tr>
 
-            @for(AccountInfo(account, owners, tryAccountNumber, rolesStatuses) <- accountOwners) {
+            @for(AccountInfo(account, owners, tryAccountNumber, rolesStatuses) <- accountOwners.toList.sortBy(_.account.name)) {
               <tr>
 
                 <td>

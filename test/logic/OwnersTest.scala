@@ -1,13 +1,14 @@
 package logic
 
-import com.gu.janus.model.{ACL, ACLEntry}
+import com.gu.janus.model.{ACL, ACLEntry, AwsAccount}
 import fixtures.Fixtures.*
+import models.IamRoleInfo
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.language.postfixOps
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class OwnersTest
     extends AnyFreeSpec
@@ -15,7 +16,7 @@ class OwnersTest
     with ScalaCheckDrivenPropertyChecks {
   import Owners.*
 
-  val accounts = List(fooAct, barAct, bazAct, quxAct)
+  val accounts = Set(fooAct, barAct, bazAct, quxAct)
   val acl = ACL(
     Map(
       "test.user" -> ACLEntry(Set(fooDev), Set.empty),
@@ -30,12 +31,16 @@ class OwnersTest
   )
 
   "accountOwnerInformation" - {
+    val emptyRoleList: (AwsAccount, Try[String]) => Set[IamRoleInfo] =
+      (_, _) => Set.empty
+
     "uses the provided lookup function to populate the role for each account" in {
       forAll { (roleArn: String) =>
-        val result = accountOwnerInformation(accounts, acl)(account =>
-          Success(s"${account.authConfigKey}-$roleArn")
+        val result = accountOwnerInformation(accounts, acl)(
+          account => Success(s"${account.authConfigKey}-$roleArn"),
+          emptyRoleList
         )
-        result.foreach { case (account, _, populatedRole) =>
+        result.foreach { case AccountInfo(account, _, populatedRole, _) =>
           populatedRole shouldEqual Success(
             s"${account.authConfigKey}-$roleArn"
           )
@@ -47,9 +52,15 @@ class OwnersTest
       val shuffledAccounts1 = scala.util.Random.shuffle(accounts)
       val shuffledAccounts2 = scala.util.Random.shuffle(accounts)
       val result1 =
-        accountOwnerInformation(shuffledAccounts1, acl)(_ => Success("role"))
+        accountOwnerInformation(shuffledAccounts1, acl)(
+          _ => Success("role"),
+          emptyRoleList
+        )
       val result2 =
-        accountOwnerInformation(shuffledAccounts2, acl)(_ => Success("role"))
+        accountOwnerInformation(shuffledAccounts2, acl)(
+          _ => Success("role"),
+          emptyRoleList
+        )
       result1 shouldEqual result2
     }
   }
@@ -61,42 +72,52 @@ class OwnersTest
 
     "fetches all the permissions for an account, ordered by username" in {
       accountPermissions(fooAct, acl) shouldEqual List(
-        "test.admin" -> Set(fooCf),
-        "test.all" -> Set(fooDev, fooCf),
-        "test.other" -> Set(fooS3),
-        "test.user" -> Set(fooDev),
-        "test.yet-another-user" -> Set(fooDev),
-        "test.zzz-other" -> Set(fooS3)
+        UserPermissions("test.admin", Set(fooCf)),
+        UserPermissions("test.all", Set(fooDev, fooCf)),
+        UserPermissions("test.other", Set(fooS3)),
+        UserPermissions("test.user", Set(fooDev)),
+        UserPermissions("test.yet-another-user", Set(fooDev)),
+        UserPermissions("test.zzz-other", Set(fooS3))
       )
     }
 
     "fetches all the permissions for a different account" in {
       accountPermissions(barAct, acl) shouldEqual List(
-        "test.different-account" -> Set(barDev)
+        UserPermissions("test.different-account", Set(barDev))
       )
     }
   }
 
   "accountIdErrors" - {
     "returns an empty list if all accounts were successfully looked up" in {
-      val accountData = List(
-        (fooAct, List.empty, Success("foo-role")),
-        (barAct, List.empty, Success("bar-role")),
-        (bazAct, List.empty, Success("baz-role")),
-        (quxAct, List.empty, Success("qux-role"))
+      val accountData = Set(
+        AccountInfo(fooAct, List.empty, Success("foo-role"), Set.empty),
+        AccountInfo(barAct, List.empty, Success("bar-role"), Set.empty),
+        AccountInfo(bazAct, List.empty, Success("baz-role"), Set.empty),
+        AccountInfo(quxAct, List.empty, Success("qux-role"), Set.empty)
       )
-      accountIdErrors(accountData) shouldEqual Nil
+      accountIdErrors(accountData) shouldEqual Set.empty
     }
 
     "returns a list of accounts that failed their lookup" in {
-      val accountData = List(
-        (fooAct, List.empty, Success("foo-role")),
-        (barAct, List.empty, Success("bar-role")),
-        (bazAct, List.empty, Failure(new RuntimeException("baz-error"))),
-        (quxAct, List.empty, Failure(new RuntimeException("qux-error")))
+      val accountData = Set(
+        AccountInfo(fooAct, List.empty, Success("foo-role"), Set.empty),
+        AccountInfo(barAct, List.empty, Success("bar-role"), Set.empty),
+        AccountInfo(
+          bazAct,
+          List.empty,
+          Failure(new RuntimeException("baz-error")),
+          Set.empty
+        ),
+        AccountInfo(
+          quxAct,
+          List.empty,
+          Failure(new RuntimeException("qux-error")),
+          Set.empty
+        )
       )
       val errorAccounts = accountIdErrors(accountData).map(_._1)
-      errorAccounts shouldEqual List(bazAct, quxAct)
+      errorAccounts shouldEqual Set(bazAct, quxAct)
     }
   }
 }
