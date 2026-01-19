@@ -40,19 +40,19 @@ POST          /passkey/registration-auth-options        controllers.PasskeyContr
 POST          /passkey/register                         controllers.PasskeyController.register
 DELETE        /passkey/:passkeyId                       controllers.PasskeyController.deletePasskey(passkeyId: String)
 
-GET           /roles-status                             controllers.Utility.accountRoles
+GET           /roles-status                             controllers.AccountsController.accountRoles
 
-GET           /roles-status/account/:account            controllers.Utility.rolesStatusForAccount(account: String)
-GET           /users/account/:account                   controllers.Utility.usersForAccount(account: String)
-GET           /account/:account                         controllers.Utility.moreInfo(account: String)
+GET           /roles-status/account/:account            controllers.AccountsController.rolesStatusForAccount(account: String)
+GET           /users/account/:account                   controllers.AccountsController.usersForAccount(account: String)
+GET           /account/:account                         controllers.AccountsController.accountInfo(account: String)
 
 # Tmp routes for passkey trial
 GET           /opt/in/passkeys                          controllers.Utility.optInToPasskeys
 GET           /opt/out/passkeys                         controllers.Utility.optOutOfPasskeys
 
 GET           /healthcheck                              controllers.Utility.healthcheck
-GET           /accounts                                 controllers.Utility.accounts
-GET           /provisioned-role-status                  controllers.Utility.provisionedRoleStatus
+GET           /accounts                                 controllers.AccountsController.accounts
+GET           /provisioned-role-status                  controllers.AccountsController.provisionedRoleStatus
 
 # Map static resources from the /public folder to the /assets URL path
 GET           /assets/*file                             controllers.Assets.versioned(file)

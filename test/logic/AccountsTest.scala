@@ -10,11 +10,11 @@ import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 import scala.language.postfixOps
 import scala.util.{Failure, Success, Try}
 
-class OwnersTest
+class AccountsTest
     extends AnyFreeSpec
     with Matchers
-    with ScalaCheckDrivenPropertyChecks {
-  import Owners.*
+    with ScalaCheckDrivenPropertyChecks
+    with Accounts {
 
   val accounts = Set(fooAct, barAct, bazAct, quxAct)
   val acl = ACL(

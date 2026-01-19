@@ -13,7 +13,7 @@ case class AccountInfo(
     rolesStatuses: Set[IamRoleInfo]
 )
 
-object Owners {
+trait Accounts {
   def accountOwnerInformation(accounts: Set[AwsAccount], access: ACL)(
       lookupConfiguredRole: AwsAccount => Try[String],
       lookupRoles: (AwsAccount, Try[String]) => Set[IamRoleInfo]
@@ -56,4 +56,5 @@ object Owners {
         (account, err)
       }
   }
+
 }
