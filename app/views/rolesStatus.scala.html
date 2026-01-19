@@ -3,7 +3,7 @@
 @import models.IamRoleInfo
 @import play.api.Mode
 
-@(accountName: String, rolesStatuses: Set[IamRoleInfo], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountName: String, rolesStatuses: List[IamRoleInfo], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main(s"Roles Status for $accountName", Some(user), janusData) {
     <div class="container">
@@ -29,18 +29,16 @@
                             Tags
                         </th>
                     </tr>
-                    @for(rolesStatus <- rolesStatuses.toList.sortBy(_.roleName)) {
+                    @for(rolesStatus <- rolesStatuses.sortBy(_.friendlyName)) {
                         <tr>
                             <td>
-                            @rolesStatus.roleName
+                            @rolesStatus.friendlyName
                             </td>
                             <td>
                             @rolesStatus.roleArn
                             </td>
                             <td>
-                              @for((key, value) <- rolesStatus.tags) {
-                                  @{s"$key -> $value"} <br/>
-                              }
+                            @rolesStatus.provisionedRoleTagValue
                             </td>
                         </tr>
                     }

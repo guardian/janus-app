@@ -4,11 +4,20 @@ import com.gu.googleauth.AuthAction
 import com.gu.janus.model.{AwsAccount, JanusData}
 import conf.Config
 import logic.Owners
+import models.{
+  AwsAccountIamRoleInfoStatus,
+  IamRoleInfo,
+  IamRoleInfoSnapshot,
+  FailureSnapshot
+}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.ProvisionedRoleStatusManager
+import software.amazon.awssdk.arns.Arn
 
 import java.time.Duration
+import scala.jdk.OptionConverters.*
+import scala.util.{Success, Try}
 
 class Utility(
     janusData: JanusData,
@@ -33,12 +42,20 @@ class Utility(
     (account, accountIdMaybe) =>
       accountIdMaybe match {
         case Success(accountId) =>
-          rolesStatuses.filter(_.roleArn.accountId().toScala contains accountId)
+          rolesStatuses.get(account) match {
+            case Some(
+                  AwsAccountIamRoleInfoStatus(
+                    Some(IamRoleInfoSnapshot(roles, _)),
+                    _
+                  )
+                ) =>
+              roles.toSet
+            case _ => Set.empty
+          }
         case _ => Set.empty
       }
 
   def accounts: Action[AnyContent] = authAction { implicit request =>
-
     val accountData = Owners.accountOwnerInformation(
       janusData.accounts,
       janusData.access
@@ -54,29 +71,47 @@ class Utility(
     Ok(views.html.accounts(accountData, request.user, janusData))
   }
 
-  def provisionedRoleStatus: Action[AnyContent] = authAction {
-    implicit request =>
-      Ok(
-        views.html.provisionedRoleStatus(
-          provisionedRoleStatusManager.getCacheStatus,
-          request.user,
-          janusData
-        )
-      )
-  }
+  private def rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
+    provisionedRoleStatusManager.getCacheStatus
 
   def accountRoles: Action[AnyContent] = authAction { implicit request =>
-    val roles: Map[String, (Set[String], Set[String])] =
-      rolesStatuses.groupBy(_.roleName).map { (k, v) =>
-        val accounts: Set[String] =
-          v.flatMap(r => r.roleArn.accountId().toScala)
-        val tagNames: Set[String] = v.flatMap(_.tags.keys)
-        (k, (accounts, tagNames))
+    val successfulRoles = rolesStatuses
+      .flatMap { (k, v) =>
+        v match {
+          case AwsAccountIamRoleInfoStatus(
+                Some(
+                  IamRoleInfoSnapshot(iamRoles, _)
+                ),
+                _
+              ) =>
+            iamRoles.map(role =>
+              ((role.friendlyName, role.provisionedRoleTagValue), k.name)
+            )
+          case _ => Seq.empty[((Option[String], String), String)]
+        }
       }
+      .groupMap(_._1)(_._2)
+
+    val failedRoles = rolesStatuses
+      .map { (k, v) =>
+        v match {
+          case AwsAccountIamRoleInfoStatus(
+                _,
+                Some(
+                  FailureSnapshot(failure, _)
+                )
+              ) =>
+            (k.name, Some(failure))
+          case _ => (k.name, None)
+        }
+      }
+      .groupMap(_._1)(_._2)
+
     Ok(
       views.html
         .accountRoles(
-          roles,
+          successfulRoles,
+          failedRoles,
           request.user,
           janusData
         )
@@ -92,14 +127,19 @@ class Utility(
 
   def rolesStatusForAccount(account: String): Action[AnyContent] = {
 
-    val rolesForThisAccount =
-      accountOwnersLookup(account).map(_.configuredRole) match {
-        case Some(Success(accountId)) =>
-          rolesStatuses.filter(roleStatus =>
-            roleStatus.roleArn.accountId().toScala.contains(accountId)
-          )
-        case _ => Set.empty
+    val rolesForThisAccount: List[IamRoleInfo] = {
+      rolesStatuses.find(_._1.name == account) match {
+        case Some(
+              _,
+              AwsAccountIamRoleInfoStatus(
+                Some(IamRoleInfoSnapshot(roles, _)),
+                _
+              )
+            ) =>
+          roles
+        case _ => Nil
       }
+    }
 
     authAction { implicit request =>
       Ok(
@@ -160,6 +200,17 @@ class Utility(
         )
       )
     }
+  }
+
+  def provisionedRoleStatus: Action[AnyContent] = authAction {
+    implicit request =>
+      Ok(
+        views.html.provisionedRoleStatus(
+          provisionedRoleStatusManager.getCacheStatus,
+          request.user,
+          janusData
+        )
+      )
   }
 
   /** Temporary action to opt in to the passkeys integration */

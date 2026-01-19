@@ -176,10 +176,3 @@ object JanusException {
       causedBy = None
     )
 }
-
-// This is the same class as Kelvin is introducing.
-case class IamRoleInfo(
-    roleName: String,
-    roleArn: Arn,
-    tags: Map[String, String]
-)

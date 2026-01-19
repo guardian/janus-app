@@ -5,18 +5,18 @@
 @import software.amazon.awssdk.arns.Arn
 @import scala.jdk.OptionConverters.*
 
-@(roles: Map[String, (Set[String], Set[String])], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(successfulRoles: Map[(Option[String], String), Iterable[String]], failedRoles: Map[String, Iterable[Option[String]]], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main(s"Roles Status", Some(user), janusData) {
     <div class="container">
         <div class="row">
             <div class="col s12">
-                <h1 class="header orange-text">Roles Statuses</h1>
+                <h1 class="header orange-text">Successful Roles</h1>
             </div>
         </div>
 
-        @if(roles.isEmpty) {
-            <p>There are no roles</p>
+        @if(successfulRoles.isEmpty) {
+            <p>There are no successful roles</p>
         } else {
             <div class="collection">
                 <table>
@@ -25,22 +25,58 @@
                             Role Name
                         </th>
                         <th>
-                            Account IDs
+                            Provisioned Role
                         </th>
                         <th>
-                            Tag Names
+                            Accounts
                         </th>
                     </tr>
-                    @for((roleName, (arns, tags)) <- roles) {
+                    @for(((r1, r2), accounts) <- successfulRoles) {
                         <tr>
                             <td>
-                            @roleName
+                                @r1.getOrElse("No friendly name")
                             </td>
                             <td>
-                            @{arns.mkString(", ")}
+                                @r2
                             </td>
                             <td>
-                            @{tags.toList.mkString(", ")}
+                                @{accounts.mkString(", ")}
+                            </td>
+                        </tr>
+                    }
+                </table>
+            </div>
+
+        }
+        <div class="row">
+            <div class="col s12">
+                <h1 class="header orange-text">Failed Roles</h1>
+            </div>
+        </div>
+
+        @if(successfulRoles.isEmpty) {
+            <p>There are no failed roles</p>
+        } else {
+            <div class="collection">
+                <table>
+                    <tr>
+                        <th>
+                            Role Name
+                        </th>
+                        <th>
+                            Provisioned Role
+                        </th>
+                        <th>
+                            Accounts
+                        </th>
+                    </tr>
+                    @for((account, failureList) <- successfulRoles) {
+                        <tr>
+                            <td>
+                                @account
+                            </td>
+                            <td>
+                                @{failureList.mkString(", ")}
                             </td>
                         </tr>
                     }
