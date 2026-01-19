@@ -366,9 +366,6 @@ a.copy-text--button__small {
 }
 
 .account-summary__button--audit {
-    /*position: absolute;*/
-    /*top: 0;*/
-    /*right: 0;*/
     font-size: 1rem;
     padding: 0 2rem;
 }
