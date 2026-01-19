@@ -92,14 +92,18 @@ class ProvisionedRoleCachingService(
 
   def startPolling(): Stream[IO, Unit] =
     if (fetchEnabled) {
-      Stream
+      Stream.eval(
+        logger.info(
+          s"Provisioned role caching enabled with fetch rate: $fetchRate"
+        )
+      ) ++ Stream
         // do first fetch immediately
         .emit(())
         // then periodically
         .append(Stream.awakeEvery[IO](fetchRate))
-        .flatMap(_ => Stream.emits(accounts.toList))
-        .evalMap(account =>
-          fetchFromAccount(account, accountIams(account))
+        .flatMap(_ => Stream.emits(accountIams.toList))
+        .evalMap((account, iam) =>
+          fetchFromAccount(account, iam)
             .map(status => cache.update(account, status))
         )
         .handleErrorWith { err =>
@@ -129,13 +133,13 @@ class ProvisionedRoleCachingService(
       iam: IamClient
   ): IO[AwsAccountIamRoleInfoStatus] =
     (for {
-      _ <- logger.info(
+      _ <- logger.debug(
         s"Fetching provisioned roles from account '${account.name}'..."
       )
       roles <- Iam.listRoles(iam, roleListRequest)
       roleInfos <- roles.traverse(role => fetchRoleInfo(iam, role))
       now <- IO.realTimeInstant
-      _ <- logger.info(
+      _ <- logger.debug(
         s"Fetched ${roleInfos.size} provisioned roles from account '${account.name}'."
       )
     } yield AwsAccountIamRoleInfoStatus.success(

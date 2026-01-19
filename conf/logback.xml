@@ -37,6 +37,9 @@
     <logger name="org.apache.http.wire" level="WARN" />
     <logger name="com.amazonaws" level="WARN" />
 
+    <!-- Useful for debugging role-fetching problems -->
+    <!-- logger name="services.ProvisionedRoleCachingService" level="DEBUG" /-->
+
     <root level="INFO">
         <appender-ref ref="LOGFILE"/>
         <appender-ref ref="ASYNCSTDOUT"/>
