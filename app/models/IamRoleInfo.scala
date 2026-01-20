@@ -1,6 +1,6 @@
 package models
 
-import com.gu.janus.model.AwsAccount
+import com.gu.janus.model.{AwsAccount, Permission}
 import software.amazon.awssdk.arns.Arn
 
 import java.time.Instant
@@ -53,6 +53,16 @@ case class IamRoleInfoSnapshot(
 case class FailureSnapshot(
     failure: String,
     timestamp: Instant
+)
+
+/** A */
+case class UserPermissions(userName: String, permissions: Set[Permission])
+
+case class AccountInfo(
+    account: AwsAccount,
+    permissions: List[UserPermissions],
+    configuredRole: Try[String],
+    rolesStatuses: Set[IamRoleInfo]
 )
 
 /** Status of [[IamRoleInfo]] data fetched from a single AWS account. */

@@ -7,7 +7,7 @@
 @import scala.util.Failure
 @import scala.util.Success
 @import logic.ViewHelpers
-@import logic.AccountInfo
+@import models.AccountInfo
 @(account: String, users: List[String], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Accounts", Some(user), janusData) {

@@ -6,7 +6,9 @@ import models.{
   AwsAccountIamRoleInfoStatus,
   FailureSnapshot,
   IamRoleInfo,
-  IamRoleInfoSnapshot
+  IamRoleInfoSnapshot,
+  AccountInfo,
+  UserPermissions
 }
 import org.scalatest.FailedStatus
 import org.scalatest.freespec.AnyFreeSpec

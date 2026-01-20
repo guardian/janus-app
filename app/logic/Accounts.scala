@@ -5,19 +5,13 @@ import models.{
   AwsAccountIamRoleInfoStatus,
   FailureSnapshot,
   IamRoleInfo,
-  IamRoleInfoSnapshot
+  IamRoleInfoSnapshot,
+  AccountInfo,
+  UserPermissions
 }
 
 import scala.collection.immutable
 import scala.util.{Success, Try, Failure}
-
-case class UserPermissions(userName: String, permissions: Set[Permission])
-case class AccountInfo(
-    account: AwsAccount,
-    permissions: List[UserPermissions],
-    configuredRole: Try[String],
-    rolesStatuses: Set[IamRoleInfo]
-)
 
 trait Accounts {
 
