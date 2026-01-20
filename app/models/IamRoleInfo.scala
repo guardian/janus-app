@@ -1,5 +1,6 @@
 package models
 
+import com.gu.janus.model.AwsAccount
 import software.amazon.awssdk.arns.Arn
 
 import java.time.Instant
@@ -15,12 +16,15 @@ import java.time.Instant
   *   Name for display in Janus UI
   * @param description
   *   Description for display in Janus UI
+  * @param account
+  *   AWS account hosting the role
   */
 case class IamRoleInfo(
     roleArn: Arn,
     provisionedRoleTagValue: String,
     friendlyName: Option[String],
-    description: Option[String]
+    description: Option[String],
+    account: AwsAccount
 )
 
 object IamRoleInfo {
@@ -28,12 +32,14 @@ object IamRoleInfo {
       roleArnString: String,
       provisionedRoleTagValue: String,
       friendlyName: Option[String],
-      description: Option[String]
+      description: Option[String],
+      account: AwsAccount
   ): IamRoleInfo = IamRoleInfo(
     Arn.fromString(roleArnString),
     provisionedRoleTagValue,
     friendlyName,
-    description
+    description,
+    account
   )
 }
 

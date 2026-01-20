@@ -26,6 +26,9 @@ class ProvisionedRolesTest
 
   private val timestamp = Instant.now()
 
+  private val account =
+    AwsAccount(name = "Account Name", authConfigKey = "accId")
+
   private val role: Role =
     Role.builder().arn("arn:aws:iam::123:role/r1").build()
 
@@ -69,13 +72,15 @@ class ProvisionedRolesTest
                   "arn:aws:iam::123:role/r1",
                   "other-tag",
                   None,
-                  None
+                  None,
+                  account
                 ),
                 IamRoleInfo(
                   "arn:aws:iam::123:role/r2",
                   "different-tag",
                   None,
-                  None
+                  None,
+                  account
                 )
               ),
               timestamp
@@ -95,7 +100,13 @@ class ProvisionedRolesTest
 
     "should return single matching role from single account" in {
       val matchingRole =
-        IamRoleInfo("arn:aws:iam::123:role/r1", "test-role", None, None)
+        IamRoleInfo(
+          "arn:aws:iam::123:role/r1",
+          "test-role",
+          None,
+          None,
+          account
+        )
       val cache = Map(
         AwsAccount("123", "acc") -> AwsAccountIamRoleInfoStatus(
           Some(IamRoleInfoSnapshot(List(matchingRole), timestamp)),
@@ -113,15 +124,33 @@ class ProvisionedRolesTest
 
     "should filter matching roles from mixed list" in {
       val matching =
-        IamRoleInfo("arn:aws:iam::123:role/r1", "test-role", None, None)
+        IamRoleInfo(
+          "arn:aws:iam::123:role/r1",
+          "test-role",
+          None,
+          None,
+          account
+        )
       val cache = Map(
         AwsAccount("123", "acc") -> AwsAccountIamRoleInfoStatus(
           Some(
             IamRoleInfoSnapshot(
               List(
-                IamRoleInfo("arn:aws:iam::123:role/r0", "other", None, None),
+                IamRoleInfo(
+                  "arn:aws:iam::123:role/r0",
+                  "other",
+                  None,
+                  None,
+                  account
+                ),
                 matching,
-                IamRoleInfo("arn:aws:iam::123:role/r2", "different", None, None)
+                IamRoleInfo(
+                  "arn:aws:iam::123:role/r2",
+                  "different",
+                  None,
+                  None,
+                  account
+                )
               ),
               timestamp
             )
@@ -140,9 +169,21 @@ class ProvisionedRolesTest
 
     "should aggregate matching roles from multiple accounts" in {
       val role1 =
-        IamRoleInfo("arn:aws:iam::111:role/r1", "test-role", None, None)
+        IamRoleInfo(
+          "arn:aws:iam::111:role/r1",
+          "test-role",
+          None,
+          None,
+          account
+        )
       val role2 =
-        IamRoleInfo("arn:aws:iam::222:role/r2", "test-role", None, None)
+        IamRoleInfo(
+          "arn:aws:iam::222:role/r2",
+          "test-role",
+          None,
+          None,
+          account
+        )
       val cache = Map(
         AwsAccount("111", "acc1") -> AwsAccountIamRoleInfoStatus(
           Some(IamRoleInfoSnapshot(List(role1), timestamp)),
@@ -164,7 +205,13 @@ class ProvisionedRolesTest
 
     "should handle accounts with mixed snapshot states" in {
       val matchingRole =
-        IamRoleInfo("arn:aws:iam::111:role/r1", "test-role", None, None)
+        IamRoleInfo(
+          "arn:aws:iam::111:role/r1",
+          "test-role",
+          None,
+          None,
+          account
+        )
       val cache = Map(
         AwsAccount("111", "acc1") -> AwsAccountIamRoleInfoStatus(
           Some(IamRoleInfoSnapshot(List(matchingRole), timestamp)),
@@ -189,7 +236,13 @@ class ProvisionedRolesTest
       forAll(Gen.listOfN(5, Gen.alphaStr), Gen.alphaStr) {
         (tags: List[String], targetTag: String) =>
           val roles = tags.zipWithIndex.map { case (tag, idx) =>
-            IamRoleInfo(s"arn:aws:iam::123:role/r$idx", tag, None, None)
+            IamRoleInfo(
+              s"arn:aws:iam::123:role/r$idx",
+              tag,
+              None,
+              None,
+              account
+            )
           }
           val cache = Map(
             AwsAccount("123", "acc") -> AwsAccountIamRoleInfoStatus(
@@ -216,6 +269,7 @@ class ProvisionedRolesTest
       )
 
       val result = ProvisionedRoles.toRoleInfo(
+        account,
         role,
         tags,
         provisionedRoleTagKey,
@@ -230,6 +284,7 @@ class ProvisionedRolesTest
       val tags = Set(createTag(provisionedRoleTagKey, "test-role"))
 
       val result = ProvisionedRoles.toRoleInfo(
+        account,
         role,
         tags,
         provisionedRoleTagKey,
@@ -238,7 +293,13 @@ class ProvisionedRolesTest
       )
 
       result shouldBe Some(
-        IamRoleInfo("arn:aws:iam::123:role/r1", "test-role", None, None)
+        IamRoleInfo(
+          "arn:aws:iam::123:role/r1",
+          "test-role",
+          None,
+          None,
+          account
+        )
       )
     }
 
@@ -249,6 +310,7 @@ class ProvisionedRolesTest
       )
 
       val result = ProvisionedRoles.toRoleInfo(
+        account,
         role,
         tags,
         provisionedRoleTagKey,
@@ -266,6 +328,7 @@ class ProvisionedRolesTest
       )
 
       val result = ProvisionedRoles.toRoleInfo(
+        account,
         role,
         tags,
         provisionedRoleTagKey,
@@ -280,6 +343,7 @@ class ProvisionedRolesTest
       val tags = Set(createTag("provisionedrole", "test-role"))
 
       val result = ProvisionedRoles.toRoleInfo(
+        account,
         role,
         tags,
         "ProvisionedRole",
@@ -292,6 +356,7 @@ class ProvisionedRolesTest
 
     "should handle empty tag set" in {
       val result = ProvisionedRoles.toRoleInfo(
+        account,
         role,
         Set.empty,
         provisionedRoleTagKey,
