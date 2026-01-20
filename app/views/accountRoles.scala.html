@@ -34,7 +34,7 @@
                     @for(((r1, r2), accounts) <- successfulRoles.toList.sortBy(_._1)) {
                         <tr>
                             <td>
-                                @r1.getOrElse("No friendly name")
+                                @r1.getOrElse("Unknown account")
                             </td>
                             <td>
                                 @r2
@@ -49,9 +49,7 @@
 
         }
 
-        @if(failedRoles.isEmpty) {
-            <p>There are no failed roles</p>
-        } else {
+        @if(failedRoles.nonEmpty) {
             <div class="row">
                 <div class="col s12">
                     <h1 class="header orange-text">Accounts with Failed Role Snapshots</h1>
