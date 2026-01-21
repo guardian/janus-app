@@ -17,6 +17,7 @@ object ProvisionedRoles {
       .toList
 
   def toRoleInfo(
+      account: AwsAccount,
       role: Role,
       tags: Set[Tag],
       provisionedRoleTagKey: String,
@@ -29,6 +30,7 @@ object ProvisionedRoles {
       roleArnString = role.arn(),
       provisionedRoleTagValue = provisionedRoleTag.value(),
       friendlyName = tags.find(_.key() == friendlyNameTagKey).map(_.value()),
-      description = tags.find(_.key() == descriptionTagKey).map(_.value())
+      description = tags.find(_.key() == descriptionTagKey).map(_.value()),
+      account
     )
 }
