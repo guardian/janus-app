@@ -198,7 +198,7 @@ class AccountsTest
   }
 
   "getAccountRoles" - {
-    "when snapshot has succeeded " in {
+    "when snapshot has succeeded" in {
       Accounts.getAccountRoles(
         accountsWithSuccessfullyFetchedTrivialRoles
       ) shouldEqual Map(
@@ -214,7 +214,7 @@ class AccountsTest
   }
 
   "getFailedAccountRoles" - {
-    "when snapshot has succeeded " in {
+    "when snapshot has succeeded" in {
       Accounts.getFailedAccountRoles(
         accountsWithSuccessfullyFetchedTrivialRoles
       ) shouldEqual Map.empty
@@ -231,7 +231,7 @@ class AccountsTest
   }
 
   "successfulRolesForThisAccount" - {
-    "when snapshot has succeeded " in {
+    "when snapshot has succeeded" in {
       Accounts.successfulRolesForThisAccount(
         accountsWithSuccessfullyFetchedTrivialRoles,
         fooAct.authConfigKey
@@ -259,6 +259,24 @@ class AccountsTest
     }
 
   }
-  "errorRolesForThisAccount" - {}
+  "errorRolesForThisAccount" - {
+    "when snapshot has succeeded" in {
+      Accounts.errorRolesForThisAccount(
+        accountsWithSuccessfullyFetchedTrivialRoles,
+        fooAct.authConfigKey
+      ) shouldBe {
+        None
+      }
+    }
+
+    "when snapshot has failed" in {
+      Accounts.errorRolesForThisAccount(
+        accountsWithFailedFetches,
+        fooAct.authConfigKey
+      ) shouldBe {
+        Some("Failed to fetch Foo")
+      }
+    }
+  }
 
 }
