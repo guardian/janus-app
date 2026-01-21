@@ -25,7 +25,7 @@ class AccountsTest
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
-  val accounts = Set(fooAct, barAct, bazAct, quxAct)
+  private val accounts = Set(fooAct, barAct, bazAct, quxAct)
   val acl = ACL(
     Map(
       "test.user" -> ACLEntry(Set(fooDev), Set.empty),
@@ -43,11 +43,10 @@ class AccountsTest
     val emptyRoleList: (AwsAccount, Try[String]) => Set[IamRoleInfo] =
       (_, _) => Set.empty
 
-    "uses the provided lookup function to populate the role for each account" in new Context() {
+    "uses the provided lookup function to populate the role for each account" in {
       forAll { (roleArn: String) =>
-        val result = accountOwnerInformation(accounts, acl)(
-          account => Success(s"${account.authConfigKey}-$roleArn"),
-          emptyRoleList
+        val result = Accounts.accountOwnerInformation(Map.empty, accounts, acl)(
+          account => Success(s"${account.authConfigKey}-$roleArn")
         )
         result.foreach { case AccountInfo(account, _, populatedRole, _) =>
           populatedRole shouldEqual Success(
@@ -58,30 +57,28 @@ class AccountsTest
 
     }
 
-    "sorts AWS accounts" in new Context {
+    "sorts AWS accounts" in {
       val shuffledAccounts1 = scala.util.Random.shuffle(accounts)
       val shuffledAccounts2 = scala.util.Random.shuffle(accounts)
       val result1 =
-        accountOwnerInformation(shuffledAccounts1, acl)(
-          _ => Success("role"),
-          emptyRoleList
+        Accounts.accountOwnerInformation(Map.empty, shuffledAccounts1, acl)(_ =>
+          Success("role")
         )
       val result2 =
-        accountOwnerInformation(shuffledAccounts2, acl)(
-          _ => Success("role"),
-          emptyRoleList
+        Accounts.accountOwnerInformation(Map.empty, shuffledAccounts2, acl)(_ =>
+          Success("role")
         )
       result1 shouldEqual result2
     }
   }
 
   "accountPermissions" - {
-    "returns empty account owners if there are no owners" in new Context() {
-      accountPermissions(bazAct, acl) shouldEqual Nil
+    "returns empty account owners if there are no owners" in {
+      Accounts.accountPermissions(bazAct, acl) shouldEqual Nil
     }
 
-    "fetches all the permissions for an account, ordered by username" in new Context {
-      accountPermissions(fooAct, acl) shouldEqual List(
+    "fetches all the permissions for an account, ordered by username" in {
+      Accounts.accountPermissions(fooAct, acl) shouldEqual List(
         UserPermissions("test.admin", Set(fooCf)),
         UserPermissions("test.all", Set(fooDev, fooCf)),
         UserPermissions("test.other", Set(fooS3)),
@@ -91,25 +88,25 @@ class AccountsTest
       )
     }
 
-    "fetches all the permissions for a different account" in new Context {
-      accountPermissions(barAct, acl) shouldEqual List(
+    "fetches all the permissions for a different account" in {
+      Accounts.accountPermissions(barAct, acl) shouldEqual List(
         UserPermissions("test.different-account", Set(barDev))
       )
     }
   }
 
   "accountIdErrors" - {
-    "returns an empty list if all accounts were successfully looked up" in new Context {
+    "returns an empty list if all accounts were successfully looked up" in {
       val accountData = Set(
         AccountInfo(fooAct, List.empty, Success("foo-role"), Set.empty),
         AccountInfo(barAct, List.empty, Success("bar-role"), Set.empty),
         AccountInfo(bazAct, List.empty, Success("baz-role"), Set.empty),
         AccountInfo(quxAct, List.empty, Success("qux-role"), Set.empty)
       )
-      accountIdErrors(accountData) shouldEqual Set.empty
+      Accounts.accountIdErrors(accountData) shouldEqual Set.empty
     }
 
-    "returns a list of accounts that failed their lookup" in new Context {
+    "returns a list of accounts that failed their lookup" in {
       val accountData = Set(
         AccountInfo(fooAct, List.empty, Success("foo-role"), Set.empty),
         AccountInfo(barAct, List.empty, Success("bar-role"), Set.empty),
@@ -126,7 +123,7 @@ class AccountsTest
           Set.empty
         )
       )
-      val errorAccounts = accountIdErrors(accountData).map(_._1)
+      val errorAccounts = Accounts.accountIdErrors(accountData).map(_._1)
       errorAccounts shouldEqual Set(bazAct, quxAct)
     }
   }
@@ -148,7 +145,8 @@ class AccountsTest
                   .build(),
                 s"provisionedRoleTagValue${a.name}",
                 Some(s"friendlyName${a.name}"),
-                Some(s"description${a.name}")
+                Some(s"description${a.name}"),
+                a
               )
             ),
             Instant.now()
@@ -168,10 +166,9 @@ class AccountsTest
       .toMap
 
   "lookupAccountRoles" - {
-    "returns something with a good account key to look up" in new Context(
-      accountsWithSuccessfullyFetchedTrivialRoles
-    ) {
-      this.lookupAccountRoles(
+    "returns something with a good account key to look up" in {
+      Accounts.lookupAccountRoles(
+        accountsWithSuccessfullyFetchedTrivialRoles,
         fooAct,
         Success[String](fooAct.authConfigKey)
       ) shouldEqual Set(
@@ -185,15 +182,15 @@ class AccountsTest
             .build(),
           "provisionedRoleTagValueFoo",
           Some("friendlyNameFoo"),
-          Some("descriptionFoo")
+          Some("descriptionFoo"),
+          fooAct
         )
       )
     }
 
-    "returns nothing with a bad account key to look up" in new Context(
-      accountsWithSuccessfullyFetchedTrivialRoles
-    ) {
-      this.lookupAccountRoles(
+    "returns nothing with a bad account key to look up" in {
+      Accounts.lookupAccountRoles(
+        accountsWithSuccessfullyFetchedTrivialRoles,
         fooAct,
         Failure[String](new Exception("This is rubbish"))
       ) shouldEqual Set.empty
@@ -201,33 +198,29 @@ class AccountsTest
   }
 
   "getAccountRoles" - {
-    "when snapshot has succeeded " in new Context(
-      accountsWithSuccessfullyFetchedTrivialRoles
-    ) {
-      this.getAccountRoles shouldEqual Map(
+    "when snapshot has succeeded " in {
+      Accounts.getAccountRoles(
+        accountsWithSuccessfullyFetchedTrivialRoles
+      ) shouldEqual Map(
         (Some("friendlyNameBar"), "provisionedRoleTagValueBar") -> List("Bar"),
         (Some("friendlyNameBaz"), "provisionedRoleTagValueBaz") -> List("Baz"),
         (Some("friendlyNameFoo"), "provisionedRoleTagValueFoo") -> List("Foo"),
         (Some("friendlyNameQux"), "provisionedRoleTagValueQux") -> List("Qux")
       )
     }
-    "when snapshot has failed " in new Context(
-      accountsWithFailedFetches
-    ) {
-      this.getAccountRoles shouldEqual Map.empty
+    "when snapshot has failed " in {
+      Accounts.getAccountRoles(accountsWithFailedFetches) shouldEqual Map.empty
     }
   }
 
   "getFailedAccountRoles" - {
-    "when snapshot has succeeded " in new Context(
-      accountsWithSuccessfullyFetchedTrivialRoles
-    ) {
-      this.getFailedAccountRoles shouldEqual Map.empty
+    "when snapshot has succeeded " in {
+      Accounts.getFailedAccountRoles(
+        accountsWithSuccessfullyFetchedTrivialRoles
+      ) shouldEqual Map.empty
     }
-    "when snapshot has failed " in new Context(
-      accountsWithFailedFetches
-    ) {
-      this.getFailedAccountRoles shouldEqual
+    "when snapshot has failed " in {
+      Accounts.getFailedAccountRoles(accountsWithFailedFetches) shouldEqual
         Map(
           "Bar" -> List(Some("Failed to fetch Bar")),
           "Qux" -> List(Some("Failed to fetch Qux")),
@@ -238,10 +231,9 @@ class AccountsTest
   }
 
   "successfulRolesForThisAccount" - {
-    "when snapshot has succeeded " in new Context(
-      accountsWithSuccessfullyFetchedTrivialRoles
-    ) {
-      this.successfulRolesForThisAccount(
+    "when snapshot has succeeded " in {
+      Accounts.successfulRolesForThisAccount(
+        accountsWithSuccessfullyFetchedTrivialRoles,
         fooAct.authConfigKey
       ) shouldEqual List(
         IamRoleInfo(
@@ -254,14 +246,14 @@ class AccountsTest
             .build(),
           "provisionedRoleTagValueFoo",
           Some("friendlyNameFoo"),
-          Some("descriptionFoo")
+          Some("descriptionFoo"),
+          fooAct
         )
       )
     }
-    "when snapshot has failed " in new Context(
-      accountsWithFailedFetches
-    ) {
-      this.successfulRolesForThisAccount(
+    "when snapshot has failed " in {
+      Accounts.successfulRolesForThisAccount(
+        accountsWithFailedFetches,
         fooAct.authConfigKey
       ) shouldEqual List.empty
     }
@@ -269,8 +261,4 @@ class AccountsTest
   }
   "errorRolesForThisAccount" - {}
 
-  class Context(
-      val rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
-        Map.empty
-  ) extends Accounts {}
 }

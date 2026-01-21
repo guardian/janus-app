@@ -13,29 +13,33 @@ import models.{
 import scala.collection.immutable
 import scala.util.{Success, Try, Failure}
 
-trait Accounts {
+object Accounts {
 
-  def rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus]
+  private type RolesStatuses = Map[AwsAccount, AwsAccountIamRoleInfoStatus]
 
-  def lookupAccountRoles: (AwsAccount, Try[String]) => Set[IamRoleInfo] =
-    (account, accountIdMaybe) =>
-      accountIdMaybe match {
-        case Success(accountId) =>
-          rolesStatuses.get(account) match {
-            case Some(
-                  AwsAccountIamRoleInfoStatus(
-                    Some(IamRoleInfoSnapshot(roles, _)),
-                    _
-                  )
-                ) =>
-              roles.toSet
-            case _ => Set.empty
-          }
-        case _ => Set.empty
-      }
+  def lookupAccountRoles(
+      rolesStatuses: RolesStatuses,
+      account: AwsAccount,
+      accountIdMaybe: Try[String]
+  ): Set[IamRoleInfo] =
+    accountIdMaybe match {
+      case Success(accountId) =>
+        rolesStatuses.get(account) match {
+          case Some(
+                AwsAccountIamRoleInfoStatus(
+                  Some(IamRoleInfoSnapshot(roles, _)),
+                  _
+                )
+              ) =>
+            roles.toSet
+          case _ => Set.empty
+        }
+      case _ => Set.empty
+    }
 
-  def getAccountRoles
-      : Map[(Option[String], String), immutable.Iterable[String]] = {
+  def getAccountRoles(
+      rolesStatuses: RolesStatuses
+  ): Map[(Option[String], String), immutable.Iterable[String]] = {
     rolesStatuses
       .flatMap { (k, v) =>
         v match {
@@ -54,7 +58,9 @@ trait Accounts {
       .groupMap(_._1)(_._2)
   }
 
-  def getFailedAccountRoles: Map[String, immutable.Iterable[Option[String]]] = {
+  def getFailedAccountRoles(
+      rolesStatuses: RolesStatuses
+  ): Map[String, immutable.Iterable[Option[String]]] = {
     rolesStatuses
       .map { (k, v) =>
         v match {
@@ -72,7 +78,10 @@ trait Accounts {
       .filter(_._2.flatten.nonEmpty)
   }
 
-  def successfulRolesForThisAccount(account: String): List[IamRoleInfo] = {
+  def successfulRolesForThisAccount(
+      rolesStatuses: RolesStatuses,
+      account: String
+  ): List[IamRoleInfo] =
     rolesStatuses.find(_._1.authConfigKey == account) match {
       case Some(
             _,
@@ -84,9 +93,11 @@ trait Accounts {
         roles
       case _ => Nil
     }
-  }
 
-  def errorRolesForThisAccount(account: String): Option[String] = {
+  def errorRolesForThisAccount(
+      rolesStatuses: RolesStatuses,
+      account: String
+  ): Option[String] = {
     rolesStatuses.find(_._1.authConfigKey == account) match {
       case Some(
             _,
@@ -100,20 +111,22 @@ trait Accounts {
     }
   }
 
-  def accountOwnerInformation(accounts: Set[AwsAccount], access: ACL)(
-      lookupConfiguredRole: AwsAccount => Try[String],
-      lookupRoles: (AwsAccount, Try[String]) => Set[IamRoleInfo]
-  ): Set[AccountInfo] =
-    accounts
-      .map { awsAccount =>
-        val accountIdMaybe = lookupConfiguredRole(awsAccount)
-        AccountInfo(
-          awsAccount,
-          accountPermissions(awsAccount, access),
-          accountIdMaybe,
-          lookupRoles(awsAccount, accountIdMaybe)
-        )
-      }
+  def accountOwnerInformation(
+      rolesStatuses: RolesStatuses,
+      accounts: Set[AwsAccount],
+      access: ACL
+  )(
+      lookupConfiguredRole: AwsAccount => Try[String]
+  ): Set[AccountInfo] = accounts
+    .map { awsAccount =>
+      val accountIdMaybe = lookupConfiguredRole(awsAccount)
+      AccountInfo(
+        awsAccount,
+        accountPermissions(awsAccount, access),
+        accountIdMaybe,
+        lookupAccountRoles(rolesStatuses, awsAccount, accountIdMaybe)
+      )
+    }
 
   def accountPermissions(
       account: AwsAccount,
