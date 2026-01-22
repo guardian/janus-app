@@ -8,11 +8,11 @@
 @import scala.util.Success
 @import logic.ViewHelpers
 @import models.AccountInfo
-@(accountName: Option[String], users: List[String], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountName: String, users: List[String], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Accounts", Some(user), janusData) {
     <div class="container" xmlns="http://www.w3.org/1999/html">
-        <h1 class="header orange-text">Users for @{accountName.getOrElse("Unknown Account")}</h1>
+        <h1 class="header orange-text">Users for @{accountName}</h1>
         @fragments.userList(users)
     </div>
 }

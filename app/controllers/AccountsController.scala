@@ -1,9 +1,10 @@
 package controllers
 
 import com.gu.googleauth.AuthAction
-import com.gu.janus.model.JanusData
+import com.gu.janus.model.{AwsAccount, JanusData}
 import conf.Config
 import logic.Accounts
+import logic.Accounts.accountPermissions
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.ProvisionedRoleStatusManager
@@ -51,72 +52,82 @@ class AccountsController(
     )
   }
 
-  def rolesStatusForAccount(authConfigKey: String): Action[AnyContent] = {
-
-    val accountName =
-      janusData.accounts.find(_.authConfigKey == authConfigKey).map(_.name)
-    val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
-    val successfullyCreatedRoles =
-      Accounts.successfulRolesForThisAccount(rolesStatuses, authConfigKey)
-    val rolesWithErrors =
-      Accounts.errorRolesForThisAccount(rolesStatuses, authConfigKey)
-
+  def rolesStatusForAccount(authConfigKey: String): Action[AnyContent] =
     authAction { implicit request =>
-      Ok(
-        views.html.rolesStatus(
-          accountName.getOrElse("Unknown Account"),
-          successfullyCreatedRoles,
-          rolesWithErrors,
-          request.user,
-          janusData
-        )
-      )
+      janusData.accounts
+        .find(_.authConfigKey == authConfigKey)
+        .map(_.name) match {
+        case Some(name) =>
+
+          val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
+          val successfullyCreatedRoles =
+            Accounts.successfulRolesForThisAccount(rolesStatuses, authConfigKey)
+          val rolesWithErrors =
+            Accounts.errorRolesForThisAccount(rolesStatuses, authConfigKey)
+
+          Ok(
+            views.html.rolesStatus(
+              name,
+              successfullyCreatedRoles,
+              rolesWithErrors,
+              request.user,
+              janusData
+            )
+          )
+
+        case None =>
+          NotFound(
+            views.html.error("Account not found", Some(request.user), janusData)
+          )
+      }
     }
+
+  def usersForAccount(authConfigKey: String): Action[AnyContent] = authAction {
+    implicit request =>
+      janusData.accounts
+        .find(_.authConfigKey == authConfigKey)
+        .map { awsAccount =>
+          (
+            awsAccount,
+            accountPermissions(awsAccount, janusData.access).map(_.userName)
+          )
+        } match {
+        case Some((AwsAccount(name, _), users)) =>
+          Ok(
+            views.html.users(
+              name,
+              users,
+              request.user,
+              janusData
+            )
+          )
+        case None =>
+          NotFound(
+            views.html.error("Account not found", Some(request.user), janusData)
+          )
+      }
+
   }
 
-  def usersForAccount(authConfigKey: String): Action[AnyContent] = {
-
-    val accountName =
-      janusData.accounts.find(_.authConfigKey == authConfigKey).map(_.name)
-
-    val accountOwners = Accounts
-      .accountOwnerInformation(
-        provisionedRoleStatusManager.getCacheStatus,
-        janusData.accounts,
-        janusData.access
-      )(account =>
-        Config.findAccountNumber(account.authConfigKey, configuration)
-      )
-      .find(_.account.authConfigKey == authConfigKey)
-      .map(_.permissions.map(_.userName))
-      .getOrElse(Nil)
-
-    authAction { implicit request =>
-      Ok(
-        views.html.users(
-          accountName,
-          accountOwners,
-          request.user,
-          janusData
-        )
-      )
-    }
-  }
-
-  def accountInfo(authConfigKey: String): Action[AnyContent] = {
-    val accountName =
-      janusData.accounts.find(_.authConfigKey == authConfigKey).map(_.name)
-
-    authAction { implicit request =>
-      Ok(
-        views.html.accountInfo(
-          accountName.getOrElse("Unknown account"),
-          authConfigKey,
-          request.user,
-          janusData
-        )
-      )
-    }
+  def accountInfo(authConfigKey: String): Action[AnyContent] = authAction {
+    implicit request =>
+      janusData.accounts
+        .find(_.authConfigKey == authConfigKey)
+        .map(_.name) match {
+        case Some(name) =>
+          Ok(
+            views.html.accountInfo(
+              name,
+              authConfigKey,
+              request.user,
+              janusData
+            )
+          )
+        case None =>
+          NotFound(
+            views.html.error("Account not found", Some(request.user), janusData)
+          )
+      }
   }
 
   def provisionedRoleStatus: Action[AnyContent] = authAction {
