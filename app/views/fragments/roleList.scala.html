@@ -13,15 +13,19 @@
         </li>
     }
 
+    @if(roles.isEmpty) {
+      <p>No roles</p>
+    }
+
     @for(role <- roles) {
         <li class="role-list-item" >
             <span >
-            @{role.friendlyName.getOrElse("No friendly name")}
+                @{role.friendlyName.getOrElse("No friendly name")}
             </span>
             <span >
                 @{role.roleArn}
             </span>
-            <span >
+            <span>
                 Tag:
                 <span class="chip">
                     @{role.provisionedRoleTagValue}
