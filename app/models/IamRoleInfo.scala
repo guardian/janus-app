@@ -63,7 +63,8 @@ case class AccountInfo(
     account: AwsAccount,
     permissions: List[UserPermissions],
     configuredRole: Try[String],
-    rolesStatuses: Set[IamRoleInfo]
+    rolesStatuses: Set[IamRoleInfo],
+    rolesError: Option[String]
 )
 
 /** Status of [[IamRoleInfo]] data fetched from a single AWS account. */

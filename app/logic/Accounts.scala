@@ -1,17 +1,9 @@
 package logic
 
-import com.gu.janus.model.{ACL, AwsAccount, Permission}
-import models.{
-  AwsAccountIamRoleInfoStatus,
-  FailureSnapshot,
-  IamRoleInfo,
-  IamRoleInfoSnapshot,
-  AccountInfo,
-  UserPermissions
-}
+import com.gu.janus.model.{ACL, AwsAccount}
+import models.*
 
-import scala.collection.immutable
-import scala.util.{Success, Try, Failure}
+import scala.util.{Failure, Success, Try}
 
 object Accounts {
 
@@ -37,46 +29,15 @@ object Accounts {
       case _ => Set.empty
     }
 
-  def getAccountRoles(
+  def getAccountRolesAndStatus(
       rolesStatuses: RolesStatuses
-  ): Map[(Option[String], String), immutable.Iterable[String]] = {
-    rolesStatuses
-      .flatMap { (k, v) =>
-        v match {
-          case AwsAccountIamRoleInfoStatus(
-                Some(
-                  IamRoleInfoSnapshot(iamRoles, _)
-                ),
-                _
-              ) =>
-            iamRoles.map(role =>
-              ((role.friendlyName, role.provisionedRoleTagValue), k.name)
-            )
-          case _ => Seq.empty[((Option[String], String), String)]
-        }
-      }
-      .groupMap(_._1)(_._2)
-  }
-
-  def getFailedAccountRoles(
-      rolesStatuses: RolesStatuses
-  ): Map[String, immutable.Iterable[Option[String]]] = {
-    rolesStatuses
-      .map { (k, v) =>
-        v match {
-          case AwsAccountIamRoleInfoStatus(
-                _,
-                Some(
-                  FailureSnapshot(failure, _)
-                )
-              ) =>
-            (k.name, Some(failure))
-          case _ => (k.name, None)
-        }
-      }
-      .groupMap(_._1)(_._2)
-      .filter(_._2.flatten.nonEmpty)
-  }
+  ): Map[String, (List[IamRoleInfo], Option[String])] = rolesStatuses
+    .map { (k, v) =>
+      k.name -> (
+        v.roleSnapshot.map(_.roles).getOrElse(List.empty),
+        v.failureStatus.map(_.failure)
+      )
+    }
 
   def successfulRolesForThisAccount(
       rolesStatuses: RolesStatuses,
@@ -124,7 +85,8 @@ object Accounts {
         awsAccount,
         accountPermissions(awsAccount, access),
         accountIdMaybe,
-        lookupAccountRoles(rolesStatuses, awsAccount, accountIdMaybe)
+        lookupAccountRoles(rolesStatuses, awsAccount, accountIdMaybe),
+        errorRolesForThisAccount(rolesStatuses, awsAccount.authConfigKey)
       )
     }
 
@@ -151,7 +113,7 @@ object Accounts {
       ]
   ): Set[(AwsAccount, Throwable)] = {
     accountData
-      .collect { case AccountInfo(account, _, Failure(err), _) =>
+      .collect { case AccountInfo(account, _, Failure(err), _, _) =>
         (account, err)
       }
   }

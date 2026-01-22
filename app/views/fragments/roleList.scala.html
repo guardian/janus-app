@@ -1,0 +1,32 @@
+@import logic.ViewHelpers
+
+@(failure: Option[String], roles: List[IamRoleInfo])
+
+<div>
+    @if(failure.isDefined) {
+        <li>
+            <span class="error">!</span> &nbsp @{failure}
+            @if(roles.nonEmpty) {
+                <hr/>
+                <p>Cached roles</p>
+            }
+        </li>
+    }
+
+    @for(role <- roles) {
+        <li class="role-list-item" >
+            <span >
+            @{role.friendlyName.getOrElse("No friendly name")}
+            </span>
+            <span >
+                @{role.roleArn}
+            </span>
+            <span >
+                Tag:
+                <span class="chip">
+                    @{role.provisionedRoleTagValue}
+                </span>
+            </span>
+        </li>
+    }
+</div>

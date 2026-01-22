@@ -459,3 +459,8 @@ a.copy-text--button__small {
 .error {
     color: red;
 }
+
+.role-list-item {
+    display: grid;
+    grid-template-columns: 25% 50% 25%;
+}

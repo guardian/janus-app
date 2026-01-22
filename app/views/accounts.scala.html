@@ -10,13 +10,6 @@
 @import models.AccountInfo
 @(accountOwners: Set[AccountInfo], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
-@*
-consider changing the accounts page to include a status icon in the accordion header for each account
-(next to the account ID), and changing the expanded section to be a properly laid out summary of the
-info for that account - the Audit link, the provisioned IAM roles status (with age and status) and maybe
-(but not certainly) the list of users.
-*@
-
 @main("Accounts", Some(user), janusData) {
   <div class="container">
 
@@ -50,7 +43,7 @@ info for that account - the Audit link, the provisioned IAM roles status (with a
                 </th>
             </tr>
 
-            @for(AccountInfo(account, owners, tryAccountNumber, rolesStatuses) <- accountOwners.toList.sortBy(_.account.name)) {
+            @for(AccountInfo(account, owners, tryAccountNumber, rolesStatuses, rolesError) <- accountOwners.toList.sortBy(_.account.name)) {
               <tr>
 
                 <td>
@@ -76,6 +69,9 @@ info for that account - the Audit link, the provisioned IAM roles status (with a
                     <a class="grey-text darken-2" href="/roles-status/account/@account.authConfigKey">
                     @rolesStatuses.size
                     <i class="material-icons tiny minor-header-icon">handyman</i>
+                    @for(roleErrorText <- rolesError) {
+                        <i class="error material-icons tiny minor-header-icon" title="@roleErrorText">error_outline</i>
+                    }
                     </a>
                 </td>
                 <td>

@@ -1,7 +1,7 @@
 package controllers
 
 import com.gu.googleauth.AuthAction
-import com.gu.janus.model.{AwsAccount, JanusData}
+import com.gu.janus.model.JanusData
 import conf.Config
 import logic.Accounts
 import play.api.mvc.*
@@ -18,15 +18,12 @@ class AccountsController(
     extends AbstractController(controllerComponents)
     with Logging {
 
-  private def getAccounts =
-    Accounts.accountOwnerInformation(
+  def accounts: Action[AnyContent] = authAction { implicit request =>
+    val accountData = Accounts.accountOwnerInformation(
       provisionedRoleStatusManager.getCacheStatus,
       janusData.accounts,
       janusData.access
     )(account => Config.findAccountNumber(account.authConfigKey, configuration))
-
-  def accounts: Action[AnyContent] = authAction { implicit request =>
-    val accountData = getAccounts
 
     // log any account number errors we accumulated
     Accounts
@@ -43,13 +40,11 @@ class AccountsController(
 
   def accountRoles: Action[AnyContent] = authAction { implicit request =>
     val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
-    val accountRoles = Accounts.getAccountRoles(rolesStatuses)
-    val accountRoleFailures = Accounts.getFailedAccountRoles(rolesStatuses)
+    val accountRolesAndStatus = Accounts.getAccountRolesAndStatus(rolesStatuses)
     Ok(
       views.html
         .accountRoles(
-          accountRoles,
-          accountRoleFailures,
+          accountRolesAndStatus,
           request.user,
           janusData
         )
@@ -81,12 +76,25 @@ class AccountsController(
 
   def usersForAccount(authConfigKey: String): Action[AnyContent] = {
 
-    val accountOwners = getAccountUsers(authConfigKey)
+    val accountName =
+      janusData.accounts.find(_.authConfigKey == authConfigKey).map(_.name)
+
+    val accountOwners = Accounts
+      .accountOwnerInformation(
+        provisionedRoleStatusManager.getCacheStatus,
+        janusData.accounts,
+        janusData.access
+      )(account =>
+        Config.findAccountNumber(account.authConfigKey, configuration)
+      )
+      .find(_.account.authConfigKey == authConfigKey)
+      .map(_.permissions.map(_.userName))
+      .getOrElse(Nil)
 
     authAction { implicit request =>
       Ok(
         views.html.users(
-          authConfigKey,
+          accountName,
           accountOwners,
           request.user,
           janusData
@@ -95,23 +103,15 @@ class AccountsController(
     }
   }
 
-  private def getAccountUsers(authConfigKey: String) = getAccounts
-    .find(_.account.authConfigKey == authConfigKey)
-    .map(_.permissions.map(_.userName))
-    .getOrElse(Nil)
-
   def accountInfo(authConfigKey: String): Action[AnyContent] = {
     val accountName =
       janusData.accounts.find(_.authConfigKey == authConfigKey).map(_.name)
-
-    val accountUsers = getAccountUsers(authConfigKey)
 
     authAction { implicit request =>
       Ok(
         views.html.accountInfo(
           accountName.getOrElse("Unknown account"),
           authConfigKey,
-          accountUsers,
           request.user,
           janusData
         )

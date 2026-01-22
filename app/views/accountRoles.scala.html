@@ -5,73 +5,38 @@
 @import software.amazon.awssdk.arns.Arn
 @import scala.jdk.OptionConverters.*
 
-@(successfulRoles: Map[(Option[String], String), Iterable[String]], failedRoles: Map[String, Iterable[Option[String]]], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountRolesAndStatus: Map[String, (List[IamRoleInfo], Option[String])], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main(s"Roles Status", Some(user), janusData) {
     <div class="container">
 
-        @if(successfulRoles.isEmpty) {
-            <p>No roles found</p>
+        <div class="row">
+            <div class="col s12">
+                <h1 class="header orange-text">Accounts Roles</h1>
+            </div>
+        </div>
+        @if(accountRolesAndStatus.empty) {
+          <p>No Accounts and Roles found</p>
         } else {
-            <div class="row">
-                <div class="col s12">
-                    <h1 class="header orange-text">Roles</h1>
-                </div>
-            </div>
             <div class="collection">
-                <table>
+                <table class="striped responsive-table">
                     <tr>
                         <th>
-                            Role Name
+                            Account Name
                         </th>
                         <th>
-                            Provisioned Role
-                        </th>
-                        <th>
-                            Account(s)
+                            Roles
                         </th>
                     </tr>
-                    @for(((r1, r2), accounts) <- successfulRoles.toList.sortBy(_._1)) {
-                        <tr>
-                            <td>
-                                @r1.getOrElse("Unknown account")
-                            </td>
-                            <td>
-                                @r2
-                            </td>
-                            <td>
-                                @{accounts.mkString(", ")}
-                            </td>
-                        </tr>
-                    }
-                </table>
-            </div>
-
-        }
-
-        @if(failedRoles.nonEmpty) {
-            <div class="row">
-                <div class="col s12">
-                    <h1 class="header orange-text">Accounts with Failed Role Snapshots</h1>
-                </div>
-            </div>
-            <div class="collection">
-                <table>
-                    <tr>
-                        <th>
-                            Role Name
-                        </th>
-                        <th>
-                            Error
-                        </th>
-                    </tr>
-                    @for((account, failureList) <- failedRoles.toList.sortBy(_._1)) {
+                    @for((account, (roles, failure)) <- accountRolesAndStatus.toList.sortBy(_._1)) {
                         <tr>
                             <td>
                                 @account
                             </td>
                             <td>
-                                @{failureList.flatten.mkString(", ")}
+                              <ul>
+                                  @fragments.roleList(failure, roles.sortBy(_.friendlyName))
+                              </ul>
                             </td>
                         </tr>
                     }

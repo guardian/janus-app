@@ -2,14 +2,7 @@ package logic
 
 import com.gu.janus.model.{ACL, ACLEntry, AwsAccount}
 import fixtures.Fixtures.*
-import models.{
-  AwsAccountIamRoleInfoStatus,
-  FailureSnapshot,
-  IamRoleInfo,
-  IamRoleInfoSnapshot,
-  AccountInfo,
-  UserPermissions
-}
+import models.*
 import org.scalatest.FailedStatus
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -48,13 +41,12 @@ class AccountsTest
         val result = Accounts.accountOwnerInformation(Map.empty, accounts, acl)(
           account => Success(s"${account.authConfigKey}-$roleArn")
         )
-        result.foreach { case AccountInfo(account, _, populatedRole, _) =>
+        result.foreach { case AccountInfo(account, _, populatedRole, _, _) =>
           populatedRole shouldEqual Success(
             s"${account.authConfigKey}-$roleArn"
           )
         }
       }
-
     }
 
     "sorts AWS accounts" in {
@@ -98,29 +90,43 @@ class AccountsTest
   "accountIdErrors" - {
     "returns an empty list if all accounts were successfully looked up" in {
       val accountData = Set(
-        AccountInfo(fooAct, List.empty, Success("foo-role"), Set.empty),
-        AccountInfo(barAct, List.empty, Success("bar-role"), Set.empty),
-        AccountInfo(bazAct, List.empty, Success("baz-role"), Set.empty),
-        AccountInfo(quxAct, List.empty, Success("qux-role"), Set.empty)
+        AccountInfo(fooAct, List.empty, Success("foo-role"), Set.empty, None),
+        AccountInfo(barAct, List.empty, Success("bar-role"), Set.empty, None),
+        AccountInfo(bazAct, List.empty, Success("baz-role"), Set.empty, None),
+        AccountInfo(quxAct, List.empty, Success("qux-role"), Set.empty, None)
       )
       Accounts.accountIdErrors(accountData) shouldEqual Set.empty
     }
 
     "returns a list of accounts that failed their lookup" in {
       val accountData = Set(
-        AccountInfo(fooAct, List.empty, Success("foo-role"), Set.empty),
-        AccountInfo(barAct, List.empty, Success("bar-role"), Set.empty),
+        AccountInfo(
+          fooAct,
+          List.empty,
+          Success("foo-role"),
+          Set.empty,
+          Some("Failed")
+        ),
+        AccountInfo(
+          barAct,
+          List.empty,
+          Success("bar-role"),
+          Set.empty,
+          Some("Failed")
+        ),
         AccountInfo(
           bazAct,
           List.empty,
           Failure(new RuntimeException("baz-error")),
-          Set.empty
+          Set.empty,
+          Some("Failed")
         ),
         AccountInfo(
           quxAct,
           List.empty,
           Failure(new RuntimeException("qux-error")),
-          Set.empty
+          Set.empty,
+          Some("Failed")
         )
       )
       val errorAccounts = Accounts.accountIdErrors(accountData).map(_._1)
@@ -194,39 +200,6 @@ class AccountsTest
         fooAct,
         Failure[String](new Exception("This is rubbish"))
       ) shouldEqual Set.empty
-    }
-  }
-
-  "getAccountRoles" - {
-    "when snapshot has succeeded" in {
-      Accounts.getAccountRoles(
-        accountsWithSuccessfullyFetchedTrivialRoles
-      ) shouldEqual Map(
-        (Some("friendlyNameBar"), "provisionedRoleTagValueBar") -> List("Bar"),
-        (Some("friendlyNameBaz"), "provisionedRoleTagValueBaz") -> List("Baz"),
-        (Some("friendlyNameFoo"), "provisionedRoleTagValueFoo") -> List("Foo"),
-        (Some("friendlyNameQux"), "provisionedRoleTagValueQux") -> List("Qux")
-      )
-    }
-    "when snapshot has failed " in {
-      Accounts.getAccountRoles(accountsWithFailedFetches) shouldEqual Map.empty
-    }
-  }
-
-  "getFailedAccountRoles" - {
-    "when snapshot has succeeded" in {
-      Accounts.getFailedAccountRoles(
-        accountsWithSuccessfullyFetchedTrivialRoles
-      ) shouldEqual Map.empty
-    }
-    "when snapshot has failed " in {
-      Accounts.getFailedAccountRoles(accountsWithFailedFetches) shouldEqual
-        Map(
-          "Bar" -> List(Some("Failed to fetch Bar")),
-          "Qux" -> List(Some("Failed to fetch Qux")),
-          "Foo" -> List(Some("Failed to fetch Foo")),
-          "Baz" -> List(Some("Failed to fetch Baz"))
-        )
     }
   }
 

@@ -3,56 +3,27 @@
 @import models.IamRoleInfo
 @import play.api.Mode
 
-@(accountName: String, rolesStatuses: List[IamRoleInfo], error: Option[String], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountName: String, roles: List[IamRoleInfo], failure: Option[String], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main(s"Roles Status for $accountName", Some(user), janusData) {
     <div class="container">
-        <div class="row">
-            <div class="col s12">
-                <h1 class="header orange-text">@{accountName} Roles Statuses</h1>
-            </div>
+        <div class="col s12">
+            <h1 class="header orange-text">@{accountName} Roles Statuses</h1>
         </div>
 
-        @if(rolesStatuses.isEmpty) {
-          <div>
-              @{error match {
-                  case Some(errorText) => {
-                    <p>Error fetching roles for {accountName}: </p>
-                    <p class="error">{errorText}</p>
-                  }
-                  case None => <p>There are no successfully created roles for this account</p>
-              }}
-          </div>
-        } else {
-            <div class="collection">
-                <table>
-                    <tr>
-                        <th>
-                            Role Name
-                        </th>
-                        <th>
-                            Role ARN
-                        </th>
-                        <th>
-                            Tags
-                        </th>
-                    </tr>
-                    @for(rolesStatus <- rolesStatuses.sortBy(_.friendlyName)) {
-                        <tr>
-                            <td>
-                            @rolesStatus.friendlyName
-                            </td>
-                            <td>
-                            @rolesStatus.roleArn
-                            </td>
-                            <td>
-                            @rolesStatus.provisionedRoleTagValue
-                            </td>
-                        </tr>
-                    }
-                </table>
-            </div>
-
-        }
+        <div class="collection">
+            <table class="striped responsive-table">
+                <tr>
+                    <th>
+                        Role
+                    </th>
+                </tr>
+                <tr>
+                    <td>
+                        @fragments.roleList(failure, roles.sortBy(_.friendlyName))
+                    </td>
+                </tr>
+            </table>
+        </div>
     </div>
 }
