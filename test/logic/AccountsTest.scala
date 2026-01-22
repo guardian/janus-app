@@ -3,7 +3,6 @@ package logic
 import com.gu.janus.model.{ACL, ACLEntry, AwsAccount}
 import fixtures.Fixtures.*
 import models.*
-import org.scalatest.FailedStatus
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
@@ -161,11 +160,42 @@ class AccountsTest
       )
       .toMap
 
-  val accountsWithFailedFetches: Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
+  val accountsWithOnlyFailedFetches
+      : Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
     accounts
       .map(a =>
         a -> AwsAccountIamRoleInfoStatus.failure(
           None,
+          FailureSnapshot(s"Failed to fetch ${a.name}", Instant.now())
+        )
+      )
+      .toMap
+
+  val accountsWithFailedFetchesAndStaleFetches
+      : Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
+    accounts
+      .map(a =>
+        a -> AwsAccountIamRoleInfoStatus.failure(
+          Some(
+            IamRoleInfoSnapshot(
+              List(
+                IamRoleInfo(
+                  Arn
+                    .builder()
+                    .accountId(s"awsAccount-${a.authConfigKey}")
+                    .partition("awsPartition")
+                    .service("awsService")
+                    .resource("awsResource")
+                    .build(),
+                  s"provisionedRoleTagValue${a.name}",
+                  Some(s"friendlyName${a.name}"),
+                  Some(s"description${a.name}"),
+                  a
+                )
+              ),
+              Instant.now()
+            )
+          ),
           FailureSnapshot(s"Failed to fetch ${a.name}", Instant.now())
         )
       )
@@ -226,7 +256,7 @@ class AccountsTest
     }
     "when snapshot has failed " in {
       Accounts.successfulRolesForThisAccount(
-        accountsWithFailedFetches,
+        accountsWithOnlyFailedFetches,
         fooAct.authConfigKey
       ) shouldEqual List.empty
     }
@@ -244,11 +274,43 @@ class AccountsTest
 
     "when snapshot has failed" in {
       Accounts.errorRolesForThisAccount(
-        accountsWithFailedFetches,
+        accountsWithOnlyFailedFetches,
         fooAct.authConfigKey
       ) shouldBe {
         Some("Failed to fetch Foo")
       }
+    }
+  }
+
+  "getAccountRolesAndStatus" - {
+    "when snapshot has succeeded" in {
+      val results = Accounts.getAccountRolesAndStatus(
+        accountsWithSuccessfullyFetchedTrivialRoles
+      )
+      results.keys.toSet shouldBe accounts.map(_.name)
+      results.values.flatMap(_._1.map(_.account)).toSet shouldBe accounts
+      results.values.flatMap(_._2).toSet shouldBe Set.empty
+    }
+
+    "when snapshot has failed but has a stale cache entry" in {
+      val results = Accounts.getAccountRolesAndStatus(
+        accountsWithFailedFetchesAndStaleFetches
+      )
+      results.keys.toSet shouldBe accounts.map(_.name)
+      results.values.flatMap(_._1.map(_.account)).toSet shouldBe accounts
+      results.values.flatMap(_._2).toSet shouldBe accounts.map(a =>
+        s"Failed to fetch ${a.name}"
+      )
+    }
+
+    "when snapshot has failed" in {
+      val results =
+        Accounts.getAccountRolesAndStatus(accountsWithOnlyFailedFetches)
+      results.keys.toSet shouldBe accounts.map(_.name)
+      results.values.flatMap(_._1.map(_.account)).toSet shouldBe Set.empty
+      results.values.flatMap(_._2).toSet shouldBe accounts.map(a =>
+        s"Failed to fetch ${a.name}"
+      )
     }
   }
 
