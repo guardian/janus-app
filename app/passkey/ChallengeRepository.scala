@@ -1,5 +1,6 @@
 package passkey
 
+import com.gu.playpasskeyauth.models.UserId
 import com.gu.playpasskeyauth.services.PasskeyChallengeRepository
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.util.Base64UrlUtil
@@ -23,32 +24,36 @@ class ChallengeRepository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
 
   private val tableName = "PasskeyChallenges"
 
-  def loadRegistrationChallenge(userId: String): Future[Challenge] =
+  override def loadRegistrationChallenge(userId: UserId): Future[Challenge] =
     loadChallenge(userId, PasskeyFlow.Registration)
 
-  override def loadAuthenticationChallenge(userId: String): Future[Challenge] =
+  override def loadAuthenticationChallenge(userId: UserId): Future[Challenge] =
     loadChallenge(userId, PasskeyFlow.Authentication)
 
-  def insertRegistrationChallenge(
-      userId: String,
-      challenge: Challenge
+  override def insertRegistrationChallenge(
+      userId: UserId,
+      challenge: Challenge,
+      expiresAt: Instant
   ): Future[Unit] =
     insertChallenge(userId, PasskeyFlow.Registration, challenge)
 
-  def insertAuthenticationChallenge(
-      userId: String,
-      challenge: Challenge
-  ): Future[Unit] =
+  override def insertAuthenticationChallenge(
+      userId: UserId,
+      challenge: Challenge,
+      expiresAt: Instant
+  ): Future[Unit] = {
+    // TODO: use expiresAt
     insertChallenge(userId, PasskeyFlow.Authentication, challenge)
+  }
 
-  def deleteRegistrationChallenge(userId: String): Future[Unit] =
+  override def deleteRegistrationChallenge(userId: UserId): Future[Unit] =
     deleteChallenge(userId, PasskeyFlow.Registration)
 
-  override def deleteAuthenticationChallenge(userId: String): Future[Unit] =
+  override def deleteAuthenticationChallenge(userId: UserId): Future[Unit] =
     deleteChallenge(userId, PasskeyFlow.Authentication)
 
   private def loadChallenge(
-      userId: String,
+      userId: UserId,
       flow: PasskeyFlow
   ): Future[Challenge] = {
     val request = GetItemRequest
@@ -78,13 +83,13 @@ class ChallengeRepository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
   }
 
   private def insertChallenge(
-      userId: String,
+      userId: UserId,
       flow: PasskeyFlow,
       challenge: Challenge
   ): Future[Unit] = {
     val expiresAt = Instant.now().plusSeconds(60)
     val item = Map(
-      "username" -> AttributeValue.fromS(userId),
+      "username" -> AttributeValue.fromS(userId.value),
       "flow" -> AttributeValue.fromS(flow.toString),
       "challenge" -> AttributeValue.fromS(
         Base64UrlUtil.encodeToString(challenge.getValue)
@@ -104,7 +109,7 @@ class ChallengeRepository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
   }
 
   private def deleteChallenge(
-      userId: String,
+      userId: UserId,
       flow: PasskeyFlow
   ): Future[Unit] = {
     val request = DeleteItemRequest
@@ -120,11 +125,11 @@ class ChallengeRepository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
   }
 
   private def toKey(
-      userId: String,
+      userId: UserId,
       flow: PasskeyFlow
   ): Map[String, AttributeValue] =
     Map(
-      "username" -> AttributeValue.fromS(userId),
+      "username" -> AttributeValue.fromS(userId.value),
       "flow" -> AttributeValue.fromS(flow.toString)
     )
 }
