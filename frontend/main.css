@@ -462,7 +462,8 @@ a.copy-text--button__small {
 
 .role-list-item {
     display: grid;
-    grid-template-columns: 25% 25% 50% ;
+    vertical-align: center;
+    grid-template-columns: 25% 40% 20% 15%;
 }
 
 :target {
@@ -483,4 +484,13 @@ a.copy-text--button__small {
     100% {
         background-color: transparent;
     }
+}
+
+.hidden-role-arn {
+    display: none;
+}
+
+.icon-small {
+    line-height: 0  !important;
+    vertical-align: text-top !important;
 }
