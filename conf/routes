@@ -40,11 +40,8 @@ POST          /passkey/registration-auth-options        controllers.PasskeyContr
 POST          /passkey/register                         controllers.PasskeyController.register
 DELETE        /passkey/:passkeyId                       controllers.PasskeyController.deletePasskey(passkeyId: String)
 
-GET           /roles-status                             controllers.AccountsController.accountRoles
-
 GET           /roles-status/account/:account            controllers.AccountsController.rolesStatusForAccount(account: String)
 GET           /users/account/:account                   controllers.AccountsController.usersForAccount(account: String)
-GET           /account/:account                         controllers.AccountsController.accountInfo(account: String)
 
 # Tmp routes for passkey trial
 GET           /opt/in/passkeys                          controllers.Utility.optInToPasskeys

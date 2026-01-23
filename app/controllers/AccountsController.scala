@@ -26,38 +26,13 @@ class AccountsController(
       janusData.access
     )(account => Config.findAccountNumber(account.authConfigKey, configuration))
 
-    // log any account number errors we accumulated
-    Accounts
-      .accountIdErrors(accountData)
-      .foreach { case (account, err) =>
-        logger
-          .warn(
-            s"Couldn't lookup account number for ${account.authConfigKey}",
-            err
-          )
-      }
     Ok(views.html.accounts(accountData, request.user, janusData))
-  }
-
-  def accountRoles: Action[AnyContent] = authAction { implicit request =>
-    val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
-    val accountRolesAndStatus = Accounts.getAccountRolesAndStatus(rolesStatuses)
-    Ok(
-      views.html
-        .accountRoles(
-          accountRolesAndStatus,
-          request.user,
-          janusData
-        )
-    )
   }
 
   def rolesStatusForAccount(authConfigKey: String): Action[AnyContent] =
     authAction { implicit request =>
-      janusData.accounts
-        .find(_.authConfigKey == authConfigKey)
-        .map(_.name) match {
-        case Some(name) =>
+      janusData.accounts.find(_.authConfigKey == authConfigKey) match {
+        case Some(AwsAccount(name, _)) =>
 
           val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
           val successfullyCreatedRoles =
@@ -85,17 +60,13 @@ class AccountsController(
   def usersForAccount(authConfigKey: String): Action[AnyContent] = authAction {
     implicit request =>
       janusData.accounts
-        .find(_.authConfigKey == authConfigKey)
-        .map { awsAccount =>
-          (
-            awsAccount,
+        .find(_.authConfigKey == authConfigKey) match {
+        case Some(awsAccount) =>
+          val users =
             accountPermissions(awsAccount, janusData.access).map(_.userName)
-          )
-        } match {
-        case Some((AwsAccount(name, _), users)) =>
           Ok(
             views.html.users(
-              name,
+              awsAccount.name,
               users,
               request.user,
               janusData
@@ -107,27 +78,6 @@ class AccountsController(
           )
       }
 
-  }
-
-  def accountInfo(authConfigKey: String): Action[AnyContent] = authAction {
-    implicit request =>
-      janusData.accounts
-        .find(_.authConfigKey == authConfigKey)
-        .map(_.name) match {
-        case Some(name) =>
-          Ok(
-            views.html.accountInfo(
-              name,
-              authConfigKey,
-              request.user,
-              janusData
-            )
-          )
-        case None =>
-          NotFound(
-            views.html.error("Account not found", Some(request.user), janusData)
-          )
-      }
   }
 
   def provisionedRoleStatus: Action[AnyContent] = authAction {

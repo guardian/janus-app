@@ -44,7 +44,7 @@
             </tr>
 
             @for(AccountInfo(account, owners, tryAccountNumber, rolesStatuses, rolesError) <- accountOwners.toList.sortBy(_.account.name)) {
-              <tr>
+              <tr id="@account.authConfigKey">
 
                 <td>
                     @account.name
