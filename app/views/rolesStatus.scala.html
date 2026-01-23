@@ -20,7 +20,35 @@
                 </tr>
                 <tr>
                     <td>
-                        @fragments.roleList(failure, roles.sortBy(_.friendlyName))
+                        <div>
+                            @if(failure.isDefined) {
+                                <li>
+                                    <span class="error">!</span> &nbsp @{failure}
+                                    @if(roles.nonEmpty) {
+                                        <hr/>
+                                        <p>Cached roles</p>
+                                    }
+                                </li>
+                            }
+
+                            @if(roles.isEmpty) {
+                                <p>No roles</p>
+                            }
+
+                            @for(role <- roles) {
+                                <li class="role-list-item" >
+                                    <span class="chip">
+                                    @{role.provisionedRoleTagValue}
+                                    </span>
+                                    <span >
+                                    @{role.friendlyName.getOrElse("No friendly name")}
+                                    </span>
+                                    <span >
+                                    @{role.roleArn}
+                                    </span>
+                                </li>
+                            }
+                        </div>
                     </td>
                 </tr>
             </table>

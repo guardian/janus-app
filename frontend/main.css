@@ -462,7 +462,7 @@ a.copy-text--button__small {
 
 .role-list-item {
     display: grid;
-    grid-template-columns: 25% 50% 25%;
+    grid-template-columns: 25% 25% 50% ;
 }
 
 :target {
