@@ -462,19 +462,23 @@ a.copy-text--button__small {
     color: green;
 }
 
-.role-list {
-    display: grid;
-}
+.role-list-double tbody tr:nth-child(4n + 1) { background-color: #e8e8e8}
+.role-list-double tbody tr:nth-child(4n + 2) { background-color: #e8e8e8}
+.role-list-double tbody tr:nth-child(4n + 3) { background-color: #efefef}
+.role-list-double tbody tr:nth-child(4n + 4) { background-color: #efefef}
+
+.role-list-single tbody tr:nth-child(2n + 1) { background-color: #e8e8e8}
+.role-list-single tbody tr:nth-child(2n + 2) { background-color: #efefef}
 
 .role-list-item-large {
-    display: grid;
-    padding: 5px;
+    padding-right: 5px;
+    padding-left: 5px;
     vertical-align: center;
-    grid-template-columns: 30% 40% 15% 15%;
 }
 
 .role-list-item-line-small {
-    padding: 5px;
+    padding-right: 5px;
+    padding-left: 5px;
     margin: 0px;
     display: flex;
     vertical-align: center;
@@ -490,6 +494,10 @@ td.cell-right, th.cell-right {
 }
 
 .icon-small {
-    line-height: 0  !important;
+    line-height: 0 !important;
     vertical-align: text-top !important;
+}
+
+.chip {
+    height: auto !important;
 }

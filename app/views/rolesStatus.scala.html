@@ -2,6 +2,7 @@
 @import com.gu.janus.model.{AwsAccount, JanusData}
 @import models.IamRoleInfo
 @import play.api.Mode
+
 @import scala.jdk.OptionConverters.RichOptional
 
 @(accountName: String, roles: List[IamRoleInfo], failure: Option[String], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
@@ -9,11 +10,15 @@
 @main(s"Roles Status for $accountName", Some(user), janusData) {
     <div class="container">
         <div class="col s12">
-            <h1 class="header orange-text">@{accountName} Roles Statuses</h1>
+            <h1 class="header orange-text">@{
+                accountName
+            } Roles Statuses</h1>
         </div>
 
         @if(failure.isDefined) {
-            <span class="error"><i class="material-icons">warning</i></span> &nbsp @{failure}
+            <span class="error"><i class="material-icons">warning</i></span> &nbsp @{
+                failure
+            }
             @if(roles.nonEmpty) {
                 <hr/>
                 <p>Cached roles</p>
@@ -24,22 +29,87 @@
             <p>No roles</p>
         }
 
-        <div class="role-list" >
+        <div class="role-list-double" >
             <div class="hide-on-large-only">
-                @for(role <- roles) {
-                    <div class="role-list-item-small" >
-                        <p class="role-list-item-line-small">
-                            <span class="chip">
-                                @{role.provisionedRoleTagValue}
-                            </span>
-                            @{role.roleArn.resource.qualifier().toScala.getOrElse("No resource qualifier").replace("janus/discoverable/", "")}
-                        </p>
-                        <div class="role-list-item-line-small" >
-                            <p class="role-list-item-line-small">
-                                @{role.friendlyName.getOrElse("No friendly name")}
-                            </p>
-                            <div class="copy-textarea">
-                                <textarea id="hidden-role-arn-@{role.roleArn.resource}" class="hidden-role-arn">@{role.roleArn}</textarea>
+                <table class="role-list">
+                    @for(role <- roles) {
+                        <tr class="role-list-item-small" >
+                            <td>
+                                <p class="role-list-item-line-small">
+                                    <span class="chip">
+                                    @{
+                                        role.provisionedRoleTagValue
+                                    }
+                                    </span>
+                                </p>
+                            </td>
+                            <td>
+                                @{
+                                    role.roleArn.resource.qualifier().toScala.getOrElse("No resource qualifier").replace("janus/discoverable/", "")
+                                }
+                            </td>
+                        </tr>
+                        <tr class="role-list-item-small" >
+                            <td>
+                                <div class="role-list-item-line-small" >
+                                    <p class="role-list-item-line-small">
+                                    @{
+                                        role.friendlyName.getOrElse("No friendly name")
+                                    }
+                                    </p>
+                                </div>
+                            </td>
+                            <td class="cell-right">
+                                <div>
+                                    <div class="copy-textarea">
+                                        <textarea id="hidden-role-arn-@{
+                                            role.roleArn.resource
+                                        }" class="hidden-role-arn">@{
+                                            role.roleArn
+                                        }</textarea>
+                                        <a class="copy-text--button copy-text--button__cta waves-effect waves-light btn" href="#">
+                                            Copy Arn
+                                            <div class="copy-text__feedback">
+                                                <i class="material-icons copy-text--default icon-small">content_copy</i>
+                                                <i class="material-icons copy-text--confirm icon-small">done</i>
+                                                <i class="material-icons copy-text--warn icon-small">report_problem</i>
+                                            </div>
+                                        </a>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </table>
+            </div>
+
+            <div class="hide-on-med-and-down">
+                <table class="role-list-single">
+                    @for(role <- roles) {
+                        <tr class="role-list-item-large" >
+                            <td>
+                                <span class="chip">
+                                @{
+                                    role.provisionedRoleTagValue
+                                }
+                                </span>
+                            </td>
+                            <td >
+                            @{
+                                role.friendlyName.getOrElse("No friendly name")
+                            }
+                            </td>
+                            <td >
+                            @{
+                                role.roleArn.resource.qualifier().toScala.getOrElse("No resource qualifier").replace("janus/discoverable/", "")
+                            }
+                            </td>
+                            <td class="copy-textarea">
+                                <textarea id="hidden-role-arn-@{
+                                    role.roleArn.resource
+                                }" class="hidden-role-arn">@{
+                                    role.roleArn
+                                }</textarea>
                                 <a class="copy-text--button copy-text--button__cta waves-effect waves-light btn" href="#">
                                         Copy Arn
                                     <div class="copy-text__feedback">
@@ -48,40 +118,11 @@
                                         <i class="material-icons copy-text--warn icon-small">report_problem</i>
                                     </div>
                                 </a>
-                            </div>
-                        </div>
-                    </div>
-                }
-            </div>
 
-            <div class="hide-on-med-and-down">
-                @for(role <- roles) {
-                    <div class="role-list-item-large" >
-                        <span>
-                            <span class="chip">
-                                @{role.provisionedRoleTagValue}
-                            </span>
-                        </span>
-                        <span >
-                            @{role.friendlyName.getOrElse("No friendly name")}
-                        </span>
-                        <span >
-                            @{role.roleArn.resource.qualifier().toScala.getOrElse("No resource qualifier").replace("janus/discoverable/", "")}
-                        </span>
-                        <div class="copy-textarea">
-                          <textarea id="hidden-role-arn-@{role.roleArn.resource}" class="hidden-role-arn">@{role.roleArn}</textarea>
-                            <a class="copy-text--button copy-text--button__cta waves-effect waves-light btn" href="#">
-                                Copy Arn
-                                <div class="copy-text__feedback">
-                                    <i class="material-icons copy-text--default icon-small">content_copy</i>
-                                    <i class="material-icons copy-text--confirm icon-small">done</i>
-                                    <i class="material-icons copy-text--warn icon-small">report_problem</i>
-                                </div>
-                            </a>
-
-                        </div>
-                    </div>
-                }
+                            </td>
+                        </tr>
+                    }
+                </table>
             </div>
         </div>
     </div>
