@@ -32,14 +32,14 @@
                 <th>
                     Account Number
                 </th>
-                <th>
+                <th class="cell-right">
                     Owners
                 </th>
-                <th>
+                <th class="cell-right">
                     Roles
                 </th>
-                <th>
-                    Audit
+                <th class="cell-right">
+                    Audit Trail
                 </th>
             </tr>
 
@@ -49,36 +49,39 @@
                 <td>
                     @account.name
                 </td>
+
                 <td>
-                            @tryAccountNumber match {
-                                case Failure(_) => {
-                                    -
-                            }
-                                case Success(accountNumber) => {
-                                    @accountNumber
-                                }
-                            }
-                </td>
-                <td>
-                        <a class="grey-text darken-2" href="/users/account/@account.authConfigKey">
-                            @owners.size
-                            <i class="material-icons tiny minor-header-icon">person</i>
-                        </a>
-                </td>
-                <td>
-                    <a class="grey-text darken-2" href="/roles-status/account/@account.authConfigKey">
-                    @rolesStatuses.size
-                    <i class="material-icons tiny minor-header-icon">handyman</i>
-                    @for(roleErrorText <- rolesError) {
-                        <i class="error material-icons tiny minor-header-icon" title="@roleErrorText">error_outline</i>
+                    @tryAccountNumber match {
+                        case Failure(_) => {
+                            -
                     }
+                        case Success(accountNumber) => {
+                            @accountNumber
+                        }
+                    }
+                </td>
+
+                <td class="cell-right">
+                    <a  href="/users/account/@account.authConfigKey">
+                        @owners.size
                     </a>
                 </td>
-                <td>
-                        <a class="grey-text darken-2" href="/audit/account/@account.authConfigKey">View Audit Trail <i class="material-icons">assignment</i></a>
-                </td>
-              </tr>
 
+                <td class="cell-right">
+                    <a href="/roles-status/account/@account.authConfigKey">
+                        @rolesStatuses.size
+                        @{rolesError match {
+                            case Some(roleErrorText) => <i class="error material-icons tiny minor-header-icon" title="@roleErrorText">error_outline</i>
+                            case None => <i class="succes material-icons tiny minor-header-icon" >check</i>
+                        }}
+                    </a>
+                </td>
+
+                <td class="cell-right">
+                    <a href="/audit/account/@account.authConfigKey"><i class="material-icons">assignment</i></a>
+                </td>
+
+              </tr>
         }
         </table>
   </div>

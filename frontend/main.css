@@ -460,6 +460,10 @@ a.copy-text--button__small {
     color: red;
 }
 
+.success {
+    color: green;
+}
+
 .role-list {
     display: grid;
 }
@@ -477,6 +481,10 @@ a.copy-text--button__small {
     display: flex;
     vertical-align: center;
     justify-content: space-between;
+}
+
+td.cell-right, th.cell-right {
+    text-align: right;
 }
 
 .hidden-role-arn {
