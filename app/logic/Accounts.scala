@@ -107,15 +107,4 @@ object Accounts {
       .sortBy(_.userName)
   }
 
-  def accountIdErrors(
-      accountData: Set[
-        AccountInfo
-      ]
-  ): Set[(AwsAccount, Throwable)] = {
-    accountData
-      .collect { case AccountInfo(account, _, Failure(err), _, _) =>
-        (account, err)
-      }
-  }
-
 }

@@ -62,7 +62,7 @@ case class UserPermissions(userName: String, permissions: Set[Permission])
 case class AccountInfo(
     account: AwsAccount,
     permissions: List[UserPermissions],
-    configuredRole: Try[String],
+    accountNumberTry: Try[String],
     rolesStatuses: Set[IamRoleInfo],
     rolesError: Option[String]
 )

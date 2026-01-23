@@ -43,7 +43,7 @@
                 </th>
             </tr>
 
-            @for(AccountInfo(account, owners, tryAccountNumber, rolesStatuses, rolesError) <- accountOwners.toList.sortBy(_.account.name)) {
+            @for(AccountInfo(account, owners, accountNumberTry, rolesStatuses, rolesError) <- accountOwners.toList.sortBy(_.account.name)) {
               <tr id="@account.authConfigKey">
 
                 <td>
@@ -51,7 +51,7 @@
                 </td>
 
                 <td>
-                    @tryAccountNumber match {
+                    @accountNumberTry match {
                         case Failure(_) => {
                             -
                     }

@@ -86,53 +86,6 @@ class AccountsTest
     }
   }
 
-  "accountIdErrors" - {
-    "returns an empty list if all accounts were successfully looked up" in {
-      val accountData = Set(
-        AccountInfo(fooAct, List.empty, Success("foo-role"), Set.empty, None),
-        AccountInfo(barAct, List.empty, Success("bar-role"), Set.empty, None),
-        AccountInfo(bazAct, List.empty, Success("baz-role"), Set.empty, None),
-        AccountInfo(quxAct, List.empty, Success("qux-role"), Set.empty, None)
-      )
-      Accounts.accountIdErrors(accountData) shouldEqual Set.empty
-    }
-
-    "returns a list of accounts that failed their lookup" in {
-      val accountData = Set(
-        AccountInfo(
-          fooAct,
-          List.empty,
-          Success("foo-role"),
-          Set.empty,
-          Some("Failed")
-        ),
-        AccountInfo(
-          barAct,
-          List.empty,
-          Success("bar-role"),
-          Set.empty,
-          Some("Failed")
-        ),
-        AccountInfo(
-          bazAct,
-          List.empty,
-          Failure(new RuntimeException("baz-error")),
-          Set.empty,
-          Some("Failed")
-        ),
-        AccountInfo(
-          quxAct,
-          List.empty,
-          Failure(new RuntimeException("qux-error")),
-          Set.empty,
-          Some("Failed")
-        )
-      )
-      val errorAccounts = Accounts.accountIdErrors(accountData).map(_._1)
-      errorAccounts shouldEqual Set(bazAct, quxAct)
-    }
-  }
-
   val accountsWithSuccessfullyFetchedTrivialRoles
       : Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
     accounts
