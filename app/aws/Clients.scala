@@ -5,7 +5,10 @@ import conf.Config
 import play.api.Configuration
 import software.amazon.awssdk.auth.credentials.*
 import software.amazon.awssdk.regions.Region.EU_WEST_1
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.{
+  DynamoDbAsyncClient,
+  DynamoDbClient
+}
 import software.amazon.awssdk.services.iam.IamClient
 import software.amazon.awssdk.services.ssm.SsmClient
 import software.amazon.awssdk.services.sts.StsClient

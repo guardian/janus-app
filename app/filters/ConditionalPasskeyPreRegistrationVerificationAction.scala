@@ -3,6 +3,7 @@ package filters
 import aws.PasskeyDB
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
+import models.PasskeyRequest
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.*
@@ -22,9 +23,9 @@ class ConditionalPasskeyPreRegistrationVerificationAction(
     passkeysEnabled: Boolean,
     enablingCookieName: String,
     authAction: ActionBuilder[UserIdentityRequest, AnyContent],
-    verificationAction: ActionBuilder[RequestWithAuthenticationData, AnyContent]
+    verificationAction: ActionBuilder[PasskeyRequest, AnyContent]
 )(using dynamoDb: DynamoDbClient, val executionContext: ExecutionContext)
-    extends ActionBuilder[RequestWithAuthenticationData, AnyContent]
+    extends ActionBuilder[PasskeyRequest, AnyContent]
     with Logging {
 
   override def parser: BodyParser[AnyContent] = authAction.parser
@@ -42,7 +43,7 @@ class ConditionalPasskeyPreRegistrationVerificationAction(
 
   def invokeBlock[A](
       request: Request[A],
-      block: RequestWithAuthenticationData[A] => Future[Result]
+      block: PasskeyRequest[A] => Future[Result]
   ): Future[Result] = {
     authAction.invokeBlock(
       request,
@@ -59,8 +60,9 @@ class ConditionalPasskeyPreRegistrationVerificationAction(
                 verificationAction.invokeBlock(request, block)
               } else {
                 // No credentials in database: bypass verification
-                val authRequest = new RequestWithAuthenticationData(
+                val authRequest = RequestWithAuthenticationData(
                   Json.obj(),
+                  userRequest.user,
                   userRequest
                 )
                 block(authRequest)
@@ -68,8 +70,9 @@ class ConditionalPasskeyPreRegistrationVerificationAction(
           }
         } else {
           // Config disabled or cookie not present: bypass verification
-          val authRequest = new RequestWithAuthenticationData(
+          val authRequest = RequestWithAuthenticationData(
             Json.obj(),
+            userRequest.user,
             userRequest
           )
           block(authRequest)
