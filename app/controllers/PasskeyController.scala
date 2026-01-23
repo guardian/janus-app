@@ -4,7 +4,7 @@ import aws.PasskeyDB
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
-import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
+import filters.ConditionalPasskeyVerificationAction
 import logic.UserAccess.hasAccess
 import models.JanusException
 import play.api.libs.json.Json
@@ -15,15 +15,15 @@ import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
-/** Controller for handling niche Janus-specific passkey operations. */
+/** Controller for handling passkey registration and authentication. */
 class PasskeyController(
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
-    passkeyVerificationAction: ActionBuilder[
-      RequestWithAuthenticationData,
+    basePasskeyController: com.gu.playpasskeyauth.controllers.PasskeyController[
+      UserIdentity,
       AnyContent
     ],
-    basePasskeyController: com.gu.playpasskeyauth.controllers.BasePasskeyController,
+    verificationAction: ConditionalPasskeyVerificationAction,
     janusData: JanusData,
     passkeysEnabled: Boolean,
     enablingCookieName: String
@@ -31,6 +31,10 @@ class PasskeyController(
     extends AbstractController(controllerComponents)
     with ResultHandler
     with Logging {
+
+  def registrationOptions: Action[Unit] = basePasskeyController.creationOptions
+
+  def register: Action[AnyContent] = basePasskeyController.register
 
   def showAuthPage: Action[AnyContent] = authAction { implicit request =>
     val enablingCookieIsPresent =
@@ -43,6 +47,8 @@ class PasskeyController(
       )
     )
   }
+
+  def authenticationOptions: Action[Unit] = basePasskeyController.authenticationOptions
 
   /** Creates authentication options during the passkey registration flow.
     *
@@ -73,7 +79,7 @@ class PasskeyController(
 
   /** Deletes a passkey from the user's account */
   def delete(passkeyId: String): Action[AnyContent] =
-    passkeyVerificationAction { implicit request =>
+    verificationAction { implicit request =>
       apiResponse(
         for {
           // Look up the passkey before deleting to include the name in the success message

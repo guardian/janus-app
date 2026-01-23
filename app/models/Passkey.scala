@@ -3,6 +3,8 @@ package models
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.module.SimpleModule
+import com.gu.googleauth.UserIdentity
+import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
 import com.webauthn4j.data.*
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.DefaultChallenge
@@ -13,6 +15,8 @@ import play.api.libs.json.{JsError, JsSuccess, Json, Reads}
 import java.time.Instant
 import scala.io.Source
 import scala.util.{Failure, Success, Try, Using}
+
+type PasskeyRequest[A] = RequestWithAuthenticationData[UserIdentity, A]
 
 case class PasskeyMetadata(
     id: String,

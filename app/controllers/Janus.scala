@@ -4,13 +4,12 @@ import aws.{AuditTrailDB, Federation, PasskeyDB}
 import cats.syntax.all.*
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.*
-import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
-import models.PasskeyAuthenticator
+import models.{PasskeyAuthenticator, PasskeyRequest}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
@@ -24,7 +23,7 @@ class Janus(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
-    passkeyAuthAction: ActionBuilder[RequestWithAuthenticationData, AnyContent],
+    passkeyAuthAction: ActionBuilder[PasskeyRequest, AnyContent],
     host: String,
     stsClient: StsClient,
     configuration: Configuration,

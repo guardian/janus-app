@@ -1,15 +1,11 @@
 import aws.Clients
-import com.gu.googleauth.AuthAction
 import com.gu.googleauth.AuthAction.UserIdentityRequest
+import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.gu.playpasskeyauth.PasskeyAuth
-import com.gu.playpasskeyauth.models.HostApp
-import com.gu.playpasskeyauth.web.{
-  AuthenticationDataExtractor,
-  CreationDataExtractor,
-  PasskeyNameExtractor
-}
+import com.gu.playpasskeyauth.models.{HostApp, PasskeyUser, UserId}
+import com.gu.playpasskeyauth.web.*
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
@@ -138,46 +134,61 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
 
-  private val creationDataExtractor = new CreationDataExtractor {
-    def findCreationData[A](
-        request: UserIdentityRequest[A]
-    ): Option[JsValue] = {
-      request.body match {
-        case AnyContentAsFormUrlEncoded(data) =>
-          data.get("passkey").flatMap(_.headOption).map(Json.parse)
-        case _ => None
-      }
+  private val creationDataExtractor =
+    new CreationDataExtractor[[A] =>> RequestWithUser[UserIdentity, A]] {
+      override def findCreationData[A](
+          request: RequestWithUser[UserIdentity, A]
+      ): Option[JsValue] =
+        request.body match {
+          case AnyContentAsFormUrlEncoded(data) =>
+            data.get("passkey").flatMap(_.headOption).map(Json.parse)
+          case _ => None
+        }
     }
+
+  private val authenticationDataExtractor =
+    new AuthenticationDataExtractor[[A] =>> RequestWithUser[UserIdentity, A]] {
+      override def findAuthenticationData[A](
+          request: RequestWithUser[UserIdentity, A]
+      ): Option[JsValue] =
+        request.body match {
+          case AnyContentAsFormUrlEncoded(data) =>
+            data.get("credentials").flatMap(_.headOption).map(Json.parse)
+          case AnyContentAsText(data) =>
+            Option(data).map(Json.parse)
+          case _ => None
+        }
+    }
+
+  private val passkeyNameExtractor =
+    new PasskeyNameExtractor[[A] =>> RequestWithUser[UserIdentity, A]] {
+      override def findPasskeyName[A](
+          request: RequestWithUser[UserIdentity, A]
+      ): Option[String] =
+        request.body match {
+          case AnyContentAsFormUrlEncoded(data) =>
+            data.get("passkeyName").flatMap(_.headOption)
+          case _ => None
+        }
+    }
+
+  private val userExtractor =
+    new UserExtractor[UserIdentity, UserIdentityRequest] {
+      override def extractUser[A](
+          request: UserIdentityRequest[A]
+      ): UserIdentity =
+        request.user
+    }
+
+  given PasskeyUser[UserIdentity] with {
+    extension (user: UserIdentity)
+      override def id: UserId = UserId(user.username)
   }
 
-  private val authenticationDataExtractor = new AuthenticationDataExtractor {
-    def findAuthenticationData[A](
-        request: UserIdentityRequest[A]
-    ): Option[JsValue] = {
-      request.body match {
-        case AnyContentAsFormUrlEncoded(data) =>
-          data.get("credentials").flatMap(_.headOption).map(Json.parse)
-        case AnyContentAsText(data) =>
-          Option(data).map(Json.parse)
-        case _ => None
-      }
-    }
-  }
-
-  private val passkeyNameExtractor = new PasskeyNameExtractor {
-    def findPasskeyName[A](request: UserIdentityRequest[A]): Option[String] = {
-      request.body match {
-        case AnyContentAsFormUrlEncoded(data) =>
-          data.get("passkeyName").flatMap(_.headOption)
-        case _ => None
-      }
-    }
-  }
-
-  private val passkeyAuth = new PasskeyAuth(
+  private val passkeyAuth = new PasskeyAuth[UserIdentity, AnyContent](
     controllerComponents,
     app = HostApp(name = host, uri = URI.create(host)),
-    authAction,
+    userAction = authAction.andThen(new UserAction(userExtractor)),
     passkeyRepo = new Repository(dynamoDbAsync),
     challengeRepo = new ChallengeRepository(dynamoDbAsync),
     creationDataExtractor,
@@ -186,7 +197,7 @@ class AppComponents(context: ApplicationLoader.Context)
     registrationRedirect = routes.Janus.userAccount
   )
 
-  private val newPasskeyController = passkeyAuth.controller()
+  private val basePasskeyController = passkeyAuth.controller()
 
   private val passkeyVerificationAction =
     new ConditionalPasskeyVerificationAction(
@@ -212,8 +223,8 @@ class AppComponents(context: ApplicationLoader.Context)
     new PasskeyController(
       controllerComponents,
       authAction,
-      passkeyAuth.verificationAction(),
-      newPasskeyController,
+      basePasskeyController,
+      passkeyVerificationAction,
       janusData,
       passkeysEnabled,
       passkeysEnablingCookieName
@@ -233,7 +244,6 @@ class AppComponents(context: ApplicationLoader.Context)
       googleGroupChecker,
       requiredGoogleGroups
     ),
-    newPasskeyController,
     new AccountsController(
       janusData,
       controllerComponents,

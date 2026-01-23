@@ -1,7 +1,9 @@
 package filters
 
 import com.gu.googleauth.AuthAction.UserIdentityRequest
+import com.gu.googleauth.UserIdentity
 import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
+import models.PasskeyRequest
 import play.api.libs.json.Json
 import play.api.mvc.*
 
@@ -11,25 +13,21 @@ import scala.concurrent.{ExecutionContext, Future}
   * configuration and cookie presence.
   *
   * If both passkeysEnabled is true and the enabling cookie is present, applies
-  * applies passkey verification. Otherwise, applies authAction without
-  * verification.
+  * passkey verification. Otherwise, applies authAction without verification.
   */
 class ConditionalPasskeyVerificationAction(
     passkeysEnabled: Boolean,
     enablingCookieName: String,
     authAction: ActionBuilder[UserIdentityRequest, AnyContent],
-    verificationAction: ActionBuilder[
-      RequestWithAuthenticationData,
-      AnyContent
-    ]
+    verificationAction: ActionBuilder[PasskeyRequest, AnyContent]
 )(using val executionContext: ExecutionContext)
-    extends ActionBuilder[RequestWithAuthenticationData, AnyContent] {
+    extends ActionBuilder[PasskeyRequest, AnyContent] {
 
   override def parser: BodyParser[AnyContent] = authAction.parser
 
   override def invokeBlock[A](
       request: Request[A],
-      block: RequestWithAuthenticationData[A] => Future[Result]
+      block: PasskeyRequest[A] => Future[Result]
   ): Future[Result] = {
     authAction.invokeBlock(
       request,
@@ -43,10 +41,12 @@ class ConditionalPasskeyVerificationAction(
           verificationAction.invokeBlock(request, block)
         } else {
           // Conditions not met: wrap in RequestWithAuthenticationData without verification
-          val authRequest = new RequestWithAuthenticationData(
-            Json.obj(),
-            userRequest
-          )
+          val authRequest =
+            new RequestWithAuthenticationData[UserIdentity, A](
+              Json.obj(),
+              userRequest.user,
+              userRequest
+            )
           block(authRequest)
         }
       }
