@@ -1,0 +1,81 @@
+@import logic.ViewHelpers
+@import scala.jdk.OptionConverters.RichOptional
+
+@(role: IamRoleInfo)
+
+<div>
+    <ul class="role-list-item-small hide-on-large-only">
+        <li>
+            <span class="chip">
+            @{
+                role.provisionedRoleTagValue
+            }
+            </span>
+        </li>
+        <li>
+        @{
+            role.roleArn.resource.qualifier().toScala.getOrElse("No resource qualifier").replace("janus/discoverable/", "")
+        }
+        </li>
+    </ul>
+    <ul class="role-list-item-small hide-on-large-only">
+        <li>
+        @{
+            role.friendlyName.getOrElse("No friendly name")
+        }
+        </li>
+        <li>
+            <div class="copy-textarea">
+                <textarea id="hidden-role-arn-@{
+                    role.roleArn.resource
+                }" class="hidden-role-arn">@{
+                    role.roleArn
+                }</textarea>
+                <a class="copy-text--button copy-text--button__cta waves-effect waves-light btn" href="#">
+                                    Copy Arn
+                    <div class="copy-text__feedback">
+                        <i class="material-icons copy-text--default icon-small">content_copy</i>
+                        <i class="material-icons copy-text--confirm icon-small">done</i>
+                        <i class="material-icons copy-text--warn icon-small">report_problem</i>
+                    </div>
+                </a>
+            </div>
+        </li>
+    </ul>
+    <ul class="role-list-item-large hide-on-med-and-down" >
+        <li>
+            <span class="chip">
+            @{
+                role.provisionedRoleTagValue
+            }
+            </span>
+        </li>
+        <li>
+        @{
+            role.roleArn.resource.qualifier().toScala.getOrElse("No resource qualifier").replace("janus/discoverable/", "")
+        }
+        </li>
+        <li>
+        @{
+            role.friendlyName.getOrElse("No friendly name")
+        }
+        </li>
+        <li>
+            <div class="copy-textarea">
+                <textarea id="hidden-role-arn-@{
+                    role.roleArn.resource
+                }" class="hidden-role-arn">@{
+                    role.roleArn
+                }</textarea>
+                <a class="copy-text--button copy-text--button__cta waves-effect waves-light btn" href="#">
+                                    Copy Arn
+                    <div class="copy-text__feedback">
+                        <i class="material-icons copy-text--default icon-small">content_copy</i>
+                        <i class="material-icons copy-text--confirm icon-small">done</i>
+                        <i class="material-icons copy-text--warn icon-small">report_problem</i>
+                    </div>
+                </a>
+            </div>
+        </li>
+    </ul>
+</div>

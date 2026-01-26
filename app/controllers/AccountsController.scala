@@ -91,4 +91,17 @@ class AccountsController(
       )
   }
 
+  def accountRoles: Action[AnyContent] = authAction { implicit request =>
+    val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
+    val accountRolesAndStatus = Accounts.getAccountRolesAndStatus(rolesStatuses)
+    Ok(
+      views.html
+        .accountRoles(
+          accountRolesAndStatus,
+          request.user,
+          janusData
+        )
+    )
+  }
+
 }
