@@ -33,13 +33,11 @@ class AccountsController(
     authAction { implicit request =>
       janusData.accounts.find(_.authConfigKey == authConfigKey) match {
         case Some(AwsAccount(name, _)) =>
-
           val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
           val successfullyCreatedRoles =
             Accounts.successfulRolesForThisAccount(rolesStatuses, authConfigKey)
           val rolesWithErrors =
             Accounts.errorRolesForThisAccount(rolesStatuses, authConfigKey)
-
           Ok(
             views.html.rolesStatus(
               name,
@@ -49,7 +47,6 @@ class AccountsController(
               janusData
             )
           )
-
         case None =>
           NotFound(
             views.html.error("Account not found", Some(request.user), janusData)
