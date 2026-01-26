@@ -155,7 +155,7 @@ class AccountsTest
       .toMap
 
   "lookupAccountRoles" - {
-    "should return full account information when given an existing account key " in {
+    "should return full account information when given an existing account key" in {
       Accounts.lookupAccountRoles(
         accountsWithSuccessfullyFetchedTrivialRoles,
         fooAct,
@@ -240,101 +240,87 @@ class AccountsTest
   "getAccountRolesAndStatus" - {
     val accountNames = accounts.map(_.name)
 
-    "should return a key for every account when snapshot has succeeded" in {
-      val keys = Accounts
+    "when snapshot has succeeded" - {
+
+      val accountRolesForAccountsWithSuccessfullyFetchedTrivialRoles = Accounts
         .getAccountRolesAndStatus(
           accountsWithSuccessfullyFetchedTrivialRoles
         )
-        .keys
-        .toSet
-      keys shouldBe accountNames
+
+      "should return a key for every account" in {
+        accountRolesForAccountsWithSuccessfullyFetchedTrivialRoles.keys.toSet shouldBe accountNames
+      }
+
+      "should return a value for every account (checks cross reference in map)" in {
+        val returnedAccounts =
+          accountRolesForAccountsWithSuccessfullyFetchedTrivialRoles.values
+            .flatMap(_._1.map(_.account))
+            .toSet
+        returnedAccounts shouldBe accounts
+      }
+
+      "should return no errors" in {
+        val errors =
+          accountRolesForAccountsWithSuccessfullyFetchedTrivialRoles.values
+            .flatMap(_._2)
+        errors.isEmpty shouldBe true
+      }
+
     }
 
-    "should return a value for every account when snapshot has succeeded (checks cross reference in map)" in {
-      val returnedAccounts = Accounts
-        .getAccountRolesAndStatus(
-          accountsWithSuccessfullyFetchedTrivialRoles
-        )
-        .values
-        .flatMap(_._1.map(_.account))
-        .toSet
-      returnedAccounts shouldBe accounts
-    }
+    "when snapshot has failed but each account has a stale cache entry" - {
 
-    "should return no errors when snapshot has succeeded" in {
-      val errors = Accounts
-        .getAccountRolesAndStatus(
-          accountsWithSuccessfullyFetchedTrivialRoles
-        )
-        .values
-        .flatMap(_._2)
-      errors.isEmpty shouldBe true
-    }
-
-    "should return a key for every account when snapshot has failed but each account has a stale cache entry" in {
-      val keys = Accounts
+      val accountRolesForAccountsWithFailedFetchesAndStaleFetches = Accounts
         .getAccountRolesAndStatus(
           accountsWithFailedFetchesAndStaleFetches
         )
-        .keys
-        .toSet
-      keys shouldBe accountNames
+
+      "should return a key for every account" in {
+        accountRolesForAccountsWithFailedFetchesAndStaleFetches.keys.toSet shouldBe accountNames
+      }
+
+      "should return a value for every account (checks cross reference in map)" in {
+        val returnedAccounts =
+          accountRolesForAccountsWithFailedFetchesAndStaleFetches.values
+            .flatMap(_._1.map(_.account))
+            .toSet
+        returnedAccounts shouldBe accounts
+      }
+
+      "should return an error for every account" in {
+        val errors =
+          accountRolesForAccountsWithFailedFetchesAndStaleFetches.values
+            .flatMap(_._2)
+            .toSet
+        errors shouldBe accounts.map(a => s"Failed to fetch ${a.name}")
+      }
     }
 
-    "should return a value for every account when snapshot has failed but each account has a stale cache entry (checks cross reference in map)" in {
-      val returnedAccounts = Accounts
-        .getAccountRolesAndStatus(
-          accountsWithFailedFetchesAndStaleFetches
-        )
-        .values
-        .flatMap(_._1.map(_.account))
-        .toSet
-      returnedAccounts shouldBe accounts
-    }
+    "when snapshot has failed without even a stale cache entry" - {
 
-    "should return an error for every account when snapshot has failed but each account has a stale cache entry" in {
-      val errors = Accounts
-        .getAccountRolesAndStatus(
-          accountsWithFailedFetchesAndStaleFetches
-        )
-        .values
-        .flatMap(_._2)
-        .toSet
-      errors shouldBe accounts.map(a => s"Failed to fetch ${a.name}")
-    }
-
-    "should return a key for every account when snapshot has failed without even a stale cache entry" in {
-      val keys = Accounts
+      val accountRolesForAccountsWithOnlyFailedFetches = Accounts
         .getAccountRolesAndStatus(
           accountsWithOnlyFailedFetches
         )
-        .keys
-        .toSet
-      keys shouldBe accountNames
-    }
+      "should return a key for every account " in {
+        accountRolesForAccountsWithOnlyFailedFetches.keys.toSet shouldBe accountNames
+      }
 
-    "should return no value for any account when snapshot has failed without even a stale cache entry" in {
-      val returnedAccounts =
-        Accounts
-          .getAccountRolesAndStatus(
-            accountsWithOnlyFailedFetches
-          )
-          .values
-          .flatMap(_._1.map(_.account))
-          .toSet
-      returnedAccounts shouldBe Set.empty
-    }
+      "should return no value for any account" in {
+        val returnedAccounts =
+          accountRolesForAccountsWithOnlyFailedFetches.values
+            .flatMap(_._1.map(_.account))
+            .toSet
+        returnedAccounts shouldBe Set.empty
+      }
 
-    "should return an error for every account when snapshot has failed without even a stale cache entry" in {
-      val errors =
-        Accounts
-          .getAccountRolesAndStatus(
-            accountsWithOnlyFailedFetches
-          )
-          .values
-          .flatMap(_._2)
-          .toSet
-      errors shouldBe accounts.map(a => s"Failed to fetch ${a.name}")
+      "should return an error for every account" in {
+        val errors =
+          accountRolesForAccountsWithOnlyFailedFetches.values
+            .flatMap(_._2)
+            .toSet
+        errors shouldBe accounts.map(a => s"Failed to fetch ${a.name}")
+      }
     }
   }
 
