@@ -56,7 +56,7 @@ case class FailureSnapshot(
     timestamp: Instant
 )
 
-/** A */
+/** A list of explicit permissions for a user */
 case class UserPermissions(userName: String, permissions: Set[Permission])
 
 case class AccountInfo(
