@@ -77,10 +77,10 @@ object Accounts {
       accounts: Set[AwsAccount],
       access: ACL
   )(
-      lookupConfiguredRole: AwsAccount => Try[String]
+      lookupAccountNumber: AwsAccount => Try[String]
   ): Set[AccountInfo] = accounts
     .map { awsAccount =>
-      val accountIdMaybe = lookupConfiguredRole(awsAccount)
+      val accountIdMaybe = lookupAccountNumber(awsAccount)
       AccountInfo(
         awsAccount,
         accountPermissions(awsAccount, access),
