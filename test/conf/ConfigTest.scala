@@ -44,7 +44,9 @@ class ConfigTest extends AnyFreeSpec with Matchers {
             |""".stripMargin
         )
       )
-      Config.accountNumber("foo", config) shouldEqual Success("123456789012")
+      Config.findAccountNumber("foo", config) shouldEqual Success(
+        "123456789012"
+      )
     }
 
     "returns a failure if the account is not configured" in {
@@ -58,7 +60,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
             |""".stripMargin
         )
       )
-      Config.accountNumber("bar", config).isFailure shouldBe true
+      Config.findAccountNumber("bar", config).isFailure shouldBe true
     }
 
     "returns a failure if the account number cannot be extracted from the role ARN" in {
@@ -72,7 +74,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
             |""".stripMargin
         )
       )
-      Config.accountNumber("foo", config).isFailure shouldBe true
+      Config.findAccountNumber("foo", config).isFailure shouldBe true
     }
   }
 
