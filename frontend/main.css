@@ -482,9 +482,9 @@ a.copy-text--button__small {
     display: none;
 }
 
-.icon-small {
-    line-height: 0 !important;
-    vertical-align: text-top !important;
+.copy-text--default.icon-small {
+    line-height: 0;
+    vertical-align: text-top;
 }
 
 .chip {
