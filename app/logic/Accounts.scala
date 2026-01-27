@@ -13,28 +13,19 @@ object Accounts {
       rolesStatuses: RolesStatuses,
       account: AwsAccount,
       accountIdMaybe: Try[String]
-  ): Set[IamRoleInfo] =
-    accountIdMaybe match {
-      case Success(accountId) =>
-        rolesStatuses.get(account) match {
-          case Some(
-                AwsAccountIamRoleInfoStatus(
-                  Some(IamRoleInfoSnapshot(roles, _)),
-                  _
-                )
-              ) =>
-            roles.toSet
-          case _ => Set.empty
-        }
-      case _ => Set.empty
-    }
+  ): Set[IamRoleInfo] = (for {
+    accountId <- accountIdMaybe.toOption
+    accountRoleStatus <- rolesStatuses.get(account)
+    roles <- accountRoleStatus.roleSnapshot
+  } yield roles.roles.toSet)
+    .getOrElse(Set.empty)
 
   def getAccountRolesAndStatus(
       rolesStatuses: RolesStatuses
   ): Map[String, (List[IamRoleInfo], Option[String])] = rolesStatuses
     .map { (k, v) =>
       k.name -> (
-        v.roleSnapshot.map(_.roles).getOrElse(List.empty),
+        v.roleSnapshot.map(_.roles).getOrElse(Nil),
         v.failureStatus.map(_.failure)
       )
     }
@@ -42,18 +33,11 @@ object Accounts {
   def successfulRolesForThisAccount(
       rolesStatuses: RolesStatuses,
       account: String
-  ): List[IamRoleInfo] =
-    rolesStatuses.find(_._1.authConfigKey == account) match {
-      case Some(
-            _,
-            AwsAccountIamRoleInfoStatus(
-              Some(IamRoleInfoSnapshot(roles, _)),
-              _
-            )
-          ) =>
-        roles
-      case _ => Nil
-    }
+  ): List[IamRoleInfo] = (for {
+    rolesStatus <- rolesStatuses.find(_._1.authConfigKey == account)
+    roleSnapshot <- rolesStatus._2.roleSnapshot
+  } yield roleSnapshot.roles)
+    .getOrElse(Nil)
 
   def errorRolesForThisAccount(
       rolesStatuses: RolesStatuses,
