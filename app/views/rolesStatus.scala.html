@@ -10,15 +10,11 @@
 @main(s"Role Status for $accountName", Some(user), janusData) {
     <div class="container">
         <div class="col s12">
-            <h1 class="header orange-text">@{
-                accountName
-            } Role Statuses</h1>
+            <h1 class="header orange-text">@accountName Role Statuses</h1>
         </div>
 
         @if(failure.isDefined) {
-            <span class="error"><i class="material-icons">warning</i></span> &nbsp @{
-                failure
-            }
+            <span class="error"><i class="material-icons">warning</i></span> &nbsp @failure
             @if(roles.nonEmpty) {
                 <hr/>
                 <p>Cached roles</p>

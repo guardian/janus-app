@@ -1,5 +1,4 @@
 @import logic.ViewHelpers
-@import scala.jdk.OptionConverters.RichOptional
 
 @(role: IamRoleInfo)
 
@@ -13,9 +12,7 @@
             </span>
         </li>
         <li>
-        @{
-            role.roleArn.resource.qualifier().toScala.getOrElse("No resource qualifier").replace("janus/discoverable/", "")
-        }
+            @ViewHelpers.getSimpleName(role.roleArn)
         </li>
     </ul>
     <ul class="role-list-item-small hide-on-large-only">
@@ -51,9 +48,7 @@
             </span>
         </li>
         <li>
-        @{
-            role.roleArn.resource.qualifier().toScala.getOrElse("No resource qualifier").replace("janus/discoverable/", "")
-        }
+            @ViewHelpers.getSimpleName(role.roleArn)
         </li>
         <li>
         @{
