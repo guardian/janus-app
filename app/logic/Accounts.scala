@@ -7,10 +7,8 @@ import scala.util.{Failure, Success, Try}
 
 object Accounts {
 
-  private type RolesStatuses = Map[AwsAccount, AwsAccountIamRoleInfoStatus]
-
   def lookupAccountRoles(
-      rolesStatuses: RolesStatuses,
+      rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus],
       account: AwsAccount,
       accountIdMaybe: Try[String]
   ): Set[IamRoleInfo] = (for {
@@ -21,7 +19,7 @@ object Accounts {
     .getOrElse(Set.empty)
 
   def getAccountRolesAndStatus(
-      rolesStatuses: RolesStatuses
+      rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus]
   ): Map[String, (List[IamRoleInfo], Option[String])] = rolesStatuses
     .map { (k, v) =>
       k.name -> (
@@ -31,7 +29,7 @@ object Accounts {
     }
 
   def successfulRolesForThisAccount(
-      rolesStatuses: RolesStatuses,
+      rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus],
       account: String
   ): List[IamRoleInfo] = (for {
     rolesStatus <- rolesStatuses.find(_._1.authConfigKey == account)
@@ -40,24 +38,16 @@ object Accounts {
     .getOrElse(Nil)
 
   def errorRolesForThisAccount(
-      rolesStatuses: RolesStatuses,
+      rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus],
       account: String
-  ): Option[String] = {
-    rolesStatuses.find(_._1.authConfigKey == account) match {
-      case Some(
-            _,
-            AwsAccountIamRoleInfoStatus(
-              _,
-              Some(FailureSnapshot(failure, _))
-            )
-          ) =>
-        Some(failure)
-      case _ => None
-    }
-  }
+  ): Option[String] = for {
+    rolesStatus <- rolesStatuses.find(_._1.authConfigKey == account)
+    roleInfoStatus = rolesStatus._2
+    failureSnapshot <- roleInfoStatus.failureStatus
+  } yield failureSnapshot.failure
 
   def accountOwnerInformation(
-      rolesStatuses: RolesStatuses,
+      rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus],
       accounts: Set[AwsAccount],
       access: ACL
   )(
