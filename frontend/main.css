@@ -478,10 +478,6 @@ a.copy-text--button__small {
     margin: 0;
 }
 
-td.cell-right, th.cell-right {
-    text-align: right;
-}
-
 .hidden-role-arn {
     display: none;
 }
