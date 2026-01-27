@@ -1,28 +1,24 @@
-@import com.gu.janus.model.{AwsAccount, JanusData}
 @import com.gu.googleauth.UserIdentity
-@import play.api.Mode
-@import scala.util.Try
-
-@import com.gu.janus.model.Permission
-@import scala.util.Failure
-@import scala.util.Success
+@import com.gu.janus.model.{AwsAccount, JanusData, Permission}
 @import logic.ViewHelpers
 @import models.AccountInfo
+@import play.api.Mode
+
+@import scala.util.{Failure, Success, Try}
 @(accountOwners: Set[AccountInfo], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Accounts", Some(user), janusData) {
-  <div class="container">
-
+    <div class="container">
         <h1 class="header orange-text">Accounts</h1>
         @janusData.permissionsRepo match {
-          case Some(permissionsRepo) => {
-              <p>
+            case Some(permissionsRepo) => {
+                <p>
                   Refer to <a href="@permissionsRepo">Janus' configuration</a> for full details on who has what access to each AWS account.
               </p>
-          }
-          case None => {
-              <p>Refer to Janus' configuration for full details on who has what access to each AWS account.</p>
-          }
+            }
+            case None => {
+                <p>Refer to Janus' configuration for full details on who has what access to each AWS account.</p>
+            }
         }
         <table>
             <tr>
@@ -44,45 +40,47 @@
             </tr>
 
             @for(AccountInfo(account, owners, accountNumberTry, rolesStatuses, rolesError) <- accountOwners.toList.sortBy(_.account.name)) {
-              <tr id="@account.authConfigKey">
+                <tr id="@account.authConfigKey">
 
-                <td>
+                    <td>
                     @account.name
-                </td>
+                    </td>
 
-                <td>
+                    <td>
                     @accountNumberTry match {
                         case Failure(_) => {
                             -
-                    }
+                        }
                         case Success(accountNumber) => {
                             @accountNumber
                         }
                     }
-                </td>
+                    </td>
 
-                <td class="right-align">
-                    <a  href="/users/account/@account.authConfigKey">
+                    <td class="right-align">
+                        <a  href="/users/account/@account.authConfigKey">
                         @owners.size
-                    </a>
-                </td>
+                        </a>
+                    </td>
 
-                <td class="right-align">
-                    <a href="/roles-status/account/@account.authConfigKey">
-                        @rolesStatuses.size
-                        @{rolesError match {
-                            case Some(roleErrorText) => <i class="error material-icons tiny minor-header-icon" title="@roleErrorText">error_outline</i>
-                            case None => <i class="succes material-icons tiny minor-header-icon" >check</i>
-                        }}
-                    </a>
-                </td>
+                    <td class="right-align">
+                        <a href="/roles-status/account/@account.authConfigKey">
+                            @rolesStatuses.size
+                            @{
+                                rolesError match {
+                                    case Some(roleErrorText) => <i class="error material-icons tiny minor-header-icon" title="@roleErrorText">error_outline</i>
+                                    case None => <i class="succes material-icons tiny minor-header-icon">check</i>
+                                }
+                            }
+                        </a>
+                    </td>
 
-                <td class="right-align">
-                    <a href="/audit/account/@account.authConfigKey"><i class="material-icons">assignment</i></a>
-                </td>
+                    <td class="right-align">
+                        <a href="/audit/account/@account.authConfigKey"><i class="material-icons">assignment</i></a>
+                    </td>
 
-              </tr>
-        }
+                </tr>
+            }
         </table>
-  </div>
+    </div>
 }
