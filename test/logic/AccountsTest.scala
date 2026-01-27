@@ -32,8 +32,6 @@ class AccountsTest
   )
 
   "accountOwnerInformation" - {
-    val emptyRoleList: (AwsAccount, Try[String]) => Set[IamRoleInfo] =
-      (_, _) => Set.empty
 
     "uses the provided lookup function to populate the role for each account" in {
       forAll { (roleArn: String) =>
