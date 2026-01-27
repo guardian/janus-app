@@ -240,18 +240,22 @@ class AccountsTest
 
     "when snapshot has succeeded" - {
 
-      val accountRolesForAccountsWithSuccessfullyFetchedTrivialRoles = Accounts
-        .getAccountRolesAndStatus(
-          accountsWithSuccessfullyFetchedTrivialRoles
-        )
-
       "should return a key for every account" in {
-        accountRolesForAccountsWithSuccessfullyFetchedTrivialRoles.keys.toSet shouldBe accountNames
+        Accounts
+          .getAccountRolesAndStatus(
+            accountsWithSuccessfullyFetchedTrivialRoles
+          )
+          .keys
+          .toSet shouldBe accountNames
       }
 
       "should return a value for every account (checks cross reference in map)" in {
         val returnedAccounts =
-          accountRolesForAccountsWithSuccessfullyFetchedTrivialRoles.values
+          Accounts
+            .getAccountRolesAndStatus(
+              accountsWithSuccessfullyFetchedTrivialRoles
+            )
+            .values
             .flatMap(_._1.map(_.account))
             .toSet
         returnedAccounts shouldBe accounts
@@ -259,7 +263,11 @@ class AccountsTest
 
       "should return no errors" in {
         val errors =
-          accountRolesForAccountsWithSuccessfullyFetchedTrivialRoles.values
+          Accounts
+            .getAccountRolesAndStatus(
+              accountsWithSuccessfullyFetchedTrivialRoles
+            )
+            .values
             .flatMap(_._2)
         errors.isEmpty shouldBe true
       }
@@ -268,26 +276,60 @@ class AccountsTest
 
     "when snapshot has failed but each account has a stale cache entry" - {
 
-      val accountRolesForAccountsWithFailedFetchesAndStaleFetches = Accounts
-        .getAccountRolesAndStatus(
-          accountsWithFailedFetchesAndStaleFetches
-        )
-
       "should return a key for every account" in {
-        accountRolesForAccountsWithFailedFetchesAndStaleFetches.keys.toSet shouldBe accountNames
+        Accounts
+          .getAccountRolesAndStatus(
+            accountsWithFailedFetchesAndStaleFetches
+          )
+          .keys
+          .toSet shouldBe accountNames
       }
 
       "should return a value for every account (checks cross reference in map)" in {
         val returnedAccounts =
-          accountRolesForAccountsWithFailedFetchesAndStaleFetches.values
+          Accounts
+            .getAccountRolesAndStatus(
+              accountsWithFailedFetchesAndStaleFetches
+            )
+            .values
             .flatMap(_._1.map(_.account))
             .toSet
         returnedAccounts shouldBe accounts
       }
 
+      "should return a role for every account " in {
+        val returnedRoles =
+          Accounts
+            .getAccountRolesAndStatus(
+              accountsWithFailedFetchesAndStaleFetches
+            )
+            .values
+            .flatMap(_._1)
+            .toSet
+        returnedRoles shouldBe accounts.map(a =>
+          IamRoleInfo(
+            Arn
+              .builder()
+              .accountId(s"awsAccount-${a.authConfigKey}")
+              .partition("awsPartition")
+              .service("awsService")
+              .resource("awsResource")
+              .build(),
+            s"provisionedRoleTagValue${a.name}",
+            Some(s"friendlyName${a.name}"),
+            Some(s"description${a.name}"),
+            a
+          )
+        )
+      }
+
       "should return an error for every account" in {
         val errors =
-          accountRolesForAccountsWithFailedFetchesAndStaleFetches.values
+          Accounts
+            .getAccountRolesAndStatus(
+              accountsWithFailedFetchesAndStaleFetches
+            )
+            .values
             .flatMap(_._2)
             .toSet
         errors shouldBe accounts.map(a => s"Failed to fetch ${a.name}")
@@ -296,25 +338,47 @@ class AccountsTest
 
     "when snapshot has failed without even a stale cache entry" - {
 
-      val accountRolesForAccountsWithOnlyFailedFetches = Accounts
-        .getAccountRolesAndStatus(
-          accountsWithOnlyFailedFetches
-        )
       "should return a key for every account " in {
-        accountRolesForAccountsWithOnlyFailedFetches.keys.toSet shouldBe accountNames
+        Accounts
+          .getAccountRolesAndStatus(
+            accountsWithOnlyFailedFetches
+          )
+          .keys
+          .toSet shouldBe accountNames
       }
 
       "should return no value for any account" in {
         val returnedAccounts =
-          accountRolesForAccountsWithOnlyFailedFetches.values
-            .flatMap(_._1.map(_.account))
+          Accounts
+            .getAccountRolesAndStatus(
+              accountsWithOnlyFailedFetches
+            )
+            .values
+            .flatMap(_._1)
+            .map(_.account)
+            .toSet
+        returnedAccounts shouldBe Set.empty
+      }
+
+      "should return no role for any account" in {
+        val returnedAccounts =
+          Accounts
+            .getAccountRolesAndStatus(
+              accountsWithOnlyFailedFetches
+            )
+            .values
+            .flatMap(_._1)
             .toSet
         returnedAccounts shouldBe Set.empty
       }
 
       "should return an error for every account" in {
         val errors =
-          accountRolesForAccountsWithOnlyFailedFetches.values
+          Accounts
+            .getAccountRolesAndStatus(
+              accountsWithOnlyFailedFetches
+            )
+            .values
             .flatMap(_._2)
             .toSet
         errors shouldBe accounts.map(a => s"Failed to fetch ${a.name}")
