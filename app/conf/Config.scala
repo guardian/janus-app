@@ -22,7 +22,7 @@ object Config {
 
   // extract aws account ID from Role ARN
   private val AwsAccountId = """arn:aws:iam::(\d+):role/.+""".r
-  def accountNumber(
+  def findAccountNumber(
       awsAccountAuthConfigKey: String,
       config: Configuration
   ): Try[String] = {

@@ -2,6 +2,8 @@ package logic
 
 import com.gu.janus.model.AwsAccount
 import software.amazon.awssdk.services.sts.model.Credentials
+import software.amazon.awssdk.arns.Arn
+import scala.jdk.OptionConverters.RichOptional
 
 object ViewHelpers {
   // created as Scala function to make it easier to control whitespace
@@ -49,4 +51,10 @@ object ViewHelpers {
       .lift(column)
       .getOrElse(Nil)
   }
+
+  def getSimpleName(roleArn: Arn): String = roleArn.resource
+    .qualifier()
+    .toScala
+    .getOrElse("No resource qualifier")
+    .replace("janus/discoverable/", "")
 }
