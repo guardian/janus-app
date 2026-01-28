@@ -8,6 +8,7 @@ import play.api.http.Status.{
   UNAUTHORIZED
 }
 import play.api.libs.json.{Json, Writes}
+import software.amazon.awssdk.arns.Arn
 
 enum AccountConfigStatus:
   case FederationConfigError(causedBy: Throwable)
