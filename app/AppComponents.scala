@@ -167,13 +167,19 @@ class AppComponents(context: ApplicationLoader.Context)
       googleGroupChecker,
       requiredGoogleGroups
     ),
+    new AccountsController(
+      janusData,
+      controllerComponents,
+      authAction,
+      configuration,
+      provisionedRoleCachingService
+    ),
     new Utility(
       janusData,
       controllerComponents,
       authAction,
       configuration,
-      passkeysEnablingCookieName,
-      provisionedRoleCachingService
+      passkeysEnablingCookieName
     ),
     assets
   )

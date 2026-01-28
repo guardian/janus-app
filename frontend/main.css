@@ -453,3 +453,40 @@ a.copy-text--button__small {
     white-space: nowrap;
     border: 0;
 }
+
+.error {
+    color: red;
+}
+
+.success {
+    color: green;
+}
+
+.role-list-item-large {
+    display: grid;
+    grid-template-columns: 25% 20% 40% 15%;
+    vertical-align: center;
+    padding: 0;
+    margin: 0;
+}
+
+.role-list-item-small {
+    display: grid;
+    grid-template-columns: 75% 25%;
+    vertical-align: center;
+    padding: 0;
+    margin: 0;
+}
+
+.hidden-role-arn {
+    display: none;
+}
+
+.copy-text--default.icon-small {
+    line-height: 0;
+    vertical-align: text-top;
+}
+
+.chip {
+    height: auto !important;
+}
