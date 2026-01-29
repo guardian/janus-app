@@ -13,6 +13,9 @@
             @{role.friendlyName.getOrElse("No friendly name")}
         </div>
         <div class="provisioned-role-item-entry">
+            @{role.description}
+        </div>
+        <div class="provisioned-role-item-entry">
             @ViewHelpers.getSimpleName(role.roleArn)
         </div>
     </div>
