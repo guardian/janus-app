@@ -81,42 +81,43 @@ class AccountsController(
 
   def accountRoles: Action[AnyContent] = authAction { implicit request =>
     val realData = provisionedRoleStatusManager.getCacheStatus
-    val fakeData = realData.map { case (account, status) =>
-      val augmentedSnapshot =
-        (status.roleSnapshot, status.failureStatus) match {
-          case (None, Some(failure)) =>
-            Some(
-              IamRoleInfoSnapshot(
-                roles = List.fill(scala.util.Random.between(0, 11))(
-                  IamRoleInfo(
-                    roleArn = Arn.fromString(
-                      s"arn:aws:iam::012345678901:role/gu/janus/discoverable/fake-role"
-                    ),
-                    provisionedRoleTagValue = "fake-provisioned-role",
-                    friendlyName = Some("Fake Role"),
-                    description = Some("This is a fake role for testing."),
-                    account = account
-                  )
-                ),
-                timestamp = java.time.Instant.now()
+    // this fake data augments what gets fetched so we can design with populated accounts
+    val fakeData = realData
+      .map { case (account, status) =>
+        val augmentedSnapshot =
+          (status.roleSnapshot, status.failureStatus) match {
+            case (None, Some(failure)) =>
+              Some(
+                IamRoleInfoSnapshot(
+                  roles = List.fill(scala.util.Random.between(0, 11))(
+                    IamRoleInfo(
+                      roleArn = Arn.fromString(
+                        s"arn:aws:iam::012345678901:role/gu/janus/discoverable/fake-role"
+                      ),
+                      provisionedRoleTagValue = "fake-provisioned-role",
+                      friendlyName = Some("Fake Role"),
+                      description = Some("This is a fake role for testing."),
+                      account = account
+                    )
+                  ),
+                  timestamp = java.time.Instant.now()
+                )
               )
-            )
-          case _ =>
-            status.roleSnapshot
+            case _ =>
+              status.roleSnapshot
 
-        }
-      account -> status.copy(roleSnapshot = augmentedSnapshot)
-    }
-    val accountRolesAndStatus = Accounts.getAccountRolesAndStatus(fakeData)
-    val tmp = fakeData.toList.sortBy(_._1.name)
+          }
+        account -> status.copy(roleSnapshot = augmentedSnapshot)
+      }
+      .toList
+      .sortBy(_._1.name)
     Ok(
       views.html
         .accountRoles(
-          fakeData.toList.sortBy(_._1.name),
+          fakeData,
           request.user,
           janusData
         )
     )
   }
-
 }
