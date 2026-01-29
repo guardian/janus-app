@@ -553,3 +553,10 @@ a.copy-text--button__small {
     padding-left: 14px;
     border-left: solid 5px #f44336;
 }
+
+.rotate{
+    animation: spinner 5s linear infinite;
+}
+@keyframes spinner {
+    to { transform: rotate(360deg); }
+}
