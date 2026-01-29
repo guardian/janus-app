@@ -48,9 +48,8 @@ GET           /opt/in/passkeys                          controllers.Utility.optI
 GET           /opt/out/passkeys                         controllers.Utility.optOutOfPasskeys
 
 GET           /healthcheck                              controllers.Utility.healthcheck
-GET           /accounts                                 controllers.AccountsController.accounts
-GET           /provisioned-role-status                  controllers.AccountsController.provisionedRoleStatus
 
+GET           /accounts                                 controllers.AccountsController.accounts
 GET           /roles-status                             controllers.AccountsController.accountRoles
 
 # Map static resources from the /public folder to the /assets URL path
