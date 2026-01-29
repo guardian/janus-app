@@ -115,6 +115,8 @@ class AccountsController(
       views.html
         .accountRoles(
           fakeData,
+          provisionedRoleStatusManager.fetchEnabled,
+          provisionedRoleStatusManager.fetchRate,
           request.user,
           janusData
         )
