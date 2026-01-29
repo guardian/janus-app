@@ -88,4 +88,7 @@ object AwsAccountIamRoleInfoStatus {
       failureStatus: FailureSnapshot
   ): AwsAccountIamRoleInfoStatus =
     AwsAccountIamRoleInfoStatus(cachedRoleSnapshot, Some(failureStatus))
+
+  def empty: AwsAccountIamRoleInfoStatus =
+    AwsAccountIamRoleInfoStatus(None, None)
 }
