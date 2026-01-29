@@ -490,3 +490,66 @@ a.copy-text--button__small {
 .chip {
     height: auto !important;
 }
+
+.provisioned-roles-account-header {
+    padding: 10px;
+    margin-bottom: 15px;
+    margin-top: 10px;
+    background-color: #f5f5f5;
+    border-top: solid 1px rgb(0, 96, 100);
+}
+.provisioned-roles-account-header span[role=heading] {
+    font-size: x-large;
+}
+
+.provisioned-roles-account-updated {
+    margin-right: 5px;
+}
+
+.provisioned-roles-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.provisioned-role-item {
+    border: solid 1px #ddd;
+    border-radius: 2px;
+}
+
+.provisioned-role-item-header {
+    padding: 10px;
+    background-color: #f5f5f5;
+    font-weight: bold;
+}
+
+.provisioned-role-item-body {
+    padding: 10px;
+}
+
+.provisioned-role-item-entry {
+    padding: 5px 0;
+}
+
+.provisioned-role-item-cta {
+    border-top: solid 1px #ddd;
+    padding: 10px 10px 10px 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.provisioned-role-empty {
+    text-align: center;
+}
+
+.provisioned-role-notice {
+    padding-left: 14px;
+    border-left: solid 5px rgb(0, 96, 100);
+}
+
+.provisioned-role-error {
+    padding-left: 14px;
+    border-left: solid 5px #f44336;
+}
