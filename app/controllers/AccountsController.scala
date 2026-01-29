@@ -5,9 +5,11 @@ import com.gu.janus.model.{AwsAccount, JanusData}
 import conf.Config
 import logic.Accounts
 import logic.Accounts.accountPermissions
+import models.{IamRoleInfo, IamRoleInfoSnapshot}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.ProvisionedRoleStatusManager
+import software.amazon.awssdk.arns.Arn
 
 class AccountsController(
     janusData: JanusData,
@@ -78,12 +80,39 @@ class AccountsController(
   }
 
   def accountRoles: Action[AnyContent] = authAction { implicit request =>
-    val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
-    val accountRolesAndStatus = Accounts.getAccountRolesAndStatus(rolesStatuses)
+    val realData = provisionedRoleStatusManager.getCacheStatus
+    val fakeData = realData.map { case (account, status) =>
+      val augmentedSnapshot =
+        (status.roleSnapshot, status.failureStatus) match {
+          case (None, Some(failure)) =>
+            Some(
+              IamRoleInfoSnapshot(
+                roles = List.fill(scala.util.Random.between(0, 11))(
+                  IamRoleInfo(
+                    roleArn = Arn.fromString(
+                      s"arn:aws:iam::012345678901:role/gu/janus/discoverable/fake-role"
+                    ),
+                    provisionedRoleTagValue = "fake-provisioned-role",
+                    friendlyName = Some("Fake Role"),
+                    description = Some("This is a fake role for testing."),
+                    account = account
+                  )
+                ),
+                timestamp = java.time.Instant.now()
+              )
+            )
+          case _ =>
+            status.roleSnapshot
+
+        }
+      account -> status.copy(roleSnapshot = augmentedSnapshot)
+    }
+    val accountRolesAndStatus = Accounts.getAccountRolesAndStatus(fakeData)
+    val tmp = fakeData.toList.sortBy(_._1.name)
     Ok(
       views.html
         .accountRoles(
-          accountRolesAndStatus,
+          fakeData.toList.sortBy(_._1.name),
           request.user,
           janusData
         )
