@@ -1,4 +1,4 @@
-@import logic.ViewHelpers
+@import logic.ProvisionedRoles.{provisionedRoleNameFromArn, provisionedRoleLinkFromArn}
 
 @(role: IamRoleInfo)
 
@@ -16,25 +16,13 @@
             @{role.description}
         </div>
         <div class="provisioned-role-item-entry">
-            @ViewHelpers.getSimpleName(role.roleArn)
+            @provisionedRoleNameFromArn(role.roleArn)
         </div>
     </div>
     <div class="provisioned-role-item-cta">
-        <div class="copy-textarea">
-            <textarea id="hidden-role-arn-@{role.roleArn.resource}" class="hidden-role-arn">@{role.roleArn}</textarea>
-            <a class="copy-text--button tooltipped copy-text--button__cta waves-effect waves-light btn" href="#"
-                data-position="bottom" data-tooltip="@role.roleArn">
-                <span class="hide">Copy</span> Arn
-                <div class="copy-text__feedback">
-                    <i class="material-icons copy-text--default icon-small">content_copy</i>
-                    <i class="material-icons copy-text--confirm icon-small">done</i>
-                    <i class="material-icons copy-text--warn icon-small">report_problem</i>
-                </div>
-            </a>
-        </div>
         <div>
-            <a class="copy-text--button__cta waves-effect waves-light btn" href="@role.roleArn" target="_blank" rel="noopener noreferrer">
-                <span class="hide">View in</span> AWS
+            <a class="copy-text--button__cta waves-effect waves-light btn" href="@provisionedRoleLinkFromArn(role.roleArn)" target="_blank" rel="noopener noreferrer">
+                View in AWS
                 <div class="copy-text__feedback">
                     <i class="material-icons copy-text--default icon-small">open_in_new</i>
                 </div>
