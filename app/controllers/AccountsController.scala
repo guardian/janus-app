@@ -28,7 +28,14 @@ class AccountsController(
       janusData.access
     )(account => Config.findAccountNumber(account.authConfigKey, configuration))
 
-    Ok(views.html.accounts(accountData, request.user, janusData))
+    Ok(
+      views.html.accounts(
+        accountData,
+        provisionedRoleStatusManager.fetchEnabled,
+        request.user,
+        janusData
+      )
+    )
   }
 
   def rolesStatusForAccount(authConfigKey: String): Action[AnyContent] =
