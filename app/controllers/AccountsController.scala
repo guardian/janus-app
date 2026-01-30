@@ -5,9 +5,11 @@ import com.gu.janus.model.{AwsAccount, JanusData}
 import conf.Config
 import logic.Accounts
 import logic.Accounts.accountPermissions
+import models.{AwsAccountIamRoleInfoStatus, IamRoleInfo, IamRoleInfoSnapshot}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.ProvisionedRoleStatusManager
+import software.amazon.awssdk.arns.Arn
 
 class AccountsController(
     janusData: JanusData,
@@ -26,31 +28,35 @@ class AccountsController(
       janusData.access
     )(account => Config.findAccountNumber(account.authConfigKey, configuration))
 
-    Ok(views.html.accounts(accountData, request.user, janusData))
+    Ok(
+      views.html.accounts(
+        accountData,
+        provisionedRoleStatusManager.fetchEnabled,
+        request.user,
+        janusData
+      )
+    )
   }
 
   def rolesStatusForAccount(authConfigKey: String): Action[AnyContent] =
     authAction { implicit request =>
-      janusData.accounts.find(_.authConfigKey == authConfigKey) match {
-        case Some(AwsAccount(name, _)) =>
-          val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
-          val successfullyCreatedRoles =
-            Accounts.successfulRolesForThisAccount(rolesStatuses, authConfigKey)
-          val rolesWithErrors =
-            Accounts.errorRolesForThisAccount(rolesStatuses, authConfigKey)
-          Ok(
-            views.html.rolesStatus(
-              name,
-              successfullyCreatedRoles,
-              rolesWithErrors,
-              request.user,
-              janusData
-            )
-          )
-        case None =>
-          NotFound(
-            views.html.error("Account not found", Some(request.user), janusData)
-          )
+      (for {
+        awsAccount <- janusData.accounts.find(_.authConfigKey == authConfigKey)
+        provisionedRolesCache = provisionedRoleStatusManager.getCacheStatus
+        accountRolesStatus = provisionedRolesCache
+          .getOrElse(awsAccount, AwsAccountIamRoleInfoStatus.empty)
+      } yield Ok(
+        views.html.rolesStatus(
+          awsAccount,
+          accountRolesStatus,
+          provisionedRoleStatusManager.fetchEnabled,
+          request.user,
+          janusData
+        )
+      )).getOrElse {
+        NotFound(
+          views.html.error("Account not found", Some(request.user), janusData)
+        )
       }
     }
 
@@ -78,16 +84,46 @@ class AccountsController(
   }
 
   def accountRoles: Action[AnyContent] = authAction { implicit request =>
-    val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
-    val accountRolesAndStatus = Accounts.getAccountRolesAndStatus(rolesStatuses)
+    val realData = provisionedRoleStatusManager.getCacheStatus
+    // this fake data augments what gets fetched so we can design with populated accounts
+    val fakeData = realData
+      .map { case (account, status) =>
+        val augmentedSnapshot =
+          (status.roleSnapshot, status.failureStatus) match {
+            case (None, Some(failure)) =>
+              Some(
+                IamRoleInfoSnapshot(
+                  roles = List.fill(scala.util.Random.between(0, 11))(
+                    IamRoleInfo(
+                      roleArn = Arn.fromString(
+                        s"arn:aws:iam::012345678901:role/gu/janus/discoverable/fake-role"
+                      ),
+                      provisionedRoleTagValue = "fake-provisioned-role",
+                      friendlyName = Some("Fake Role"),
+                      description = Some("This is a fake role for testing."),
+                      account = account
+                    )
+                  ),
+                  timestamp = java.time.Instant.now()
+                )
+              )
+            case _ =>
+              status.roleSnapshot
+
+          }
+        account -> status.copy(roleSnapshot = augmentedSnapshot)
+      }
+      .toList
+      .sortBy(_._1.name)
     Ok(
       views.html
         .accountRoles(
-          accountRolesAndStatus,
+          fakeData,
+          provisionedRoleStatusManager.fetchEnabled,
+          provisionedRoleStatusManager.fetchRate,
           request.user,
           janusData
         )
     )
   }
-
 }

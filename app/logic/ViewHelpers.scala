@@ -51,10 +51,4 @@ object ViewHelpers {
       .lift(column)
       .getOrElse(Nil)
   }
-
-  def getSimpleName(roleArn: Arn): String = roleArn.resource
-    .qualifier()
-    .toScala
-    .getOrElse("No resource qualifier")
-    .replace("janus/discoverable/", "")
 }

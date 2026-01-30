@@ -367,4 +367,60 @@ class ProvisionedRolesTest
       result shouldBe None
     }
   }
+
+  "provisionedRoleNameFromArn" - {
+    "should extract role name from ARN with janus/discoverable prefix" in {
+      val arn = software.amazon.awssdk.arns.Arn.fromString(
+        "arn:aws:iam::123456789:role/gu/janus/discoverable/my-role"
+      )
+
+      val result = ProvisionedRoles.provisionedRoleNameFromArn(arn)
+
+      result shouldBe Some("my-role")
+    }
+
+    "should return None when ARN path does not match a Janus provisioned role" in {
+      val arn = software.amazon.awssdk.arns.Arn.fromString(
+        "arn:aws:iam::123456789:role/different/path/role-name"
+      )
+
+      val result = ProvisionedRoles.provisionedRoleNameFromArn(arn)
+
+      result shouldBe None
+    }
+
+    "should return None when ARN has no qualifier" in {
+      val arn = software.amazon.awssdk.arns.Arn.fromString(
+        "arn:aws:iam::123456789:role"
+      )
+
+      val result = ProvisionedRoles.provisionedRoleNameFromArn(arn)
+
+      result shouldBe None
+    }
+  }
+
+  "provisionedRoleLinkFromArn" - {
+    "should generate console link from ARN" in {
+      val arn = software.amazon.awssdk.arns.Arn.fromString(
+        "arn:aws:iam::012345678901:role/gu/janus/discoverable/my-role"
+      )
+
+      val result = ProvisionedRoles.provisionedRoleLinkFromArn(arn)
+
+      result shouldBe Some(
+        "https://console.aws.amazon.com/iam/home#/roles/details/my-role"
+      )
+    }
+
+    "should return None when ARN has no qualifier" in {
+      val arn = software.amazon.awssdk.arns.Arn.fromString(
+        "arn:aws:iam::123456789:role"
+      )
+
+      val result = ProvisionedRoles.provisionedRoleLinkFromArn(arn)
+
+      result shouldBe None
+    }
+  }
 }
