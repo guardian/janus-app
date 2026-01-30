@@ -5,7 +5,7 @@
 
 @import scala.jdk.OptionConverters.RichOptional
 
-@(accountName: String, roles: List[IamRoleInfo], failure: Option[String], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountName: String, roleStatus: AwsAccountIamRoleInfoStatus, serviceEnabled: Boolean, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main(s"Role Status for $accountName", Some(user), janusData) {
     <div class="container">
@@ -13,26 +13,45 @@
             <h1 class="header orange-text">@accountName Role Statuses</h1>
         </div>
 
-        @if(failure.isDefined) {
-            <span class="error"><i class="material-icons">warning</i></span> &nbsp @failure
-            @if(roles.nonEmpty) {
-                <hr/>
-                <p>Cached roles</p>
-            }
+        @(roleStatus.roleSnapshot, roleStatus.failureStatus) match {
+          case (None, None) => {<div>
+              @if(serviceEnabled) {
+                  <i class="material-icons small rotate">autorenew</i>
+              } else {
+                  <i class="material-icons small">sync_problem</i>
+              }
+          </div>}
+          case _ => {}
         }
 
-        @if(roles.isEmpty) {
-            <p>No roles</p>
+        @for(failureStatus <- roleStatus.failureStatus) {
+          <p>
+            <span class="error"><i class="material-icons">warning</i></span>
+            @{failureStatus.failure}
+          </p>
+          @if(roleStatus.roleSnapshot.map(_.roles).getOrElse(Nil).nonEmpty) {
+              <hr/>
+              <p>Cached roles</p>
+          } else {
+              <div class="provisioned-role-empty center-align grey-text">
+                  <i class="material-icons medium">not_interested</i>
+                      <br/>
+                  No roles found in this account
+              </div>
+          }
         }
 
         <table class="role-list striped">
-            @for(role <- roles) {
-                <tr>
-                    <td>
-                        @fragments.roleList(role)
-                    </td>
-                </tr>
+            @for(roleSnapshot <- roleStatus.roleSnapshot) {
+                @for(role <- roleSnapshot.roles) {
+                    <tr>
+                        <td>
+                            @fragments.roleList(role)
+                        </td>
+                    </tr>
+                }
             }
         </table>
+
     </div>
 }
