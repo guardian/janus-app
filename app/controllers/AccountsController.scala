@@ -5,7 +5,7 @@ import com.gu.janus.model.{AwsAccount, JanusData}
 import conf.Config
 import logic.Accounts
 import logic.Accounts.accountPermissions
-import models.{IamRoleInfo, IamRoleInfoSnapshot}
+import models.{AwsAccountIamRoleInfoStatus, IamRoleInfo, IamRoleInfoSnapshot}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.ProvisionedRoleStatusManager
@@ -33,33 +33,23 @@ class AccountsController(
 
   def rolesStatusForAccount(authConfigKey: String): Action[AnyContent] =
     authAction { implicit request =>
-      janusData.accounts.find(_.authConfigKey == authConfigKey) match {
-        case Some(account @ AwsAccount(name, _)) =>
-          val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
-          rolesStatuses.get(account) match {
-            case Some(successfullyCreatedRoles) =>
-              Ok(
-                views.html.rolesStatus(
-                  name,
-                  successfullyCreatedRoles,
-                  provisionedRoleStatusManager.fetchEnabled,
-                  request.user,
-                  janusData
-                )
-              )
-            case _ =>
-              NotFound(
-                views.html.error(
-                  "Account roles cache not found",
-                  Some(request.user),
-                  janusData
-                )
-              )
-          }
-        case None =>
-          NotFound(
-            views.html.error("Account not found", Some(request.user), janusData)
-          )
+      (for {
+        awsAccount <- janusData.accounts.find(_.authConfigKey == authConfigKey)
+        provisionedRolesCache = provisionedRoleStatusManager.getCacheStatus
+        accountRolesStatus = provisionedRolesCache
+          .getOrElse(awsAccount, AwsAccountIamRoleInfoStatus.empty)
+      } yield Ok(
+        views.html.rolesStatus(
+          awsAccount,
+          accountRolesStatus,
+          provisionedRoleStatusManager.fetchEnabled,
+          request.user,
+          janusData
+        )
+      )).getOrElse {
+        NotFound(
+          views.html.error("Account not found", Some(request.user), janusData)
+        )
       }
     }
 
