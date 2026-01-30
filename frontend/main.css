@@ -516,6 +516,8 @@ a.copy-text--button__small {
 .provisioned-role-item {
     border: solid 1px #ddd;
     border-radius: 2px;
+    display: flex;
+    flex-direction: column;
 }
 
 .provisioned-role-item-header {
@@ -526,6 +528,7 @@ a.copy-text--button__small {
 
 .provisioned-role-item-body {
     padding: 10px;
+    flex: 1;
 }
 
 .provisioned-role-item-entry {
