@@ -8,16 +8,14 @@
             @{role.provisionedRoleTagValue}
         </span>
     </div>
-    <div class="provisioned-role-item-body">
-        <div class="provisioned-role-item-entry">
-            @{role.friendlyName.getOrElse("No friendly name")}
-        </div>
-        <div class="provisioned-role-item-entry">
-            @{role.description}
-        </div>
-        <div class="provisioned-role-item-entry">
-            @provisionedRoleNameFromArn(role.roleArn)
-        </div>
+    <div class="provisioned-role-item-entry">
+        @{role.friendlyName.getOrElse("No friendly name")}
+    </div>
+    <div class="provisioned-role-item-entry grey-text provisioned-role-description expand">
+        @{role.description}
+    </div>
+    <div class="provisioned-role-item-entry provisioned-role-role-name">
+        @provisionedRoleNameFromArn(role.roleArn)
     </div>
     <div class="provisioned-role-item-cta">
         <div>

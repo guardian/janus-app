@@ -526,13 +526,19 @@ a.copy-text--button__small {
     font-weight: bold;
 }
 
-.provisioned-role-item-body {
-    padding: 10px;
+
+.provisioned-role-item-entry {
+    padding: 5px 10px;
+}
+.provisioned-role-item-entry.expand {
     flex: 1;
 }
 
-.provisioned-role-item-entry {
-    padding: 5px 0;
+.provisioned-role-description {
+    font-size: small;
+}
+.provisioned-role-role-name {
+    font-family: monospace;
 }
 
 .provisioned-role-item-cta {
