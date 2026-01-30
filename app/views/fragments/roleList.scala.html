@@ -8,13 +8,13 @@
             @{role.provisionedRoleTagValue}
         </span>
     </div>
-    <div class="provisioned-role-item-entry">
+    <div class="provisioned-role-item-entry" aria-label="Friendly name of role">
         @{role.friendlyName.getOrElse("No friendly name")}
     </div>
-    <div class="provisioned-role-item-entry grey-text provisioned-role-description expand">
+    <div class="provisioned-role-item-entry grey-text provisioned-role-description expand" aria-label="Description of role">
         @{role.description}
     </div>
-    <div class="provisioned-role-item-entry provisioned-role-role-name">
+    <div class="provisioned-role-item-entry provisioned-role-name" aria-label="IAM name of the role in AWS">
         @provisionedRoleNameFromArn(role.roleArn)
     </div>
     <div class="provisioned-role-item-cta">
