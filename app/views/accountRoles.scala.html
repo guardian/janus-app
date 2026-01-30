@@ -80,10 +80,17 @@
                                         }
                                     </span>
                                 </div>
-                              <p class="provisioned-role-notice">
-                                Provisioned role information has not yet been loaded.
-                                  Please wait a few moments and refresh the page.
-                              </p>
+                                @if(serviceEnabled) {
+                                    <p class="provisioned-role-notice">
+                                        Provisioned role information has not yet been loaded.
+                                          Please wait a few moments and refresh the page.
+                                    </p>
+                                } else {
+                                    <p class="provisioned-role-error">
+                                        Provisioned role information is not available
+                                          because the sync service is disabled.
+                                    </p>
+                                }
                             }
                         }
 
