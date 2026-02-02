@@ -514,24 +514,44 @@ a.copy-text--button__small {
 }
 
 .provisioned-role-item {
-    border: solid 1px #ddd;
-    border-radius: 2px;
     display: flex;
     flex-direction: column;
+    border-radius: 5px;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .provisioned-role-item-header {
     padding: 10px;
-    background-color: #f5f5f5;
+    /*background-color: rgb(0, 96, 100);*/
+    /*color: rgba(255, 255, 255, 0.9);*/
     font-weight: bold;
+    font-size: large;
 }
 
+.provisioned-role-item-janus {
+    display: flex;
+    flex-direction: column;
+    border: solid 1px #bbb;
+    border-bottom: none;
+    border-radius: 5px 5px 0 0;
+    padding-bottom: 5px;
+}
+.provisioned-role-item-aws {
+    background-color: #eef7ff;
+    padding: 10px 10px 16px 10px;
+    border: solid 1px rgb(0, 96, 100);
+    border-radius: 0 0 5px 5px;
+}
 
 .provisioned-role-item-entry {
     padding: 5px 10px;
 }
-.provisioned-role-item-entry.expand {
+.expand {
     flex: 1;
+}
+
+.provisioned-role-chip {
+    font-family: monospace;
 }
 
 .provisioned-role-description {
@@ -542,8 +562,7 @@ a.copy-text--button__small {
 }
 
 .provisioned-role-item-cta {
-    border-top: solid 1px #ddd;
-    padding: 10px 10px 10px 10px;
+    padding: 10px 0 0 0;
     display: grid;
     gap: 10px;
 }
