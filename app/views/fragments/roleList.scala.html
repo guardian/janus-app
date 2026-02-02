@@ -21,14 +21,12 @@
             @provisionedRoleNameFromArn(role.roleArn)
         </div>
         <div class="provisioned-role-item-cta">
-            <div>
-                <a class="copy-text--button__cta waves-effect waves-light btn" href="@provisionedRoleLinkFromArn(role.roleArn)" target="_blank" rel="noopener noreferrer">
-                    View in AWS console
-                    <div class="copy-text__feedback">
-                        <i class="material-icons copy-text--default icon-small">open_in_new</i>
-                    </div>
-                </a>
-            </div>
+            <a class="copy-text--button__cta waves-effect waves-light btn" href="@provisionedRoleLinkFromArn(role.roleArn)" target="_blank" rel="noopener noreferrer">
+                View in AWS console
+                <div class="copy-text__feedback">
+                    <i class="material-icons copy-text--default icon-small">open_in_new</i>
+                </div>
+            </a>
         </div>
     </div>
 </div>
