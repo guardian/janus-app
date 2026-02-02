@@ -486,11 +486,6 @@ a.copy-text--button__small {
     line-height: 0;
     vertical-align: text-top;
 }
-
-.chip {
-    height: auto !important;
-}
-
 .provisioned-roles-account-header {
     padding: 10px;
     margin-bottom: 15px;
@@ -522,8 +517,6 @@ a.copy-text--button__small {
 
 .provisioned-role-item-header {
     padding: 10px;
-    /*background-color: rgb(0, 96, 100);*/
-    /*color: rgba(255, 255, 255, 0.9);*/
     font-weight: bold;
     font-size: large;
 }
@@ -539,30 +532,32 @@ a.copy-text--button__small {
 .provisioned-role-item-aws {
     background-color: #eef7ff;
     padding: 10px 10px 16px 10px;
-    border: solid 1px rgb(0, 96, 100);
+    border: solid 1px #006064;
     border-radius: 0 0 5px 5px;
 }
 
 .provisioned-role-item-entry {
     padding: 5px 10px;
 }
+
 .expand {
     flex: 1;
 }
 
 .provisioned-role-chip {
+    height: auto !important;
+}
+
+.provisioned-role-chip, .provisioned-role-name {
     font-family: monospace;
 }
 
 .provisioned-role-description {
     font-size: small;
 }
-.provisioned-role-name {
-    font-family: monospace;
-}
 
 .provisioned-role-item-cta {
-    padding: 10px 0 0 0;
+    padding-top: 10px;
     display: grid;
     gap: 10px;
 }
@@ -573,7 +568,7 @@ a.copy-text--button__small {
 
 .provisioned-role-notice {
     padding-left: 14px;
-    border-left: solid 5px rgb(0, 96, 100);
+    border-left: solid 5px #006064;
 }
 
 .provisioned-role-error {
