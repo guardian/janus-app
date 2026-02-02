@@ -1,9 +1,10 @@
 package models
 
-import com.gu.janus.model.AwsAccount
+import com.gu.janus.model.{AwsAccount, Permission}
 import software.amazon.awssdk.arns.Arn
 
 import java.time.Instant
+import scala.util.Try
 
 /** Holds the data required to manage an IAM role that's part of a
   * [[com.gu.janus.model.ProvisionedRole]].
@@ -55,6 +56,17 @@ case class FailureSnapshot(
     timestamp: Instant
 )
 
+/** A list of explicit permissions for a user */
+case class UserPermissions(userName: String, permissions: Set[Permission])
+
+case class AccountInfo(
+    account: AwsAccount,
+    permissions: List[UserPermissions],
+    accountNumberTry: Try[String],
+    rolesStatuses: Set[IamRoleInfo],
+    rolesError: Option[String]
+)
+
 /** Status of [[IamRoleInfo]] data fetched from a single AWS account. */
 case class AwsAccountIamRoleInfoStatus(
     roleSnapshot: Option[IamRoleInfoSnapshot],
@@ -76,4 +88,7 @@ object AwsAccountIamRoleInfoStatus {
       failureStatus: FailureSnapshot
   ): AwsAccountIamRoleInfoStatus =
     AwsAccountIamRoleInfoStatus(cachedRoleSnapshot, Some(failureStatus))
+
+  def empty: AwsAccountIamRoleInfoStatus =
+    AwsAccountIamRoleInfoStatus(None, None)
 }
