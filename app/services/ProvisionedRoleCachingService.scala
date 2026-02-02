@@ -77,6 +77,9 @@ class ProvisionedRoleCachingService(
 
   // TrieMap is Scala's default concurrent Map implementation
   private val cache = new TrieMap[AwsAccount, AwsAccountIamRoleInfoStatus]()
+  accounts.foreach { account =>
+    cache.update(account, AwsAccountIamRoleInfoStatus.empty)
+  }
 
   private val accountIams: Map[AwsAccount, IamClient] =
     accounts.map { account =>
