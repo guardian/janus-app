@@ -99,6 +99,7 @@ class AccountsTest
                   .service("awsService")
                   .resource("awsResource")
                   .build(),
+                "awsResource",
                 s"provisionedRoleTagValue${a.name}",
                 Some(s"friendlyName${a.name}"),
                 Some(s"description${a.name}"),
@@ -138,6 +139,7 @@ class AccountsTest
                     .service("awsService")
                     .resource("awsResource")
                     .build(),
+                  "awsResource",
                   s"provisionedRoleTagValue${a.name}",
                   Some(s"friendlyName${a.name}"),
                   Some(s"description${a.name}"),
@@ -167,6 +169,7 @@ class AccountsTest
             .service("awsService")
             .resource("awsResource")
             .build(),
+          "awsResource",
           "provisionedRoleTagValueFoo",
           Some("friendlyNameFoo"),
           Some("descriptionFoo"),
@@ -200,6 +203,7 @@ class AccountsTest
             .partition("awsPartition")
             .service("awsService")
             .build(),
+          "awsResource",
           "provisionedRoleTagValueFoo",
           Some("friendlyNameFoo"),
           Some("descriptionFoo"),
@@ -315,6 +319,7 @@ class AccountsTest
               .service("awsService")
               .resource("awsResource")
               .build(),
+            "awsResource",
             s"provisionedRoleTagValue${a.name}",
             Some(s"friendlyName${a.name}"),
             Some(s"description${a.name}"),
