@@ -2,16 +2,16 @@
 
 @(role: IamRoleInfo)
 
-<div class="provisioned-role-item">
+<li class="provisioned-role-item">
     <div class="provisioned-role-item-janus expand">
-        <div class="provisioned-role-item-header">
+        <div class="provisioned-role-item-header"  aria-label="Friendly name of role">
             @{role.friendlyName.getOrElse("No friendly name")}
         </div>
         <div class="provisioned-role-item-entry grey-text provisioned-role-description expand" aria-label="Description of role">
             @{role.description}
         </div>
-        <div class="provisioned-role-item-entry" aria-label="Friendly name of role">
-            <span class="provisioned-role-chip chip">
+        <div class="provisioned-role-item-entry">
+            <span class="provisioned-role-chip chip" aria-label="Janus tag">
                 @{role.provisionedRoleTagValue}
             </span>
         </div>
@@ -29,4 +29,4 @@
             </a>
         </div>
     </div>
-</div>
+</li>

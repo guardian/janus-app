@@ -491,7 +491,7 @@ a.copy-text--button__small {
     margin-bottom: 15px;
     margin-top: 10px;
     background-color: #f5f5f5;
-    border-top: solid 1px rgb(0, 96, 100);
+    border-top: solid 4px #006064;
 }
 .provisioned-roles-account-header span[role=heading] {
     font-size: x-large;
