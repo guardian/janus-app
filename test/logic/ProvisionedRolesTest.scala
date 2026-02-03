@@ -30,7 +30,11 @@ class ProvisionedRolesTest
     AwsAccount(name = "Account Name", authConfigKey = "accId")
 
   private val role: Role =
-    Role.builder().arn("arn:aws:iam::123:role/r1").build()
+    Role
+      .builder()
+      .arn("arn:aws:iam::123:role/r1")
+      .roleName("r1")
+      .build()
 
   private def createTag(key: String, value: String): Tag =
     Tag.builder().key(key).value(value).build()
@@ -70,6 +74,7 @@ class ProvisionedRolesTest
               List(
                 IamRoleInfo(
                   "arn:aws:iam::123:role/r1",
+                  "r1",
                   "other-tag",
                   None,
                   None,
@@ -77,6 +82,7 @@ class ProvisionedRolesTest
                 ),
                 IamRoleInfo(
                   "arn:aws:iam::123:role/r2",
+                  "r2",
                   "different-tag",
                   None,
                   None,
@@ -102,6 +108,7 @@ class ProvisionedRolesTest
       val matchingRole =
         IamRoleInfo(
           "arn:aws:iam::123:role/r1",
+          "r1",
           "test-role",
           None,
           None,
@@ -126,6 +133,7 @@ class ProvisionedRolesTest
       val matching =
         IamRoleInfo(
           "arn:aws:iam::123:role/r1",
+          "r1",
           "test-role",
           None,
           None,
@@ -138,6 +146,7 @@ class ProvisionedRolesTest
               List(
                 IamRoleInfo(
                   "arn:aws:iam::123:role/r0",
+                  "r0",
                   "other",
                   None,
                   None,
@@ -146,6 +155,7 @@ class ProvisionedRolesTest
                 matching,
                 IamRoleInfo(
                   "arn:aws:iam::123:role/r2",
+                  "r2",
                   "different",
                   None,
                   None,
@@ -171,6 +181,7 @@ class ProvisionedRolesTest
       val role1 =
         IamRoleInfo(
           "arn:aws:iam::111:role/r1",
+          "r1",
           "test-role",
           None,
           None,
@@ -179,6 +190,7 @@ class ProvisionedRolesTest
       val role2 =
         IamRoleInfo(
           "arn:aws:iam::222:role/r2",
+          "r2",
           "test-role",
           None,
           None,
@@ -207,6 +219,7 @@ class ProvisionedRolesTest
       val matchingRole =
         IamRoleInfo(
           "arn:aws:iam::111:role/r1",
+          "r1",
           "test-role",
           None,
           None,
@@ -238,6 +251,7 @@ class ProvisionedRolesTest
           val roles = tags.zipWithIndex.map { case (tag, idx) =>
             IamRoleInfo(
               s"arn:aws:iam::123:role/r$idx",
+              "r$idx",
               tag,
               None,
               None,
@@ -295,6 +309,7 @@ class ProvisionedRolesTest
       result shouldBe Some(
         IamRoleInfo(
           "arn:aws:iam::123:role/r1",
+          "r1",
           "test-role",
           None,
           None,
@@ -368,59 +383,44 @@ class ProvisionedRolesTest
     }
   }
 
-  "provisionedRoleNameFromArn" - {
-    "should extract role name from ARN with janus/discoverable prefix" in {
-      val arn = software.amazon.awssdk.arns.Arn.fromString(
-        "arn:aws:iam::123456789:role/gu/janus/discoverable/my-role"
-      )
-
-      val result = ProvisionedRoles.provisionedRoleNameFromArn(arn)
-
-      result shouldBe Some("my-role")
+  "iamRoleInfoSlug" - {
+    "always prefixes slug with PROVISIONED_ROLE_NAMESPACE_PREFIX" in {
+      forAll(Gen.asciiPrintableStr) { rawRoleName =>
+        val slug = ProvisionedRoles.iamRoleInfoSlug(rawRoleName, account)
+        slug.startsWith(
+          ProvisionedRoles.PROVISIONED_ROLE_NAMESPACE_PREFIX
+        ) shouldBe true
+      }
     }
 
-    "should return None when ARN path does not match a Janus provisioned role" in {
-      val arn = software.amazon.awssdk.arns.Arn.fromString(
-        "arn:aws:iam::123456789:role/different/path/role-name"
-      )
-
-      val result = ProvisionedRoles.provisionedRoleNameFromArn(arn)
-
-      result shouldBe None
+    "always includes account auth config key in slug" in {
+      forAll(Gen.asciiPrintableStr) { rawRoleName =>
+        val slug = ProvisionedRoles.iamRoleInfoSlug(rawRoleName, account)
+        slug.contains(account.authConfigKey) shouldBe true
+      }
     }
 
-    "should return None when ARN has no qualifier" in {
-      val arn = software.amazon.awssdk.arns.Arn.fromString(
-        "arn:aws:iam::123456789:role"
+    "URL-encodes special characters" in {
+      val testCases = List(
+        ("role.name", "role.name"),
+        ("role,name", "role%2Cname"),
+        ("role+name", "role%2Bname"),
+        ("role@name", "role%40name"),
+        ("role=name", "role%3Dname"),
+        ("role name", "role+name")
       )
 
-      val result = ProvisionedRoles.provisionedRoleNameFromArn(arn)
-
-      result shouldBe None
-    }
-  }
-
-  "provisionedRoleLinkFromArn" - {
-    "should generate console link from ARN" in {
-      val arn = software.amazon.awssdk.arns.Arn.fromString(
-        "arn:aws:iam::012345678901:role/gu/janus/discoverable/my-role"
-      )
-
-      val result = ProvisionedRoles.provisionedRoleLinkFromArn(arn)
-
-      result shouldBe Some(
-        "https://console.aws.amazon.com/iam/home#/roles/details/my-role"
-      )
+      for ((rawRoleName, expected) <- testCases) {
+        val slug = ProvisionedRoles.iamRoleInfoSlug(rawRoleName, account)
+        slug should endWith(s"-$expected")
+      }
     }
 
-    "should return None when ARN has no qualifier" in {
-      val arn = software.amazon.awssdk.arns.Arn.fromString(
-        "arn:aws:iam::123456789:role"
-      )
+    "produces different slugs for role names that differ only in special characters" in {
+      val roleNames = List("role.name", "role,name", "role+name", "role@name")
+      val slugs = roleNames.map(ProvisionedRoles.iamRoleInfoSlug(_, account))
 
-      val result = ProvisionedRoles.provisionedRoleLinkFromArn(arn)
-
-      result shouldBe None
+      slugs.distinct.size shouldBe roleNames.size
     }
   }
 }

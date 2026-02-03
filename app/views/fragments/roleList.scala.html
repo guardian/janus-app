@@ -1,4 +1,4 @@
-@import logic.ProvisionedRoles.{provisionedRoleNameFromArn, provisionedRoleLinkFromArn}
+@import logic.ProvisionedRoles.provisionedRoleLink
 
 @(role: IamRoleInfo)
 
@@ -18,10 +18,10 @@
     </div>
     <div class="provisioned-role-item-aws">
         <div class="provisioned-role-name" aria-label="IAM name of the role in AWS">
-            @provisionedRoleNameFromArn(role.roleArn)
+            @role.roleName
         </div>
         <div class="provisioned-role-item-cta">
-            <a class="copy-text--button__cta waves-effect waves-light btn" href="@provisionedRoleLinkFromArn(role.roleArn)" target="_blank" rel="noopener noreferrer">
+            <a class="copy-text--button__cta waves-effect waves-light btn" href="@provisionedRoleLink(role.roleName)" target="_blank" rel="noopener noreferrer">
                 View in AWS console
                 <div class="copy-text__feedback">
                     <i class="material-icons copy-text--default icon-small">open_in_new</i>
