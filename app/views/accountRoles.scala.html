@@ -96,11 +96,11 @@
 
                         @status.roleSnapshot match {
                             case Some(rolesStatus) if rolesStatus.roles.nonEmpty => {
-                                <div class="provisioned-roles-container">
+                                <ul class="provisioned-roles-container">
                                     @for(role <- rolesStatus.roles) {
                                         @fragments.roleList(role)
                                     }
-                                </div>
+                                </ul>
                             }
                             case _ => {
                                 <div class="provisioned-role-empty center-align grey-text">
