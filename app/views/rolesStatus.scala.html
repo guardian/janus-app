@@ -13,7 +13,7 @@
         @(roleStatus.roleSnapshot, roleStatus.failureStatus) match {
             case (_, Some(failure)) => {
                 <div class="right valign-wrapper tooltipped"
-                data-position="bottom" data-tooltip="last updated (UK time)">
+                data-position="bottom" data-tooltip="last updated (UTC)">
                     <span class="provisioned-roles-account-updated grey-text">
                         <span class="hide-on-med-and-down">
                             @formatDateTime(failure.timestamp)
@@ -37,7 +37,7 @@
             }
             case (Some(roles), _) => {
                 <div class="right valign-wrapper tooltipped"
-                data-position="bottom" data-tooltip="last updated (UK time)">
+                data-position="bottom" data-tooltip="last updated (UTC)">
                     <span class="provisioned-roles-account-updated grey-text">
                         <span class="hide-on-med-and-down">
                             @formatDateTime(roles.timestamp)
