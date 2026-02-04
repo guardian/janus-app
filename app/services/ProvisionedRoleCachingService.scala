@@ -36,6 +36,8 @@ trait ProvisionedRoleFinder {
   * we've cached.
   */
 trait ProvisionedRoleStatusManager {
+  val fetchEnabled: Boolean
+  val fetchRate: FiniteDuration
   def getCacheStatus: Map[AwsAccount, AwsAccountIamRoleInfoStatus]
 }
 
@@ -59,9 +61,9 @@ class ProvisionedRoleCachingService(
 
   private given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
-  private val fetchEnabled =
+  override val fetchEnabled: Boolean =
     config.get[Boolean]("provisionedRoles.fetch.enabled")
-  private val fetchRate =
+  override val fetchRate: FiniteDuration =
     config.get[FiniteDuration]("provisionedRoles.fetch.rate")
 
   private val provisionedRoleTagKey =

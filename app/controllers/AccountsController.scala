@@ -5,9 +5,11 @@ import com.gu.janus.model.{AwsAccount, JanusData}
 import conf.Config
 import logic.Accounts
 import logic.Accounts.accountPermissions
+import models.{AwsAccountIamRoleInfoStatus, IamRoleInfo, IamRoleInfoSnapshot}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.ProvisionedRoleStatusManager
+import software.amazon.awssdk.arns.Arn
 
 class AccountsController(
     janusData: JanusData,
@@ -26,31 +28,35 @@ class AccountsController(
       janusData.access
     )(account => Config.findAccountNumber(account.authConfigKey, configuration))
 
-    Ok(views.html.accounts(accountData, request.user, janusData))
+    Ok(
+      views.html.accounts(
+        accountData,
+        provisionedRoleStatusManager.fetchEnabled,
+        request.user,
+        janusData
+      )
+    )
   }
 
   def rolesStatusForAccount(authConfigKey: String): Action[AnyContent] =
     authAction { implicit request =>
-      janusData.accounts.find(_.authConfigKey == authConfigKey) match {
-        case Some(AwsAccount(name, _)) =>
-          val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
-          val successfullyCreatedRoles =
-            Accounts.successfulRolesForThisAccount(rolesStatuses, authConfigKey)
-          val rolesWithErrors =
-            Accounts.errorRolesForThisAccount(rolesStatuses, authConfigKey)
-          Ok(
-            views.html.rolesStatus(
-              name,
-              successfullyCreatedRoles,
-              rolesWithErrors,
-              request.user,
-              janusData
-            )
-          )
-        case None =>
-          NotFound(
-            views.html.error("Account not found", Some(request.user), janusData)
-          )
+      (for {
+        awsAccount <- janusData.accounts.find(_.authConfigKey == authConfigKey)
+        provisionedRolesCache = provisionedRoleStatusManager.getCacheStatus
+        accountRolesStatus = provisionedRolesCache
+          .getOrElse(awsAccount, AwsAccountIamRoleInfoStatus.empty)
+      } yield Ok(
+        views.html.rolesStatus(
+          awsAccount,
+          accountRolesStatus,
+          provisionedRoleStatusManager.fetchEnabled,
+          request.user,
+          janusData
+        )
+      )).getOrElse {
+        NotFound(
+          views.html.error("Account not found", Some(request.user), janusData)
+        )
       }
     }
 
@@ -78,16 +84,18 @@ class AccountsController(
   }
 
   def accountRoles: Action[AnyContent] = authAction { implicit request =>
-    val rolesStatuses = provisionedRoleStatusManager.getCacheStatus
-    val accountRolesAndStatus = Accounts.getAccountRolesAndStatus(rolesStatuses)
+    val accountsStatus =
+      provisionedRoleStatusManager.getCacheStatus.toList
+        .sortBy(_._1.name)
     Ok(
       views.html
         .accountRoles(
-          accountRolesAndStatus,
+          accountsStatus,
+          provisionedRoleStatusManager.fetchEnabled,
+          provisionedRoleStatusManager.fetchRate,
           request.user,
           janusData
         )
     )
   }
-
 }

@@ -4,9 +4,11 @@ import models.DisplayMode
 import models.DisplayMode.*
 
 import java.time.ZoneOffset.UTC
-import java.time._
+import java.time.*
 import java.time.format.DateTimeFormatter
+import scala.concurrent.duration.FiniteDuration
 import scala.util.Try
+import scala.jdk.DurationConverters.*
 
 object Date {
   private val simpleDateFormatter =
@@ -53,6 +55,9 @@ object Date {
       case (value, unit) if value > 1 => s"$value ${unit}s"
     }.mkString(", ")
   }
+
+  def formatDuration(fDuration: FiniteDuration): String =
+    formatDuration(fDuration.toJava)
 
   def firstDayOfWeek(instant: Instant): Instant =
     instant
