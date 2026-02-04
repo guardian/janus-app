@@ -1,10 +1,12 @@
 package filters
 
-import aws.PasskeyChallengeDB
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.UserIdentity
 import com.gu.playpasskeyauth.models.{PasskeyId, PasskeyUser, UserId}
-import com.gu.playpasskeyauth.services.PasskeyRepository
+import com.gu.playpasskeyauth.services.{
+  PasskeyChallengeRepository,
+  PasskeyRepository
+}
 import com.webauthn4j.data.AuthenticationData
 import logic.Passkey
 import models.JanusException
@@ -36,6 +38,7 @@ import scala.util.{Failure, Success, Try}
 class PasskeyAuthFilter(
     host: String,
     passkeyDb: PasskeyRepository,
+    passkeyChallengeDb: PasskeyChallengeRepository,
     passkeysEnabled: Boolean,
     enablingCookieName: String,
     clock: Clock
@@ -64,49 +67,40 @@ class PasskeyAuthFilter(
 
   private def authenticatePasskey[A](
       request: UserIdentityRequest[A]
-  )(using PasskeyUser[UserIdentity]): Future[Unit] = for {
-    challengeResponse <- Future.fromTry(
-      PasskeyChallengeDB.loadChallenge(
-        request.user,
-        Authentication
+  )(using PasskeyUser[UserIdentity]): Future[Unit] = {
+    val userId = UserId.from(request.user)
+    for {
+      challenge <- passkeyChallengeDb.loadAuthenticationChallenge(userId)
+      authData <- Future.fromTry(extractAuthDataFromRequest(request))
+      passkeyId = PasskeyId(authData.getCredentialId)
+      credential <- passkeyDb.loadPasskey(
+        userId,
+        passkeyId
       )
-    )
-    challenge <- Future.fromTry(
-      PasskeyChallengeDB.extractChallenge(
-        challengeResponse,
-        request.user
+      //    _ <- validateCredentialExists(request.user, credentialRecord)
+      verifiedAuthData <- Future.fromTry(
+        Passkey.verifiedAuthentication(
+          host,
+          request.user,
+          challenge,
+          authData,
+          credential
+        )
       )
-    )
-    authData <- Future.fromTry(extractAuthDataFromRequest(request))
-    userId = UserId.from(request.user)
-    passkeyId = PasskeyId(authData.getCredentialId)
-    credential <- passkeyDb.loadPasskey(
-      userId,
-      passkeyId
-    )
-    //    _ <- validateCredentialExists(request.user, credentialRecord)
-    verifiedAuthData <- Future.fromTry(
-      Passkey.verifiedAuthentication(
-        host,
-        request.user,
-        challenge,
-        authData,
-        credential
+      _ <- passkeyChallengeDb.deleteAuthenticationChallenge(userId)
+      _ <- passkeyDb.updateAuthenticationCount(
+        userId,
+        passkeyId,
+        verifiedAuthData.getAuthenticatorData.getSignCount
       )
-    )
-    _ <- Future.fromTry(PasskeyChallengeDB.delete(request.user, Authentication))
-    _ <- passkeyDb.updateAuthenticationCount(
-      userId,
-      passkeyId,
-      verifiedAuthData.getAuthenticatorData.getSignCount
-    )
-    _ <- passkeyDb.updateLastUsedTime(
-      userId,
-      passkeyId,
-      timestamp = clock.instant()
-    )
-    _ = logger.info(s"Verified passkey for user ${request.user.username}")
-  } yield ()
+      _ <- passkeyDb.updateLastUsedTime(
+        userId,
+        passkeyId,
+        timestamp = clock.instant()
+      )
+      _ = logger.info(s"Verified passkey for user ${request.user.username}")
+    } yield ()
+  }
 
   private def apiResponse(auth: => Try[Unit]): Option[Result] =
     auth match {
