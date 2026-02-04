@@ -48,7 +48,8 @@ class PasskeyController(
     )
   }
 
-  def authenticationOptions: Action[Unit] = basePasskeyController.authenticationOptions
+  def authenticationOptions: Action[Unit] =
+    basePasskeyController.authenticationOptions
 
   /** Creates authentication options during the passkey registration flow.
     *

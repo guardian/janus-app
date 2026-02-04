@@ -2,7 +2,12 @@ package passkey
 
 import cats.implicits.catsSyntaxMonadError
 import com.gu.googleauth.UserIdentity
-import com.gu.playpasskeyauth.models.{PasskeyId, PasskeyInfo, UserId}
+import com.gu.playpasskeyauth.models.{
+  PasskeyId,
+  PasskeyInfo,
+  PasskeyName,
+  UserId
+}
 import com.gu.playpasskeyauth.services.PasskeyRepository
 import com.webauthn4j.converter.AttestedCredentialDataConverter
 import com.webauthn4j.converter.util.ObjectConverter
@@ -84,11 +89,12 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
         for {
           idAttrib <- attribs.get("credentialId")
           nameAttrib <- attribs.get("passkeyName")
+          name <- PasskeyName.validate(nameAttrib.s()).toOption
           createdAtAttrib <- attribs.get("registrationTime")
           lastUsedAtAttrib = attribs.get("lastUsedTime")
         } yield PasskeyInfo(
           id = PasskeyId.fromBase64Url(idAttrib.s()),
-          name = ???, // TODO: passkeyname needs an apply: nameAttrib.s()
+          name,
           createdAt = Instant.parse(createdAtAttrib.s()),
           lastUsedAt = lastUsedAtAttrib.map(attrib => Instant.parse(attrib.s()))
         )
