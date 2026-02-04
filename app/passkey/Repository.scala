@@ -42,49 +42,37 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
   override def loadPasskey(
       userId: UserId,
       passkeyId: PasskeyId
-  ): Future[CredentialRecord] = {
-    val request = GetItemRequest
-      .builder()
-      .tableName(tableName)
-      .key(toKey(userId, passkeyId).asJava)
-      .build()
+  ): Future[CredentialRecord] =
+    loadPasskeyRecord(userId, passkeyId).flatMap(item =>
+      Future.fromTry(extractCredential(userId, item))
+    )
 
-    dynamoDb
-      .getItem(request)
-      .asScala
-      .flatMap { response =>
-        if (response.hasItem) {
-          Future.fromTry(
-            extractCredential(userId, response.item().asScala.toMap)
-          )
-        } else {
-          Future.failed(
-            RuntimeException(
-              s"Failed to load credential record for user: $userId"
-            )
-          )
-        }
-      }
-      .recoverWith { case err =>
-        Future.failed(
-          JanusException
-            .failedToLoadDbItem(toUserIdentity(userId), tableName, err)
-        )
-      }
-  }
+  override def loadPasskeyInfo(
+      userId: UserId,
+      passkeyId: PasskeyId
+  ): Future[PasskeyInfo] =
+    loadPasskeyRecord(userId, passkeyId).map(item =>
+      PasskeyInfo(
+        id = PasskeyId.fromBase64Url(item("credentialId").s()),
+        name = PasskeyName(item("passkeyName").s()),
+        createdAt = Instant.parse(item("registrationTime").s()),
+        lastUsedAt =
+          item.get("lastUsedTime").map(attrib => Instant.parse(attrib.s()))
+      )
+    )
 
   override def loadPasskeyIds(userId: UserId): Future[List[PasskeyId]] =
-    loadPasskeys(userId).map(
+    loadPasskeyRecords(userId).map(
       _.flatMap(
         _.get("credentialId").map(attrib => PasskeyId.fromBase64Url(attrib.s()))
       )
     )
 
   override def loadPasskeyNames(userId: UserId): Future[List[String]] =
-    loadPasskeys(userId).map(_.flatMap(_.get("passkeyName").map(_.s())))
+    loadPasskeyRecords(userId).map(_.flatMap(_.get("passkeyName").map(_.s())))
 
   override def listPasskeys(userId: UserId): Future[List[PasskeyInfo]] =
-    loadPasskeys(userId).map(
+    loadPasskeyRecords(userId).map(
       _.flatMap(attribs =>
         for {
           idAttrib <- attribs.get("credentialId")
@@ -123,14 +111,14 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       ),
       "attestationStatement" -> AttributeValue.fromS(
         Base64UrlUtil.encodeToString(
-          objConverter.getCborConverter.writeValueAsBytes(
+          objConverter.getCborMapper.writeValueAsBytes(
             credentialRecord.getAttestationStatement
           )
         )
       ),
       "authenticatorExtensions" -> AttributeValue.fromS(
         Base64UrlUtil.encodeToString(
-          objConverter.getCborConverter.writeValueAsBytes(
+          objConverter.getCborMapper.writeValueAsBytes(
             credentialRecord.getAuthenticatorExtensions
           )
         )
@@ -248,7 +236,39 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       }
   }
 
-  private def loadPasskeys(
+  private def loadPasskeyRecord(
+      userId: UserId,
+      passkeyId: PasskeyId
+  ): Future[Map[String, AttributeValue]] = {
+    val request = GetItemRequest
+      .builder()
+      .tableName(tableName)
+      .key(toKey(userId, passkeyId).asJava)
+      .build()
+
+    dynamoDb
+      .getItem(request)
+      .asScala
+      .flatMap { response =>
+        if (response.hasItem) {
+          Future.successful(response.item().asScala.toMap)
+        } else {
+          Future.failed(
+            RuntimeException(
+              s"Failed to load credential record for user: $userId: $passkeyId"
+            )
+          )
+        }
+      }
+      .recoverWith { case err =>
+        Future.failed(
+          JanusException
+            .failedToLoadDbItem(toUserIdentity(userId), tableName, err)
+        )
+      }
+  }
+
+  private def loadPasskeyRecords(
       userId: UserId
   ): Future[List[Map[String, AttributeValue]]] = {
     val expressionValues = Map(
@@ -310,7 +330,7 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       userId: UserId,
       item: Map[String, AttributeValue]
   ): Try[CredentialRecord] = Try {
-    val attestationStmt = objConverter.getCborConverter.readValue(
+    val attestationStmt = objConverter.getCborMapper.readValue(
       Base64UrlUtil.decode(item("attestationStatement").s()),
       classOf[NoneAttestationStatement]
     )
@@ -318,7 +338,7 @@ class Repository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
     val credentialData = credentialDataConverter.convert(
       Base64UrlUtil.decode(item("credential").s())
     )
-    val authExts = objConverter.getCborConverter.readValue(
+    val authExts = objConverter.getCborMapper.readValue(
       Base64UrlUtil.decode(item("authenticatorExtensions").s()),
       classOf[AuthenticationExtensionsAuthenticatorOutputs[
         RegistrationExtensionAuthenticatorOutput

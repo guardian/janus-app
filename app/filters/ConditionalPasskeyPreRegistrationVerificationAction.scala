@@ -1,7 +1,9 @@
 package filters
 
-import aws.PasskeyDB
 import com.gu.googleauth.AuthAction.UserIdentityRequest
+import com.gu.googleauth.UserIdentity
+import com.gu.playpasskeyauth.models.{PasskeyUser, UserId}
+import com.gu.playpasskeyauth.services.PasskeyRepository
 import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
 import models.PasskeyRequest
 import play.api.Logging
@@ -9,8 +11,9 @@ import play.api.libs.json.Json
 import play.api.mvc.*
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
-import scala.concurrent.{ExecutionContext, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 /** ActionBuilder that conditionally applies passkey verification based on
   * configuration, cookie presence, and database credentials.
@@ -20,28 +23,38 @@ import scala.util.{Failure, Success}
   * Otherwise, applies authAction without verification.
   */
 class ConditionalPasskeyPreRegistrationVerificationAction(
+    passkeyDb: PasskeyRepository,
     passkeysEnabled: Boolean,
     enablingCookieName: String,
     authAction: ActionBuilder[UserIdentityRequest, AnyContent],
     verificationAction: ActionBuilder[PasskeyRequest, AnyContent]
-)(using dynamoDb: DynamoDbClient, val executionContext: ExecutionContext)
-    extends ActionBuilder[PasskeyRequest, AnyContent]
+)(using
+    dynamoDb: DynamoDbClient,
+    val executionContext: ExecutionContext,
+    passkeyUser: PasskeyUser[UserIdentity]
+) extends ActionBuilder[PasskeyRequest, AnyContent]
     with Logging {
 
   override def parser: BodyParser[AnyContent] = authAction.parser
 
   private def hasPasskeyCredentials[A](
       request: UserIdentityRequest[A]
+  )(using
+      PasskeyUser[UserIdentity],
+      ExecutionContext
   ): Either[Result, Boolean] = {
-    PasskeyDB.loadCredentials(request.user) match {
-      case Success(dbResponse) => Right(!dbResponse.items.isEmpty)
-      case Failure(e)          =>
+    Try(
+      Await
+        .result(passkeyDb.listPasskeys(UserId.from(request.user)), Duration.Inf)
+    ) match {
+      case Success(passkeys) => Right(passkeys.nonEmpty)
+      case Failure(e)        =>
         logger.error(s"Failed to load passkey credentials: ${e.getMessage}", e)
         Left(Results.InternalServerError("Failed to verify credentials"))
     }
   }
 
-  def invokeBlock[A](
+  override def invokeBlock[A](
       request: Request[A],
       block: PasskeyRequest[A] => Future[Result]
   ): Future[Result] = {

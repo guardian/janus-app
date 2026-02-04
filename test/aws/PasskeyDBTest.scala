@@ -9,6 +9,8 @@ import software.amazon.awssdk.services.dynamodb.model._
 
 class PasskeyDBTest extends AnyFreeSpec with Matchers {
 
+  private val tableName = "Passkeys"
+
   "test db stuff - use this to test DynamoDB stuff locally during development" - {
     given dynamoDB: DynamoDbClient = Clients.localDb
 
@@ -33,7 +35,7 @@ class PasskeyDBTest extends AnyFreeSpec with Matchers {
     dynamoDB.createTable(
       CreateTableRequest
         .builder()
-        .tableName(PasskeyDB.tableName)
+        .tableName(tableName)
         .keySchema(
           KeySchemaElement
             .builder()
@@ -72,6 +74,6 @@ class PasskeyDBTest extends AnyFreeSpec with Matchers {
       dynamoDb: DynamoDbClient
   ): DeleteTableResponse =
     dynamoDb.deleteTable(
-      DeleteTableRequest.builder().tableName(PasskeyDB.tableName).build()
+      DeleteTableRequest.builder().tableName(tableName).build()
     )
 }

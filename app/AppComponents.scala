@@ -216,6 +216,7 @@ class AppComponents(context: ApplicationLoader.Context)
       passkeyVerificationAction,
       host,
       Clients.stsClient,
+      passkeyDb = new Repository(dynamoDbAsync),
       configuration,
       passkeysEnablingCookieName,
       passkeyAuthenticatorMetadata,
@@ -227,6 +228,7 @@ class AppComponents(context: ApplicationLoader.Context)
       basePasskeyController,
       passkeyVerificationAction,
       janusData,
+      passkeyDb = new Repository(dynamoDbAsync),
       passkeysEnabled,
       passkeysEnablingCookieName
     ),

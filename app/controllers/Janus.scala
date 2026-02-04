@@ -1,16 +1,18 @@
 package controllers
 
-import aws.{AuditTrailDB, Federation, PasskeyDB}
+import aws.{AuditTrailDB, Federation}
 import cats.syntax.all.*
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.*
+import com.gu.playpasskeyauth.models.{PasskeyUser, UserId}
+import com.gu.playpasskeyauth.services.PasskeyRepository
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.AccountOrdering.orderedAccountAccess
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
-import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator, PasskeyRequest}
+import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator, PasskeyMetadata, PasskeyRequest}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.DeveloperPolicyFinder
@@ -20,6 +22,8 @@ import software.amazon.awssdk.services.sts.model.Credentials
 
 import java.time.*
 import java.time.format.DateTimeFormatter
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 class Janus(
     janusData: JanusData,
@@ -28,12 +32,18 @@ class Janus(
     passkeyAuthAction: ActionBuilder[PasskeyRequest, AnyContent],
     host: String,
     stsClient: StsClient,
+    passkeyDb: PasskeyRepository,
     configuration: Configuration,
     passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
     developerPolicyFinder: DeveloperPolicyFinder
-)(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
-    extends AbstractController(controllerComponents)
+)(using
+    dynamodDB: DynamoDbClient,
+    mode: Mode,
+    assetsFinder: AssetsFinder,
+    passkeyUser: PasskeyUser[UserIdentity],
+    ec: ExecutionContext
+) extends AbstractController(controllerComponents)
     with ResultHandler
     with Logging {
 
@@ -146,29 +156,34 @@ class Janus(
     apiResponse {
       def dateTimeFormat(instant: Instant, formatter: DateTimeFormatter) =
         instant.atZone(ZoneId.of("Europe/London")).format(formatter)
+
       def dateFormat(instant: Instant) =
         dateTimeFormat(instant, DateTimeFormatter.ofPattern("d MMM yyyy"))
+
       def timeFormat(instant: Instant) =
         dateTimeFormat(
           instant,
           DateTimeFormatter.ofPattern("d MMM yyyy HH:mm:ss XXXXX")
         )
-      for {
-        queryResponse <- PasskeyDB.loadCredentials(request.user)
-        passkeys = PasskeyDB
-          .extractMetadata(queryResponse)
-          .map(p =>
-            p.copy(authenticator = passkeyAuthenticatorMetadata.get(p.aaguid))
-          )
-      } yield views.html.userAccount(
-        request.user,
-        janusData,
-        passkeys,
-        dateFormat,
-        timeFormat,
-        passkeysEnablingCookieName,
-        passkeysManagerLink(configuration),
-        passkeysManagerLinkText(configuration)
+
+      Try(
+        Await.result(
+          for {
+            passkeys <- passkeyDb
+              .listPasskeys(UserId.from(request.user))
+              .map(_.map(PasskeyMetadata.fromPasskeyInfo))
+          } yield views.html.userAccount(
+            request.user,
+            janusData,
+            passkeys,
+            dateFormat,
+            timeFormat,
+            passkeysEnablingCookieName,
+            passkeysManagerLink(configuration),
+            passkeysManagerLinkText(configuration)
+          ),
+          scala.concurrent.duration.Duration.Inf
+        )
       )
     }
   }
