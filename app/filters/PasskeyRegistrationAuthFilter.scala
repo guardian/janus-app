@@ -1,7 +1,9 @@
 package filters
 
-import aws.PasskeyDB
 import com.gu.googleauth.AuthAction.UserIdentityRequest
+import com.gu.googleauth.UserIdentity
+import com.gu.playpasskeyauth.models.{PasskeyUser, UserId}
+import com.gu.playpasskeyauth.services.PasskeyRepository
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.Results.InternalServerError
@@ -24,9 +26,13 @@ import scala.concurrent.{ExecutionContext, Future}
   * @param ec
   *   Execution context for asynchronous operations
   */
-class PasskeyRegistrationAuthFilter(authFilter: PasskeyAuthFilter)(using
+class PasskeyRegistrationAuthFilter(
+    authFilter: PasskeyAuthFilter,
+    passkeyDb: PasskeyRepository
+)(using
     dynamoDb: DynamoDbClient,
-    ec: ExecutionContext
+    ec: ExecutionContext,
+    passkeyUser: PasskeyUser[UserIdentity]
 ) extends ActionFilter[UserIdentityRequest]
     with Logging {
 
@@ -44,27 +50,10 @@ class PasskeyRegistrationAuthFilter(authFilter: PasskeyAuthFilter)(using
     *   response
     */
   def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] =
-    PasskeyDB
-      .loadCredentials(request.user)
-      .fold(
-        err => {
-          logger.error(
-            s"Failed to load existing credentials for user ${request.user.username}",
-            err
-          )
-          Future.successful(
-            Some(
-              InternalServerError(
-                Json.obj(
-                  "error" -> "DB load error",
-                  "message" -> "Failed to load existing credentials for the user."
-                )
-              )
-            )
-          )
-        },
-        dbResponse =>
-          if !dbResponse.items.isEmpty then authFilter.filter(request)
-          else Future.successful(None)
-      )
+    passkeyDb
+      .loadPasskeyIds(UserId.from(request.user))
+      .flatMap { ids =>
+        if ids.nonEmpty then authFilter.filter(request)
+        else Future.successful(None)
+      }
 }

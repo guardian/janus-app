@@ -1,9 +1,10 @@
 package controllers
 
-import aws.PasskeyDB
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
+import com.gu.playpasskeyauth.models.{PasskeyId, PasskeyUser, UserId}
+import com.gu.playpasskeyauth.services.PasskeyRepository
 import filters.ConditionalPasskeyVerificationAction
 import logic.UserAccess.hasAccess
 import models.JanusException
@@ -12,7 +13,8 @@ import play.api.mvc.*
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
-import scala.concurrent.Future
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
@@ -25,10 +27,16 @@ class PasskeyController(
     ],
     verificationAction: ConditionalPasskeyVerificationAction,
     janusData: JanusData,
+    passkeyDb: PasskeyRepository,
     passkeysEnabled: Boolean,
     enablingCookieName: String
-)(using dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
-    extends AbstractController(controllerComponents)
+)(using
+    dynamoDb: DynamoDbClient,
+    mode: Mode,
+    assetsFinder: AssetsFinder,
+    passkeyUser: PasskeyUser[UserIdentity],
+    ec: ExecutionContext
+) extends AbstractController(controllerComponents)
     with ResultHandler
     with Logging {
 
@@ -81,31 +89,29 @@ class PasskeyController(
   /** Deletes a passkey from the user's account */
   def delete(passkeyId: String): Action[AnyContent] =
     verificationAction { implicit request =>
+      val userId = UserId.from(request.user)
+      val keyId = PasskeyId.fromBase64Url(passkeyId)
       apiResponse(
-        for {
-          // Look up the passkey before deleting to include the name in the success message
-          queryResponse <- PasskeyDB.loadCredentials(request.user)
-          passkeys = PasskeyDB.extractMetadata(queryResponse)
-          passkeyName <- passkeys
-            .find(_.id == passkeyId)
-            .map(_.name)
-            .toRight(
-              JanusException.missingItemInDb(request.user, "Passkeys")
-            )
-            .toTry
-          _ <- PasskeyDB.deleteById(request.user, passkeyId)
-          _ = logger.info(
-            s"Deleted passkey for user ${request.user.username} with ID $passkeyId"
+        Try(
+          Await.result(
+            for {
+              passkeyInfo <- passkeyDb.loadPasskeyInfo(userId, keyId)
+              _ <- passkeyDb.deletePasskey(userId, keyId)
+              _ = logger.info(
+                s"Deleted passkey for user ${request.user.username} with ID $passkeyId"
+              )
+            } yield {
+              Ok(
+                Json.obj(
+                  "success" -> true,
+                  "message" -> s"Passkey '${passkeyInfo.name}' was successfully deleted",
+                  "redirect" -> routes.Janus.userAccount.url
+                )
+              )
+            },
+            Duration.Inf
           )
-        } yield {
-          Ok(
-            Json.obj(
-              "success" -> true,
-              "message" -> s"Passkey '$passkeyName' was successfully deleted",
-              "redirect" -> routes.Janus.userAccount.url
-            )
-          )
-        }
+        )
       )
     }
 

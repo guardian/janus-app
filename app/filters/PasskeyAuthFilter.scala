@@ -1,8 +1,10 @@
 package filters
 
-import aws.{PasskeyChallengeDB, PasskeyDB}
+import aws.PasskeyChallengeDB
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.UserIdentity
+import com.gu.playpasskeyauth.models.{PasskeyId, PasskeyUser, UserId}
+import com.gu.playpasskeyauth.services.PasskeyRepository
 import com.webauthn4j.data.AuthenticationData
 import logic.Passkey
 import models.JanusException
@@ -20,6 +22,7 @@ import play.api.mvc.{
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse
 
+import java.time.Clock
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
@@ -32,18 +35,25 @@ import scala.util.{Failure, Success, Try}
   */
 class PasskeyAuthFilter(
     host: String,
+    passkeyDb: PasskeyRepository,
     passkeysEnabled: Boolean,
-    enablingCookieName: String
-)(using dynamoDb: DynamoDbClient, val executionContext: ExecutionContext)
-    extends ActionFilter[UserIdentityRequest]
+    enablingCookieName: String,
+    clock: Clock
+)(using
+    dynamoDb: DynamoDbClient,
+    val executionContext: ExecutionContext,
+    passkeyUser: PasskeyUser[UserIdentity]
+) extends ActionFilter[UserIdentityRequest]
     with Logging {
 
-  def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] = {
+  override def filter[A](
+      request: UserIdentityRequest[A]
+  ): Future[Option[Result]] = {
     val enablingCookieIsPresent =
       request.cookies.get(enablingCookieName).isDefined
     if (passkeysEnabled && enablingCookieIsPresent) {
       logger.info(s"Verifying passkey for user ${request.user.username} ...")
-      Future(apiResponse(authenticatePasskey(request)))
+      fapiResponse(authenticatePasskey(request))
     } else {
       logger.info(
         s"Passing through request for '${request.method} ${request.path}' by ${request.user.username}"
@@ -54,32 +64,47 @@ class PasskeyAuthFilter(
 
   private def authenticatePasskey[A](
       request: UserIdentityRequest[A]
-  ): Try[Unit] = for {
-    challengeResponse <- PasskeyChallengeDB.loadChallenge(
-      request.user,
-      Authentication
+  )(using PasskeyUser[UserIdentity]): Future[Unit] = for {
+    challengeResponse <- Future.fromTry(
+      PasskeyChallengeDB.loadChallenge(
+        request.user,
+        Authentication
+      )
     )
-    challenge <- PasskeyChallengeDB.extractChallenge(
-      challengeResponse,
-      request.user
+    challenge <- Future.fromTry(
+      PasskeyChallengeDB.extractChallenge(
+        challengeResponse,
+        request.user
+      )
     )
-    authData <- extractAuthDataFromRequest(request)
-    credentialResponse <- PasskeyDB.loadCredential(
-      request.user,
-      authData.getCredentialId
+    authData <- Future.fromTry(extractAuthDataFromRequest(request))
+    userId = UserId.from(request.user)
+    passkeyId = PasskeyId(authData.getCredentialId)
+    credential <- passkeyDb.loadPasskey(
+      userId,
+      passkeyId
     )
-    _ <- validateCredentialExists(request.user, credentialResponse)
-    credential <- PasskeyDB.extractCredential(credentialResponse, request.user)
-    verifiedAuthData <- Passkey.verifiedAuthentication(
-      host,
-      request.user,
-      challenge,
-      authData,
-      credential
+    //    _ <- validateCredentialExists(request.user, credentialRecord)
+    verifiedAuthData <- Future.fromTry(
+      Passkey.verifiedAuthentication(
+        host,
+        request.user,
+        challenge,
+        authData,
+        credential
+      )
     )
-    _ <- PasskeyChallengeDB.delete(request.user, Authentication)
-    _ <- PasskeyDB.updateCounter(request.user, verifiedAuthData)
-    _ <- PasskeyDB.updateLastUsedTime(request.user, verifiedAuthData)
+    _ <- Future.fromTry(PasskeyChallengeDB.delete(request.user, Authentication))
+    _ <- passkeyDb.updateAuthenticationCount(
+      userId,
+      passkeyId,
+      verifiedAuthData.getAuthenticatorData.getSignCount
+    )
+    _ <- passkeyDb.updateLastUsedTime(
+      userId,
+      passkeyId,
+      timestamp = clock.instant()
+    )
     _ = logger.info(s"Verified passkey for user ${request.user.username}")
   } yield ()
 
@@ -93,6 +118,12 @@ class PasskeyAuthFilter(
         Some(InternalServerError(toJson(err)))
       case Success(_) => None
     }
+
+  private def fapiResponse(auth: => Future[Unit]): Future[Option[Result]] =
+    auth
+      .map(_ => Success(()))
+      .recover { case err => Failure(err) }
+      .map(apiResponse(_))
 
   private def extractAuthDataFromRequest[A](
       request: UserIdentityRequest[A]
