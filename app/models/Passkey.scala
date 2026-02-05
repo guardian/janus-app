@@ -41,9 +41,6 @@ object PasskeyMetadata {
     )
 }
 
-enum PasskeyFlow:
-  case Registration, Authentication
-
 object PasskeyEncodings {
 
   /*

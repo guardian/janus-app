@@ -4,7 +4,6 @@ import aws.{AuditTrailDB, Federation}
 import cats.syntax.all.*
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.*
-import com.gu.playpasskeyauth.models.{PasskeyUser, UserId}
 import com.gu.playpasskeyauth.services.PasskeyRepository
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
@@ -12,7 +11,7 @@ import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.AccountOrdering.orderedAccountAccess
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
-import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator, PasskeyMetadata, PasskeyRequest}
+import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator, PasskeyRequest}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.DeveloperPolicyFinder
@@ -22,8 +21,7 @@ import software.amazon.awssdk.services.sts.model.Credentials
 
 import java.time.*
 import java.time.format.DateTimeFormatter
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.ExecutionContext
 
 class Janus(
     janusData: JanusData,
@@ -41,7 +39,6 @@ class Janus(
     dynamodDB: DynamoDbClient,
     mode: Mode,
     assetsFinder: AssetsFinder,
-    passkeyUser: PasskeyUser[UserIdentity],
     ec: ExecutionContext
 ) extends AbstractController(controllerComponents)
     with ResultHandler
@@ -166,25 +163,27 @@ class Janus(
           DateTimeFormatter.ofPattern("d MMM yyyy HH:mm:ss XXXXX")
         )
 
-      Try(
-        Await.result(
-          for {
-            passkeys <- passkeyDb
-              .listPasskeys(UserId.from(request.user))
-              .map(_.map(PasskeyMetadata.fromPasskeyInfo))
-          } yield views.html.userAccount(
-            request.user,
-            janusData,
-            passkeys,
-            dateFormat,
-            timeFormat,
-            passkeysEnablingCookieName,
-            passkeysManagerLink(configuration),
-            passkeysManagerLinkText(configuration)
-          ),
-          scala.concurrent.duration.Duration.Inf
-        )
-      )
+      // TODO
+//      Try(
+//        Await.result(
+//          for {
+//            passkeys <- passkeyDb
+//              .listPasskeys(UserId.from(request.user))
+//              .map(_.map(PasskeyMetadata.fromPasskeyInfo))
+//          } yield views.html.userAccount(
+//            request.user,
+//            janusData,
+//            passkeys,
+//            dateFormat,
+//            timeFormat,
+//            passkeysEnablingCookieName,
+//            passkeysManagerLink(configuration),
+//            passkeysManagerLinkText(configuration)
+//          ),
+//          scala.concurrent.duration.Duration.Inf
+//        )
+//      )
+      ???
     }
   }
 
