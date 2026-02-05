@@ -1,38 +1,96 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.{AwsAccount, JanusData}
+@import logic.Date.{formatTime, formatDateTime, formatDuration}
 @import models.IamRoleInfo
 @import play.api.Mode
 
 @import scala.jdk.OptionConverters.RichOptional
 
-@(accountName: String, roles: List[IamRoleInfo], failure: Option[String], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(account: AwsAccount, roleStatus: AwsAccountIamRoleInfoStatus, serviceEnabled: Boolean, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
-@main(s"Role Status for $accountName", Some(user), janusData) {
+@main(s"Role Status for ${account.name}", Some(user), janusData) {
     <div class="container">
-        <div class="col s12">
-            <h1 class="header orange-text">@accountName Role Statuses</h1>
-        </div>
+        @(roleStatus.roleSnapshot, roleStatus.failureStatus) match {
+            case (_, Some(failure)) => {
+                <div class="right valign-wrapper tooltipped"
+                data-position="bottom" data-tooltip="last updated (UTC)">
+                    <span class="provisioned-roles-account-updated grey-text">
+                        <span class="hide-on-med-and-down">
+                            @formatDateTime(failure.timestamp)
+                        </span>
+                        <span class="hide-on-large-only">
+                            @formatTime(failure.timestamp)
+                        </span>
+                    </span>
+                    <i class="error material-icons small">error_outline</i>
+                </div>
+                <h1 class="header orange-text">@account.name roles status</h1>
 
-        @if(failure.isDefined) {
-            <span class="error"><i class="material-icons">warning</i></span> &nbsp @failure
-            @if(roles.nonEmpty) {
-                <hr/>
-                <p>Cached roles</p>
+                <div class="provisioned-role-error">
+                    <p>
+                        Failed to load provisioned roles, role information may be out of date.
+                    </p>
+                    <p class="grey-text">
+                        @failure.failure
+                    </p>
+                </div>
+            }
+            case (Some(roles), _) => {
+                <div class="right valign-wrapper tooltipped"
+                data-position="bottom" data-tooltip="last updated (UTC)">
+                    <span class="provisioned-roles-account-updated grey-text">
+                        <span class="hide-on-med-and-down">
+                            @formatDateTime(roles.timestamp)
+                        </span>
+                        <span class="hide-on-large-only">
+                            @formatTime(roles.timestamp)
+                        </span>
+                    </span>
+                    <i class="success material-icons small">check</i>
+                </div>
+                <h1 class="header orange-text">@account.name roles status</h1>
+            }
+            case (None, None) => {
+                <span class="right valign-wrapper">
+                    @if(serviceEnabled) {
+                        <span class="grey-text">Sync not yet completed</span>
+                        <i class="material-icons small rotate">autorenew</i>
+                    } else {
+                        <span class="grey-text">Sync service disabled</span>
+                        <i class="material-icons small">sync_problem</i>
+                    }
+                </span>
+                <h1 class="header orange-text">@account.name roles status</h1>
+                @if(serviceEnabled) {
+                    <p class="provisioned-role-notice">
+                        Provisioned role information has not yet been loaded.
+                          Please wait a few moments and refresh the page.
+                    </p>
+                } else {
+                    <p class="provisioned-role-error">
+                        Provisioned role information is not available
+                          because the sync service is disabled.
+                    </p>
+                }
             }
         }
 
-        @if(roles.isEmpty) {
-            <p>No roles</p>
-        }
-
-        <table class="role-list striped">
-            @for(role <- roles) {
-                <tr>
-                    <td>
+        @roleStatus.roleSnapshot match {
+            case Some(rolesStatus) if rolesStatus.roles.nonEmpty => {
+                <ul class="provisioned-roles-container">
+                    @for(role <- rolesStatus.roles) {
                         @fragments.roleList(role)
-                    </td>
-                </tr>
+                    }
+                </ul>
             }
-        </table>
+            case _ => {
+                <div class="provisioned-role-empty center-align grey-text">
+                    <i class="material-icons medium">not_interested</i>
+                    <br/>
+                    No roles found in this account
+                </div>
+            }
+        }
+
     </div>
 }
