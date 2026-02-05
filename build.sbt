@@ -15,7 +15,7 @@ val commonDependencies = Seq(
   "org.scalatest" %% "scalatest" % "3.2.19" % Test,
   "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
-  "ch.qos.logback" % "logback-classic" % "1.5.26"
+  "ch.qos.logback" % "logback-classic" % "1.5.27"
 )
 lazy val commonSettings = Seq(
   scalaVersion := "3.3.7",
@@ -38,7 +38,7 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.20.2"
+val jacksonVersion = "2.21.0"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
