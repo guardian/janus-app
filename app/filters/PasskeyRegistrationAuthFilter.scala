@@ -2,11 +2,9 @@ package filters
 
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.UserIdentity
-import com.gu.playpasskeyauth.models.{PasskeyUser, UserId}
+import com.gu.playpasskeyauth.filters.PasskeyVerificationFilter
 import com.gu.playpasskeyauth.services.PasskeyRepository
 import play.api.Logging
-import play.api.libs.json.Json
-import play.api.mvc.Results.InternalServerError
 import play.api.mvc.{ActionFilter, Result}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -27,12 +25,11 @@ import scala.concurrent.{ExecutionContext, Future}
   *   Execution context for asynchronous operations
   */
 class PasskeyRegistrationAuthFilter(
-    authFilter: PasskeyAuthFilter,
+    authFilter: PasskeyVerificationFilter[UserIdentity],
     passkeyDb: PasskeyRepository
 )(using
     dynamoDb: DynamoDbClient,
-    ec: ExecutionContext,
-    passkeyUser: PasskeyUser[UserIdentity]
+    ec: ExecutionContext
 ) extends ActionFilter[UserIdentityRequest]
     with Logging {
 
@@ -49,11 +46,21 @@ class PasskeyRegistrationAuthFilter(
     *   otherwise the result of the delegated passkey auth filter or an error
     *   response
     */
-  def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] =
-    passkeyDb
-      .loadPasskeyIds(UserId.from(request.user))
-      .flatMap { ids =>
-        if ids.nonEmpty then authFilter.filter(request)
-        else Future.successful(None)
-      }
+  def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] = {
+    // TODO
+    ???
+//    passkeyDb
+//      .loadPasskeyIds(UserId.from(request.user))
+//      .flatMap { ids =>
+//        if ids.nonEmpty then {
+//          val wrappedRequest =
+//            new RequestWithAuthenticationData[UserIdentity, A](
+//              Json.obj(),
+//              request.user,
+//              request
+//            )
+//          authFilter.filter(wrappedRequest)
+//        } else Future.successful(None)
+//      }
+  }
 }

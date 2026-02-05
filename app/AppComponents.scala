@@ -4,7 +4,7 @@ import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.gu.playpasskeyauth.PasskeyAuth
-import com.gu.playpasskeyauth.models.{HostApp, PasskeyUser, UserId}
+import com.gu.playpasskeyauth.models.{HostApp, UserId, UserIdExtractor}
 import com.gu.playpasskeyauth.web.*
 import com.typesafe.config.ConfigException
 import conf.Config
@@ -12,7 +12,6 @@ import controllers.*
 import filters.*
 import models.*
 import models.AccountConfigStatus.*
-import passkey.{ChallengeRepository, Repository}
 import play.api.libs.json.{JsValue, Json}
 import play.api.libs.ws.WSClient
 import play.api.libs.ws.ahc.AhcWSComponents
@@ -22,7 +21,11 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
 import play.filters.csp.CSPComponents
 import router.Routes
-import services.ProvisionedRoleCachingService
+import services.{
+  DynamoPasskeyChallengeRepository,
+  DynamoPasskeyRepository,
+  ProvisionedRoleCachingService
+}
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.{
   DynamoDbAsyncClient,
@@ -30,7 +33,7 @@ import software.amazon.awssdk.services.dynamodb.{
 }
 
 import java.net.URI
-import java.time.Duration
+import java.time.{Clock, Duration}
 import scala.concurrent.ExecutionContext
 import scala.util.chaining.scalaUtilChainingOps
 
@@ -134,6 +137,14 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
 
+  val userExtractor: UserExtractor[UserIdentity, UserIdentityRequest] =
+    new UserExtractor[UserIdentity, UserIdentityRequest] {
+      def extractUser[A](request: UserIdentityRequest[A]): UserIdentity =
+        request.user
+    }
+
+  given UserIdExtractor[UserIdentity] = user => UserId(user.username)
+
   private val creationDataExtractor =
     new CreationDataExtractor[[A] =>> RequestWithUser[UserIdentity, A]] {
       override def findCreationData[A](
@@ -172,62 +183,60 @@ class AppComponents(context: ApplicationLoader.Context)
         }
     }
 
-  private val userExtractor =
-    new UserExtractor[UserIdentity, UserIdentityRequest] {
-      override def extractUser[A](
-          request: UserIdentityRequest[A]
-      ): UserIdentity =
-        request.user
-    }
+  private val passkeyRepo =
+    new DynamoPasskeyRepository(dynamoDbAsync, Clock.systemUTC())
 
-  given PasskeyUser[UserIdentity] with {
-    extension (user: UserIdentity)
-      override def id: UserId = UserId(user.username)
-  }
+  private val challengeRepo = new DynamoPasskeyChallengeRepository(
+    dynamoDbAsync
+  )
 
   private val passkeyAuth = new PasskeyAuth[UserIdentity, AnyContent](
     controllerComponents,
     app = HostApp(name = host, uri = URI.create(host)),
     userAction = authAction.andThen(new UserAction(userExtractor)),
-    passkeyRepo = new Repository(dynamoDbAsync),
-    challengeRepo = new ChallengeRepository(dynamoDbAsync),
+    passkeyRepo,
+    challengeRepo,
     creationDataExtractor,
     authenticationDataExtractor,
     passkeyNameExtractor,
     registrationRedirect = routes.Janus.userAccount
   )
 
-  private val basePasskeyController = passkeyAuth.controller()
+//  private val passkeyAuth = PasskeyAuthSimple(
+//      appName = host,
+//      appOrigin = URI.create(host),
+//    passkeyRepo,
+//    challengeRepo = new DynamoPasskeyChallengeRepository(dynamoDbAsync)
+//  )
 
-  private val passkeyVerificationAction =
-    new ConditionalPasskeyVerificationAction(
-      passkeysEnabled,
-      passkeysEnablingCookieName,
-      authAction,
-      passkeyAuth.verificationAction()
-    )
+//  private val passkeyVerificationAction =
+//    new ConditionalPasskeyVerificationAction(
+//      passkeysEnabled,
+//      passkeysEnablingCookieName,
+//      authAction,
+//      passkeyAuth.verificationAction()
+//    )
 
   override def router: Router = new Routes(
     httpErrorHandler,
+    // TODO
     new Janus(
       janusData,
       controllerComponents,
       authAction,
-      passkeyVerificationAction,
+      passkeyAuth.verificationAction(),
       host,
       Clients.stsClient,
-      passkeyDb = new Repository(dynamoDbAsync),
+      passkeyDb = passkeyRepo,
       configuration,
       passkeysEnablingCookieName,
       passkeyAuthenticatorMetadata
-    ),
+    )(using ???, ???, ???, ???),
     new PasskeyController(
       controllerComponents,
       authAction,
-      basePasskeyController,
-      passkeyVerificationAction,
+      passkeyAuth,
       janusData,
-      passkeyDb = new Repository(dynamoDbAsync),
       passkeysEnabled,
       passkeysEnablingCookieName
     ),

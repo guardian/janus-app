@@ -1,10 +1,9 @@
-package passkey
+package services
 
 import com.gu.playpasskeyauth.models.UserId
 import com.gu.playpasskeyauth.services.PasskeyChallengeRepository
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import com.webauthn4j.util.Base64UrlUtil
-import models.PasskeyFlow
 import software.amazon.awssdk.services.dynamodb.DynamoDbAsyncClient
 import software.amazon.awssdk.services.dynamodb.model.{
   AttributeValue,
@@ -19,10 +18,9 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.*
 import scala.jdk.FutureConverters.*
 
-class ChallengeRepository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
-    extends PasskeyChallengeRepository {
-
-  private val tableName = "PasskeyChallenges"
+class DynamoPasskeyChallengeRepository(dynamoDb: DynamoDbAsyncClient)(using
+    ExecutionContext
+) extends PasskeyChallengeRepository {
 
   override def loadRegistrationChallenge(userId: UserId): Future[Challenge] =
     loadChallenge(userId, PasskeyFlow.Registration)
@@ -35,15 +33,14 @@ class ChallengeRepository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
       challenge: Challenge,
       expiresAt: Instant
   ): Future[Unit] =
-    insertChallenge(userId, PasskeyFlow.Registration, challenge)
+    insertChallenge(userId, PasskeyFlow.Registration, challenge, expiresAt)
 
   override def insertAuthenticationChallenge(
       userId: UserId,
       challenge: Challenge,
       expiresAt: Instant
   ): Future[Unit] = {
-    // TODO: use expiresAt
-    insertChallenge(userId, PasskeyFlow.Authentication, challenge)
+    insertChallenge(userId, PasskeyFlow.Authentication, challenge, expiresAt)
   }
 
   override def deleteRegistrationChallenge(userId: UserId): Future[Unit] =
@@ -51,6 +48,11 @@ class ChallengeRepository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
 
   override def deleteAuthenticationChallenge(userId: UserId): Future[Unit] =
     deleteChallenge(userId, PasskeyFlow.Authentication)
+
+  private val tableName = "PasskeyChallenges"
+
+  private enum PasskeyFlow:
+    case Registration, Authentication
 
   private def loadChallenge(
       userId: UserId,
@@ -85,9 +87,9 @@ class ChallengeRepository(dynamoDb: DynamoDbAsyncClient)(using ExecutionContext)
   private def insertChallenge(
       userId: UserId,
       flow: PasskeyFlow,
-      challenge: Challenge
+      challenge: Challenge,
+      expiresAt: Instant
   ): Future[Unit] = {
-    val expiresAt = Instant.now().plusSeconds(60)
     val item = Map(
       "username" -> AttributeValue.fromS(userId.value),
       "flow" -> AttributeValue.fromS(flow.toString),

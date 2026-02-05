@@ -80,6 +80,7 @@ class PasskeyTest extends AnyFreeSpec with should.Matchers with EitherValues {
         |  },
         |  "hints" : [ "client-device", "security-key", "hybrid" ],
         |  "attestation" : "direct",
+        |  "attestationFormats" : null,
         |  "extensions" : null
         |}""".stripMargin
     }
