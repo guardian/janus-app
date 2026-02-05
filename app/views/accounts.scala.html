@@ -5,7 +5,7 @@
 @import play.api.Mode
 
 @import scala.util.{Failure, Success, Try}
-@(accountOwners: Set[AccountInfo], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountOwners: Set[AccountInfo], provisionedRoleServiceEnabled: Boolean, user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Accounts", Some(user), janusData) {
     <div class="container">
@@ -41,9 +41,8 @@
 
             @for(AccountInfo(account, owners, accountNumberTry, rolesStatuses, rolesError) <- accountOwners.toList.sortBy(_.account.name)) {
                 <tr id="@account.authConfigKey">
-
                     <td>
-                    @account.name
+                        @account.name
                     </td>
 
                     <td>
@@ -68,8 +67,15 @@
                             @rolesStatuses.size
                             @{
                                 rolesError match {
-                                    case Some(roleErrorText) => <i class="error material-icons tiny minor-header-icon" title="@roleErrorText">error_outline</i>
-                                    case None => <i class="succes material-icons tiny minor-header-icon">check</i>
+                                    case Some(roleErrorText) => {
+                                        <i class="error material-icons tiny minor-header-icon" title="@roleErrorText">error_outline</i>
+                                    }
+                                    case None if provisionedRoleServiceEnabled => {
+                                        <i class="success material-icons tiny minor-header-icon">check</i>
+                                    }
+                                    case None => {
+                                        <i class="grey-text material-icons tiny minor-header-icon">sync_problem</i>
+                                    }
                                 }
                             }
                         </a>
