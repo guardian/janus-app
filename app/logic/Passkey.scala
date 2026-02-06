@@ -24,9 +24,10 @@ import models.*
 
 import java.net.URI
 import java.nio.charset.StandardCharsets.UTF_8
+import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.concurrent.duration.{Duration, SECONDS}
 import scala.jdk.CollectionConverters.*
-import scala.util.Try
+import scala.util.{Failure, Success, Try}
 
 /** Logic for registration of passkeys and authentication using them. */
 object Passkey {
@@ -281,4 +282,11 @@ object Passkey {
       case err =>
         JanusException.invalidFieldInRequest(user, "passkey", err)
     }
+
+  def futureToTry[A](
+      fa: => Future[A]
+  )(using ExecutionContext): Try[A] = {
+    val fta = fa.map(a => Success(a)).recover(err => Failure(err))
+    Await.result(fta, scala.concurrent.duration.Duration.Inf)
+  }
 }
