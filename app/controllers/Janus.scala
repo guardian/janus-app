@@ -23,6 +23,7 @@ import software.amazon.awssdk.services.sts.model.Credentials
 import java.time.*
 import java.time.format.DateTimeFormatter
 import scala.concurrent.ExecutionContext
+import scala.util.{Failure, Success}
 
 class Janus(
     janusData: JanusData,
@@ -150,33 +151,33 @@ class Janus(
       )
     }
 
-  def userAccount: Action[AnyContent] = authAction { implicit request =>
-    apiResponse {
-      def dateTimeFormat(instant: Instant, formatter: DateTimeFormatter) =
-        instant.atZone(ZoneId.of("Europe/London")).format(formatter)
+  def userAccount: Action[AnyContent] = authAction.async { implicit request =>
+    def dateTimeFormat(instant: Instant, formatter: DateTimeFormatter) =
+      instant.atZone(ZoneId.of("Europe/London")).format(formatter)
 
-      def dateFormat(instant: Instant) =
-        dateTimeFormat(instant, DateTimeFormatter.ofPattern("d MMM yyyy"))
+    def dateFormat(instant: Instant) =
+      dateTimeFormat(instant, DateTimeFormatter.ofPattern("d MMM yyyy"))
 
-      def timeFormat(instant: Instant) =
-        dateTimeFormat(
-          instant,
-          DateTimeFormatter.ofPattern("d MMM yyyy HH:mm:ss XXXXX")
-        )
+    def timeFormat(instant: Instant) =
+      dateTimeFormat(
+        instant,
+        DateTimeFormatter.ofPattern("d MMM yyyy HH:mm:ss XXXXX")
+      )
 
-      futureToTry(
-        for {
-          passkeys <- passkeyAuth.verificationService
-            .listPasskeys(UserId(request.user.username))
-            .map(
-              _.map(passkey =>
-                PasskeyMetadata.fromPasskeyInfo(
-                  passkey,
-                  passkeyAuthenticatorMetadata.get(passkey.aaguid)
-                )
-              )
+    (for {
+      passkeys <- passkeyAuth.verificationService
+        .listPasskeys(UserId(request.user.username))
+        .map(
+          _.map(passkey =>
+            PasskeyMetadata.fromPasskeyInfo(
+              passkey,
+              passkeyAuthenticatorMetadata.get(passkey.aaguid)
             )
-        } yield views.html.userAccount(
+          )
+        )
+    } yield apiResponse(
+      Success(
+        views.html.userAccount(
           request.user,
           janusData,
           passkeys,
@@ -187,6 +188,8 @@ class Janus(
           passkeysManagerLinkText(configuration)
         )
       )
+    )).recover { case err =>
+      apiResponse(Failure(err))
     }
   }
 
