@@ -219,7 +219,6 @@ class AppComponents(context: ApplicationLoader.Context)
 
   override def router: Router = new Routes(
     httpErrorHandler,
-    // TODO
     new Janus(
       janusData,
       controllerComponents,
@@ -227,11 +226,11 @@ class AppComponents(context: ApplicationLoader.Context)
       passkeyAuth.verificationAction(),
       host,
       Clients.stsClient,
-      passkeyDb = passkeyRepo,
       configuration,
       passkeysEnablingCookieName,
-      passkeyAuthenticatorMetadata
-    )(using ???, ???, ???, ???),
+      passkeyAuthenticatorMetadata,
+      passkeyAuth
+    )(using dynamodDB, mode, assetsFinder, executionContext),
     new PasskeyController(
       controllerComponents,
       authAction,

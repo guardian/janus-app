@@ -31,11 +31,11 @@ class DynamoPasskeyRepository(dynamoDb: DynamoDbAsyncClient, clock: Clock)(using
   override def list(userId: UserId): Future[List[Passkey]] =
     loadPasskeyItems(userId).map(_.map(item => toPasskey(item, userId)))
 
+  // TODO: this could be in library and then caller has to implement insert and update instead
   override def upsert(userId: UserId, passkey: Passkey): Future[Unit] =
-    exists(userId, passkey).flatMap(itemExists =>
-      if itemExists then update(userId, passkey)
-      else insert(userId, passkey, clock)
-    )
+    loadPasskeyItem(userId, passkey.id)
+      .flatMap(_ => update(userId, passkey))
+      .recoverWith(_ => insert(userId, passkey, clock))
 
   override def delete(userId: UserId, passkeyId: PasskeyId): Future[Unit] = {
     val request = DeleteItemRequest
@@ -55,9 +55,6 @@ class DynamoPasskeyRepository(dynamoDb: DynamoDbAsyncClient, clock: Clock)(using
         )
       }
   }
-
-  // TODO
-  private def exists(userId: UserId, passkey: Passkey): Future[Boolean] = ???
 
   private def insert(
       userId: UserId,
@@ -121,20 +118,24 @@ class DynamoPasskeyRepository(dynamoDb: DynamoDbAsyncClient, clock: Clock)(using
   }
 
   private def update(userId: UserId, passkey: Passkey): Future[Unit] = {
+    val updates = Map(
+      "authCounter" -> Some(
+        AttributeValue.fromN(String.valueOf(passkey.signCount))
+      ),
+      "lastUsedTime" -> passkey.lastUsedAt.map(time =>
+        AttributeValue.fromS(time.toString)
+      )
+    ).collect { case (key, Some(value)) => key -> value }
+
+    val setClause =
+      updates.keys.map(key => s"$key = :${key}Value").mkString(", ")
+    val values = updates.map { case (key, value) => s":${key}Value" -> value }
+
     val request = UpdateItemRequest.builder
       .tableName(tableName)
       .key(toKey(userId, passkey.id).asJava)
-      .updateExpression("SET authCounter = :authCounterValue, lastUsedTime = :lastUsedTimeValue")
-      .expressionAttributeValues(
-        Map(
-          ":authCounterValue" -> AttributeValue.fromN(
-            String.valueOf(passkey.signCount)
-          ),
-          ":lastUsedTimeValue" -> AttributeValue.fromS(
-            passkey.lastUsedAt.toString
-          )
-        ).asJava
-      )
+      .updateExpression(s"SET $setClause")
+      .expressionAttributeValues(values.asJava)
       .build()
 
     dynamoDb
@@ -269,7 +270,8 @@ class DynamoPasskeyRepository(dynamoDb: DynamoDbAsyncClient, clock: Clock)(using
       ),
       createdAt = registrationTime,
       lastUsedAt,
-      signCount = counter
+      signCount = counter,
+      aaguid = credentialData.getAaguid
     )
   }
 

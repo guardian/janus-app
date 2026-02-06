@@ -417,14 +417,9 @@ document.addEventListener("DOMContentLoaded", function () {
             `Are you sure you want to delete the passkey "${DOMPurify.sanitize(passkeyName)}"?`,
           )
         ) {
-          const result = await deletePasskey(passkeyId, csrfToken);
-          // Immediately redirect to the user-account page
-          // The flash message will be displayed after the redirect
-          if (result.redirect) {
-            window.location.href = result.redirect;
-          } else {
-            window.location.reload();
-          }
+          await deletePasskey(passkeyId, csrfToken);
+          // Immediately reload the user-account page
+          window.location.reload();
         }
       });
     });
