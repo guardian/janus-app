@@ -9,6 +9,7 @@ import com.gu.playpasskeyauth.models.UserId
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
+import logic.Passkey.futureToTry
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
 import models.{PasskeyAuthenticator, PasskeyMetadata, PasskeyRequest}
@@ -20,8 +21,7 @@ import software.amazon.awssdk.services.sts.model.Credentials
 
 import java.time.*
 import java.time.format.DateTimeFormatter
-import scala.concurrent.{Await, ExecutionContext, Future}
-import scala.util.{Failure, Success, Try}
+import scala.concurrent.ExecutionContext
 
 class Janus(
     janusData: JanusData,
@@ -338,10 +338,5 @@ class Janus(
         permission.account -> credentials
       })
       .sequence
-  }
-
-  private def futureToTry[A](fa: => Future[A]): Try[A] = {
-    val fta = fa.map(a => Success(a)).recover(err => Failure(err))
-    Await.result(fta, scala.concurrent.duration.Duration.Inf)
   }
 }
