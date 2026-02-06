@@ -10,9 +10,10 @@ import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
-import models.PasskeyAuthenticator
+import models.{IamRoleInfo, PasskeyAuthenticator}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
+import services.ProvisionedRoleFinder
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.model.Credentials
@@ -29,7 +30,8 @@ class Janus(
     stsClient: StsClient,
     configuration: Configuration,
     passkeysEnablingCookieName: String,
-    passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator]
+    passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
+    provisionedRoleFinder: ProvisionedRoleFinder
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
@@ -42,8 +44,13 @@ class Janus(
     authAction { implicit request =>
       val displayMode =
         Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
+      val iamRoles = provisionedRoleFinder.getIamRoles()
       (for {
-        permissions <- userAccess(username(request.user), janusData.access)
+        permissions <- userAccess(
+          username(request.user),
+          janusData.access,
+          iamRoles
+        )
         favourites = Favourites.fromCookie(request.cookies.get("favourites"))
         awsAccountAccess = orderedAccountAccess(permissions, favourites)
       } yield {
@@ -51,6 +58,7 @@ class Janus(
           views.html
             .index(
               awsAccountAccess,
+              favourites,
               request.user,
               janusData,
               displayMode
@@ -61,8 +69,13 @@ class Janus(
 
   def admin: Action[AnyContent] =
     authAction { implicit request =>
+      val iamRoles = provisionedRoleFinder.getIamRoles()
       (for {
-        permissions <- userAccess(username(request.user), janusData.admin)
+        permissions <- userAccess(
+          username(request.user),
+          janusData.admin,
+          iamRoles
+        )
         awsAccountAccess = orderedAccountAccess(permissions)
       } yield {
         Ok(
@@ -85,6 +98,7 @@ class Janus(
       val supportUsersInNextPeriod = nextSupportUsers(now, janusData.support)
       val currentUserFutureSupportPeriods =
         futureRotaSlotsForUser(now, janusData.support, username(request.user))
+      val iamRoles = provisionedRoleFinder.getIamRoles()
       (for {
         permissions <- userSupportAccess(
           username(request.user),
@@ -147,12 +161,14 @@ class Janus(
 
   def consoleLogin(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
+      val iamRoles = provisionedRoleFinder.getIamRoles()
       (for {
         (credentials, _) <- assumeRole(
           request.user,
           permissionId,
           JConsole,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          iamRoles
         )
         loginUrl = Federation.generateLoginUrl(credentials, host)
       } yield {
@@ -168,12 +184,14 @@ class Janus(
 
   def consoleUrl(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
+      val iamRoles = provisionedRoleFinder.getIamRoles()
       (for {
         (credentials, permission) <- assumeRole(
           request.user,
           permissionId,
           JConsole,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          iamRoles
         )
         loginUrl = Federation.generateLoginUrl(credentials, host)
       } yield {
@@ -197,12 +215,14 @@ class Janus(
 
   def credentials(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
+      val iamRoles = provisionedRoleFinder.getIamRoles()
       (for {
         (credentials, permission) <- assumeRole(
           request.user,
           permissionId,
           JCredentials,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          iamRoles
         )
       } yield {
         Ok(
@@ -225,11 +245,13 @@ class Janus(
   def multiCredentials(rawPermissionIds: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
       val permissionIds = splitQuerystringParam(rawPermissionIds)
+      val iamRoles = provisionedRoleFinder.getIamRoles()
       (for {
         accountCredentials <- multiAccountAssumption(
           request.user,
           permissionIds,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          iamRoles
         )
         expiry <- accountCredentials.headOption.map { case (_, creds) =>
           creds.expiration
@@ -269,7 +291,8 @@ class Janus(
       user: UserIdentity,
       permissionId: String,
       accessType: JanusAccessType,
-      durationParams: (Option[Duration], Option[ZoneId])
+      durationParams: (Option[Duration], Option[ZoneId]),
+      iamRoles: List[IamRoleInfo]
   ): Option[(Credentials, Permission)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
@@ -299,7 +322,8 @@ class Janus(
         permission,
         accessType,
         duration,
-        janusData.access
+        janusData.access,
+        iamRoles
       )
       _ = AuditTrailDB.insert(auditLog)
     } yield {
@@ -313,10 +337,11 @@ class Janus(
   private def multiAccountAssumption(
       user: UserIdentity,
       permissionIds: List[String],
-      durationParams: (Option[Duration], Option[ZoneId])
+      durationParams: (Option[Duration], Option[ZoneId]),
+      iamRoles: List[IamRoleInfo]
   ): Option[List[(AwsAccount, Credentials)]] = {
     permissionIds
-      .map(assumeRole(user, _, JCredentials, durationParams))
+      .map(assumeRole(user, _, JCredentials, durationParams, iamRoles))
       .map(_.map { case (credentials, permission) =>
         permission.account -> credentials
       })

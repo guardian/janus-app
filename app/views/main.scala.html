@@ -1,6 +1,6 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
-@import logic.UserAccess.{hasAccess, isSupportUser, username}
+@import logic.UserAccess.{hasAnyAccess, isSupportUser, username}
 @import logic.Customisation.displayColour
 @import play.api.Mode
 @import java.time.Instant
@@ -38,7 +38,7 @@
                         <ul class="right hide-on-med-and-down">
                             <li><a href="/accounts">Accounts</a></li>
                             <li><a href="/support">Support</a></li>
-                            @if(hasAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
+                            @if(hasAnyAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
                             <li><a href="/user-account">@user.firstName @user.lastName</a></li>
                         </ul>
@@ -47,7 +47,7 @@
                             <li><a href="/">Home</a></li>
                             <li><a href="/accounts">Accounts</a></li>
                             @if(isSupportUser(username(user), Instant.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
-                            @if(hasAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
+                            @if(hasAnyAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
                             <li><a href="/user-account">@user.firstName @user.lastName <i class="material-icons right">perm_identity</i></a></li>
                         </ul>

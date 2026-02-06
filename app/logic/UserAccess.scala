@@ -1,7 +1,8 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, AwsAccount, Permission, SupportACL}
+import com.gu.janus.model.{ACL, ACLEntry, AwsAccount, Permission, SupportACL}
+import models.{AwsAccountAccess, IamRoleInfo}
 
 import java.time.Instant
 
@@ -12,17 +13,60 @@ object UserAccess {
   def username(user: UserIdentity): String =
     user.email.split("@").head.toLowerCase
 
-  /** A user's basic access. Note that default permissions are available for
-    * anyone mentioned in the Access list.
+  /** A user's standard (excluding admin/support) access for each AwsAccount.
+    *
+    * The ACL's default permissions are available for anyone mentioned in the
+    * Access list.
     */
-  def userAccess(username: String, acl: ACL): Option[Set[Permission]] =
+  def userAccess(
+      username: String,
+      acl: ACL,
+      provisionedRoles: List[IamRoleInfo]
+  ): Option[Set[AwsAccountAccess]] = {
     acl.userAccess
       .get(username)
-      .map(_.permissions ++ acl.defaultPermissions)
+      .map { aclEntry =>
+        val permissions =
+          userPermissions(username, aclEntry, acl.defaultPermissions)
+        val roles = userRoles(username, provisionedRoles, aclEntry)
+        val allMentionedAccounts =
+          permissions.map(_.account) ++ roles.map(_.account)
+
+        allMentionedAccounts.map { account =>
+          val permsForAccount = permissions.filter(_.account == account)
+          val rolesForAccount = roles.filter(_.account == account)
+          AwsAccountAccess(
+            account,
+            permsForAccount.toList,
+            rolesForAccount.toList
+          )
+        }
+      }
+  }
+
+  private def userPermissions(
+      username: String,
+      aclEntry: ACLEntry,
+      defaultPermissions: Set[Permission]
+  ): Set[Permission] = {
+    aclEntry.permissions ++ defaultPermissions
+  }
+
+  private def userRoles(
+      username: String,
+      provisionedRoles: List[IamRoleInfo],
+      aclEntry: ACLEntry
+  ): Set[IamRoleInfo] = {
+    val eligibleRoleTags = aclEntry.roles
+    provisionedRoles.filter { role =>
+      eligibleRoleTags
+        .exists(tag => tag.iamRoleTag == role.provisionedRoleTagValue)
+    }.toSet
+  }
 
   /** Checks if the username is explicitly mentioned in the provided ACL.
     */
-  def hasAccess(username: String, acl: ACL): Boolean = {
+  def hasAnyAccess(username: String, acl: ACL): Boolean = {
     acl.userAccess.keySet.contains(username)
   }
 
@@ -32,9 +76,16 @@ object UserAccess {
       username: String,
       date: Instant,
       supportACL: SupportACL
-  ): Option[Set[Permission]] = {
+  ): Option[Set[AwsAccountAccess]] = {
     if (isSupportUser(username, date, supportACL))
-      Some(supportACL.supportAccess)
+      Some(
+        supportACL.supportAccess
+          .groupBy(_.account)
+          .map { case (account, permissions) =>
+            AwsAccountAccess(account, permissions.toList, Nil)
+          }
+          .toSet
+      )
     else None
   }
 
@@ -114,34 +165,33 @@ object UserAccess {
 
   /** Combine a user's permissions from all sources to work out everything they
     * can do.
+    *
+    * TODO: extend this to include provisioned roles support
     */
   def allUserPermissions(
       username: String,
       date: Instant,
       acl: ACL,
       adminACL: ACL,
-      supportACL: SupportACL
+      supportACL: SupportACL,
+      provisionedRoles: List[IamRoleInfo]
   ): Set[Permission] = {
-    val access = userAccess(username, acl).getOrElse(Set.empty)
-    val adminAccess = userAccess(username, adminACL).getOrElse(Set.empty)
+    val access =
+      userAccess(username, acl, provisionedRoles).getOrElse(Set.empty)
+    val adminAccess =
+      userAccess(username, adminACL, provisionedRoles).getOrElse(Set.empty)
     val supportAccess =
       userSupportAccess(username, date, supportACL).getOrElse(Set.empty)
-    access ++ adminAccess ++ supportAccess
-  }
 
-  /** All the accounts this user has any access to.
-    */
-  def allUserAccounts(
-      username: String,
-      date: Instant,
-      acl: ACL,
-      adminACL: ACL,
-      supportACL: SupportACL
-  ): Set[AwsAccount] = {
-    allUserPermissions(username, date, acl, adminACL, supportACL).map(_.account)
+    // just the permissions from each source for now - TODO: extend to include provisioned roles support
+    access.flatMap(_.permissions) ++
+      adminAccess.flatMap(_.permissions) ++
+      supportAccess.flatMap(_.permissions)
   }
 
   /** Check if the provider user has been granted this permission.
+    *
+    * TODO: extend this to include provisioned roles support
     */
   def checkUserPermission(
       username: String,
@@ -151,33 +201,24 @@ object UserAccess {
       adminACL: ACL,
       supportACL: SupportACL
   ): Option[Permission] = {
-    allUserPermissions(username, date, acl, adminACL, supportACL).find(
+    allUserPermissions(username, date, acl, adminACL, supportACL, Nil).find(
       _.id == permissionId
     )
   }
 
-  /** Check if the user has explicit access granted in the Access.scala file.
+  /** Check if the user has explicit access to this permission granted in the
+    * Access.scala file.
+    *
+    * TODO: extend this to include provisioned roles support
     */
   def hasExplicitAccess(
       username: String,
       permission: Permission,
-      acl: ACL
-  ): Boolean = {
-    userAccess(username, acl).getOrElse(Set.empty).contains(permission)
-  }
-
-  /** Checks if a user has access to an account and returns appropriate
-    * permissions (if any).
-    */
-  def userAccountAccess(
-      username: String,
-      accountId: String,
-      date: Instant,
       acl: ACL,
-      adminACL: ACL,
-      supportACL: SupportACL
-  ): Set[Permission] = {
-    allUserPermissions(username, date, acl, adminACL, supportACL)
-      .filter(_.account.authConfigKey == accountId)
+      provisionedRoles: List[IamRoleInfo]
+  ): Boolean = {
+    userAccess(username, acl, Nil)
+      .getOrElse(Set.empty)
+      .exists(_.permissions.contains(permission))
   }
 }

@@ -60,11 +60,11 @@ class UserAccessTest
     )
 
     "returns true when given a user that has an entry" in {
-      hasAccess("test.user", adminACL) shouldEqual true
+      hasAnyAccess("test.user", adminACL) shouldEqual true
     }
 
     "returns false if the user is not explicitly mentioned" in {
-      hasAccess("not.in.the.list", adminACL) shouldEqual false
+      hasAnyAccess("not.in.the.list", adminACL) shouldEqual false
     }
   }
 
@@ -568,71 +568,6 @@ class UserAccessTest
 
     "returns false if a support user does not have explicit access" in {
       hasExplicitAccess("support.user", fooDev, acl) shouldEqual false
-    }
-  }
-
-  "userAccountAccess" - {
-    val acl = ACL(
-      Map(
-        "user" -> ACLEntry(Set(fooDev), Set.empty),
-        "admin" -> ACLEntry(Set.empty, Set.empty),
-        "support.user" -> ACLEntry(Set.empty, Set.empty)
-      ),
-      Set.empty
-    )
-    val admins = ACL(Map("admin" -> ACLEntry(Set(fooCf, barDev), Set.empty)))
-    val supportAcl = SupportACL.create(
-      Map(
-        Instant.now().minus(Period.ofDays(1)) -> (
-          "support.user",
-          "another.support.user"
-        )
-      ),
-      Set(fooCf, barDev)
-    )
-
-    "returns permissions if a user has been granted explicit access" in {
-      userAccountAccess(
-        "user",
-        fooAct.authConfigKey,
-        Instant.now(),
-        acl,
-        admins,
-        supportAcl
-      ) shouldEqual Set(fooDev)
-    }
-
-    "returns permissions for an admin user without explicit access to the account" in {
-      userAccountAccess(
-        "admin",
-        fooAct.authConfigKey,
-        Instant.now(),
-        acl,
-        admins,
-        supportAcl
-      ) shouldEqual Set(fooCf)
-    }
-
-    "returns permissions for a support user without explicit access to a support account" in {
-      userAccountAccess(
-        "support.user",
-        fooAct.authConfigKey,
-        Instant.now(),
-        acl,
-        admins,
-        supportAcl
-      ) shouldEqual Set(fooCf)
-    }
-
-    "returns empty permissions for a non-admin, non-support user that does not have explicit access" in {
-      userAccountAccess(
-        "user",
-        barAct.authConfigKey,
-        Instant.now(),
-        acl,
-        admins,
-        supportAcl
-      ) shouldBe empty
     }
   }
 

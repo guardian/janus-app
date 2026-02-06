@@ -1,6 +1,6 @@
 package logic
 
-import com.gu.janus.model.Permission
+import com.gu.janus.model.{AwsAccount, Permission}
 import models.AwsAccountAccess
 
 object AccountOrdering {
@@ -13,11 +13,11 @@ object AccountOrdering {
     * layout), then adds the favourites to the front in the user's order.
     */
   def orderedAccountAccess(
-      permissions: Set[Permission],
+      permissions: Set[AwsAccountAccess],
       favourites: List[String] = Nil
   ): List[AwsAccountAccess] = {
     permissions
-      .groupBy(_.account)
+      .groupBy(_.awsAccount)
       .toList
       .sortBy { case (acct, _) => acct.name.toLowerCase }
       .sortBy { case (_, perms) => perms.size * -1 }
@@ -26,13 +26,7 @@ object AccountOrdering {
         if (favIndex < 0) favIndex + favourites.size + 1
         else favIndex
       }
-      .map { case (awsAccount, accountPerms) =>
-        AwsAccountAccess(
-          awsAccount,
-          accountPerms.toList.sorted,
-          favourites.contains(awsAccount.authConfigKey)
-        )
-      }
+      .flatMap(_._2)
   }
 
   /** 'dev' then then alphabetical 'others', finally 'cloudformation' (admin)
@@ -49,4 +43,16 @@ object AccountOrdering {
 
       sortKey(p1) compare sortKey(p2)
     }
+
+  def isFavourite(
+      awsAccount: AwsAccount,
+      maybeFavs: Option[List[String]] = None
+  ): Boolean = {
+    maybeFavs match {
+      case Some(favourites) =>
+        favourites.contains(awsAccount.authConfigKey)
+      case None =>
+        false
+    }
+  }
 }

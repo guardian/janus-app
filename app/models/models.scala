@@ -20,7 +20,7 @@ enum AccountConfigStatus:
 case class AwsAccountAccess(
     awsAccount: AwsAccount,
     permissions: List[Permission],
-    isFavourite: Boolean
+    iamRoles: List[IamRoleInfo]
 )
 
 enum DisplayMode:

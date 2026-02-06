@@ -8,7 +8,7 @@ import com.gu.janus.model.JanusData
 import com.webauthn4j.data.client.challenge.{Challenge, DefaultChallenge}
 import controllers.Validation.formattedErrors
 import logic.Passkey
-import logic.UserAccess.hasAccess
+import logic.UserAccess.hasAnyAccess
 import models.JanusException
 import models.PasskeyFlow.{Authentication, Registration}
 import play.api.data.Form
@@ -235,8 +235,8 @@ class PasskeyController(
   private def verifyHasAccess(
       user: UserIdentity
   ): Try[Unit] =
-    if hasAccess(user.username, janusData.access) ||
-      hasAccess(user.username, janusData.admin)
+    if hasAnyAccess(user.username, janusData.access) ||
+      hasAnyAccess(user.username, janusData.admin)
     then Success(())
     else Failure(JanusException.noAccessFailure(user))
 

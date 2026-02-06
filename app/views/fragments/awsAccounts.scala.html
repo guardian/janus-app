@@ -1,9 +1,10 @@
 @import models.AwsAccountAccess
 @import logic.Customisation.displayColour
+@import logic.AccountOrdering.isFavourite
 @import models.DisplayMode
 @import models.DisplayMode.*
 
-@(accountAccesses: List[AwsAccountAccess], allowFavs: Boolean, displayMode: DisplayMode = Normal)
+@(accountAccesses: List[AwsAccountAccess], favourites: Option[List[String]] = None, displayMode: DisplayMode = Normal)
 
 <div class="row">
     @for((accountAccess, i) <- accountAccesses.zipWithIndex) {
@@ -15,9 +16,9 @@
         <div class="col s12 m6">
             <div class="card card--aws-account @displayColour(displayMode) lighten-5" data-account-key="@accountAccess.awsAccount.authConfigKey">
                 <div class="card-content card-content--aws-account-header @displayColour(displayMode) darken-4 white-text">
-                    @if(allowFavs) {
+                    @if(favourites.isDefined) {
                         <button name="account" value="@accountAccess.awsAccount.authConfigKey" class="right card-content--aws-account-header__button--favourite">
-                            @if(accountAccess.isFavourite) {
+                            @if(isFavourite(accountAccess.awsAccount, favourites)) {
                                 <i class="small material-icons star">star</i>
                             } else {
                                 <i class="small material-icons star">star_border</i>

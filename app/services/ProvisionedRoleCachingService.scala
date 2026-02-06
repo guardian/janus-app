@@ -29,7 +29,7 @@ import scala.concurrent.duration.FiniteDuration
   * [[ProvisionedRole]].
   */
 trait ProvisionedRoleFinder {
-  def getIamRolesByProvisionedRole(role: ProvisionedRole): List[IamRoleInfo]
+  def getIamRoles(): List[IamRoleInfo]
 }
 
 /** For use where we want to know the status of the [[ProvisionedRole]] data
@@ -119,13 +119,14 @@ class ProvisionedRoleCachingService(
     } else
       Stream.eval(logger.warn("Provisioned role caching has been disabled!"))
 
-  override def getIamRolesByProvisionedRole(
-      role: ProvisionedRole
-  ): List[IamRoleInfo] =
-    ProvisionedRoles.getIamRolesByProvisionedRole(
-      cache.readOnlySnapshot().toMap,
-      role
-    )
+  override def getIamRoles(): List[IamRoleInfo] =
+    cache
+      .readOnlySnapshot()
+      .toMap
+      .values
+      .flatMap(_.roleSnapshot)
+      .flatMap(_.roles)
+      .toList
 
   override def getCacheStatus: Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
     cache.readOnlySnapshot().toMap
