@@ -63,11 +63,6 @@ case class AwsAccount(
       */
     authConfigKey: String
 )
-case class AwsAccountAccess(
-    awsAccount: AwsAccount,
-    permissions: List[Permission],
-    isFavourite: Boolean
-)
 
 case class Permission(
     account: AwsAccount,

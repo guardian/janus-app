@@ -1,6 +1,7 @@
 package models
 
 import com.gu.googleauth.UserIdentity
+import com.gu.janus.model.{AwsAccount, Permission}
 import play.api.http.Status.{
   BAD_REQUEST,
   FORBIDDEN,
@@ -15,6 +16,12 @@ enum AccountConfigStatus:
   case ConfigSuccess
   case ConfigWarn(accounts: Set[String])
   case ConfigError(accounts: Set[String])
+
+case class AwsAccountAccess(
+    awsAccount: AwsAccount,
+    permissions: List[Permission],
+    isFavourite: Boolean
+)
 
 enum DisplayMode:
   case Normal, Spooky, Festive
