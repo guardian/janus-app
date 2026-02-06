@@ -4,14 +4,15 @@ import aws.{AuditTrailDB, Federation}
 import cats.syntax.all.*
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.*
-import com.gu.playpasskeyauth.services.PasskeyRepository
+import com.gu.playpasskeyauth.PasskeyAuth
+import com.gu.playpasskeyauth.models.UserId
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.AccountOrdering.orderedAccountAccess
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
-import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator, PasskeyRequest}
+import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator, PasskeyMetadata, PasskeyRequest}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.DeveloperPolicyFinder
@@ -21,7 +22,8 @@ import software.amazon.awssdk.services.sts.model.Credentials
 
 import java.time.*
 import java.time.format.DateTimeFormatter
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.util.{Failure, Success, Try}
 
 class Janus(
     janusData: JanusData,
@@ -30,10 +32,10 @@ class Janus(
     passkeyAuthAction: ActionBuilder[PasskeyRequest, AnyContent],
     host: String,
     stsClient: StsClient,
-    passkeyDb: PasskeyRepository,
     configuration: Configuration,
     passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
+    passkeyAuth: PasskeyAuth[UserIdentity, AnyContent]
     developerPolicyFinder: DeveloperPolicyFinder
 )(using
     dynamodDB: DynamoDbClient,
@@ -163,27 +165,29 @@ class Janus(
           DateTimeFormatter.ofPattern("d MMM yyyy HH:mm:ss XXXXX")
         )
 
-      // TODO
-//      Try(
-//        Await.result(
-//          for {
-//            passkeys <- passkeyDb
-//              .listPasskeys(UserId.from(request.user))
-//              .map(_.map(PasskeyMetadata.fromPasskeyInfo))
-//          } yield views.html.userAccount(
-//            request.user,
-//            janusData,
-//            passkeys,
-//            dateFormat,
-//            timeFormat,
-//            passkeysEnablingCookieName,
-//            passkeysManagerLink(configuration),
-//            passkeysManagerLinkText(configuration)
-//          ),
-//          scala.concurrent.duration.Duration.Inf
-//        )
-//      )
-      ???
+      futureToTry(
+        for {
+          passkeys <- passkeyAuth.verificationService
+            .listPasskeys(UserId(request.user.username))
+            .map(
+              _.map(passkey =>
+                PasskeyMetadata.fromPasskeyInfo(
+                  passkey,
+                  passkeyAuthenticatorMetadata.get(passkey.aaguid)
+                )
+              )
+            )
+        } yield views.html.userAccount(
+          request.user,
+          janusData,
+          passkeys,
+          dateFormat,
+          timeFormat,
+          passkeysEnablingCookieName,
+          passkeysManagerLink(configuration),
+          passkeysManagerLinkText(configuration)
+        )
+      )
     }
   }
 
@@ -371,5 +375,10 @@ class Janus(
         permission.account -> credentials
       })
       .sequence
+  }
+
+  private def futureToTry[A](fa: => Future[A]): Try[A] = {
+    val fta = fa.map(a => Success(a)).recover(err => Failure(err))
+    Await.result(fta, scala.concurrent.duration.Duration.Inf)
   }
 }

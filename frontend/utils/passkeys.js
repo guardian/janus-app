@@ -407,7 +407,8 @@ export async function deletePasskey(passkeyId, csrfToken) {
       );
     }
 
-    return await response.json();
+    // 204 response has no body so return null
+    return null;
   } catch (error) {
     console.error("Error deleting passkey:", error);
     displayToast(`Error deleting passkey: ${error.message}`, messageType.error);

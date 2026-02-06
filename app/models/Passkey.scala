@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.gu.googleauth.UserIdentity
-import com.gu.playpasskeyauth.models.PasskeyInfo
+import com.gu.playpasskeyauth.models.{Passkey, PasskeyInfo}
 import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
 import com.webauthn4j.data.*
 import com.webauthn4j.data.attestation.authenticator.AAGUID
@@ -30,14 +30,17 @@ case class PasskeyMetadata(
 )
 
 object PasskeyMetadata {
-  def fromPasskeyInfo(info: PasskeyInfo) =
+  def fromPasskeyInfo(
+      info: PasskeyInfo,
+      authenticator: Option[PasskeyAuthenticator]
+  ) =
     PasskeyMetadata(
       id = info.id.toBase64Url,
       name = info.name.value,
       registrationTime = info.createdAt,
-      aaguid = AAGUID.NULL,
+      aaguid = info.aaguid,
       lastUsedTime = info.lastUsedAt,
-      authenticator = None
+      authenticator
     )
 }
 
