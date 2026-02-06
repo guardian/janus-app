@@ -1,6 +1,7 @@
 package models
 
 import com.gu.janus.model.{AwsAccount, Permission}
+import logic.ProvisionedRoles
 import software.amazon.awssdk.arns.Arn
 
 import java.time.Instant
@@ -22,21 +23,26 @@ import scala.util.Try
   */
 case class IamRoleInfo(
     roleArn: Arn,
+    roleName: String,
     provisionedRoleTagValue: String,
     friendlyName: Option[String],
     description: Option[String],
     account: AwsAccount
-)
+) {
+  val slug: String = ProvisionedRoles.iamRoleInfoSlug(roleName, account)
+}
 
 object IamRoleInfo {
   def apply(
       roleArnString: String,
+      roleName: String,
       provisionedRoleTagValue: String,
       friendlyName: Option[String],
       description: Option[String],
       account: AwsAccount
   ): IamRoleInfo = IamRoleInfo(
     Arn.fromString(roleArnString),
+    roleName,
     provisionedRoleTagValue,
     friendlyName,
     description,
