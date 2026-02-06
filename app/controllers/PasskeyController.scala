@@ -4,13 +4,12 @@ import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.JanusData
 import com.gu.playpasskeyauth.PasskeyAuth
 import com.gu.playpasskeyauth.models.UserId
-import logic.Passkey.futureToTry
 import logic.UserAccess.hasAccess
 import models.JanusException
 import play.api.mvc.*
 import play.api.{Logging, Mode}
 
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
@@ -37,23 +36,20 @@ class PasskeyController(
     * @return
     *   Authentication options containing credentials and challenge data
     */
-  def preRegistrationAuthenticationOptions: Action[Unit] = authAction(
-    parse.empty
-  ) { request =>
-    apiResponse(
-      for {
-        _ <- verifyHasAccess(request.user)
-        options <- futureToTry(
-          passkeyAuth.verificationService.buildAuthenticationOptions(
-            UserId(request.user.username)
-          )
+  def preRegistrationAuthenticationOptions: Action[Unit] =
+    authAction(parse.empty).async { request =>
+      (for {
+        _ <- Future.successful(verifyHasAccess(request.user))
+        options <- passkeyAuth.verificationService.buildAuthenticationOptions(
+          UserId(request.user.username)
         )
         _ = logger.info(
           s"Created registration authentication options for user ${request.user.username}"
         )
-      } yield options
-    )
-  }
+      } yield apiResponse(Success(options))).recover { case err =>
+        apiResponse(Failure(err))
+      }
+    }
 
   def registrationOptions: Action[Unit] =
     passkeyAuth.controller().creationOptions
