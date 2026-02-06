@@ -85,7 +85,7 @@ class AppComponents(context: ApplicationLoader.Context)
       DynamoDbClient.builder().region(EU_WEST_1).build()
     else Clients.localDb
 
-  val dynamoDbAsync: DynamoDbAsyncClient =
+  private val dynamoDbAsync: DynamoDbAsyncClient =
     if (context.environment.mode == play.api.Mode.Prod)
       Clients.dynamoDbAsync
     else Clients.localDbAsync
@@ -137,7 +137,7 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
 
-  val userExtractor: UserExtractor[UserIdentity, UserIdentityRequest] =
+  private val userExtractor: UserExtractor[UserIdentity, UserIdentityRequest] =
     new UserExtractor[UserIdentity, UserIdentityRequest] {
       def extractUser[A](request: UserIdentityRequest[A]): UserIdentity =
         request.user
@@ -202,20 +202,13 @@ class AppComponents(context: ApplicationLoader.Context)
     registrationRedirect = routes.Janus.userAccount
   )
 
-//  private val passkeyAuth = PasskeyAuthSimple(
-//      appName = host,
-//      appOrigin = URI.create(host),
-//    passkeyRepo,
-//    challengeRepo = new DynamoPasskeyChallengeRepository(dynamoDbAsync)
-//  )
-
-//  private val passkeyVerificationAction =
-//    new ConditionalPasskeyVerificationAction(
-//      passkeysEnabled,
-//      passkeysEnablingCookieName,
-//      authAction,
-//      passkeyAuth.verificationAction()
-//    )
+  private val passkeyVerificationAction =
+    new ConditionalPasskeyVerificationAction(
+      passkeysEnabled,
+      passkeysEnablingCookieName,
+      authAction,
+      passkeyAuth.verificationAction()
+    )
 
   override def router: Router = new Routes(
     httpErrorHandler,
@@ -223,7 +216,7 @@ class AppComponents(context: ApplicationLoader.Context)
       janusData,
       controllerComponents,
       authAction,
-      passkeyAuth.verificationAction(),
+      passkeyVerificationAction,
       host,
       Clients.stsClient,
       configuration,
