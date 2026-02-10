@@ -1,8 +1,8 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, ACLEntry, AwsAccount, Permission, SupportACL}
-import models.{AwsAccountAccess, IamRoleInfo}
+import com.gu.janus.model.{ACL, ACLEntry, AccessClass, AwsAccount, Permission, SupportACL}
+import models.{AccountAccess, AwsAccountAccess, IamRoleInfo}
 
 import java.time.Instant
 
@@ -175,7 +175,7 @@ object UserAccess {
       adminACL: ACL,
       supportACL: SupportACL,
       provisionedRoles: List[IamRoleInfo]
-  ): Set[Permission] = {
+  ): Map[AwsAccount, AccountAccess] = {
     val access =
       userAccess(username, acl, provisionedRoles).getOrElse(Set.empty)
     val adminAccess =
@@ -183,15 +183,19 @@ object UserAccess {
     val supportAccess =
       userSupportAccess(username, date, supportACL).getOrElse(Set.empty)
 
-    // just the permissions from each source for now - TODO: extend to include provisioned roles support
-    access.flatMap(_.permissions) ++
-      adminAccess.flatMap(_.permissions) ++
-      supportAccess.flatMap(_.permissions)
+    (access ++ adminAccess ++ supportAccess).groupBy(_.awsAccount)
+      .map { case (account, accesses) =>
+        AwsAccountAccess(
+          account,
+          accesses.flatMap(_.permissions).toList,
+          accesses.flatMap(_.iamRoles).toList
+        )
+      }.toSet
   }
 
   /** Check if the provider user has been granted this permission.
-    *
-    * TODO: extend this to include provisioned roles support
+   * 
+   * TODO: have this check for externality at the same time, and return it
     */
   def checkUserPermission(
       username: String,
@@ -199,11 +203,20 @@ object UserAccess {
       date: Instant,
       acl: ACL,
       adminACL: ACL,
-      supportACL: SupportACL
-  ): Option[Permission] = {
-    allUserPermissions(username, date, acl, adminACL, supportACL, Nil).find(
-      _.id == permissionId
-    )
+      supportACL: SupportACL,
+      iamRoles: List[IamRoleInfo]
+  ): Option[(Permission, AccessClass)] = {
+    allUserPermissions(username, date, acl, adminACL, supportACL, Nil)
+      .flatMap { awsAccountAccess =>
+        val maybeMatchingPermission =
+          awsAccountAccess.permissions
+            .find(_.id == permissionId)
+        val maybeMatchingPermissionFromRole = awsAccountAccess.iamRoles
+          .map(_.asPermission)
+          .find(_.id == permissionId)
+        maybeMatchingPermission.orElse(maybeMatchingPermissionFromRole)
+      }
+      .headOption
   }
 
   /** Check if the user has explicit access to this permission granted in the

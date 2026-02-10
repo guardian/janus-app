@@ -13,9 +13,9 @@ object AccountOrdering {
     * layout), then adds the favourites to the front in the user's order.
     */
   def orderedAccountAccess(
-      permissions: Set[AwsAccountAccess],
+      permissions: Map[AwsAccount, AccountAccess],
       favourites: List[String] = Nil
-  ): List[AwsAccountAccess] = {
+  ): List[(AwsAccount, AccountAccess)] = {
     permissions
       .groupBy(_.awsAccount)
       .toList

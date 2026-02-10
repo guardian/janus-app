@@ -293,13 +293,14 @@ class Janus(
   ): Option[(Credentials, Permission)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
-      permission <- checkUserPermission(
+      (permission, accessClass) <- checkUserPermission(
         username(user),
         permissionId,
         Instant.now(),
         janusData.access,
         janusData.admin,
-        janusData.support
+        janusData.support,
+        iamRoles
       )
       duration = Federation.duration(
         permission,
@@ -307,12 +308,6 @@ class Janus(
         tzOffset.map(Clock.system)
       )
       roleArn = Config.roleArn(permission.account.authConfigKey, configuration)
-      isExternalAccess = hasExplicitAccess(
-        username(user),
-        permission,
-        janusData.access,
-        iamRoles
-      )
       credentials = Federation.assumeRole(
         username(user),
         roleArn,
@@ -325,7 +320,7 @@ class Janus(
         permission,
         accessType,
         duration,
-        isExternalAccess
+        accessClass
       )
       _ = AuditTrailDB.insert(auditLog)
     } yield {

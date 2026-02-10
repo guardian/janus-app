@@ -17,8 +17,7 @@ enum AccountConfigStatus:
   case ConfigWarn(accounts: Set[String])
   case ConfigError(accounts: Set[String])
 
-case class AwsAccountAccess(
-    awsAccount: AwsAccount,
+case class AccountAccess(
     permissions: List[Permission],
     iamRoles: List[IamRoleInfo]
 )

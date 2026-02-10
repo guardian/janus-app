@@ -30,6 +30,15 @@ case class IamRoleInfo(
     account: AwsAccount
 ) {
   val slug: String = ProvisionedRoles.iamRoleInfoSlug(roleName, account)
+
+  def asPermission: Permission = {
+    Permission.fromManagedPolicyArns(
+      account,
+      slug,
+      description.getOrElse(friendlyName.getOrElse("No description")),
+      List(roleArn.toString)
+    )
+  }
 }
 
 object IamRoleInfo {

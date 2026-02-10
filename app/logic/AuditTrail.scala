@@ -1,7 +1,7 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, AuditLog, JanusAccessType, Permission}
+import com.gu.janus.model.{ACL, AccessClass, AuditLog, JanusAccessType, Permission}
 import logic.UserAccess.{hasExplicitAccess, username}
 import models.IamRoleInfo
 import play.api.Logging
@@ -84,8 +84,9 @@ object AuditTrail extends Logging {
       permission: Permission,
       janusAccessType: JanusAccessType,
       duration: Duration,
-      isExternalAccess: Boolean
-  ): AuditLog =
+      accessClass: AccessClass
+  ): AuditLog = {
+    val isExternalAccess = accessClass != AccessClass.Direct
     AuditLog(
       permission.account.authConfigKey,
       username(user),
@@ -95,6 +96,7 @@ object AuditTrail extends Logging {
       janusAccessType,
       isExternalAccess
     )
+  }
 
   /** Extract nice error message from db conversion.
     */
