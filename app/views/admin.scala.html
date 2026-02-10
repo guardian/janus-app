@@ -1,9 +1,9 @@
 @import com.gu.googleauth.UserIdentity
-@import com.gu.janus.model.JanusData
-@import models.AwsAccountAccess
+@import com.gu.janus.model.{JanusData, AwsAccount}
+@import models.AccountAccess
 @import play.api.Mode
 
-@(accountAccesses: List[AwsAccountAccess], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountAccesses: List[(AwsAccount, AccountAccess)], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Admin", Some(user), janusData) {
     <div class="container">

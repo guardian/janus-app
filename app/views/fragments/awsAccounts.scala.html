@@ -1,31 +1,32 @@
-@import models.AwsAccountAccess
+@import com.gu.janus.model.{JanusData, AwsAccount}
+@import models.AccountAccess
 @import logic.Customisation.displayColour
 @import logic.AccountOrdering.isFavourite
 @import models.DisplayMode
 @import models.DisplayMode.*
 
-@(accountAccesses: List[AwsAccountAccess], favourites: Option[List[String]] = None, displayMode: DisplayMode = Normal)
+@(accountAccesses: List[(AwsAccount, AccountAccess)], favourites: Option[List[String]] = None, displayMode: DisplayMode = Normal)
 
 <div class="row">
-    @for((accountAccess, i) <- accountAccesses.zipWithIndex) {
+    @for(((awsAccount, accountAccess), i) <- accountAccesses.zipWithIndex) {
         @if((i % 2) == 0 && i > 0) {
 </div>
 <div class="row">
         }
 
         <div class="col s12 m6">
-            <div class="card card--aws-account @displayColour(displayMode) lighten-5" data-account-key="@accountAccess.awsAccount.authConfigKey">
+            <div class="card card--aws-account @displayColour(displayMode) lighten-5" data-account-key="@awsAccount.authConfigKey">
                 <div class="card-content card-content--aws-account-header @displayColour(displayMode) darken-4 white-text">
                     @if(favourites.isDefined) {
-                        <button name="account" value="@accountAccess.awsAccount.authConfigKey" class="right card-content--aws-account-header__button--favourite">
-                            @if(isFavourite(accountAccess.awsAccount, favourites)) {
+                        <button name="account" value="@awsAccount.authConfigKey" class="right card-content--aws-account-header__button--favourite">
+                            @if(isFavourite(awsAccount, favourites)) {
                                 <i class="small material-icons star">star</i>
                             } else {
                                 <i class="small material-icons star">star_border</i>
                             }
                         </button>
                     }
-                    <span class="card-title card-content--aws-account-header__title">@accountAccess.awsAccount.name</span>
+                    <span class="card-title card-content--aws-account-header__title">@awsAccount.name</span>
                 </div>
                 <div class="aws-account-body">
                 @for(permission <- accountAccess.permissions) {
@@ -71,7 +72,7 @@
                 }
                 </div>
                 <div class="card-action card-action--audit-log">
-                    <a class="grey-text darken-2" href="/audit/account/@accountAccess.awsAccount.authConfigKey">View audit trail <i class="material-icons">assignment</i></a>
+                    <a class="grey-text darken-2" href="/audit/account/@awsAccount.authConfigKey">View audit trail <i class="material-icons">assignment</i></a>
                 </div>
             </div>
         </div>

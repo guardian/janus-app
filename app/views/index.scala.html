@@ -1,11 +1,11 @@
 @import com.gu.googleauth.UserIdentity
-@import com.gu.janus.model.JanusData
-@import models.AwsAccountAccess
+@import com.gu.janus.model.{JanusData, AwsAccount}
+@import models.AccountAccess
 @import helper.*
 @import models.DisplayMode
 @import play.api.Mode
 
-@(accountAccesses: List[AwsAccountAccess], favourites: List[String], user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountAccesses: List[(AwsAccount, AccountAccess)], favourites: List[String], user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Your permissions", Some(user), janusData, displayMode) {
     <div class="container">

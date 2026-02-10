@@ -1,7 +1,7 @@
 package logic
 
 import com.gu.janus.model.{AwsAccount, Permission}
-import models.AwsAccountAccess
+import models.AccountAccess
 
 object AccountOrdering {
 
@@ -16,17 +16,16 @@ object AccountOrdering {
       permissions: Map[AwsAccount, AccountAccess],
       favourites: List[String] = Nil
   ): List[(AwsAccount, AccountAccess)] = {
-    permissions
-      .groupBy(_.awsAccount)
-      .toList
+    permissions.toList
       .sortBy { case (acct, _) => acct.name.toLowerCase }
-      .sortBy { case (_, perms) => perms.size * -1 }
+      .sortBy { case (_, access) =>
+        (access.permissions.size + access.iamRoles.size) * -1
+      }
       .sortBy { case (awsAccount, _) =>
         val favIndex = favourites.indexOf(awsAccount.authConfigKey)
         if (favIndex < 0) favIndex + favourites.size + 1
         else favIndex
       }
-      .flatMap(_._2)
   }
 
   /** 'dev' then then alphabetical 'others', finally 'cloudformation' (admin)

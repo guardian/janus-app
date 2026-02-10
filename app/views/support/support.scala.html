@@ -1,10 +1,10 @@
-@import com.gu.janus.model.JanusData
-@import models.AwsAccountAccess
+@import com.gu.janus.model.{JanusData, AwsAccount}
+@import models.AccountAccess
 @import com.gu.googleauth.UserIdentity
 @import play.api.Mode
 @import java.time.Instant
 
-@(accountAccesses: List[AwsAccountAccess],
+@(accountAccesses: List[(AwsAccount, AccountAccess)],
   activeSupportUsers: Option[(Instant, (Option[String], Option[String]))],
     nextSupportUsers: Option[(Instant, (Option[String], Option[String]))],
   futureSupportDates: List[(Instant, String)], user: UserIdentity, janusData: JanusData

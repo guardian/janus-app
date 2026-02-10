@@ -1,8 +1,8 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, ACLEntry, AccessClass, AwsAccount, Permission, SupportACL}
-import models.{AccountAccess, AwsAccountAccess, IamRoleInfo}
+import com.gu.janus.model.*
+import models.{AccountAccess, IamRoleInfo}
 
 import java.time.Instant
 
@@ -22,7 +22,7 @@ object UserAccess {
       username: String,
       acl: ACL,
       provisionedRoles: List[IamRoleInfo]
-  ): Option[Set[AwsAccountAccess]] = {
+  ): Option[Map[AwsAccount, AccountAccess]] = {
     acl.userAccess
       .get(username)
       .map { aclEntry =>
@@ -35,12 +35,11 @@ object UserAccess {
         allMentionedAccounts.map { account =>
           val permsForAccount = permissions.filter(_.account == account)
           val rolesForAccount = roles.filter(_.account == account)
-          AwsAccountAccess(
-            account,
+          account -> AccountAccess(
             permsForAccount.toList,
             rolesForAccount.toList
           )
-        }
+        }.toMap
       }
   }
 
@@ -76,15 +75,14 @@ object UserAccess {
       username: String,
       date: Instant,
       supportACL: SupportACL
-  ): Option[Set[AwsAccountAccess]] = {
+  ): Option[Map[AwsAccount, AccountAccess]] = {
     if (isSupportUser(username, date, supportACL))
       Some(
         supportACL.supportAccess
           .groupBy(_.account)
           .map { case (account, permissions) =>
-            AwsAccountAccess(account, permissions.toList, Nil)
+            account -> AccountAccess(permissions.toList, Nil)
           }
-          .toSet
       )
     else None
   }
@@ -165,8 +163,6 @@ object UserAccess {
 
   /** Combine a user's permissions from all sources to work out everything they
     * can do.
-    *
-    * TODO: extend this to include provisioned roles support
     */
   def allUserPermissions(
       username: String,
@@ -177,25 +173,29 @@ object UserAccess {
       provisionedRoles: List[IamRoleInfo]
   ): Map[AwsAccount, AccountAccess] = {
     val access =
-      userAccess(username, acl, provisionedRoles).getOrElse(Set.empty)
+      userAccess(username, acl, provisionedRoles).getOrElse(Map.empty)
     val adminAccess =
-      userAccess(username, adminACL, provisionedRoles).getOrElse(Set.empty)
+      userAccess(username, adminACL, provisionedRoles).getOrElse(Map.empty)
     val supportAccess =
-      userSupportAccess(username, date, supportACL).getOrElse(Set.empty)
+      userSupportAccess(username, date, supportACL).getOrElse(Map.empty)
 
-    (access ++ adminAccess ++ supportAccess).groupBy(_.awsAccount)
-      .map { case (account, accesses) =>
-        AwsAccountAccess(
-          account,
-          accesses.flatMap(_.permissions).toList,
-          accesses.flatMap(_.iamRoles).toList
-        )
-      }.toSet
+    // combines these sources, merging permissions and roles from the three sources, for each account
+    (access.keySet ++ adminAccess.keySet ++ supportAccess.keySet).map {
+      account =>
+        val permissions =
+          access.get(account).map(_.permissions).getOrElse(Nil) ++
+            adminAccess.get(account).map(_.permissions).getOrElse(Nil) ++
+            supportAccess.get(account).map(_.permissions).getOrElse(Nil)
+        val roles = access.get(account).map(_.iamRoles).getOrElse(Nil) ++
+          adminAccess.get(account).map(_.iamRoles).getOrElse(Nil) ++
+          supportAccess.get(account).map(_.iamRoles).getOrElse(Nil)
+        account -> AccountAccess(permissions, roles)
+    }.toMap
   }
 
   /** Check if the provider user has been granted this permission.
-   * 
-   * TODO: have this check for externality at the same time, and return it
+    *
+    * TODO: have this check for externality at the same time, and return it
     */
   def checkUserPermission(
       username: String,
@@ -206,23 +206,28 @@ object UserAccess {
       supportACL: SupportACL,
       iamRoles: List[IamRoleInfo]
   ): Option[(Permission, AccessClass)] = {
-    allUserPermissions(username, date, acl, adminACL, supportACL, Nil)
-      .flatMap { awsAccountAccess =>
-        val maybeMatchingPermission =
-          awsAccountAccess.permissions
-            .find(_.id == permissionId)
-        val maybeMatchingPermissionFromRole = awsAccountAccess.iamRoles
-          .map(_.asPermission)
+    val permission = allUserPermissions(
+      username,
+      date,
+      acl,
+      adminACL,
+      supportACL,
+      Nil
+    ).flatMap { (awsAccount, accountAccess) =>
+      val maybeMatchingPermission =
+        accountAccess.permissions
           .find(_.id == permissionId)
-        maybeMatchingPermission.orElse(maybeMatchingPermissionFromRole)
-      }
-      .headOption
+      val maybeMatchingPermissionFromRole = accountAccess.iamRoles
+        .map(_.asPermission)
+        .find(_.id == permissionId)
+      maybeMatchingPermission.orElse(maybeMatchingPermissionFromRole)
+    }.headOption
+    // TODO: calculate the access class instead of hard-coding this
+    permission.map(_ -> AccessClass.Direct)
   }
 
   /** Check if the user has explicit access to this permission granted in the
     * Access.scala file.
-    *
-    * TODO: extend this to include provisioned roles support
     */
   def hasExplicitAccess(
       username: String,
@@ -231,7 +236,11 @@ object UserAccess {
       provisionedRoles: List[IamRoleInfo]
   ): Boolean = {
     userAccess(username, acl, Nil)
-      .getOrElse(Set.empty)
-      .exists(_.permissions.contains(permission))
+      .getOrElse(Map.empty)
+      .exists { case (account, accountAccess) =>
+        account == permission.account &&
+        (accountAccess.permissions.contains(permission) ||
+          accountAccess.iamRoles.exists(_.asPermission == permission))
+      }
   }
 }

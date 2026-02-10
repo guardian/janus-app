@@ -1,7 +1,13 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, AccessClass, AuditLog, JanusAccessType, Permission}
+import com.gu.janus.model.{
+  ACL,
+  AccessClass,
+  AuditLog,
+  JanusAccessType,
+  Permission
+}
 import logic.UserAccess.{hasExplicitAccess, username}
 import models.IamRoleInfo
 import play.api.Logging
