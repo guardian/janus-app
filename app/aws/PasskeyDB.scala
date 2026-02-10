@@ -1,5 +1,6 @@
 package aws
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import cats.implicits.catsSyntaxMonadError
 import com.gu.googleauth.UserIdentity
 import com.webauthn4j.converter.AttestedCredentialDataConverter
@@ -57,14 +58,14 @@ object PasskeyDB {
       ),
       "attestationStatement" -> AttributeValue.fromS(
         Base64UrlUtil.encodeToString(
-          objConverter.getCborConverter.writeValueAsBytes(
+          objConverter.getCborMapper.writeValueAsBytes(
             credentialRecord.getAttestationStatement
           )
         )
       ),
       "authenticatorExtensions" -> AttributeValue.fromS(
         Base64UrlUtil.encodeToString(
-          objConverter.getCborConverter.writeValueAsBytes(
+          objConverter.getCborMapper.writeValueAsBytes(
             credentialRecord.getAuthenticatorExtensions
           )
         )
@@ -117,7 +118,7 @@ object PasskeyDB {
   ): Try[CredentialRecord] = {
     if (response.hasItem) {
       val item = response.item()
-      val attestationStmt = objConverter.getCborConverter.readValue(
+      val attestationStmt = objConverter.getCborMapper.readValue(
         Base64UrlUtil.decode(item.get("attestationStatement").s()),
         classOf[NoneAttestationStatement]
       )
@@ -125,7 +126,7 @@ object PasskeyDB {
       val credentialData = credentialDataConverter.convert(
         Base64UrlUtil.decode(item.get("credential").s())
       )
-      val authExts = objConverter.getCborConverter.readValue(
+      val authExts = objConverter.getCborMapper.readValue(
         Base64UrlUtil.decode(item.get("authenticatorExtensions").s()),
         classOf[AuthenticationExtensionsAuthenticatorOutputs[
           RegistrationExtensionAuthenticatorOutput
