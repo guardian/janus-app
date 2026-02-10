@@ -84,8 +84,7 @@ object AuditTrail extends Logging {
       permission: Permission,
       janusAccessType: JanusAccessType,
       duration: Duration,
-      acl: ACL,
-      iamRoles: List[IamRoleInfo]
+      isExternalAccess: Boolean
   ): AuditLog =
     AuditLog(
       permission.account.authConfigKey,
@@ -94,7 +93,7 @@ object AuditTrail extends Logging {
       duration,
       permission.label,
       janusAccessType,
-      !hasExplicitAccess(username(user), permission, acl, iamRoles)
+      isExternalAccess
     )
 
   /** Extract nice error message from db conversion.

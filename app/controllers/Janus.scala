@@ -161,14 +161,13 @@ class Janus(
 
   def consoleLogin(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
-      val iamRoles = provisionedRoleFinder.getIamRoles()
       (for {
         (credentials, _) <- assumeRole(
           request.user,
           permissionId,
           JConsole,
           Customisation.durationParams(request),
-          iamRoles
+          provisionedRoleFinder.getIamRoles()
         )
         loginUrl = Federation.generateLoginUrl(credentials, host)
       } yield {
@@ -184,14 +183,13 @@ class Janus(
 
   def consoleUrl(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
-      val iamRoles = provisionedRoleFinder.getIamRoles()
       (for {
         (credentials, permission) <- assumeRole(
           request.user,
           permissionId,
           JConsole,
           Customisation.durationParams(request),
-          iamRoles
+          provisionedRoleFinder.getIamRoles()
         )
         loginUrl = Federation.generateLoginUrl(credentials, host)
       } yield {
@@ -215,14 +213,13 @@ class Janus(
 
   def credentials(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
-      val iamRoles = provisionedRoleFinder.getIamRoles()
       (for {
         (credentials, permission) <- assumeRole(
           request.user,
           permissionId,
           JCredentials,
           Customisation.durationParams(request),
-          iamRoles
+          provisionedRoleFinder.getIamRoles()
         )
       } yield {
         Ok(
@@ -310,6 +307,12 @@ class Janus(
         tzOffset.map(Clock.system)
       )
       roleArn = Config.roleArn(permission.account.authConfigKey, configuration)
+      isExternalAccess = hasExplicitAccess(
+        username(user),
+        permission,
+        janusData.access,
+        iamRoles
+      )
       credentials = Federation.assumeRole(
         username(user),
         roleArn,
@@ -322,8 +325,7 @@ class Janus(
         permission,
         accessType,
         duration,
-        janusData.access,
-        iamRoles
+        isExternalAccess
       )
       _ = AuditTrailDB.insert(auditLog)
     } yield {
