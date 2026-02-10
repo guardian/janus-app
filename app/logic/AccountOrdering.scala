@@ -1,6 +1,7 @@
 package logic
 
-import com.gu.janus.model.{AwsAccountAccess, Permission}
+import com.gu.janus.model.Permission
+import models.AwsAccountAccess
 
 object AccountOrdering {
 
