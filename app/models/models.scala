@@ -22,6 +22,10 @@ case class AccountAccess(
     iamRoles: List[IamRoleInfo]
 )
 
+enum AccessClass {
+  case Direct, Admin, Support
+}
+
 enum DisplayMode:
   case Normal, Spooky, Festive
 

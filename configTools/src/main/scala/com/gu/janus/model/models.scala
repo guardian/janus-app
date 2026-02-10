@@ -188,10 +188,6 @@ object JanusAccessType {
   }
 }
 
-enum AccessClass {
-  case Direct, Admin, Support
-}
-
 case class AuditLog(
     account: String,
     username: String,

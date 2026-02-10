@@ -2,7 +2,7 @@ package logic
 
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.*
-import models.{AccountAccess, IamRoleInfo}
+import models.{AccessClass, AccountAccess, IamRoleInfo}
 
 import java.time.Instant
 

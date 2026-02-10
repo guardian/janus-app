@@ -1,15 +1,9 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{
-  ACL,
-  AccessClass,
-  AuditLog,
-  JanusAccessType,
-  Permission
-}
+import com.gu.janus.model.{ACL, AuditLog, JanusAccessType, Permission}
 import logic.UserAccess.{hasExplicitAccess, username}
-import models.IamRoleInfo
+import models.{AccessClass, IamRoleInfo}
 import play.api.Logging
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
