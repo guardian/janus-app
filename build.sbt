@@ -8,7 +8,7 @@ import sbtversionpolicy.withsbtrelease.ReleaseVersion
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.41.10"
+val awsSdkVersion = "2.41.26"
 val circeVersion = "0.14.15"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
