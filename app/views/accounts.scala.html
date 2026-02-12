@@ -1,11 +1,11 @@
 @import com.gu.googleauth.UserIdentity
-@import com.gu.janus.model.{AwsAccount, JanusData, Permission}
-@import logic.ViewHelpers
+@import com.gu.janus.model.JanusData
 @import models.AccountInfo
 @import play.api.Mode
 
-@import scala.util.{Failure, Success, Try}
-@(accountOwners: Set[AccountInfo], provisionedRoleServiceEnabled: Boolean, user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@import scala.util.{Failure, Success}
+
+@(accountOwners: Set[AccountInfo], developerPolicyCachingServiceEnabled: Boolean, user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Accounts", Some(user), janusData) {
     <div class="container">
@@ -32,14 +32,14 @@
                     Owners
                 </th>
                 <th class="right-align">
-                    Roles
+                    Developer Policies
                 </th>
                 <th class="right-align">
                     Audit Trail
                 </th>
             </tr>
 
-            @for(AccountInfo(account, owners, accountNumberTry, rolesStatuses, rolesError) <- accountOwners.toList.sortBy(_.account.name)) {
+            @for(AccountInfo(account, owners, accountNumberTry, developerPolicies, policiesError) <- accountOwners.toList.sortBy(_.account.name)) {
                 <tr id="@account.authConfigKey">
                     <td>
                         @account.name
@@ -63,14 +63,14 @@
                     </td>
 
                     <td class="right-align">
-                        <a href="/roles-status/account/@account.authConfigKey">
-                            @rolesStatuses.size
+                        <a href="/policies-status/account/@account.authConfigKey">
+                            @developerPolicies.size
                             @{
-                                rolesError match {
-                                    case Some(roleErrorText) => {
-                                        <i class="error material-icons tiny minor-header-icon" title="@roleErrorText">error_outline</i>
+                                policiesError match {
+                                    case Some(policyErrorText) => {
+                                        <i class="error material-icons tiny minor-header-icon" title="@policyErrorText">error_outline</i>
                                     }
-                                    case None if provisionedRoleServiceEnabled => {
+                                    case None if developerPolicyCachingServiceEnabled => {
                                         <i class="success material-icons tiny minor-header-icon">check</i>
                                     }
                                     case None => {

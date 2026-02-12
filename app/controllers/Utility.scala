@@ -1,21 +1,11 @@
 package controllers
 
 import com.gu.googleauth.AuthAction
-import com.gu.janus.model.{AwsAccount, JanusData}
-import conf.Config
-import logic.Accounts
-import models.{
-  AwsAccountIamRoleInfoStatus,
-  IamRoleInfo,
-  IamRoleInfoSnapshot,
-  FailureSnapshot
-}
+import com.gu.janus.model.JanusData
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
-import services.ProvisionedRoleStatusManager
 
 import java.time.Duration
-import scala.util.{Success, Try}
 
 class Utility(
     janusData: JanusData,
