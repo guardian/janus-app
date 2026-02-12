@@ -1,13 +1,11 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.{AwsAccount, JanusData}
-@import logic.Date.{formatTime, formatDateTime, formatDuration}
-@import models.IamRoleInfo
+@import logic.Date.{formatDateTime, formatDuration, formatTime}
 @import play.api.Mode
-@import software.amazon.awssdk.arns.Arn
-@import scala.jdk.OptionConverters.*
 
 @import scala.concurrent.duration.FiniteDuration
-@(accountRolesAndStatus: List[(AwsAccount, AwsAccountIamRoleInfoStatus)], serviceEnabled: Boolean, refreshFrequency: FiniteDuration, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@(accountAndStatuses: List[(AwsAccount, AwsAccountDeveloperPolicyStatus)], serviceEnabled: Boolean, refreshFrequency: FiniteDuration, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main(s"Roles Status", Some(user), janusData) {
     <div class="container">
@@ -20,13 +18,13 @@
             }
         </div>
         <h1 class="header orange-text">Provisioned roles</h1>
-        @if(accountRolesAndStatus.empty) {
+        @if(accountAndStatuses.empty) {
           <p>No Accounts and Roles found</p>
         } else {
             <ul class="collection">
-                @for((account, status) <- accountRolesAndStatus) {
+                @for((account, status) <- accountAndStatuses) {
                     <li class="collection-item">
-                        @(status.roleSnapshot, status.failureStatus) match {
+                        @(status.policySnapshot, status.failureStatus) match {
                             case (_, Some(failure)) => {
                                 <div class="provisioned-roles-account-header">
                                     <span role="heading" aria-level="2">@account.name</span>
@@ -45,24 +43,24 @@
                                 </div>
                                 <div class="provisioned-role-error">
                                     <p>
-                                        Failed to load provisioned roles, role information may be out of date.
+                                        Failed to load developer policies. Policy information may be out of date.
                                     </p>
                                     <p class="grey-text">
                                         @failure.failure
                                     </p>
                                 </div>
                             }
-                            case (Some(roles), _) => {
+                            case (Some(policies), _) => {
                                 <div class="provisioned-roles-account-header">
                                     <span role="heading" aria-level="2">@account.name</span>
                                     <div class="right valign-wrapper tooltipped"
                                       data-position="bottom" data-tooltip="last updated (UTC)">
                                         <span class="provisioned-roles-account-updated grey-text">
                                             <span class="hide-on-med-and-down">
-                                                @formatDateTime(roles.timestamp)
+                                                @formatDateTime(policies.timestamp)
                                             </span>
                                             <span class="hide-on-large-only">
-                                                @formatTime(roles.timestamp)
+                                                @formatTime(policies.timestamp)
                                             </span>
                                         </span>
                                         <i class="success material-icons small">check</i>
@@ -87,18 +85,18 @@
                                     </p>
                                 } else {
                                     <p class="provisioned-role-error">
-                                        Provisioned role information is not available
+                                        Developer policy information is not available
                                           because the sync service is disabled.
                                     </p>
                                 }
                             }
                         }
 
-                        @status.roleSnapshot match {
-                            case Some(rolesStatus) if rolesStatus.roles.nonEmpty => {
+                        @status.policySnapshot match {
+                            case Some(snapshot) if snapshot.policies.nonEmpty => {
                                 <ul class="provisioned-roles-container">
-                                    @for(role <- rolesStatus.roles) {
-                                        @fragments.roleList(role)
+                                    @for(policy <- snapshot.policies) {
+                                        @fragments.developerPolicyList(policy)
                                     }
                                 </ul>
                             }

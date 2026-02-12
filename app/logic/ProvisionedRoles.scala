@@ -1,69 +1,70 @@
 package logic
 
 import com.gu.janus.model.{AwsAccount, ProvisionedRole}
-import models.{AwsAccountIamRoleInfoStatus, IamRoleInfo}
-import software.amazon.awssdk.services.iam.model.{Role, Tag}
+import models.{AwsAccountDeveloperPolicyStatus, DeveloperPolicy}
+import software.amazon.awssdk.services.iam.model.{Policy, Tag}
 
 import java.net.URLEncoder
 
-object ProvisionedRoles {
+object DeveloperPolicies {
 
-  def getIamRolesByProvisionedRole(
-      cache: Map[AwsAccount, AwsAccountIamRoleInfoStatus],
+  def getDeveloperPoliciesByProvisionedRole(
+      cache: Map[AwsAccount, AwsAccountDeveloperPolicyStatus],
       role: ProvisionedRole
-  ): List[IamRoleInfo] =
+  ): List[DeveloperPolicy] =
     cache.values
-      .flatMap(_.roleSnapshot)
-      .flatMap(_.roles)
+      .flatMap(_.policySnapshot)
+      .flatMap(_.policies)
       .filter(_.provisionedRoleTagValue == role.iamRoleTag)
       .toList
 
-  def toRoleInfo(
+  def toDeveloperPolicy(
       account: AwsAccount,
-      role: Role,
+      policy: Policy,
       tags: Set[Tag],
       provisionedRoleTagKey: String,
       friendlyNameTagKey: String,
       descriptionTagKey: String
-  ): Option[IamRoleInfo] =
+  ): Option[DeveloperPolicy] =
     for {
-      provisionedRoleTag <- tags.find(_.key() == provisionedRoleTagKey)
-    } yield IamRoleInfo(
-      roleArnString = role.arn(),
-      roleName = role.roleName(),
-      provisionedRoleTagValue = provisionedRoleTag.value(),
-      friendlyName = tags.find(_.key() == friendlyNameTagKey).map(_.value()),
-      description = tags.find(_.key() == descriptionTagKey).map(_.value()),
+      provisionedRoleTag <- tags.find(_.key == provisionedRoleTagKey)
+    } yield DeveloperPolicy(
+      policyArnString = policy.arn,
+      policyName = policy.policyName,
+      provisionedRoleTagValue = provisionedRoleTag.value,
+      friendlyName = tags.find(_.key == friendlyNameTagKey).map(_.value),
+      description = tags.find(_.key == descriptionTagKey).map(_.value),
       account
     )
 
-  /** To get a URL-safe slug for a provisioned role, we use the IAM role name.
+  /** To get a URL-safe slug for a [[DeveloperPolicy]], we use the IAM policy
+    * name.
     *
     * Janus permission IDs are created from the permission label, combined with
     * the account name. We take the same approach here, but use the (unique to
-    * each AWS account) role name.
+    * each AWS account) policy name.
     *
     * To ensure this slug does not clash with a Janus permission, we use a
-    * prefix to namespace provisioned roles.
+    * prefix to namespace developer policies.
     *
-    * We URL-encode the role name to ensure it's URL-safe while preserving
-    * uniqueness (avoiding collisions from AWS role names that differ only in
+    * We URL-encode the policy name to ensure it's URL-safe while preserving
+    * uniqueness (avoiding collisions from AWS policy names that differ only in
     * special characters like `.`, `,`, `+`, `@`, etc.).
     */
-  def iamRoleInfoSlug(
-      roleName: String,
+  def developerPolicySlug(
+      policyName: String,
       account: AwsAccount
   ): String = {
-    val encodedRoleName = URLEncoder.encode(roleName, "UTF-8")
-    s"$PROVISIONED_ROLE_NAMESPACE_PREFIX-${account.authConfigKey}-$encodedRoleName"
+    val encodedPolicyName = URLEncoder.encode(policyName, "UTF-8")
+    s"$DEVELOPER_POLICY_NAMESPACE_PREFIX-${account.authConfigKey}-$encodedPolicyName"
   }
-  private[logic] val PROVISIONED_ROLE_NAMESPACE_PREFIX = "iam-"
+  private[logic] val DEVELOPER_POLICY_NAMESPACE_PREFIX = "iam-"
 
-  /** Builds a working AWS console link from the role's ARN. These links require
-    * a valid console session.
+  /** Builds a working AWS console link from the policy's name. These links
+    * require a valid console session.
     *
-    * Note: For the link to work this role name must not be URL-encoded.
+    * Note: For the link to work this policy name must not be URL-encoded.
     */
-  def provisionedRoleLink(roleName: String): String =
-    s"https://console.aws.amazon.com/iam/home#/roles/details/$roleName"
+  def developerPolicyLink(policyName: String): String =
+    s"https://console.aws.amazon.com/iam/home#/policies/details/$policyName"
 }

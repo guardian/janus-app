@@ -2,20 +2,20 @@ package logic
 
 import com.gu.janus.model.{AwsAccount, ProvisionedRole}
 import models.{
-  AwsAccountIamRoleInfoStatus,
-  FailureSnapshot,
-  IamRoleInfo,
-  IamRoleInfoSnapshot
+  AwsAccountDeveloperPolicyStatus,
+  DeveloperPolicy,
+  DeveloperPolicySnapshot,
+  FailureSnapshot
 }
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
-import software.amazon.awssdk.services.iam.model.{Role, Tag}
+import software.amazon.awssdk.services.iam.model.{Policy, Tag}
 
 import java.time.Instant
 
-class ProvisionedRolesTest
+class DeveloperPoliciesTest
     extends AnyFreeSpec
     with Matchers
     with ScalaCheckPropertyChecks {
@@ -29,19 +29,19 @@ class ProvisionedRolesTest
   private val account =
     AwsAccount(name = "Account Name", authConfigKey = "accId")
 
-  private val role: Role =
-    Role
+  private val policy: Policy =
+    Policy
       .builder()
-      .arn("arn:aws:iam::123:role/r1")
-      .roleName("r1")
+      .arn("arn:aws:iam::123:policy/p1")
+      .policyName("p1")
       .build()
 
   private def createTag(key: String, value: String): Tag =
     Tag.builder().key(key).value(value).build()
 
-  "getIamRolesByProvisionedRole" - {
+  "getDeveloperPoliciesByProvisionedRole" - {
     "should return empty list when cache is empty" in {
-      val result = ProvisionedRoles.getIamRolesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
         Map.empty,
         ProvisionedRole("Test Role", "test-role")
       )
@@ -51,14 +51,17 @@ class ProvisionedRolesTest
 
     "should return empty list when no accounts have snapshots" in {
       val cache = Map(
-        AwsAccount("123", "acc1") -> AwsAccountIamRoleInfoStatus(None, None),
-        AwsAccount("456", "acc2") -> AwsAccountIamRoleInfoStatus(
+        AwsAccount("123", "acc1") -> AwsAccountDeveloperPolicyStatus(
+          None,
+          None
+        ),
+        AwsAccount("456", "acc2") -> AwsAccountDeveloperPolicyStatus(
           None,
           Some(FailureSnapshot("error", timestamp))
         )
       )
 
-      val result = ProvisionedRoles.getIamRolesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
         cache,
         ProvisionedRole("Test Role", "test-role")
       )
@@ -66,23 +69,23 @@ class ProvisionedRolesTest
       result shouldBe empty
     }
 
-    "should return empty list when no roles match the tag" in {
+    "should return empty list when no policies match the tag" in {
       val cache = Map(
-        AwsAccount("123", "acc") -> AwsAccountIamRoleInfoStatus(
+        AwsAccount("123", "acc") -> AwsAccountDeveloperPolicyStatus(
           Some(
-            IamRoleInfoSnapshot(
+            DeveloperPolicySnapshot(
               List(
-                IamRoleInfo(
-                  "arn:aws:iam::123:role/r1",
-                  "r1",
+                DeveloperPolicy(
+                  "arn:aws:iam::123:policy/p1",
+                  "p1",
                   "other-tag",
                   None,
                   None,
                   account
                 ),
-                IamRoleInfo(
-                  "arn:aws:iam::123:role/r2",
-                  "r2",
+                DeveloperPolicy(
+                  "arn:aws:iam::123:policy/p2",
+                  "p2",
                   "different-tag",
                   None,
                   None,
@@ -96,7 +99,7 @@ class ProvisionedRolesTest
         )
       )
 
-      val result = ProvisionedRoles.getIamRolesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
         cache,
         ProvisionedRole("Test Role", "test-role")
       )
@@ -104,57 +107,57 @@ class ProvisionedRolesTest
       result shouldBe empty
     }
 
-    "should return single matching role from single account" in {
-      val matchingRole =
-        IamRoleInfo(
-          "arn:aws:iam::123:role/r1",
-          "r1",
+    "should return single matching policy from single account" in {
+      val matchingPolicy =
+        DeveloperPolicy(
+          "arn:aws:iam::123:policy/p1",
+          "p1",
           "test-role",
           None,
           None,
           account
         )
       val cache = Map(
-        AwsAccount("123", "acc") -> AwsAccountIamRoleInfoStatus(
-          Some(IamRoleInfoSnapshot(List(matchingRole), timestamp)),
+        AwsAccount("123", "acc") -> AwsAccountDeveloperPolicyStatus(
+          Some(DeveloperPolicySnapshot(List(matchingPolicy), timestamp)),
           None
         )
       )
 
-      val result = ProvisionedRoles.getIamRolesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
         cache,
         ProvisionedRole("Test Role", "test-role")
       )
 
-      result should contain only matchingRole
+      result should contain only matchingPolicy
     }
 
-    "should filter matching roles from mixed list" in {
+    "should filter matching policies from mixed list" in {
       val matching =
-        IamRoleInfo(
-          "arn:aws:iam::123:role/r1",
-          "r1",
+        DeveloperPolicy(
+          "arn:aws:iam::123:policy/p1",
+          "p1",
           "test-role",
           None,
           None,
           account
         )
       val cache = Map(
-        AwsAccount("123", "acc") -> AwsAccountIamRoleInfoStatus(
+        AwsAccount("123", "acc") -> AwsAccountDeveloperPolicyStatus(
           Some(
-            IamRoleInfoSnapshot(
+            DeveloperPolicySnapshot(
               List(
-                IamRoleInfo(
-                  "arn:aws:iam::123:role/r0",
-                  "r0",
+                DeveloperPolicy(
+                  "arn:aws:iam::123:policy/p0",
+                  "p0",
                   "other",
                   None,
                   None,
                   account
                 ),
                 matching,
-                IamRoleInfo(
-                  "arn:aws:iam::123:role/r2",
+                DeveloperPolicy(
+                  "arn:aws:iam::123:policy/p2",
                   "r2",
                   "different",
                   None,
@@ -169,7 +172,7 @@ class ProvisionedRolesTest
         )
       )
 
-      val result = ProvisionedRoles.getIamRolesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
         cache,
         ProvisionedRole("Test Role", "test-role")
       )
@@ -177,81 +180,84 @@ class ProvisionedRolesTest
       result should contain only matching
     }
 
-    "should aggregate matching roles from multiple accounts" in {
-      val role1 =
-        IamRoleInfo(
-          "arn:aws:iam::111:role/r1",
-          "r1",
+    "should aggregate matching policies from multiple accounts" in {
+      val policy1 =
+        DeveloperPolicy(
+          "arn:aws:iam::111:policy/p1",
+          "p1",
           "test-role",
           None,
           None,
           account
         )
-      val role2 =
-        IamRoleInfo(
-          "arn:aws:iam::222:role/r2",
-          "r2",
+      val policy2 =
+        DeveloperPolicy(
+          "arn:aws:iam::222:policy/p2",
+          "p2",
           "test-role",
           None,
           None,
           account
         )
       val cache = Map(
-        AwsAccount("111", "acc1") -> AwsAccountIamRoleInfoStatus(
-          Some(IamRoleInfoSnapshot(List(role1), timestamp)),
+        AwsAccount("111", "acc1") -> AwsAccountDeveloperPolicyStatus(
+          Some(DeveloperPolicySnapshot(List(policy1), timestamp)),
           None
         ),
-        AwsAccount("222", "acc2") -> AwsAccountIamRoleInfoStatus(
-          Some(IamRoleInfoSnapshot(List(role2), timestamp)),
+        AwsAccount("222", "acc2") -> AwsAccountDeveloperPolicyStatus(
+          Some(DeveloperPolicySnapshot(List(policy2), timestamp)),
           None
         )
       )
 
-      val result = ProvisionedRoles.getIamRolesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
         cache,
         ProvisionedRole("Test Role", "test-role")
       )
 
-      result should contain theSameElementsAs List(role1, role2)
+      result should contain theSameElementsAs List(policy1, policy2)
     }
 
     "should handle accounts with mixed snapshot states" in {
-      val matchingRole =
-        IamRoleInfo(
-          "arn:aws:iam::111:role/r1",
-          "r1",
+      val matchingPolicy =
+        DeveloperPolicy(
+          "arn:aws:iam::111:policy/p1",
+          "p1",
           "test-role",
           None,
           None,
           account
         )
       val cache = Map(
-        AwsAccount("111", "acc1") -> AwsAccountIamRoleInfoStatus(
-          Some(IamRoleInfoSnapshot(List(matchingRole), timestamp)),
+        AwsAccount("111", "acc1") -> AwsAccountDeveloperPolicyStatus(
+          Some(DeveloperPolicySnapshot(List(matchingPolicy), timestamp)),
           None
         ),
-        AwsAccount("222", "acc2") -> AwsAccountIamRoleInfoStatus(None, None),
-        AwsAccount("333", "acc3") -> AwsAccountIamRoleInfoStatus(
+        AwsAccount("222", "acc2") -> AwsAccountDeveloperPolicyStatus(
+          None,
+          None
+        ),
+        AwsAccount("333", "acc3") -> AwsAccountDeveloperPolicyStatus(
           None,
           Some(FailureSnapshot("error", timestamp))
         )
       )
 
-      val result = ProvisionedRoles.getIamRolesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
         cache,
         ProvisionedRole("Test Role", "test-role")
       )
 
-      result should contain only matchingRole
+      result should contain only matchingPolicy
     }
 
-    "property: result should only contain roles with matching tag" in {
+    "property: result should only contain policies with matching tag" in {
       forAll(Gen.listOfN(5, Gen.alphaStr), Gen.alphaStr) {
         (tags: List[String], targetTag: String) =>
-          val roles = tags.zipWithIndex.map { case (tag, idx) =>
-            IamRoleInfo(
-              s"arn:aws:iam::123:role/r$idx",
-              "r$idx",
+          val policies = tags.zipWithIndex.map { case (tag, idx) =>
+            DeveloperPolicy(
+              s"arn:aws:iam::123:policy/p$idx",
+              s"p$idx",
               tag,
               None,
               None,
@@ -259,13 +265,13 @@ class ProvisionedRolesTest
             )
           }
           val cache = Map(
-            AwsAccount("123", "acc") -> AwsAccountIamRoleInfoStatus(
-              Some(IamRoleInfoSnapshot(roles, timestamp)),
+            AwsAccount("123", "acc") -> AwsAccountDeveloperPolicyStatus(
+              Some(DeveloperPolicySnapshot(policies, timestamp)),
               None
             )
           )
 
-          val result = ProvisionedRoles.getIamRolesByProvisionedRole(
+          val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
             cache,
             ProvisionedRole(targetTag, "Test")
           )
@@ -275,16 +281,16 @@ class ProvisionedRolesTest
     }
   }
 
-  "toRoleInfo" - {
+  "toDeveloperPolicy" - {
     "should return None when provisioned role tag is absent" in {
       val tags = Set(
         createTag(friendlyNameTagKey, "Name"),
         createTag(descriptionTagKey, "Desc")
       )
 
-      val result = ProvisionedRoles.toRoleInfo(
+      val result = DeveloperPolicies.toDeveloperPolicy(
         account,
-        role,
+        policy,
         tags,
         provisionedRoleTagKey,
         friendlyNameTagKey,
@@ -294,12 +300,12 @@ class ProvisionedRolesTest
       result shouldBe None
     }
 
-    "should return IamRoleInfo with only required fields when optional tags absent" in {
+    "should return developer policy with only required fields when optional tags absent" in {
       val tags = Set(createTag(provisionedRoleTagKey, "test-role"))
 
-      val result = ProvisionedRoles.toRoleInfo(
+      val result = DeveloperPolicies.toDeveloperPolicy(
         account,
-        role,
+        policy,
         tags,
         provisionedRoleTagKey,
         friendlyNameTagKey,
@@ -307,9 +313,9 @@ class ProvisionedRolesTest
       )
 
       result shouldBe Some(
-        IamRoleInfo(
-          "arn:aws:iam::123:role/r1",
-          "r1",
+        DeveloperPolicy(
+          "arn:aws:iam::123:policy/p1",
+          "p1",
           "test-role",
           None,
           None,
@@ -324,9 +330,9 @@ class ProvisionedRolesTest
         createTag(friendlyNameTagKey, "Friendly")
       )
 
-      val result = ProvisionedRoles.toRoleInfo(
+      val result = DeveloperPolicies.toDeveloperPolicy(
         account,
-        role,
+        policy,
         tags,
         provisionedRoleTagKey,
         friendlyNameTagKey,
@@ -342,9 +348,9 @@ class ProvisionedRolesTest
         createTag(descriptionTagKey, "Description")
       )
 
-      val result = ProvisionedRoles.toRoleInfo(
+      val result = DeveloperPolicies.toDeveloperPolicy(
         account,
-        role,
+        policy,
         tags,
         provisionedRoleTagKey,
         friendlyNameTagKey,
@@ -357,9 +363,9 @@ class ProvisionedRolesTest
     "should be case-sensitive for tag keys" in {
       val tags = Set(createTag("provisionedrole", "test-role"))
 
-      val result = ProvisionedRoles.toRoleInfo(
+      val result = DeveloperPolicies.toDeveloperPolicy(
         account,
-        role,
+        policy,
         tags,
         "ProvisionedRole",
         friendlyNameTagKey,
@@ -370,9 +376,9 @@ class ProvisionedRolesTest
     }
 
     "should handle empty tag set" in {
-      val result = ProvisionedRoles.toRoleInfo(
+      val result = DeveloperPolicies.toDeveloperPolicy(
         account,
-        role,
+        policy,
         Set.empty,
         provisionedRoleTagKey,
         friendlyNameTagKey,
@@ -383,44 +389,46 @@ class ProvisionedRolesTest
     }
   }
 
-  "iamRoleInfoSlug" - {
-    "always prefixes slug with PROVISIONED_ROLE_NAMESPACE_PREFIX" in {
-      forAll(Gen.asciiPrintableStr) { rawRoleName =>
-        val slug = ProvisionedRoles.iamRoleInfoSlug(rawRoleName, account)
+  "developerPolicySlug" - {
+    "always prefixes slug with DEVELOPER_POLICY_NAMESPACE_PREFIX" in {
+      forAll(Gen.asciiPrintableStr) { rawPolicyName =>
+        val slug = DeveloperPolicies.developerPolicySlug(rawPolicyName, account)
         slug.startsWith(
-          ProvisionedRoles.PROVISIONED_ROLE_NAMESPACE_PREFIX
+          DeveloperPolicies.DEVELOPER_POLICY_NAMESPACE_PREFIX
         ) shouldBe true
       }
     }
 
     "always includes account auth config key in slug" in {
-      forAll(Gen.asciiPrintableStr) { rawRoleName =>
-        val slug = ProvisionedRoles.iamRoleInfoSlug(rawRoleName, account)
+      forAll(Gen.asciiPrintableStr) { rawPolicyName =>
+        val slug = DeveloperPolicies.developerPolicySlug(rawPolicyName, account)
         slug.contains(account.authConfigKey) shouldBe true
       }
     }
 
     "URL-encodes special characters" in {
       val testCases = List(
-        ("role.name", "role.name"),
-        ("role,name", "role%2Cname"),
-        ("role+name", "role%2Bname"),
-        ("role@name", "role%40name"),
-        ("role=name", "role%3Dname"),
-        ("role name", "role+name")
+        ("policy.name", "policy.name"),
+        ("policy,name", "policy%2Cname"),
+        ("policy+name", "policy%2Bname"),
+        ("policy@name", "policy%40name"),
+        ("policy=name", "policy%3Dname"),
+        ("policy name", "policy+name")
       )
 
-      for ((rawRoleName, expected) <- testCases) {
-        val slug = ProvisionedRoles.iamRoleInfoSlug(rawRoleName, account)
+      for ((rawPolicyName, expected) <- testCases) {
+        val slug = DeveloperPolicies.developerPolicySlug(rawPolicyName, account)
         slug should endWith(s"-$expected")
       }
     }
 
-    "produces different slugs for role names that differ only in special characters" in {
-      val roleNames = List("role.name", "role,name", "role+name", "role@name")
-      val slugs = roleNames.map(ProvisionedRoles.iamRoleInfoSlug(_, account))
+    "produces different slugs for policy names that differ only in special characters" in {
+      val policyNames =
+        List("policy.name", "policy,name", "policy+name", "policy@name")
+      val slugs =
+        policyNames.map(DeveloperPolicies.developerPolicySlug(_, account))
 
-      slugs.distinct.size shouldBe roleNames.size
+      slugs.distinct.size shouldBe policyNames.size
     }
   }
 }
