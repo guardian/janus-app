@@ -1,27 +1,27 @@
-@import logic.ProvisionedRoles.provisionedRoleLink
+@import logic.DeveloperPolicies.developerPolicyLink
 
-@(role: IamRoleInfo)
+@(policy: DeveloperPolicy)
 
 <li class="provisioned-role-item">
     <div class="provisioned-role-item-janus expand">
         <div class="provisioned-role-item-header"  aria-label="Friendly name of role">
-            @{role.friendlyName.getOrElse("No friendly name")}
+            @{policy.friendlyName.getOrElse("No friendly name")}
         </div>
         <div class="provisioned-role-item-entry grey-text provisioned-role-description expand" aria-label="Description of role">
-            @{role.description}
+            @{policy.description}
         </div>
         <div class="provisioned-role-item-entry">
             <span class="provisioned-role-chip chip" aria-label="Janus tag">
-                @{role.provisionedRoleTagValue}
+                @{policy.provisionedRoleTagValue}
             </span>
         </div>
     </div>
     <div class="provisioned-role-item-aws">
         <div class="provisioned-role-name" aria-label="IAM name of the role in AWS">
-            @role.roleName
+            @policy.policyName
         </div>
         <div class="provisioned-role-item-cta">
-            <a class="copy-text--button__cta waves-effect waves-light btn" href="@provisionedRoleLink(role.roleName)" target="_blank" rel="noopener noreferrer">
+            <a class="copy-text--button__cta waves-effect waves-light btn" href="@developerPolicyLink(policy.policyName)" target="_blank" rel="noopener noreferrer">
                 View in AWS console
                 <div class="copy-text__feedback">
                     <i class="material-icons copy-text--default icon-small">open_in_new</i>

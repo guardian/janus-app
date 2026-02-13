@@ -1,29 +1,28 @@
 package controllers
 
 import com.gu.googleauth.AuthAction
-import com.gu.janus.model.{AwsAccount, JanusData}
+import com.gu.janus.model.JanusData
 import conf.Config
 import logic.Accounts
 import logic.Accounts.accountPermissions
-import models.{AwsAccountIamRoleInfoStatus, IamRoleInfo, IamRoleInfoSnapshot}
+import models.AwsAccountDeveloperPolicyStatus
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
-import services.ProvisionedRoleStatusManager
-import software.amazon.awssdk.arns.Arn
+import services.DeveloperPolicyStatusManager
 
 class AccountsController(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
     authAction: AuthAction[AnyContent],
     configuration: Configuration,
-    provisionedRoleStatusManager: ProvisionedRoleStatusManager
+    developerPolicyStatusManager: DeveloperPolicyStatusManager
 )(using mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
 
   def accounts: Action[AnyContent] = authAction { implicit request =>
     val accountData = Accounts.accountOwnerInformation(
-      provisionedRoleStatusManager.getCacheStatus,
+      developerPolicyStatusManager.getCacheStatus,
       janusData.accounts,
       janusData.access
     )(account => Config.findAccountNumber(account.authConfigKey, configuration))
@@ -31,25 +30,25 @@ class AccountsController(
     Ok(
       views.html.accounts(
         accountData,
-        provisionedRoleStatusManager.fetchEnabled,
+        developerPolicyStatusManager.fetchEnabled,
         request.user,
         janusData
       )
     )
   }
 
-  def rolesStatusForAccount(authConfigKey: String): Action[AnyContent] =
+  def policiesStatusForAccount(authConfigKey: String): Action[AnyContent] =
     authAction { implicit request =>
       (for {
         awsAccount <- janusData.accounts.find(_.authConfigKey == authConfigKey)
-        provisionedRolesCache = provisionedRoleStatusManager.getCacheStatus
-        accountRolesStatus = provisionedRolesCache
-          .getOrElse(awsAccount, AwsAccountIamRoleInfoStatus.empty)
+        developerPolicyCache = developerPolicyStatusManager.getCacheStatus
+        accountPoliciesStatus = developerPolicyCache
+          .getOrElse(awsAccount, AwsAccountDeveloperPolicyStatus.empty)
       } yield Ok(
-        views.html.rolesStatus(
+        views.html.developerPoliciesStatus(
           awsAccount,
-          accountRolesStatus,
-          provisionedRoleStatusManager.fetchEnabled,
+          accountPoliciesStatus,
+          developerPolicyStatusManager.fetchEnabled,
           request.user,
           janusData
         )
@@ -83,19 +82,20 @@ class AccountsController(
 
   }
 
-  def accountRoles: Action[AnyContent] = authAction { implicit request =>
-    val accountsStatus =
-      provisionedRoleStatusManager.getCacheStatus.toList
-        .sortBy(_._1.name)
-    Ok(
-      views.html
-        .accountRoles(
-          accountsStatus,
-          provisionedRoleStatusManager.fetchEnabled,
-          provisionedRoleStatusManager.fetchRate,
-          request.user,
-          janusData
-        )
-    )
+  def accountDeveloperPolicies: Action[AnyContent] = authAction {
+    implicit request =>
+      val accountsStatus =
+        developerPolicyStatusManager.getCacheStatus.toList
+          .sortBy(_._1.name)
+      Ok(
+        views.html
+          .accountPolicies(
+            accountsStatus,
+            developerPolicyStatusManager.fetchEnabled,
+            developerPolicyStatusManager.fetchRate,
+            request.user,
+            janusData
+          )
+      )
   }
 }

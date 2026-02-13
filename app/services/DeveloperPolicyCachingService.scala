@@ -6,43 +6,45 @@ import cats.effect.unsafe.implicits.global
 import cats.implicits.toTraverseOps
 import com.gu.janus.model.{AwsAccount, ProvisionedRole}
 import fs2.Stream
-import logic.ProvisionedRoles
+import logic.DeveloperPolicies
 import models.{
-  AwsAccountIamRoleInfoStatus,
-  FailureSnapshot,
-  IamRoleInfo,
-  IamRoleInfoSnapshot
+  AwsAccountDeveloperPolicyStatus,
+  DeveloperPolicy,
+  DeveloperPolicySnapshot,
+  FailureSnapshot
 }
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import play.api.Configuration
 import play.api.inject.ApplicationLifecycle
 import software.amazon.awssdk.services.iam.IamClient
-import software.amazon.awssdk.services.iam.model.{ListRolesRequest, Role}
+import software.amazon.awssdk.services.iam.model.{ListPoliciesRequest, Policy}
 import software.amazon.awssdk.services.sts.StsClient
 
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 
-/** For use where we just need to know which IAM roles are part of a particular
-  * [[ProvisionedRole]].
+/** For use where we just need to know which [[DeveloperPolicy]]s are part of a
+  * particular [[ProvisionedRole]].
   */
-trait ProvisionedRoleFinder {
-  def getIamRolesByProvisionedRole(role: ProvisionedRole): List[IamRoleInfo]
+trait DeveloperPolicyFinder {
+  def getDeveloperPoliciesByProvisionedRole(
+      role: ProvisionedRole
+  ): List[DeveloperPolicy]
 }
 
 /** For use where we want to know the status of the [[ProvisionedRole]] data
   * we've cached.
   */
-trait ProvisionedRoleStatusManager {
+trait DeveloperPolicyStatusManager {
   val fetchEnabled: Boolean
   val fetchRate: FiniteDuration
-  def getCacheStatus: Map[AwsAccount, AwsAccountIamRoleInfoStatus]
+  def getCacheStatus: Map[AwsAccount, AwsAccountDeveloperPolicyStatus]
 }
 
-/** Fetches and keeps a cache of AWS IAM roles that have a
-  * [[com.gu.janus.model.ProvisionedRole]] tag attached to them. Role data is
+/** Fetches and keeps a cache of [[DeveloperPolicy]]s that have a
+  * [[com.gu.janus.model.ProvisionedRole]] tag attached to them. Policy data is
   * fetched from across multiple accounts.
   *
   * @param accounts
@@ -52,12 +54,12 @@ trait ProvisionedRoleStatusManager {
   * @param sts
   *   Needed for cross-account access by role assumption
   */
-class ProvisionedRoleCachingService(
+class DeveloperPolicyCachingService(
     accounts: Set[AwsAccount],
     config: Configuration,
     sts: StsClient
-) extends ProvisionedRoleFinder
-    with ProvisionedRoleStatusManager {
+) extends DeveloperPolicyFinder
+    with DeveloperPolicyStatusManager {
 
   private given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
@@ -66,6 +68,9 @@ class ProvisionedRoleCachingService(
   override val fetchRate: FiniteDuration =
     config.get[FiniteDuration]("provisionedRoles.fetch.rate")
 
+  private val discoverablePath =
+    config.get[String]("provisionedRoles.discoverablePath")
+
   private val provisionedRoleTagKey =
     config.get[String]("provisionedRoles.tagKey")
   private val friendlyNameTagKey =
@@ -73,24 +78,20 @@ class ProvisionedRoleCachingService(
   private val descriptionTagKey =
     config.get[String]("provisionedRoles.descriptionTagKey")
 
-  private val roleListRequest = ListRolesRequest.builder
-    .pathPrefix(config.get("provisionedRoles.discoverablePath"))
-    .build()
-
   // TrieMap is Scala's default concurrent Map implementation
-  private val cache = new TrieMap[AwsAccount, AwsAccountIamRoleInfoStatus]()
+  private val cache = new TrieMap[AwsAccount, AwsAccountDeveloperPolicyStatus]()
   accounts.foreach { account =>
-    cache.update(account, AwsAccountIamRoleInfoStatus.empty)
+    cache.update(account, AwsAccountDeveloperPolicyStatus.empty)
   }
 
   private val accountIams: Map[AwsAccount, IamClient] =
     accounts.map { account =>
       val iam =
-        Clients.provisionedRoleReadingIam(
+        Clients.developerPolicyReadingIam(
           account,
           sts,
           config,
-          "ProvisionedRoleReader"
+          "DeveloperPolicyReader"
         )
       account -> iam
     }.toMap
@@ -99,7 +100,7 @@ class ProvisionedRoleCachingService(
     if (fetchEnabled) {
       Stream.eval(
         logger.info(
-          s"Provisioned role caching enabled with fetch rate: $fetchRate"
+          s"Developer policy caching enabled with fetch rate: $fetchRate"
         )
       ) ++ Stream
         // do first fetch immediately
@@ -113,21 +114,22 @@ class ProvisionedRoleCachingService(
         )
         .handleErrorWith { err =>
           Stream.eval(
-            logger.error(err)("Failed to refresh provisioned role cache")
+            logger.error(err)("Failed to refresh developer policy cache")
           )
         }
     } else
-      Stream.eval(logger.warn("Provisioned role caching has been disabled!"))
+      Stream.eval(logger.warn("Developer policy caching has been disabled!"))
 
-  override def getIamRolesByProvisionedRole(
+  override def getDeveloperPoliciesByProvisionedRole(
       role: ProvisionedRole
-  ): List[IamRoleInfo] =
-    ProvisionedRoles.getIamRolesByProvisionedRole(
+  ): List[DeveloperPolicy] =
+    DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
       cache.readOnlySnapshot().toMap,
       role
     )
 
-  override def getCacheStatus: Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
+  override def getCacheStatus
+      : Map[AwsAccount, AwsAccountDeveloperPolicyStatus] =
     cache.readOnlySnapshot().toMap
 
   def shutdown(): IO[Unit] =
@@ -136,42 +138,47 @@ class ProvisionedRoleCachingService(
   private def fetchFromAccount(
       account: AwsAccount,
       iam: IamClient
-  ): IO[AwsAccountIamRoleInfoStatus] =
+  ): IO[AwsAccountDeveloperPolicyStatus] =
     (for {
       _ <- logger.debug(
-        s"Fetching provisioned roles from account '${account.name}'..."
+        s"Fetching developer policies from account '${account.name}'..."
       )
-      roles <- Iam.listRoles(iam, roleListRequest)
-      roleInfos <- roles.traverse(role => fetchRoleInfo(account, iam, role))
+      policyListRequest = ListPoliciesRequest.builder
+        .pathPrefix(discoverablePath)
+        .build()
+      awsPolicies <- Iam.listPolicies(iam, policyListRequest)
+      policies <- awsPolicies.traverse(policy =>
+        fetchDeveloperPolicy(account, iam, policy)
+      )
       now <- IO.realTimeInstant
       _ <- logger.debug(
-        s"Fetched ${roleInfos.size} provisioned roles from account '${account.name}'."
+        s"Fetched ${policies.size} developer policies from account '${account.name}'."
       )
-    } yield AwsAccountIamRoleInfoStatus.success(
-      IamRoleInfoSnapshot(roleInfos, now)
+    } yield AwsAccountDeveloperPolicyStatus.success(
+      DeveloperPolicySnapshot(policies, now)
     )).handleErrorWith(err =>
       for {
         now <- IO.realTimeInstant
         _ <- logger.error(err)(
-          s"Failed to fetch provisioned roles from account '${account.name}'"
+          s"Failed to fetch developer policies from account '${account.name}'"
         )
-      } yield AwsAccountIamRoleInfoStatus.failure(
-        cachedRoleSnapshot = cache.get(account).flatMap(_.roleSnapshot),
+      } yield AwsAccountDeveloperPolicyStatus.failure(
+        cachedPolicySnapshot = cache.get(account).flatMap(_.policySnapshot),
         failureStatus = FailureSnapshot(err.getMessage, now)
       )
     )
 
-  private def fetchRoleInfo(
+  private def fetchDeveloperPolicy(
       account: AwsAccount,
       iam: IamClient,
-      role: Role
-  ): IO[IamRoleInfo] =
+      policy: Policy
+  ): IO[DeveloperPolicy] =
     for {
-      tags <- Iam.listRoleTags(iam, role)
-      roleInfo <- IO.fromOption(
-        ProvisionedRoles.toRoleInfo(
+      tags <- Iam.listPolicyTags(iam, policy)
+      policy <- IO.fromOption(
+        DeveloperPolicies.toDeveloperPolicy(
           account,
-          role,
+          policy,
           tags,
           provisionedRoleTagKey,
           friendlyNameTagKey,
@@ -179,13 +186,13 @@ class ProvisionedRoleCachingService(
         )
       )(
         new Exception(
-          s"Required tag '$provisionedRoleTagKey' not found on role ${role.arn()}"
+          s"Required tag '$provisionedRoleTagKey' not found on policy ${policy.arn}"
         )
       )
-    } yield roleInfo
+    } yield policy
 }
 
-object ProvisionedRoleCachingService {
+object DeveloperPolicyCachingService {
 
   /** Convenience method to start and manage lifecycle of the caching service.
     */
@@ -194,8 +201,8 @@ object ProvisionedRoleCachingService {
       accounts: Set[AwsAccount],
       config: Configuration,
       sts: StsClient
-  )(using ExecutionContext): ProvisionedRoleCachingService = {
-    val service = new ProvisionedRoleCachingService(accounts, config, sts)
+  )(using ExecutionContext): DeveloperPolicyCachingService = {
+    val service = new DeveloperPolicyCachingService(accounts, config, sts)
     val cancellationToken = service
       .startPolling()
       .compile

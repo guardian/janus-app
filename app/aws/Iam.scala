@@ -2,32 +2,30 @@ package aws
 
 import cats.effect.IO
 import software.amazon.awssdk.services.iam.IamClient
-import software.amazon.awssdk.services.iam.model.{
-  ListRoleTagsRequest,
-  ListRolesRequest,
-  Role,
-  Tag
-}
+import software.amazon.awssdk.services.iam.model.*
 
 import scala.jdk.CollectionConverters.*
 
 /** For managing calls to AWS IAM services and transforming results. */
 object Iam {
 
-  def listRoles(iam: IamClient, request: ListRolesRequest): IO[List[Role]] =
-    // Page through results as we don't know how many discoverable roles there will be per account
+  def listPolicies(
+      iam: IamClient,
+      request: ListPoliciesRequest
+  ): IO[List[Policy]] =
+    // Page through results as we don't know how many there will be per account
     IO.blocking(
       iam
-        .listRolesPaginator(request)
+        .listPoliciesPaginator(request)
         .asScala
-        .foldLeft(List.empty[Role])((acc, response) =>
-          acc ++ response.roles().asScala
+        .foldLeft(List.empty[Policy])((acc, response) =>
+          acc ++ response.policies.asScala.toList
         )
     )
 
-  def listRoleTags(iam: IamClient, role: Role): IO[Set[Tag]] = {
-    val request = ListRoleTagsRequest.builder.roleName(role.roleName).build()
-    // No need to page through results as we don't expect many tags per role
-    IO.blocking(iam.listRoleTags(request).tags().asScala.toSet)
+  def listPolicyTags(iam: IamClient, policy: Policy): IO[Set[Tag]] = {
+    val request = ListPolicyTagsRequest.builder.policyArn(policy.arn).build()
+    // No need to page through results as we don't expect many tags per policy
+    IO.blocking(iam.listPolicyTags(request).tags().asScala.toSet)
   }
 }
