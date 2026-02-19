@@ -2,7 +2,7 @@ package logic
 
 import com.gu.janus.model.{AwsAccount, ProvisionedRole}
 import models.{AwsAccountDeveloperPolicyStatus, DeveloperPolicy}
-import software.amazon.awssdk.services.iam.model.{Policy, Tag}
+import software.amazon.awssdk.services.iam.model.Policy
 
 import java.net.URLEncoder
 
@@ -15,25 +15,30 @@ object DeveloperPolicies {
     cache.values
       .flatMap(_.policySnapshot)
       .flatMap(_.policies)
-      .filter(_.provisionedRoleTagValue == role.iamRoleTag)
+      .filter(_.provisionedRoleId == role.iamRoleTag)
       .toList
 
+  /** Creates a DeveloperPolicy from an AWS IAM managed policy if it's possible.
+    *
+    * It's assumed that the managed policy will have a path with the structure
+    * "/developer-policy/<developer-policy-id>/".
+    *
+    * @param account
+    *   AWS account holding the source policy.
+    * @param policy
+    *   Source AWS IAM managed policy
+    */
   def toDeveloperPolicy(
       account: AwsAccount,
-      policy: Policy,
-      tags: Set[Tag],
-      provisionedRoleTagKey: String,
-      friendlyNameTagKey: String,
-      descriptionTagKey: String
+      policy: Policy
   ): Option[DeveloperPolicy] =
     for {
-      provisionedRoleTag <- tags.find(_.key == provisionedRoleTagKey)
+      provisionedRoleId <- policy.path.split('/').lift(2)
     } yield DeveloperPolicy(
       policyArnString = policy.arn,
       policyName = policy.policyName,
-      provisionedRoleTagValue = provisionedRoleTag.value,
-      friendlyName = tags.find(_.key == friendlyNameTagKey).map(_.value),
-      description = tags.find(_.key == descriptionTagKey).map(_.value),
+      provisionedRoleId,
+      description = Option(policy.description).filter(!_.isBlank),
       account
     )
 

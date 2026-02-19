@@ -22,10 +22,4 @@ object Iam {
           acc ++ response.policies.asScala.toList
         )
     )
-
-  def listPolicyTags(iam: IamClient, policy: Policy): IO[Set[Tag]] = {
-    val request = ListPolicyTagsRequest.builder.policyArn(policy.arn).build()
-    // No need to page through results as we don't expect many tags per policy
-    IO.blocking(iam.listPolicyTags(request).tags().asScala.toSet)
-  }
 }

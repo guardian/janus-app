@@ -12,10 +12,8 @@ import scala.util.Try
   *
   * @param policyArn
   *   ARN
-  * @param provisionedRoleTagValue
+  * @param provisionedRoleId
   *   Corresponds to [[com.gu.janus.model.ProvisionedRole.iamRoleTag]]
-  * @param friendlyName
-  *   Name for display in Janus UI
   * @param description
   *   Description for display in Janus UI
   * @param account
@@ -24,8 +22,7 @@ import scala.util.Try
 case class DeveloperPolicy(
     policyArn: Arn,
     policyName: String,
-    provisionedRoleTagValue: String,
-    friendlyName: Option[String],
+    provisionedRoleId: String,
     description: Option[String],
     account: AwsAccount
 ) {
@@ -36,15 +33,13 @@ object DeveloperPolicy {
   def apply(
       policyArnString: String,
       policyName: String,
-      provisionedRoleTagValue: String,
-      friendlyName: Option[String],
+      provisionedRoleId: String,
       description: Option[String],
       account: AwsAccount
   ): DeveloperPolicy = DeveloperPolicy(
     Arn.fromString(policyArnString),
     policyName,
-    provisionedRoleTagValue,
-    friendlyName,
+    provisionedRoleId,
     description,
     account
   )

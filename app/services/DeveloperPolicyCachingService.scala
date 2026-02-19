@@ -68,15 +68,8 @@ class DeveloperPolicyCachingService(
   override val fetchRate: FiniteDuration =
     config.get[FiniteDuration]("provisionedRoles.fetch.rate")
 
-  private val discoverablePath =
+  private val discoverablePathPrefix =
     config.get[String]("provisionedRoles.discoverablePath")
-
-  private val provisionedRoleTagKey =
-    config.get[String]("provisionedRoles.tagKey")
-  private val friendlyNameTagKey =
-    config.get[String]("provisionedRoles.friendlyNameTagKey")
-  private val descriptionTagKey =
-    config.get[String]("provisionedRoles.descriptionTagKey")
 
   // TrieMap is Scala's default concurrent Map implementation
   private val cache = new TrieMap[AwsAccount, AwsAccountDeveloperPolicyStatus]()
@@ -144,7 +137,7 @@ class DeveloperPolicyCachingService(
         s"Fetching developer policies from account '${account.name}'..."
       )
       policyListRequest = ListPoliciesRequest.builder
-        .pathPrefix(discoverablePath)
+        .pathPrefix(discoverablePathPrefix)
         .build()
       awsPolicies <- Iam.listPolicies(iam, policyListRequest)
       policies <- awsPolicies.traverse(policy =>
@@ -173,23 +166,11 @@ class DeveloperPolicyCachingService(
       iam: IamClient,
       policy: Policy
   ): IO[DeveloperPolicy] =
-    for {
-      tags <- Iam.listPolicyTags(iam, policy)
-      policy <- IO.fromOption(
-        DeveloperPolicies.toDeveloperPolicy(
-          account,
-          policy,
-          tags,
-          provisionedRoleTagKey,
-          friendlyNameTagKey,
-          descriptionTagKey
-        )
-      )(
-        new Exception(
-          s"Required tag '$provisionedRoleTagKey' not found on policy ${policy.arn}"
-        )
+    IO.fromOption(DeveloperPolicies.toDeveloperPolicy(account, policy))(
+      new Exception(
+        s"Policy path doesn't contain developer policy ID at expected position in IAM policy ${policy.arn}"
       )
-    } yield policy
+    )
 }
 
 object DeveloperPolicyCachingService {
