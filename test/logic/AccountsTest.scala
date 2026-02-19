@@ -100,8 +100,7 @@ class AccountsTest
                   .resource("awsResource")
                   .build(),
                 "awsResource",
-                s"provisionedRoleTagValue${a.name}",
-                Some(s"friendlyName${a.name}"),
+                s"provisionedRoleId${a.name}",
                 Some(s"description${a.name}"),
                 a
               )
@@ -140,8 +139,7 @@ class AccountsTest
                     .resource("awsResource")
                     .build(),
                   "awsResource",
-                  s"provisionedRoleTagValue${a.name}",
-                  Some(s"friendlyName${a.name}"),
+                  s"provisionedRoleId${a.name}",
                   Some(s"description${a.name}"),
                   a
                 )
@@ -170,8 +168,7 @@ class AccountsTest
             .resource("awsResource")
             .build(),
           "awsResource",
-          "provisionedRoleTagValueFoo",
-          Some("friendlyNameFoo"),
+          "provisionedRoleIdFoo",
           Some("descriptionFoo"),
           fooAct
         )
@@ -204,8 +201,7 @@ class AccountsTest
             .service("awsService")
             .build(),
           "awsResource",
-          "provisionedRoleTagValueFoo",
-          Some("friendlyNameFoo"),
+          "provisionedRoleIdFoo",
           Some("descriptionFoo"),
           fooAct
         )
@@ -320,8 +316,7 @@ class AccountsTest
               .resource("awsResource")
               .build(),
             "awsResource",
-            s"provisionedRoleTagValue${a.name}",
-            Some(s"friendlyName${a.name}"),
+            s"provisionedRoleId${a.name}",
             Some(s"description${a.name}"),
             a
           )

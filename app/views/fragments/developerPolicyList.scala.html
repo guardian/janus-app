@@ -5,14 +5,14 @@
 <li class="provisioned-role-item">
     <div class="provisioned-role-item-janus expand">
         <div class="provisioned-role-item-header"  aria-label="Friendly name of role">
-            @{policy.friendlyName.getOrElse("No friendly name")}
+            @{policy.policyName}
         </div>
         <div class="provisioned-role-item-entry grey-text provisioned-role-description expand" aria-label="Description of role">
-            @{policy.description}
+            @{policy.description.getOrElse("No description.")}
         </div>
         <div class="provisioned-role-item-entry">
             <span class="provisioned-role-chip chip" aria-label="Janus tag">
-                @{policy.provisionedRoleTagValue}
+                @{policy.provisionedRoleId}
             </span>
         </div>
     </div>
