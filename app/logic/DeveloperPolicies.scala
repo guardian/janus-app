@@ -65,11 +65,9 @@ object DeveloperPolicies {
   }
   private[logic] val DEVELOPER_POLICY_NAMESPACE_PREFIX = "iam-"
 
-  /** Builds a working AWS console link from the policy's name. These links
+  /** Builds a working AWS console link from a [[DeveloperPolicy]]. These links
     * require a valid console session.
-    *
-    * Note: For the link to work this policy name must not be URL-encoded.
     */
-  def developerPolicyLink(policyName: String): String =
-    s"https://console.aws.amazon.com/iam/home#/policies/details/$policyName"
+  def developerPolicyLink(policy: DeveloperPolicy): String =
+    s"https://console.aws.amazon.com/iam/home#/policies/${policy.policyArn}"
 }
