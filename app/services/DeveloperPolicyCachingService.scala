@@ -64,12 +64,13 @@ class DeveloperPolicyCachingService(
   private given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
   override val fetchEnabled: Boolean =
-    config.get[Boolean]("provisionedRoles.fetch.enabled")
+    config.get[Boolean]("developerPolicies.fetch.enabled")
   override val fetchRate: FiniteDuration =
-    config.get[FiniteDuration]("provisionedRoles.fetch.rate")
+    config.get[FiniteDuration]("developerPolicies.fetch.rate")
 
-  private val discoverablePathPrefix =
-    config.get[String]("provisionedRoles.discoverablePath")
+  private val policyListRequest = ListPoliciesRequest.builder
+    .pathPrefix(config.get[String]("developerPolicies.discoverablePath"))
+    .build()
 
   // TrieMap is Scala's default concurrent Map implementation
   private val cache = new TrieMap[AwsAccount, AwsAccountDeveloperPolicyStatus]()
@@ -136,12 +137,9 @@ class DeveloperPolicyCachingService(
       _ <- logger.debug(
         s"Fetching developer policies from account '${account.name}'..."
       )
-      policyListRequest = ListPoliciesRequest.builder
-        .pathPrefix(discoverablePathPrefix)
-        .build()
-      awsPolicies <- Iam.listPolicies(iam, policyListRequest)
-      policies <- awsPolicies.traverse(policy =>
-        fetchDeveloperPolicy(account, iam, policy)
+      policySummaries <- Iam.listPolicies(iam, policyListRequest)
+      policies <- policySummaries.traverse(summary =>
+        fetchDeveloperPolicy(account, iam, summary)
       )
       now <- IO.realTimeInstant
       _ <- logger.debug(
@@ -164,13 +162,21 @@ class DeveloperPolicyCachingService(
   private def fetchDeveloperPolicy(
       account: AwsAccount,
       iam: IamClient,
-      policy: Policy
+      summary: Policy
   ): IO[DeveloperPolicy] =
-    IO.fromOption(DeveloperPolicies.toDeveloperPolicy(account, policy))(
-      new Exception(
-        s"Policy path doesn't contain developer policy ID at expected position in IAM policy ${policy.arn}"
+    for {
+      awsPolicy <- Iam.getPolicyDetails(iam, summary)
+      policy <- IO.fromOption(
+        DeveloperPolicies.toDeveloperPolicy(
+          account,
+          awsPolicy
+        )
+      )(
+        new Exception(
+          s"Policy path doesn't contain developer policy ID at expected position in IAM policy ${awsPolicy.arn}"
+        )
       )
-    )
+    } yield policy
 }
 
 object DeveloperPolicyCachingService {

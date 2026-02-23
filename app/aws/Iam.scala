@@ -22,4 +22,10 @@ object Iam {
           acc ++ response.policies.asScala.toList
         )
     )
+
+  // This is necessary to get the policy description, which isn't populated in the listPolicies call
+  def getPolicyDetails(iam: IamClient, summary: Policy): IO[Policy] = {
+    val request = GetPolicyRequest.builder.policyArn(summary.arn).build()
+    IO.blocking(iam.getPolicy(request).policy())
+  }
 }
