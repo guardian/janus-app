@@ -9,7 +9,7 @@
 
 @main(s"Roles Status", Some(user), janusData) {
     <div class="container">
-        <div class="provisioned-role-service-config right valign-wrapper">
+        <div class="developer-policy-service-config right valign-wrapper">
             @if(serviceEnabled) {
                 <span class="grey-text">Roles update every @formatDuration(refreshFrequency)</span>
             } else {
@@ -26,11 +26,11 @@
                     <li class="collection-item">
                         @(status.policySnapshot, status.failureStatus) match {
                             case (_, Some(failure)) => {
-                                <div class="provisioned-roles-account-header">
+                                <div class="developer-policy-account-header">
                                     <span role="heading" aria-level="2">@account.name</span>
                                     <div class="right valign-wrapper tooltipped"
                                       data-position="bottom" data-tooltip="last updated (UTC)">
-                                        <span class="provisioned-roles-account-updated grey-text">
+                                        <span class="developer-policy-account-updated grey-text">
                                             <span class="hide-on-med-and-down">
                                                 @formatDateTime(failure.timestamp)
                                             </span>
@@ -41,7 +41,7 @@
                                         <i class="error material-icons small">error_outline</i>
                                     </div>
                                 </div>
-                                <div class="provisioned-role-error">
+                                <div class="developer-policy-error">
                                     <p>
                                         Failed to load developer policies. Policy information may be out of date.
                                     </p>
@@ -51,11 +51,11 @@
                                 </div>
                             }
                             case (Some(policies), _) => {
-                                <div class="provisioned-roles-account-header">
+                                <div class="developer-policy-account-header">
                                     <span role="heading" aria-level="2">@account.name</span>
                                     <div class="right valign-wrapper tooltipped"
                                       data-position="bottom" data-tooltip="last updated (UTC)">
-                                        <span class="provisioned-roles-account-updated grey-text">
+                                        <span class="developer-policy-account-updated grey-text">
                                             <span class="hide-on-med-and-down">
                                                 @formatDateTime(policies.timestamp)
                                             </span>
@@ -68,7 +68,7 @@
                                 </div>
                             }
                             case (None, None) => {
-                                <div class="provisioned-roles-account-header">
+                                <div class="developer-policy-account-header">
                                     <span role="heading" aria-level="2">@account.name</span>
                                     <span class="right">
                                         @if(serviceEnabled) {
@@ -79,12 +79,12 @@
                                     </span>
                                 </div>
                                 @if(serviceEnabled) {
-                                    <p class="provisioned-role-notice">
-                                        Provisioned role information has not yet been loaded.
+                                    <p class="developer-policy-notice">
+                                        Developer policy information has not yet been loaded.
                                           Please wait a few moments and refresh the page.
                                     </p>
                                 } else {
-                                    <p class="provisioned-role-error">
+                                    <p class="developer-policy-error">
                                         Developer policy information is not available
                                           because the sync service is disabled.
                                     </p>
@@ -94,17 +94,17 @@
 
                         @status.policySnapshot match {
                             case Some(snapshot) if snapshot.policies.nonEmpty => {
-                                <ul class="provisioned-roles-container">
+                                <ul class="developer-policy-container">
                                     @for(policy <- snapshot.policies) {
                                         @fragments.developerPolicyList(policy)
                                     }
                                 </ul>
                             }
                             case _ => {
-                                <div class="provisioned-role-empty center-align grey-text">
+                                <div class="developer-policy-empty center-align grey-text">
                                     <i class="material-icons medium">not_interested</i>
                                     <br/>
-                                    No roles found in this account
+                                    No developer policies found in this account
                                 </div>
                             }
                         }

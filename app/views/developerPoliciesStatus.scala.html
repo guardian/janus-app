@@ -11,7 +11,7 @@
             case (_, Some(failure)) => {
                 <div class="right valign-wrapper tooltipped"
                 data-position="bottom" data-tooltip="last updated (UTC)">
-                    <span class="provisioned-roles-account-updated grey-text">
+                    <span class="developer-policy-account-updated grey-text">
                         <span class="hide-on-med-and-down">
                             @formatDateTime(failure.timestamp)
                         </span>
@@ -23,7 +23,7 @@
                 </div>
                 <h1 class="header orange-text">@account.name developer policy status</h1>
 
-                <div class="provisioned-role-error">
+                <div class="developer-policy-error">
                     <p>
                         Failed to load developer policies. Policy information may be out of date.
                     </p>
@@ -35,7 +35,7 @@
             case (Some(snapshot), _) => {
                 <div class="right valign-wrapper tooltipped"
                 data-position="bottom" data-tooltip="last updated (UTC)">
-                    <span class="provisioned-roles-account-updated grey-text">
+                    <span class="developer-policy-account-updated grey-text">
                         <span class="hide-on-med-and-down">
                             @formatDateTime(snapshot.timestamp)
                         </span>
@@ -59,12 +59,12 @@
                 </span>
                 <h1 class="header orange-text">@account.name policies status</h1>
                 @if(serviceEnabled) {
-                    <p class="provisioned-role-notice">
+                    <p class="developer-policy-notice">
                         Developer policy information has not yet been loaded.
                           Please wait a few moments and refresh the page.
                     </p>
                 } else {
-                    <p class="provisioned-role-error">
+                    <p class="developer-policy-error">
                         Developer policy information is not available
                           because the sync service is disabled.
                     </p>
@@ -74,14 +74,14 @@
 
         @status.policySnapshot match {
             case Some(snapshot) if snapshot.policies.nonEmpty => {
-                <ul class="provisioned-roles-container">
+                <ul class="developer-policy-container">
                     @for(policy <- snapshot.policies) {
                         @fragments.developerPolicyList(policy)
                     }
                 </ul>
             }
             case _ => {
-                <div class="provisioned-role-empty center-align grey-text">
+                <div class="developer-policy-empty center-align grey-text">
                     <i class="material-icons medium">not_interested</i>
                     <br/>
                     No developer policies found in this account.

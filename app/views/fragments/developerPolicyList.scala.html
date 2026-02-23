@@ -2,22 +2,22 @@
 
 @(policy: DeveloperPolicy)
 
-<li class="provisioned-role-item">
-    <div class="provisioned-role-item-janus expand">
-        <div class="provisioned-role-item-entry">
-            <span class="provisioned-role-chip chip" aria-label="Janus tag">
+<li class="developer-policy-item">
+    <div class="developer-policy-item-janus expand">
+        <div class="developer-policy-item-entry">
+            <span class="developer-policy-chip chip" aria-label="Janus tag">
                 @{policy.provisionedRoleId}
             </span>
         </div>
-        <div class="provisioned-role-item-entry grey-text provisioned-role-description expand" aria-label="Description of role">
+        <div class="developer-policy-item-entry grey-text developer-policy-description expand" aria-label="Description of role">
             @{policy.description.getOrElse("No description.")}
         </div>
     </div>
-    <div class="provisioned-role-item-aws">
-        <div class="provisioned-role-name" aria-label="IAM name of the role in AWS">
+    <div class="developer-policy-item-aws">
+        <div class="developer-policy-name" aria-label="IAM name of the role in AWS">
             @policy.policyName
         </div>
-        <div class="provisioned-role-item-cta">
+        <div class="developer-policy-item-cta">
             <a class="copy-text--button__cta waves-effect waves-light btn" href="@developerPolicyLink(policy)" target="_blank" rel="noopener noreferrer">
                 View in AWS console
                 <div class="copy-text__feedback">
