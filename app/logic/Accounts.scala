@@ -3,51 +3,51 @@ package logic
 import com.gu.janus.model.{ACL, AwsAccount}
 import models.*
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Try
 
 object Accounts {
 
-  def lookupAccountRoles(
-      rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus],
+  private[logic] def lookupAccountDeveloperPolicies(
+      statuses: Map[AwsAccount, AwsAccountDeveloperPolicyStatus],
       account: AwsAccount,
       accountIdMaybe: Try[String]
-  ): Set[IamRoleInfo] = (for {
+  ): Set[DeveloperPolicy] = (for {
     accountId <- accountIdMaybe.toOption
-    accountRoleStatus <- rolesStatuses.get(account)
-    roles <- accountRoleStatus.roleSnapshot
-  } yield roles.roles.toSet)
+    status <- statuses.get(account)
+    snapshot <- status.policySnapshot
+  } yield snapshot.policies.toSet)
     .getOrElse(Set.empty)
 
-  def getAccountRolesAndStatus(
-      rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus]
-  ): Map[String, (List[IamRoleInfo], Option[String])] = rolesStatuses
+  def getAccountPoliciesAndStatus(
+      statuses: Map[AwsAccount, AwsAccountDeveloperPolicyStatus]
+  ): Map[String, (List[DeveloperPolicy], Option[String])] = statuses
     .map { (k, v) =>
       k.name -> (
-        v.roleSnapshot.map(_.roles).getOrElse(Nil),
+        v.policySnapshot.map(_.policies).getOrElse(Nil),
         v.failureStatus.map(_.failure)
       )
     }
 
-  def successfulRolesForThisAccount(
-      rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus],
+  def successfulPoliciesForThisAccount(
+      statuses: Map[AwsAccount, AwsAccountDeveloperPolicyStatus],
       account: String
-  ): List[IamRoleInfo] = (for {
-    rolesStatus <- rolesStatuses.find(_._1.authConfigKey == account)
-    roleSnapshot <- rolesStatus._2.roleSnapshot
-  } yield roleSnapshot.roles)
+  ): List[DeveloperPolicy] = (for {
+    status <- statuses.find(_._1.authConfigKey == account)
+    snapshot <- status._2.policySnapshot
+  } yield snapshot.policies)
     .getOrElse(Nil)
 
-  def errorRolesForThisAccount(
-      rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus],
+  def errorPoliciesForThisAccount(
+      statuses: Map[AwsAccount, AwsAccountDeveloperPolicyStatus],
       account: String
   ): Option[String] = for {
-    rolesStatus <- rolesStatuses.find(_._1.authConfigKey == account)
-    roleInfoStatus = rolesStatus._2
-    failureSnapshot <- roleInfoStatus.failureStatus
+    accountAndStatus <- statuses.find(_._1.authConfigKey == account)
+    status = accountAndStatus._2
+    failureSnapshot <- status.failureStatus
   } yield failureSnapshot.failure
 
   def accountOwnerInformation(
-      rolesStatuses: Map[AwsAccount, AwsAccountIamRoleInfoStatus],
+      policyStatuses: Map[AwsAccount, AwsAccountDeveloperPolicyStatus],
       accounts: Set[AwsAccount],
       access: ACL
   )(
@@ -59,8 +59,12 @@ object Accounts {
         awsAccount,
         accountPermissions(awsAccount, access),
         accountIdMaybe,
-        lookupAccountRoles(rolesStatuses, awsAccount, accountIdMaybe),
-        errorRolesForThisAccount(rolesStatuses, awsAccount.authConfigKey)
+        lookupAccountDeveloperPolicies(
+          policyStatuses,
+          awsAccount,
+          accountIdMaybe
+        ),
+        errorPoliciesForThisAccount(policyStatuses, awsAccount.authConfigKey)
       )
     }
 

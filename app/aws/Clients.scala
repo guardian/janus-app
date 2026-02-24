@@ -67,7 +67,7 @@ object Clients {
     * unable to do anything. This means that in the dev environment special
     * configuration will be needed, which is described elsewhere.
     */
-  def provisionedRoleReadingIam(
+  def developerPolicyReadingIam(
       account: AwsAccount,
       sts: StsClient,
       config: Configuration,

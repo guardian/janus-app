@@ -16,7 +16,7 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
 import play.filters.csp.CSPComponents
 import router.Routes
-import services.ProvisionedRoleCachingService
+import services.DeveloperPolicyCachingService
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -87,8 +87,8 @@ class AppComponents(context: ApplicationLoader.Context)
     case ConfigSuccess =>
   }
 
-  private val provisionedRoleCachingService =
-    ProvisionedRoleCachingService.start(
+  private val developerPolicyCachingService =
+    DeveloperPolicyCachingService.start(
       applicationLifecycle,
       accounts = janusData.accounts,
       config = configuration,
@@ -172,7 +172,7 @@ class AppComponents(context: ApplicationLoader.Context)
       controllerComponents,
       authAction,
       configuration,
-      provisionedRoleCachingService
+      developerPolicyCachingService
     ),
     new Utility(
       janusData,
