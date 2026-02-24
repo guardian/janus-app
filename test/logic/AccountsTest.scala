@@ -10,7 +10,7 @@ import software.amazon.awssdk.arns.Arn
 
 import java.time.Instant
 import scala.language.{dynamics, postfixOps}
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 
 class AccountsTest
     extends AnyFreeSpec
@@ -84,14 +84,14 @@ class AccountsTest
     }
   }
 
-  val accountsWithSuccessfullyFetchedTrivialRoles
-      : Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
+  val accountsWithSuccessfullyFetchedTrivialPolicies
+      : Map[AwsAccount, AwsAccountDeveloperPolicyStatus] =
     accounts
       .map(a =>
-        a -> AwsAccountIamRoleInfoStatus.success(
-          IamRoleInfoSnapshot(
+        a -> AwsAccountDeveloperPolicyStatus.success(
+          DeveloperPolicySnapshot(
             List(
-              IamRoleInfo(
+              DeveloperPolicy(
                 Arn
                   .builder()
                   .accountId(s"awsAccount-${a.authConfigKey}")
@@ -100,8 +100,7 @@ class AccountsTest
                   .resource("awsResource")
                   .build(),
                 "awsResource",
-                s"provisionedRoleTagValue${a.name}",
-                Some(s"friendlyName${a.name}"),
+                s"provisionedRoleId${a.name}",
                 Some(s"description${a.name}"),
                 a
               )
@@ -113,10 +112,10 @@ class AccountsTest
       .toMap
 
   val accountsWithOnlyFailedFetches
-      : Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
+      : Map[AwsAccount, AwsAccountDeveloperPolicyStatus] =
     accounts
       .map(a =>
-        a -> AwsAccountIamRoleInfoStatus.failure(
+        a -> AwsAccountDeveloperPolicyStatus.failure(
           None,
           FailureSnapshot(s"Failed to fetch ${a.name}", Instant.now())
         )
@@ -124,14 +123,14 @@ class AccountsTest
       .toMap
 
   val accountsWithFailedFetchesAndStaleFetches
-      : Map[AwsAccount, AwsAccountIamRoleInfoStatus] =
+      : Map[AwsAccount, AwsAccountDeveloperPolicyStatus] =
     accounts
       .map(a =>
-        a -> AwsAccountIamRoleInfoStatus.failure(
+        a -> AwsAccountDeveloperPolicyStatus.failure(
           Some(
-            IamRoleInfoSnapshot(
+            DeveloperPolicySnapshot(
               List(
-                IamRoleInfo(
+                DeveloperPolicy(
                   Arn
                     .builder()
                     .accountId(s"awsAccount-${a.authConfigKey}")
@@ -140,8 +139,7 @@ class AccountsTest
                     .resource("awsResource")
                     .build(),
                   "awsResource",
-                  s"provisionedRoleTagValue${a.name}",
-                  Some(s"friendlyName${a.name}"),
+                  s"provisionedRoleId${a.name}",
                   Some(s"description${a.name}"),
                   a
                 )
@@ -154,14 +152,14 @@ class AccountsTest
       )
       .toMap
 
-  "lookupAccountRoles" - {
+  "lookupAccountDeveloperPolicies" - {
     "should return full account information when given an existing account key" in {
-      Accounts.lookupAccountRoles(
-        accountsWithSuccessfullyFetchedTrivialRoles,
+      Accounts.lookupAccountDeveloperPolicies(
+        accountsWithSuccessfullyFetchedTrivialPolicies,
         fooAct,
         Success[String](fooAct.authConfigKey)
       ) shouldEqual Set(
-        IamRoleInfo(
+        DeveloperPolicy(
           Arn
             .builder()
             .accountId("awsAccount-foo")
@@ -170,8 +168,7 @@ class AccountsTest
             .resource("awsResource")
             .build(),
           "awsResource",
-          "provisionedRoleTagValueFoo",
-          Some("friendlyNameFoo"),
+          "provisionedRoleIdFoo",
           Some("descriptionFoo"),
           fooAct
         )
@@ -180,8 +177,8 @@ class AccountsTest
 
     "should return an empty set when given an non-existing account key" in {
       Accounts
-        .lookupAccountRoles(
-          accountsWithSuccessfullyFetchedTrivialRoles,
+        .lookupAccountDeveloperPolicies(
+          accountsWithSuccessfullyFetchedTrivialPolicies,
           fooAct,
           Failure[String](new Exception("Unable to look up this account"))
         )
@@ -189,13 +186,13 @@ class AccountsTest
     }
   }
 
-  "successfulRolesForThisAccount" - {
+  "successfulPoliciesForThisAccount" - {
     "should return full account info when the snapshot has succeeded for this account" in {
-      Accounts.successfulRolesForThisAccount(
-        accountsWithSuccessfullyFetchedTrivialRoles,
+      Accounts.successfulPoliciesForThisAccount(
+        accountsWithSuccessfullyFetchedTrivialPolicies,
         fooAct.authConfigKey
       ) shouldEqual List(
-        IamRoleInfo(
+        DeveloperPolicy(
           Arn
             .builder()
             .accountId("awsAccount-foo")
@@ -204,8 +201,7 @@ class AccountsTest
             .service("awsService")
             .build(),
           "awsResource",
-          "provisionedRoleTagValueFoo",
-          Some("friendlyNameFoo"),
+          "provisionedRoleIdFoo",
           Some("descriptionFoo"),
           fooAct
         )
@@ -213,7 +209,7 @@ class AccountsTest
     }
     "should return nothing when the snapshot has failed for this account" in {
       Accounts
-        .successfulRolesForThisAccount(
+        .successfulPoliciesForThisAccount(
           accountsWithOnlyFailedFetches,
           fooAct.authConfigKey
         )
@@ -221,33 +217,33 @@ class AccountsTest
     }
   }
 
-  "errorRolesForThisAccount" - {
+  "errorPoliciesForThisAccount" - {
     "should return no errors when the snapshot has succeeded" in {
       Accounts
-        .errorRolesForThisAccount(
-          accountsWithSuccessfullyFetchedTrivialRoles,
+        .errorPoliciesForThisAccount(
+          accountsWithSuccessfullyFetchedTrivialPolicies,
           fooAct.authConfigKey
         )
         .isEmpty shouldBe true
     }
 
     "should return the failure when the snapshot has failed" in {
-      Accounts.errorRolesForThisAccount(
+      Accounts.errorPoliciesForThisAccount(
         accountsWithOnlyFailedFetches,
         fooAct.authConfigKey
       ) shouldBe Some("Failed to fetch Foo")
     }
   }
 
-  "getAccountRolesAndStatus" - {
+  "getAccountPoliciesAndStatus" - {
     val accountNames = accounts.map(_.name)
 
     "when snapshot has succeeded" - {
 
       "should return a key for every account" in {
         Accounts
-          .getAccountRolesAndStatus(
-            accountsWithSuccessfullyFetchedTrivialRoles
+          .getAccountPoliciesAndStatus(
+            accountsWithSuccessfullyFetchedTrivialPolicies
           )
           .keys
           .toSet shouldBe accountNames
@@ -256,8 +252,8 @@ class AccountsTest
       "should return a value for every account (checks cross reference in map)" in {
         val returnedAccounts =
           Accounts
-            .getAccountRolesAndStatus(
-              accountsWithSuccessfullyFetchedTrivialRoles
+            .getAccountPoliciesAndStatus(
+              accountsWithSuccessfullyFetchedTrivialPolicies
             )
             .values
             .flatMap(_._1.map(_.account))
@@ -268,8 +264,8 @@ class AccountsTest
       "should return no errors" in {
         val errors =
           Accounts
-            .getAccountRolesAndStatus(
-              accountsWithSuccessfullyFetchedTrivialRoles
+            .getAccountPoliciesAndStatus(
+              accountsWithSuccessfullyFetchedTrivialPolicies
             )
             .values
             .flatMap(_._2)
@@ -282,7 +278,7 @@ class AccountsTest
 
       "should return a key for every account" in {
         Accounts
-          .getAccountRolesAndStatus(
+          .getAccountPoliciesAndStatus(
             accountsWithFailedFetchesAndStaleFetches
           )
           .keys
@@ -292,7 +288,7 @@ class AccountsTest
       "should return a value for every account (checks cross reference in map)" in {
         val returnedAccounts =
           Accounts
-            .getAccountRolesAndStatus(
+            .getAccountPoliciesAndStatus(
               accountsWithFailedFetchesAndStaleFetches
             )
             .values
@@ -304,14 +300,14 @@ class AccountsTest
       "should return a role for every account " in {
         val returnedRoles =
           Accounts
-            .getAccountRolesAndStatus(
+            .getAccountPoliciesAndStatus(
               accountsWithFailedFetchesAndStaleFetches
             )
             .values
             .flatMap(_._1)
             .toSet
         returnedRoles shouldBe accounts.map(a =>
-          IamRoleInfo(
+          DeveloperPolicy(
             Arn
               .builder()
               .accountId(s"awsAccount-${a.authConfigKey}")
@@ -320,8 +316,7 @@ class AccountsTest
               .resource("awsResource")
               .build(),
             "awsResource",
-            s"provisionedRoleTagValue${a.name}",
-            Some(s"friendlyName${a.name}"),
+            s"provisionedRoleId${a.name}",
             Some(s"description${a.name}"),
             a
           )
@@ -331,7 +326,7 @@ class AccountsTest
       "should return an error for every account" in {
         val errors =
           Accounts
-            .getAccountRolesAndStatus(
+            .getAccountPoliciesAndStatus(
               accountsWithFailedFetchesAndStaleFetches
             )
             .values
@@ -345,7 +340,7 @@ class AccountsTest
 
       "should return a key for every account " in {
         Accounts
-          .getAccountRolesAndStatus(
+          .getAccountPoliciesAndStatus(
             accountsWithOnlyFailedFetches
           )
           .keys
@@ -355,7 +350,7 @@ class AccountsTest
       "should return no value for any account" in {
         val returnedAccounts =
           Accounts
-            .getAccountRolesAndStatus(
+            .getAccountPoliciesAndStatus(
               accountsWithOnlyFailedFetches
             )
             .values
@@ -368,7 +363,7 @@ class AccountsTest
       "should return no role for any account" in {
         val returnedAccounts =
           Accounts
-            .getAccountRolesAndStatus(
+            .getAccountPoliciesAndStatus(
               accountsWithOnlyFailedFetches
             )
             .values
@@ -380,7 +375,7 @@ class AccountsTest
       "should return an error for every account" in {
         val errors =
           Accounts
-            .getAccountRolesAndStatus(
+            .getAccountPoliciesAndStatus(
               accountsWithOnlyFailedFetches
             )
             .values
