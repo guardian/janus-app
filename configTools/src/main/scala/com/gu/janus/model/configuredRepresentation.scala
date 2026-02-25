@@ -35,31 +35,27 @@ case class ConfiguredAclEntry(
     label: String
 )
 
-case class ConfiguredDeveloperPolicyGrantAclEntry(
-    grantName: String,
-    grantId: String
+case class ConfiguredRoleAclEntry(
+    provisionedRoleName: String,
+    iamRoleTag: String
 )
 
-given Decoder[ConfiguredAclEntry | ConfiguredDeveloperPolicyGrantAclEntry] =
+given Decoder[ConfiguredAclEntry | ConfiguredRoleAclEntry] =
   Decoder[ConfiguredAclEntry]
-    .widen[ConfiguredAclEntry | ConfiguredDeveloperPolicyGrantAclEntry]
+    .widen[ConfiguredAclEntry | ConfiguredRoleAclEntry]
     .or(
-      Decoder[ConfiguredDeveloperPolicyGrantAclEntry]
-        .widen[ConfiguredAclEntry | ConfiguredDeveloperPolicyGrantAclEntry]
+      Decoder[ConfiguredRoleAclEntry]
+        .widen[ConfiguredAclEntry | ConfiguredRoleAclEntry]
     )
 
 case class ConfiguredAccess(
     defaultPermissions: List[ConfiguredAclEntry],
-    acl: Map[String, List[
-      ConfiguredAclEntry | ConfiguredDeveloperPolicyGrantAclEntry
-    ]]
+    acl: Map[String, List[ConfiguredAclEntry | ConfiguredRoleAclEntry]]
 )
 
 // helps circe-config auto-extract data
 case class ConfiguredAdmin(
-    acl: Map[String, List[
-      ConfiguredAclEntry | ConfiguredDeveloperPolicyGrantAclEntry
-    ]]
+    acl: Map[String, List[ConfiguredAclEntry | ConfiguredRoleAclEntry]]
 )
 
 case class ConfiguredSupport(

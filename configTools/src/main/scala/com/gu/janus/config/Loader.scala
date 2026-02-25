@@ -133,9 +133,7 @@ object Loader {
   }
 
   private[config] def parseAclEntries(
-      acl: Map[String, List[
-        ConfiguredAclEntry | ConfiguredDeveloperPolicyGrantAclEntry
-      ]],
+      acl: Map[String, List[ConfiguredAclEntry | ConfiguredRoleAclEntry]],
       permissions: Set[Permission]
   ): Either[String, List[(String, ACLEntry)]] = {
     val permsMap =
@@ -153,18 +151,15 @@ object Loader {
                 .toRight(
                   s"The access configuration for `$username` includes a permission that doesn't appear to be defined.\nIt has label `${entry.label}` and refers to the account with key ${entry.account}"
                 )
-            } yield ACLEntry(
-              current.permissions + permission,
-              current.policyGrants
-            )
+            } yield ACLEntry(current.permissions + permission, current.roles)
 
-          case (acc, entry: ConfiguredDeveloperPolicyGrantAclEntry) =>
+          case (acc, entry: ConfiguredRoleAclEntry) =>
             acc.map(current =>
               ACLEntry(
                 current.permissions,
-                current.policyGrants + DeveloperPolicyGrant(
-                  entry.grantName,
-                  entry.grantId
+                current.roles + ProvisionedRole(
+                  entry.provisionedRoleName,
+                  entry.iamRoleTag
                 )
               )
             )

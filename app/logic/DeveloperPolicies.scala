@@ -1,6 +1,6 @@
 package logic
 
-import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant}
+import com.gu.janus.model.{AwsAccount, ProvisionedRole}
 import models.{AwsAccountDeveloperPolicyStatus, DeveloperPolicy}
 import software.amazon.awssdk.services.iam.model.Policy
 
@@ -8,14 +8,14 @@ import java.net.URLEncoder
 
 object DeveloperPolicies {
 
-  def getDeveloperPoliciesByGrant(
+  def getDeveloperPoliciesByProvisionedRole(
       cache: Map[AwsAccount, AwsAccountDeveloperPolicyStatus],
-      grant: DeveloperPolicyGrant
+      role: ProvisionedRole
   ): List[DeveloperPolicy] =
     cache.values
       .flatMap(_.policySnapshot)
       .flatMap(_.policies)
-      .filter(_.policyGrantId == grant.id)
+      .filter(_.provisionedRoleId == role.iamRoleTag)
       .toList
 
   /** Creates a DeveloperPolicy from an AWS IAM managed policy if it's possible.
@@ -33,11 +33,11 @@ object DeveloperPolicies {
       policy: Policy
   ): Option[DeveloperPolicy] =
     for {
-      policyGrantId <- policy.path.split('/').lift(2)
+      provisionedRoleId <- policy.path.split('/').lift(2)
     } yield DeveloperPolicy(
       policyArnString = policy.arn,
       policyName = policy.policyName,
-      policyGrantId,
+      provisionedRoleId,
       description = Option(policy.description).filter(!_.isBlank),
       account
     )

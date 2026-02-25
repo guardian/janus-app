@@ -21,7 +21,7 @@ case class ACL(
 /** Access available to a single user. */
 case class ACLEntry(
     permissions: Set[Permission],
-    policyGrants: Set[DeveloperPolicyGrant]
+    roles: Set[ProvisionedRole]
 )
 
 case class SupportACL private (
@@ -165,18 +165,16 @@ object Permission {
   }
 }
 
-/** The grant of a group of IAM policies that are narrowly scoped for local
-  * tasks and workloads.
-  */
-case class DeveloperPolicyGrant(
-    /** A friendly name to identify this grant in a UI or elsewhere. */
+/** A set of provisioned IAM roles that Janus can discover by tag lookup. */
+case class ProvisionedRole(
+    /** A friendly name to identify this in a UI or elsewhere. */
     name: String,
 
-    /** Hook that will allow us to discover the IAM policies included in this
-      * group. Each relevant policy will be found by a path prefix identifying
-      * it as a developer policy and a path slug that matches this id.
+    /** Hook that will allow us to discover the IAM roles included in this set.
+      * Each relevant role will be found by a tag identifying it as a Janus role
+      * and a tag that matches this value.
       */
-    id: String
+    iamRoleTag: String
 )
 
 sealed abstract class JanusAccessType(override val toString: String)

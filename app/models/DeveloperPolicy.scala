@@ -8,13 +8,12 @@ import java.time.Instant
 import scala.util.Try
 
 /** Holds the data required to manage an IAM policy that's part of a
-  * [[com.gu.janus.model.DeveloperPolicyGrant]].
+  * [[com.gu.janus.model.ProvisionedRole]].
   *
   * @param policyArn
   *   ARN
-  * @param policyGrantId
-  *   Corresponds to
-  *   [[com.gu.janus.model.DeveloperPolicyGrant.id]]
+  * @param provisionedRoleId
+  *   Corresponds to [[com.gu.janus.model.ProvisionedRole.iamRoleTag]]
   * @param description
   *   Description for display in Janus UI
   * @param account
@@ -23,7 +22,7 @@ import scala.util.Try
 case class DeveloperPolicy(
     policyArn: Arn,
     policyName: String,
-    policyGrantId: String,
+    provisionedRoleId: String,
     description: Option[String],
     account: AwsAccount
 ) {
@@ -34,13 +33,13 @@ object DeveloperPolicy {
   def apply(
       policyArnString: String,
       policyName: String,
-      policyGrantId: String,
+      provisionedRoleId: String,
       description: Option[String],
       account: AwsAccount
   ): DeveloperPolicy = DeveloperPolicy(
     Arn.fromString(policyArnString),
     policyName,
-    policyGrantId,
+    provisionedRoleId,
     description,
     account
   )
