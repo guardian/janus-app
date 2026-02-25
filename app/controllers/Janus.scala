@@ -13,6 +13,7 @@ import logic.{AuditTrail, Customisation, Date, Favourites}
 import models.PasskeyAuthenticator
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
+import services.DeveloperPolicyFinder
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.model.Credentials
@@ -29,7 +30,8 @@ class Janus(
     stsClient: StsClient,
     configuration: Configuration,
     passkeysEnablingCookieName: String,
-    passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator]
+    passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
+    developerPolicyFinder: DeveloperPolicyFinder
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
@@ -43,7 +45,11 @@ class Janus(
       val displayMode =
         Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
       (for {
-        permissions <- userAccess(username(request.user), janusData.access)
+        permissions <- userAccess(
+          username(request.user),
+          janusData.access,
+          developerPolicyFinder.getDeveloperPolicies
+        )
         favourites = Favourites.fromCookie(request.cookies.get("favourites"))
         awsAccountAccess = orderedAccountAccess(permissions, favourites)
       } yield {
@@ -62,7 +68,11 @@ class Janus(
   def admin: Action[AnyContent] =
     authAction { implicit request =>
       (for {
-        permissions <- userAccess(username(request.user), janusData.admin)
+        permissions <- userAccess(
+          username(request.user),
+          janusData.admin,
+          developerPolicyFinder.getDeveloperPolicies
+        )
         awsAccountAccess = orderedAccountAccess(permissions)
       } yield {
         Ok(
@@ -279,7 +289,8 @@ class Janus(
         Instant.now(),
         janusData.access,
         janusData.admin,
-        janusData.support
+        janusData.support,
+        developerPolicyFinder.getDeveloperPolicies
       )
       duration = Federation.duration(
         permission,
@@ -299,7 +310,8 @@ class Janus(
         permission,
         accessType,
         duration,
-        janusData.access
+        janusData.access,
+        developerPolicyFinder.getDeveloperPolicies
       )
       _ = AuditTrailDB.insert(auditLog)
     } yield {

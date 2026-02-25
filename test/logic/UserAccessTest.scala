@@ -27,16 +27,18 @@ class UserAccessTest
       )
 
     "returns None if the user doesn't have any permissions" in {
-      userAccess("username.does.not.exist", testAccess) should equal(None)
+      userAccess("username.does.not.exist", testAccess, Set.empty) should equal(
+        None
+      )
     }
 
     "returns the user's permissions if they exist" in {
-      val permissions = userAccess("test.user", testAccess).value
+      val permissions = userAccess("test.user", testAccess, Set.empty).value
       permissions should (contain(fooDev) and contain(barDev))
     }
 
     "include default permissions in all users' available permissions" in {
-      val access = userAccess("test.user", testAccess).value
+      val access = userAccess("test.user", testAccess, Set.empty).value
       testAccess.defaultPermissions foreach { perm =>
         access should contain(perm)
       }
@@ -48,7 +50,8 @@ class UserAccessTest
         ACL(Map("test.user" -> ACLEntry(permissions, Set.empty)), Set.empty)
       userAccess(
         "test.user",
-        access
+        access,
+        Set.empty
       ).value shouldEqual (permissions ++ access.defaultPermissions)
     }
   }
@@ -498,7 +501,8 @@ class UserAccessTest
         Instant.now(),
         acl,
         adminAcl,
-        supportAcl
+        supportAcl,
+        Set.empty
       ).value shouldEqual fooDev
     }
 
@@ -510,7 +514,8 @@ class UserAccessTest
           Instant.now(),
           acl,
           adminAcl,
-          supportAcl
+          supportAcl,
+          Set.empty
         ).value shouldEqual adminPermission
       }
     }
@@ -523,7 +528,8 @@ class UserAccessTest
           Instant.now(),
           acl,
           adminAcl,
-          supportAcl
+          supportAcl,
+          Set.empty
         ).value shouldEqual supportPermission
       }
     }
@@ -535,7 +541,8 @@ class UserAccessTest
         Instant.now(),
         acl,
         adminAcl,
-        supportAcl
+        supportAcl,
+        Set.empty
       ) shouldBe None
     }
   }
@@ -559,15 +566,20 @@ class UserAccessTest
     )
 
     "returns true if a user has been granted explicit access" in {
-      hasExplicitAccess("user", fooDev, acl) shouldEqual true
+      hasExplicitAccess("user", fooDev, acl, Set.empty) shouldEqual true
     }
 
     "returns false if an admin user does not have explicit access" in {
-      hasExplicitAccess("admin", fooDev, acl) shouldEqual false
+      hasExplicitAccess("admin", fooDev, acl, Set.empty) shouldEqual false
     }
 
     "returns false if a support user does not have explicit access" in {
-      hasExplicitAccess("support.user", fooDev, acl) shouldEqual false
+      hasExplicitAccess(
+        "support.user",
+        fooDev,
+        acl,
+        Set.empty
+      ) shouldEqual false
     }
   }
 
@@ -598,7 +610,8 @@ class UserAccessTest
         Instant.now(),
         acl,
         admins,
-        supportAcl
+        supportAcl,
+        Set.empty
       ) shouldEqual Set(fooDev)
     }
 
@@ -609,7 +622,8 @@ class UserAccessTest
         Instant.now(),
         acl,
         admins,
-        supportAcl
+        supportAcl,
+        Set.empty
       ) shouldEqual Set(fooCf)
     }
 
@@ -620,7 +634,8 @@ class UserAccessTest
         Instant.now(),
         acl,
         admins,
-        supportAcl
+        supportAcl,
+        Set.empty
       ) shouldEqual Set(fooCf)
     }
 
@@ -631,7 +646,8 @@ class UserAccessTest
         Instant.now(),
         acl,
         admins,
-        supportAcl
+        supportAcl,
+        Set.empty
       ) shouldBe empty
     }
   }

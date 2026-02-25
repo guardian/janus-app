@@ -1,22 +1,12 @@
 package logic
 
-import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant}
-import models.{AwsAccountDeveloperPolicyStatus, DeveloperPolicy}
+import com.gu.janus.model.{AwsAccount, Permission}
+import models.DeveloperPolicy
 import software.amazon.awssdk.services.iam.model.Policy
 
 import java.net.URLEncoder
 
 object DeveloperPolicies {
-
-  def getDeveloperPoliciesByGrant(
-      cache: Map[AwsAccount, AwsAccountDeveloperPolicyStatus],
-      grant: DeveloperPolicyGrant
-  ): List[DeveloperPolicy] =
-    cache.values
-      .flatMap(_.policySnapshot)
-      .flatMap(_.policies)
-      .filter(_.policyGrantId == grant.id)
-      .toList
 
   /** Creates a DeveloperPolicy from an AWS IAM managed policy if it's possible.
     *
@@ -40,6 +30,14 @@ object DeveloperPolicies {
       policyGrantId,
       description = Option(policy.description).filter(!_.isBlank),
       account
+    )
+
+  def toPermission(policy: DeveloperPolicy): Permission =
+    Permission.fromManagedPolicyArns(
+      account = policy.account,
+      label = policy.slug,
+      description = policy.description.getOrElse("No description."),
+      managedPolicyArns = List(policy.policyArn.toString)
     )
 
   /** To get a URL-safe slug for a [[DeveloperPolicy]], we use the IAM policy

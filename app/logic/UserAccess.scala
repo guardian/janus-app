@@ -2,6 +2,8 @@ package logic
 
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.{ACL, AwsAccount, Permission, SupportACL}
+import logic.DeveloperPolicies.toPermission
+import models.DeveloperPolicy
 
 import java.time.Instant
 
@@ -15,10 +17,22 @@ object UserAccess {
   /** A user's basic access. Note that default permissions are available for
     * anyone mentioned in the Access list.
     */
-  def userAccess(username: String, acl: ACL): Option[Set[Permission]] =
+  def userAccess(
+      username: String,
+      acl: ACL,
+      developerPolicies: Set[DeveloperPolicy]
+  ): Option[Set[Permission]] =
     acl.userAccess
       .get(username)
-      .map(_.permissions ++ acl.defaultPermissions)
+      .map { aclEntry =>
+        val permissions = aclEntry.permissions ++ acl.defaultPermissions
+        val policies = developerPolicies
+          .filter { policy =>
+            aclEntry.policyGrants.exists(_.id == policy.policyGrantId)
+          }
+          .map(toPermission)
+        permissions ++ policies
+      }
 
   /** Checks if the username is explicitly mentioned in the provided ACL.
     */
@@ -115,15 +129,18 @@ object UserAccess {
   /** Combine a user's permissions from all sources to work out everything they
     * can do.
     */
-  def allUserPermissions(
+  private def allUserPermissions(
       username: String,
       date: Instant,
       acl: ACL,
       adminACL: ACL,
-      supportACL: SupportACL
+      supportACL: SupportACL,
+      developerPolicies: Set[DeveloperPolicy]
   ): Set[Permission] = {
-    val access = userAccess(username, acl).getOrElse(Set.empty)
-    val adminAccess = userAccess(username, adminACL).getOrElse(Set.empty)
+    val access =
+      userAccess(username, acl, developerPolicies).getOrElse(Set.empty)
+    val adminAccess =
+      userAccess(username, adminACL, developerPolicies).getOrElse(Set.empty)
     val supportAccess =
       userSupportAccess(username, date, supportACL).getOrElse(Set.empty)
     access ++ adminAccess ++ supportAccess
@@ -136,12 +153,20 @@ object UserAccess {
       date: Instant,
       acl: ACL,
       adminACL: ACL,
-      supportACL: SupportACL
+      supportACL: SupportACL,
+      developerPolicies: Set[DeveloperPolicy]
   ): Set[AwsAccount] = {
-    allUserPermissions(username, date, acl, adminACL, supportACL).map(_.account)
+    allUserPermissions(
+      username,
+      date,
+      acl,
+      adminACL,
+      supportACL,
+      developerPolicies
+    ).map(_.account)
   }
 
-  /** Check if the provider user has been granted this permission.
+  /** Check if the provided user has been granted this permission.
     */
   def checkUserPermission(
       username: String,
@@ -149,9 +174,17 @@ object UserAccess {
       date: Instant,
       acl: ACL,
       adminACL: ACL,
-      supportACL: SupportACL
+      supportACL: SupportACL,
+      developerPolicies: Set[DeveloperPolicy]
   ): Option[Permission] = {
-    allUserPermissions(username, date, acl, adminACL, supportACL).find(
+    allUserPermissions(
+      username,
+      date,
+      acl,
+      adminACL,
+      supportACL,
+      developerPolicies
+    ).find(
       _.id == permissionId
     )
   }
@@ -161,9 +194,12 @@ object UserAccess {
   def hasExplicitAccess(
       username: String,
       permission: Permission,
-      acl: ACL
+      acl: ACL,
+      developerPolicies: Set[DeveloperPolicy]
   ): Boolean = {
-    userAccess(username, acl).getOrElse(Set.empty).contains(permission)
+    userAccess(username, acl, developerPolicies)
+      .getOrElse(Set.empty)
+      .contains(permission)
   }
 
   /** Checks if a user has access to an account and returns appropriate
@@ -175,9 +211,17 @@ object UserAccess {
       date: Instant,
       acl: ACL,
       adminACL: ACL,
-      supportACL: SupportACL
+      supportACL: SupportACL,
+      developerPolicies: Set[DeveloperPolicy]
   ): Set[Permission] = {
-    allUserPermissions(username, date, acl, adminACL, supportACL)
+    allUserPermissions(
+      username,
+      date,
+      acl,
+      adminACL,
+      supportACL,
+      developerPolicies
+    )
       .filter(_.account.authConfigKey == accountId)
   }
 }
