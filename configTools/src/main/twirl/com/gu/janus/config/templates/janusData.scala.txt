@@ -1,4 +1,4 @@
-@import com.gu.janus.model.{JanusData, Permission, DeveloperPolicyGrant}
+@import com.gu.janus.model.{JanusData, Permission, ProvisionedRole}
 
 @(janusData: JanusData, allPermissions: Set[Permission])
 
@@ -43,8 +43,8 @@ janus {
                     @for(permission <- aclEntry.permissions) {
                         @permissionReference(permission)
                     }
-                    @for(grant <- aclEntry.policyGrants) {
-                        { grantName = """@grant.name""", grantId = "@grant.id" }
+                    @for(role <- aclEntry.roles) {
+                        { provisionedRoleName = """@role.name""", iamRoleTag = "@role.iamRoleTag" }
                     }
                 ]
             },
@@ -58,8 +58,8 @@ janus {
                     @for(permission <- aclEntry.permissions) {
                         @permissionReference(permission)
                     }
-                    @for(grant <- aclEntry.policyGrants) {
-                        { grantName = """@grant.name""", grantId = "@grant.id" }
+                    @for(role <- aclEntry.roles) {
+                        { provisionedRoleName = """@role.name""", iamRoleTag = "@role.iamRoleTag" }
                     }
                 ]
             }

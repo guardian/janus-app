@@ -91,8 +91,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         simplePolicy,
         false
       )
-      val grant =
-        DeveloperPolicyGrant("Test Grant Name", "test-grant-id")
+      val provisionedRole = ProvisionedRole("TestRole", "test-role-tag")
 
       "includes user in ACL" in {
         val janusData = JanusData(
@@ -108,11 +107,11 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Writer.toConfig(janusData) should include(""""testuser"""")
       }
 
-      "includes DeveloperPolicyGrant name in ACL entry" in {
+      "includes provisioned role name in ACL entry" in {
         val janusData = JanusData(
           Set(account1),
           access = ACL(
-            Map("testuser" -> ACLEntry(Set.empty, Set(grant))),
+            Map("testuser" -> ACLEntry(Set.empty, Set(provisionedRole))),
             Set.empty
           ),
           admin = ACL(Map.empty, Set.empty),
@@ -120,15 +119,15 @@ class WriterTest extends AnyFreeSpec with Matchers {
           None
         )
         Writer.toConfig(janusData) should include(
-          s"""grantName = \"\"\"Test Grant Name\"\"\""""
+          s"provisionedRoleName = \"\"\"TestRole\"\"\""
         )
       }
 
-      "includes DeveloperPolicyGrant id in ACL entry" in {
+      "includes provisioned role iamRoleTag in ACL entry" in {
         val janusData = JanusData(
           Set(account1),
           access = ACL(
-            Map("testuser" -> ACLEntry(Set.empty, Set(grant))),
+            Map("testuser" -> ACLEntry(Set.empty, Set(provisionedRole))),
             Set.empty
           ),
           admin = ACL(Map.empty, Set.empty),
@@ -136,17 +135,17 @@ class WriterTest extends AnyFreeSpec with Matchers {
           None
         )
         Writer.toConfig(janusData) should include(
-          """grantId = "test-grant-id""""
+          """iamRoleTag = "test-role-tag""""
         )
       }
 
-      "includes multiple DeveloperPolicyGrants for a single user" in {
-        val grant1 = DeveloperPolicyGrant("Grant1", "grant-1-id")
-        val grant2 = DeveloperPolicyGrant("Grant2", "grant-2-id")
+      "includes multiple provisioned roles for a single user" in {
+        val role1 = ProvisionedRole("Role1", "role-1-tag")
+        val role2 = ProvisionedRole("Role2", "role-2-tag")
         val janusData = JanusData(
           Set(account1),
           access = ACL(
-            Map("testuser" -> ACLEntry(Set.empty, Set(grant1, grant2))),
+            Map("testuser" -> ACLEntry(Set.empty, Set(role1, role2))),
             Set.empty
           ),
           admin = ACL(Map.empty, Set.empty),
@@ -154,21 +153,21 @@ class WriterTest extends AnyFreeSpec with Matchers {
           None
         )
         val config = Writer.toConfig(janusData)
-        config should include("grantName = \"\"\"Grant1\"\"\"")
-        config should include("grantName = \"\"\"Grant2\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"Role1\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"Role2\"\"\"")
       }
 
-      "includes multiple permissions and multiple policy grants for a single user" in {
+      "includes multiple permissions and multiple roles for a single user" in {
         val perm1 =
           Permission(account1, "perm1", "Permission 1", simplePolicy, false)
         val perm2 =
           Permission(account1, "perm2", "Permission 2", simplePolicy, false)
-        val grant1 = DeveloperPolicyGrant("Grant1", "grant-1-id")
-        val grant2 = DeveloperPolicyGrant("Grant2", "grant-2-id")
+        val role1 = ProvisionedRole("Role1", "role-1-tag")
+        val role2 = ProvisionedRole("Role2", "role-2-tag")
         val janusData = JanusData(
           Set(account1),
           access = ACL(
-            Map("testuser" -> ACLEntry(Set(perm1, perm2), Set(grant1, grant2))),
+            Map("testuser" -> ACLEntry(Set(perm1, perm2), Set(role1, role2))),
             Set.empty
           ),
           admin = ACL(Map.empty, Set.empty),
@@ -178,8 +177,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
         val config = Writer.toConfig(janusData)
         config should include("""label = "perm1"""")
         config should include("""label = "perm2"""")
-        config should include("grantName = \"\"\"Grant1\"\"\"")
-        config should include("grantName = \"\"\"Grant2\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"Role1\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"Role2\"\"\"")
       }
     }
 
@@ -191,8 +190,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         simplePolicy,
         false
       )
-      val grant =
-        DeveloperPolicyGrant("AdminGrant", "admin-grant-id")
+      val provisionedRole = ProvisionedRole("AdminRole", "admin-role-tag")
 
       "includes user in admin ACL" in {
         val janusData = JanusData(
@@ -208,59 +206,57 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Writer.toConfig(janusData) should include(""""adminuser"""")
       }
 
-      "includes DeveloperPolicyGrant in admin ACL entry" in {
+      "includes provisioned role in admin ACL entry" in {
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
           admin = ACL(
-            Map("adminuser" -> ACLEntry(Set.empty, Set(grant))),
+            Map("adminuser" -> ACLEntry(Set.empty, Set(provisionedRole))),
             Set.empty
           ),
           SupportACL.create(Map.empty, Set.empty),
           None
         )
         Writer.toConfig(janusData) should include(
-          s"""grantName = \"\"\"AdminGrant\"\"\""""
+          s"provisionedRoleName = \"\"\"AdminRole\"\"\""
         )
       }
 
-      "includes DeveloperPolicyGrant id in admin ACL entry" in {
+      "includes provisioned role iamRoleTag in admin ACL entry" in {
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
           admin = ACL(
-            Map("adminuser" -> ACLEntry(Set.empty, Set(grant))),
+            Map("adminuser" -> ACLEntry(Set.empty, Set(provisionedRole))),
             Set.empty
           ),
           SupportACL.create(Map.empty, Set.empty),
           None
         )
         Writer.toConfig(janusData) should include(
-          """grantId = "admin-grant-id""""
+          """iamRoleTag = "admin-role-tag""""
         )
       }
 
-      "includes multiple DeveloperPolicyGrants for a single user" in {
-        val grant1 =
-          DeveloperPolicyGrant("AdminGrant1", "admin-grant-1-id")
-        val grant2 =
-          DeveloperPolicyGrant("AdminGrant2", "admin-grant-2-id")
+      "includes multiple provisioned roles for a single user" in {
+        val role1 = ProvisionedRole("AdminRole1", "admin-role-1-tag")
+        val role2 = ProvisionedRole("AdminRole2", "admin-role-2-tag")
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
           admin = ACL(
-            Map("adminuser" -> ACLEntry(Set.empty, Set(grant1, grant2))),
+            Map("adminuser" -> ACLEntry(Set.empty, Set(role1, role2))),
             Set.empty
           ),
           SupportACL.create(Map.empty, Set.empty),
           None
         )
         val config = Writer.toConfig(janusData)
-        config should include("grantName = \"\"\"AdminGrant1\"\"\"")
-        config should include("grantName = \"\"\"AdminGrant2\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"AdminRole1\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"AdminRole2\"\"\"")
       }
 
-      "includes multiple permissions and multiple DeveloperPolicyGrants for a single user" in {
+      "includes multiple permissions and multiple roles for a single user" in {
         val perm1 = Permission(
           account1,
           "adminPerm1",
@@ -275,17 +271,13 @@ class WriterTest extends AnyFreeSpec with Matchers {
           simplePolicy,
           false
         )
-        val grant1 =
-          DeveloperPolicyGrant("AdminGrant1", "admin-grant-1-id")
-        val grant2 =
-          DeveloperPolicyGrant("AdminGrant2", "admin-grant-2-id")
+        val role1 = ProvisionedRole("AdminRole1", "admin-role-1-tag")
+        val role2 = ProvisionedRole("AdminRole2", "admin-role-2-tag")
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
           admin = ACL(
-            Map(
-              "adminuser" -> ACLEntry(Set(perm1, perm2), Set(grant1, grant2))
-            ),
+            Map("adminuser" -> ACLEntry(Set(perm1, perm2), Set(role1, role2))),
             Set.empty
           ),
           SupportACL.create(Map.empty, Set.empty),
@@ -294,8 +286,8 @@ class WriterTest extends AnyFreeSpec with Matchers {
         val config = Writer.toConfig(janusData)
         config should include("""label = "adminPerm1"""")
         config should include("""label = "adminPerm2"""")
-        config should include("grantName = \"\"\"AdminGrant1\"\"\"")
-        config should include("grantName = \"\"\"AdminGrant2\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"AdminRole1\"\"\"")
+        config should include(s"provisionedRoleName = \"\"\"AdminRole2\"\"\"")
       }
     }
   }

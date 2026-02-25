@@ -306,8 +306,8 @@ class LoaderTest
         entries.head._2.permissions shouldEqual Set(testPermission)
       }
 
-      "returns no policy grants" in {
-        entries.head._2.policyGrants shouldBe empty
+      "returns no roles" in {
+        entries.head._2.roles shouldBe empty
       }
     }
 
@@ -359,13 +359,33 @@ class LoaderTest
       }
     }
 
-    "parses a single policy-based ACL entry" - {
+    "parses a single role-based ACL entry" - {
+      val acl = Map(
+        "user1" -> List(ConfiguredRoleAclEntry("MyRole", "role-tag"))
+      )
+      val result = Loader.parseAclEntries(acl, permissions)
+      val entries = result.value
+
+      "returns single entry" in {
+        entries should have size 1
+      }
+
+      "returns no permissions" in {
+        entries.head._2.permissions shouldBe empty
+      }
+
+      "returns correct role" in {
+        entries.head._2.roles shouldEqual Set(
+          ProvisionedRole("MyRole", "role-tag")
+        )
+      }
+    }
+
+    "parses a multiple-role-based ACL entry" - {
       val acl = Map(
         "user1" -> List(
-          ConfiguredDeveloperPolicyGrantAclEntry(
-            "MyGrant",
-            "grant-id"
-          )
+          ConfiguredRoleAclEntry("MyRole", "role-tag"),
+          ConfiguredRoleAclEntry("MyRole2", "role-tag-2")
         )
       )
       val result = Loader.parseAclEntries(acl, permissions)
@@ -379,53 +399,19 @@ class LoaderTest
         entries.head._2.permissions shouldBe empty
       }
 
-      "returns correct policy grant" in {
-        entries.head._2.policyGrants shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id")
+      "returns correct roles" in {
+        entries.head._2.roles shouldEqual Set(
+          ProvisionedRole("MyRole", "role-tag"),
+          ProvisionedRole("MyRole2", "role-tag-2")
         )
       }
     }
 
-    "parses a multiple-policy-based ACL entry" - {
-      val acl = Map(
-        "user1" -> List(
-          ConfiguredDeveloperPolicyGrantAclEntry(
-            "MyGrant",
-            "grant-id"
-          ),
-          ConfiguredDeveloperPolicyGrantAclEntry(
-            "MyGrant2",
-            "grant-id-2"
-          )
-        )
-      )
-      val result = Loader.parseAclEntries(acl, permissions)
-      val entries = result.value
-
-      "returns single entry" in {
-        entries should have size 1
-      }
-
-      "returns no permissions" in {
-        entries.head._2.permissions shouldBe empty
-      }
-
-      "returns correct policy grants" in {
-        entries.head._2.policyGrants shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id"),
-          DeveloperPolicyGrant("MyGrant2", "grant-id-2")
-        )
-      }
-    }
-
-    "parses mixed permission and policy grant entries for same user" - {
+    "parses mixed permission and role entries for same user" - {
       val acl = Map(
         "user1" -> List(
           ConfiguredAclEntry("test-account", "test-permission"),
-          ConfiguredDeveloperPolicyGrantAclEntry(
-            "MyGrant",
-            "grant-id"
-          )
+          ConfiguredRoleAclEntry("MyRole", "role-tag")
         )
       )
       val result = Loader.parseAclEntries(acl, permissions)
@@ -441,9 +427,9 @@ class LoaderTest
         )
       }
 
-      "returns correct policies" in {
-        entries.flatMap(_._2.policyGrants).toSet shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id")
+      "returns correct roles" in {
+        entries.flatMap(_._2.roles).toSet shouldEqual Set(
+          ProvisionedRole("MyRole", "role-tag")
         )
       }
     }
