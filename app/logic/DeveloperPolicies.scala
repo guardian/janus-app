@@ -35,7 +35,7 @@ object DeveloperPolicies {
   def toPermission(policy: DeveloperPolicy): Permission =
     Permission.fromManagedPolicyArns(
       account = policy.account,
-      label = policy.slug,
+      label = developerPolicySlug(policy.policyName),
       description = policy.description.getOrElse("No description."),
       managedPolicyArns = List(policy.policyArn.toString)
     )
@@ -54,12 +54,9 @@ object DeveloperPolicies {
     * uniqueness (avoiding collisions from AWS policy names that differ only in
     * special characters like `.`, `,`, `+`, `@`, etc.).
     */
-  def developerPolicySlug(
-      policyName: String,
-      account: AwsAccount
-  ): String = {
+  private[logic] def developerPolicySlug(policyName: String): String = {
     val encodedPolicyName = URLEncoder.encode(policyName, "UTF-8")
-    s"$DEVELOPER_POLICY_NAMESPACE_PREFIX-${account.authConfigKey}-$encodedPolicyName"
+    s"$DEVELOPER_POLICY_NAMESPACE_PREFIX$encodedPolicyName"
   }
   private[logic] val DEVELOPER_POLICY_NAMESPACE_PREFIX = "iam-"
 

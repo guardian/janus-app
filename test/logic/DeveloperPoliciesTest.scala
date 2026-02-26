@@ -1,6 +1,12 @@
 package logic
 
 import com.gu.janus.model.AwsAccount
+import logic.DeveloperPolicies.{
+  DEVELOPER_POLICY_NAMESPACE_PREFIX,
+  developerPolicySlug,
+  toDeveloperPolicy,
+  toPermission
+}
 import models.DeveloperPolicy
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
@@ -40,7 +46,7 @@ class DeveloperPoliciesTest
         .policyName("p1")
         .build()
 
-      val result = DeveloperPolicies.toDeveloperPolicy(account, policy)
+      val result = toDeveloperPolicy(account, policy)
 
       result shouldBe None
     }
@@ -52,7 +58,7 @@ class DeveloperPoliciesTest
         .path("/developer-policy/dev-pol-id/")
         .policyName("p1")
         .build()
-      val result = DeveloperPolicies.toDeveloperPolicy(account, policy)
+      val result = toDeveloperPolicy(account, policy)
 
       result shouldBe Some(
         DeveloperPolicy(
@@ -73,7 +79,7 @@ class DeveloperPoliciesTest
         .policyName("p1")
         .description("")
         .build()
-      val result = DeveloperPolicies.toDeveloperPolicy(account, policy)
+      val result = toDeveloperPolicy(account, policy)
 
       result shouldBe Some(
         DeveloperPolicy(
@@ -94,7 +100,7 @@ class DeveloperPoliciesTest
         .policyName("p1")
         .description("   ")
         .build()
-      val result = DeveloperPolicies.toDeveloperPolicy(account, policy)
+      val result = toDeveloperPolicy(account, policy)
 
       result shouldBe Some(
         DeveloperPolicy(
@@ -108,7 +114,7 @@ class DeveloperPoliciesTest
     }
 
     "should include description when present" in {
-      val result = DeveloperPolicies.toDeveloperPolicy(account, policy)
+      val result = toDeveloperPolicy(account, policy)
 
       result.flatMap(_.description) shouldBe Some("Description")
     }
@@ -117,17 +123,10 @@ class DeveloperPoliciesTest
   "developerPolicySlug" - {
     "always prefixes slug with DEVELOPER_POLICY_NAMESPACE_PREFIX" in {
       forAll(Gen.asciiPrintableStr) { rawPolicyName =>
-        val slug = DeveloperPolicies.developerPolicySlug(rawPolicyName, account)
+        val slug = developerPolicySlug(rawPolicyName)
         slug.startsWith(
-          DeveloperPolicies.DEVELOPER_POLICY_NAMESPACE_PREFIX
+          DEVELOPER_POLICY_NAMESPACE_PREFIX
         ) shouldBe true
-      }
-    }
-
-    "always includes account auth config key in slug" in {
-      forAll(Gen.asciiPrintableStr) { rawPolicyName =>
-        val slug = DeveloperPolicies.developerPolicySlug(rawPolicyName, account)
-        slug.contains(account.authConfigKey) shouldBe true
       }
     }
 
@@ -142,7 +141,7 @@ class DeveloperPoliciesTest
       )
 
       for ((rawPolicyName, expected) <- testCases) {
-        val slug = DeveloperPolicies.developerPolicySlug(rawPolicyName, account)
+        val slug = developerPolicySlug(rawPolicyName)
         slug should endWith(s"-$expected")
       }
     }
@@ -150,8 +149,7 @@ class DeveloperPoliciesTest
     "produces different slugs for policy names that differ only in special characters" in {
       val policyNames =
         List("policy.name", "policy,name", "policy+name", "policy@name")
-      val slugs =
-        policyNames.map(DeveloperPolicies.developerPolicySlug(_, account))
+      val slugs = policyNames.map(developerPolicySlug)
 
       slugs.distinct.size shouldBe policyNames.size
     }
@@ -167,28 +165,28 @@ class DeveloperPoliciesTest
     )
 
     "uses the policy slug as the permission label" in {
-      val permission = DeveloperPolicies.toPermission(developerPolicy)
-      permission.label shouldBe developerPolicy.slug
+      val permission = toPermission(developerPolicy)
+      permission.label shouldBe developerPolicySlug(developerPolicy.policyName)
     }
 
     "uses the policy account" in {
-      val permission = DeveloperPolicies.toPermission(developerPolicy)
+      val permission = toPermission(developerPolicy)
       permission.account shouldBe account
     }
 
     "uses the policy description when present" in {
-      val permission = DeveloperPolicies.toPermission(developerPolicy)
+      val permission = toPermission(developerPolicy)
       permission.description shouldBe "A description"
     }
 
     "uses a fallback description when none is present" in {
       val noDesc = developerPolicy.copy(description = None)
-      val permission = DeveloperPolicies.toPermission(noDesc)
+      val permission = toPermission(noDesc)
       permission.description should not be empty
     }
 
     "uses the policy ARN as the managed policy ARN" in {
-      val permission = DeveloperPolicies.toPermission(developerPolicy)
+      val permission = toPermission(developerPolicy)
       permission.managedPolicyArns.value should contain(
         developerPolicy.policyArn.toString
       )
@@ -207,8 +205,8 @@ class DeveloperPoliciesTest
           None,
           acc
         )
-        val permission = DeveloperPolicies.toPermission(pol)
-        permission.id shouldBe s"${acc.authConfigKey}-${pol.slug}"
+        val permission = toPermission(pol)
+        permission.id shouldBe s"${acc.authConfigKey}-${developerPolicySlug(policyName)}"
       }
     }
   }
