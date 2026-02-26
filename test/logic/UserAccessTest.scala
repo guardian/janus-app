@@ -74,6 +74,31 @@ class UserAccessTest
       permissions should contain(policyPermission)
     }
 
+    "a matching policyGrant results in additional permissions beyond the base ACL permissions" in {
+      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val policy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "p1",
+        "grant-id",
+        None,
+        fooAct
+      )
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
+        Set.empty
+      )
+      val policyPermission = DeveloperPolicies.toPermission(policy)
+      val permissionsWithPolicy =
+        userAccess("test.user", acl, Set(policy)).value
+      val permissionsWithoutPolicy =
+        userAccess("test.user", acl, Set.empty).value
+      // Base ACL permissions are preserved in the result
+      permissionsWithPolicy should contain(fooDev)
+      permissionsWithoutPolicy should contain(fooDev)
+      // The only addition is exactly the policy-derived permission
+      (permissionsWithPolicy -- permissionsWithoutPolicy) shouldEqual Set(policyPermission)
+    }
+
     "does not include developer policies whose grant ID does not match any ACL entry grant" in {
       val grant = DeveloperPolicyGrant("My Grant", "grant-id")
       val unmatchedPolicy = DeveloperPolicy(
