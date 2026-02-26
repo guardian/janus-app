@@ -1,13 +1,9 @@
 package logic
 
-import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant}
-import models.{
-  AwsAccountDeveloperPolicyStatus,
-  DeveloperPolicy,
-  DeveloperPolicySnapshot,
-  FailureSnapshot
-}
+import com.gu.janus.model.AwsAccount
+import models.DeveloperPolicy
 import org.scalacheck.Gen
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -18,6 +14,7 @@ import java.time.Instant
 class DeveloperPoliciesTest
     extends AnyFreeSpec
     with Matchers
+    with OptionValues
     with ScalaCheckPropertyChecks {
 
   private val timestamp = Instant.now()
@@ -157,6 +154,62 @@ class DeveloperPoliciesTest
         policyNames.map(DeveloperPolicies.developerPolicySlug(_, account))
 
       slugs.distinct.size shouldBe policyNames.size
+    }
+  }
+
+  "toPermission" - {
+    val developerPolicy = DeveloperPolicy(
+      "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1",
+      "p1",
+      "dev-pol-id",
+      Some("A description"),
+      account
+    )
+
+    "uses the policy slug as the permission label" in {
+      val permission = DeveloperPolicies.toPermission(developerPolicy)
+      permission.label shouldBe developerPolicy.slug
+    }
+
+    "uses the policy account" in {
+      val permission = DeveloperPolicies.toPermission(developerPolicy)
+      permission.account shouldBe account
+    }
+
+    "uses the policy description when present" in {
+      val permission = DeveloperPolicies.toPermission(developerPolicy)
+      permission.description shouldBe "A description"
+    }
+
+    "uses a fallback description when none is present" in {
+      val noDesc = developerPolicy.copy(description = None)
+      val permission = DeveloperPolicies.toPermission(noDesc)
+      permission.description should not be empty
+    }
+
+    "uses the policy ARN as the managed policy ARN" in {
+      val permission = DeveloperPolicies.toPermission(developerPolicy)
+      permission.managedPolicyArns.value should contain(
+        developerPolicy.policyArn.toString
+      )
+    }
+
+    "property: permission id is composed of account key and policy slug" in {
+      forAll(
+        Gen.alphaNumStr.suchThat(_.nonEmpty),
+        Gen.alphaNumStr.suchThat(_.nonEmpty)
+      ) { (policyName, accountKey) =>
+        val acc = AwsAccount("Test Account", accountKey)
+        val pol = DeveloperPolicy(
+          s"arn:aws:iam::123:policy/developer-policy/grant-id/$policyName",
+          policyName,
+          "grant-id",
+          None,
+          acc
+        )
+        val permission = DeveloperPolicies.toPermission(pol)
+        permission.id shouldBe s"${acc.authConfigKey}-${pol.slug}"
+      }
     }
   }
 }

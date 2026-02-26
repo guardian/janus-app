@@ -1,8 +1,9 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, ACLEntry, SupportACL}
+import com.gu.janus.model.{ACL, ACLEntry, DeveloperPolicyGrant, SupportACL}
 import fixtures.Fixtures.*
+import models.DeveloperPolicy
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -53,6 +54,100 @@ class UserAccessTest
         access,
         Set.empty
       ).value shouldEqual (permissions ++ access.defaultPermissions)
+    }
+
+    "includes permissions derived from matching developer policies" in {
+      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val policy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "p1",
+        "grant-id",
+        None,
+        fooAct
+      )
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
+        Set.empty
+      )
+      val permissions = userAccess("test.user", acl, Set(policy)).value
+      val policyPermission = DeveloperPolicies.toPermission(policy)
+      permissions should contain(policyPermission)
+    }
+
+    "does not include developer policies whose grant ID does not match any ACL entry grant" in {
+      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val unmatchedPolicy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/other-id/p1",
+        "p1",
+        "other-id",
+        None,
+        fooAct
+      )
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
+        Set.empty
+      )
+      val permissions = userAccess("test.user", acl, Set(unmatchedPolicy)).value
+      val unmatchedPermission = DeveloperPolicies.toPermission(unmatchedPolicy)
+      permissions should not contain unmatchedPermission
+    }
+
+    "does not include developer policies when the user has no policy grants" in {
+      val policy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "p1",
+        "grant-id",
+        None,
+        fooAct
+      )
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev), Set.empty)),
+        Set.empty
+      )
+      val permissions = userAccess("test.user", acl, Set(policy)).value
+      permissions shouldEqual Set(fooDev)
+    }
+
+    "property: result only contains developer policy permissions for grants the user holds" in {
+      val grant1 = DeveloperPolicyGrant("Grant 1", "grant-alpha")
+      val grant2 = DeveloperPolicyGrant("Grant 2", "grant-beta")
+      val allGrants = List(grant1, grant2)
+
+      forAll(Gen.someOf(allGrants), Gen.someOf(allGrants)) {
+        (userGrantSeq, policyGrantSeq) =>
+          val userGrants = userGrantSeq.toSet
+          val policyGrants = policyGrantSeq.toSet
+
+          val policies = policyGrants.zipWithIndex.map { case (g, i) =>
+            DeveloperPolicy(
+              s"arn:aws:iam::123:policy/developer-policy/${g.id}/p$i",
+              s"p$i",
+              g.id,
+              None,
+              fooAct
+            )
+          }
+
+          val acl = ACL(
+            Map("test.user" -> ACLEntry(Set.empty, userGrants)),
+            Set.empty
+          )
+
+          val result = userAccess("test.user", acl, policies).value
+
+          // Every policy that produced a permission must have a matching grant
+          val permissionsFromPolicies =
+            policies.map(DeveloperPolicies.toPermission)
+          val unexpectedPermissions =
+            result.intersect(permissionsFromPolicies).filter { perm =>
+              val sourcePolicy = policies.find(
+                DeveloperPolicies.toPermission(_) == perm
+              )
+              sourcePolicy
+                .forall(p => !userGrants.exists(_.id == p.policyGrantId))
+            }
+          unexpectedPermissions shouldBe empty
+      }
     }
   }
 
