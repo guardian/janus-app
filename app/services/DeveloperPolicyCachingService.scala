@@ -4,7 +4,7 @@ import aws.{Clients, Iam}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import cats.implicits.toTraverseOps
-import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant}
+import com.gu.janus.model.AwsAccount
 import fs2.Stream
 import logic.DeveloperPolicies
 import models.{

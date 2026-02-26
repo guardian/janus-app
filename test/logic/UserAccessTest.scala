@@ -96,7 +96,9 @@ class UserAccessTest
       permissionsWithPolicy should contain(fooDev)
       permissionsWithoutPolicy should contain(fooDev)
       // The only addition is exactly the policy-derived permission
-      (permissionsWithPolicy -- permissionsWithoutPolicy) shouldEqual Set(policyPermission)
+      (permissionsWithPolicy -- permissionsWithoutPolicy) shouldEqual Set(
+        policyPermission
+      )
     }
 
     "does not include developer policies whose grant ID does not match any ACL entry grant" in {
