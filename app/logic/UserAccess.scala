@@ -26,9 +26,10 @@ object UserAccess {
       .get(username)
       .map { aclEntry =>
         val permissions = aclEntry.permissions ++ acl.defaultPermissions
+        val grantedPolicyIds = aclEntry.policyGrants.map(_.id).toSet
         val policies = developerPolicies
           .filter { policy =>
-            aclEntry.policyGrants.exists(_.id == policy.policyGrantId)
+            grantedPolicyIds.contains(policy.policyGrantId)
           }
           .map(toPermission)
         permissions ++ policies
