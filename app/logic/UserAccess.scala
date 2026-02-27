@@ -26,13 +26,12 @@ object UserAccess {
       .get(username)
       .map { aclEntry =>
         val permissions = aclEntry.permissions ++ acl.defaultPermissions
-        val grantedPolicyIds = aclEntry.policyGrants.map(_.id).toSet
+        val grantedPolicyIds = aclEntry.policyGrants.map(_.id)
         val policies = developerPolicies
           .filter { policy =>
             grantedPolicyIds.contains(policy.policyGrantId)
           }
-          .map(toPermission)
-        permissions ++ policies
+        permissions ++ policies.map(toPermission)
       }
 
   /** Checks if the username is explicitly mentioned in the provided ACL.
