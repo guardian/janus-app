@@ -7,7 +7,7 @@
 
 @(accountAndStatuses: List[(AwsAccount, AwsAccountDeveloperPolicyStatus)], serviceEnabled: Boolean, refreshFrequency: FiniteDuration, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
-@main(s"Roles Status", Some(user), janusData) {
+@main(s"Developer policies status", Some(user), janusData) {
     <div class="container">
         <div class="developer-policy-service-config right valign-wrapper">
             @if(serviceEnabled) {
@@ -17,10 +17,11 @@
                 <i class="material-icons small">sync_problem</i>
             }
         </div>
-        <h1 class="header orange-text">Provisioned roles</h1>
+        <h1 class="header orange-text">Developer policies</h1>
         @if(accountAndStatuses.empty) {
           <p>No Accounts and Roles found</p>
         } else {
+            @fragments.developerPolicyDocumentation()
             <ul class="collection">
                 @for((account, status) <- accountAndStatuses) {
                     <li class="collection-item">
