@@ -10,7 +10,7 @@ import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
-import models.PasskeyAuthenticator
+import models.{DeveloperPolicy, PasskeyAuthenticator}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.DeveloperPolicyFinder
@@ -162,7 +162,8 @@ class Janus(
           request.user,
           permissionId,
           JConsole,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          developerPolicyFinder.getDeveloperPolicies
         )
         loginUrl = Federation.generateLoginUrl(credentials, host)
       } yield {
@@ -183,7 +184,8 @@ class Janus(
           request.user,
           permissionId,
           JConsole,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          developerPolicyFinder.getDeveloperPolicies
         )
         loginUrl = Federation.generateLoginUrl(credentials, host)
       } yield {
@@ -212,7 +214,8 @@ class Janus(
           request.user,
           permissionId,
           JCredentials,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          developerPolicyFinder.getDeveloperPolicies
         )
       } yield {
         Ok(
@@ -239,7 +242,8 @@ class Janus(
         accountCredentials <- multiAccountAssumption(
           request.user,
           permissionIds,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          developerPolicyFinder.getDeveloperPolicies
         )
         expiry <- accountCredentials.headOption.map { case (_, creds) =>
           creds.expiration
@@ -279,7 +283,8 @@ class Janus(
       user: UserIdentity,
       permissionId: String,
       accessType: JanusAccessType,
-      durationParams: (Option[Duration], Option[ZoneId])
+      durationParams: (Option[Duration], Option[ZoneId]),
+      developerPolicies: Set[DeveloperPolicy]
   ): Option[(Credentials, Permission)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
@@ -290,7 +295,7 @@ class Janus(
         janusData.access,
         janusData.admin,
         janusData.support,
-        developerPolicyFinder.getDeveloperPolicies
+        developerPolicies
       )
       duration = Federation.duration(
         permission,
@@ -325,10 +330,11 @@ class Janus(
   private def multiAccountAssumption(
       user: UserIdentity,
       permissionIds: List[String],
-      durationParams: (Option[Duration], Option[ZoneId])
+      durationParams: (Option[Duration], Option[ZoneId]),
+      developerPolicies: Set[DeveloperPolicy]
   ): Option[List[(AwsAccount, Credentials)]] = {
     permissionIds
-      .map(assumeRole(user, _, JCredentials, durationParams))
+      .map(assumeRole(user, _, JCredentials, durationParams, developerPolicies))
       .map(_.map { case (credentials, permission) =>
         permission.account -> credentials
       })
