@@ -166,9 +166,14 @@ object UserAccess {
     ).map(_.account)
   }
 
-  /** Check if the provided user has been granted this permission.
+  /** Check if the provided user has been granted this permission, and whether
+    * that permission was granted via explicit (ie. non-support, non-admin)
+    * access.
+    *
+    * @return
+    *   Some(permission, isExplicitAccess) iff user has the permission.
     */
-  def checkUserPermission(
+  def checkUserPermissionWithSource(
       username: String,
       permissionId: String,
       date: Instant,
@@ -176,30 +181,14 @@ object UserAccess {
       adminACL: ACL,
       supportACL: SupportACL,
       developerPolicies: Set[DeveloperPolicy]
-  ): Option[Permission] = {
-    allUserPermissions(
-      username,
-      date,
-      acl,
-      adminACL,
-      supportACL,
-      developerPolicies
-    ).find(
-      _.id == permissionId
-    )
-  }
-
-  /** Check if the user has explicit access granted in the Access.scala file.
-    */
-  def hasExplicitAccess(
-      username: String,
-      permission: Permission,
-      acl: ACL,
-      developerPolicies: Set[DeveloperPolicy]
-  ): Boolean = {
-    userAccess(username, acl, developerPolicies)
-      .getOrElse(Set.empty)
-      .contains(permission)
+  ): Option[(Permission, Boolean)] = {
+    val explicitAccess = userAccess(username, acl, developerPolicies).getOrElse(Set.empty)
+    val adminAccess = userAccess(username, adminACL, developerPolicies).getOrElse(Set.empty)
+    val supportAccess = userSupportAccess(username, date, supportACL).getOrElse(Set.empty)
+    val allPerms = explicitAccess ++ adminAccess ++ supportAccess
+    allPerms
+      .find(_.id == permissionId)
+      .map(permission => (permission, explicitAccess.contains(permission)))
   }
 
   /** Checks if a user has access to an account and returns appropriate

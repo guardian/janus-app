@@ -598,7 +598,7 @@ class UserAccessTest
     }
   }
 
-  "checkUserPermission" - {
+  "checkUserPermissionWithSource" - {
     val acl = ACL(
       Map(
         "user" -> ACLEntry(Set(fooDev), Set.empty)
@@ -617,7 +617,7 @@ class UserAccessTest
     )
 
     "returns the permission if a user has been granted access" in {
-      checkUserPermission(
+      val (permission, _) = checkUserPermissionWithSource(
         "user",
         fooDev.id,
         Instant.now(),
@@ -625,12 +625,13 @@ class UserAccessTest
         adminAcl,
         supportAcl,
         Set.empty
-      ).value shouldEqual fooDev
+      ).value
+      permission shouldEqual fooDev
     }
 
     "returns the permission if it has been granted via admin access" in {
       Inspectors.forAll(allTestPerms) { adminPermission =>
-        checkUserPermission(
+        val (permission, _) = checkUserPermissionWithSource(
           "admin",
           adminPermission.id,
           Instant.now(),
@@ -638,13 +639,14 @@ class UserAccessTest
           adminAcl,
           supportAcl,
           Set.empty
-        ).value shouldEqual adminPermission
+        ).value
+        permission shouldEqual adminPermission
       }
     }
 
     "returns the permission if it has been granted via support access" in {
       Inspectors.forAll(supportAcl.supportAccess) { supportPermission =>
-        checkUserPermission(
+        val (permission, _) = checkUserPermissionWithSource(
           "support.user",
           supportPermission.id,
           Instant.now(),
@@ -652,12 +654,13 @@ class UserAccessTest
           adminAcl,
           supportAcl,
           Set.empty
-        ).value shouldEqual supportPermission
+        ).value
+        permission shouldEqual supportPermission
       }
     }
 
     "returns None if the permission has not been granted to the user" in {
-      checkUserPermission(
+      checkUserPermissionWithSource(
         "no.permissions",
         fooDev.id,
         Instant.now(),
@@ -687,21 +690,28 @@ class UserAccessTest
       Set(fooDev)
     )
 
+    def isGrantedExplicitly(username: String): Boolean =
+      checkUserPermissionWithSource(
+        username,
+        fooDev.id,
+        Instant.now(),
+        acl,
+        adminAcl,
+        supportAcl,
+        Set.empty
+      )
+        .exists((_, explicit) => explicit)
+
     "returns true if a user has been granted explicit access" in {
-      hasExplicitAccess("user", fooDev, acl, Set.empty) shouldEqual true
+      isGrantedExplicitly("user") shouldEqual true
     }
 
     "returns false if an admin user does not have explicit access" in {
-      hasExplicitAccess("admin", fooDev, acl, Set.empty) shouldEqual false
+      isGrantedExplicitly("admin") shouldEqual false
     }
 
     "returns false if a support user does not have explicit access" in {
-      hasExplicitAccess(
-        "support.user",
-        fooDev,
-        acl,
-        Set.empty
-      ) shouldEqual false
+      isGrantedExplicitly("support.user") shouldEqual false
     }
   }
 
