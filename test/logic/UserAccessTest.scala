@@ -1,9 +1,9 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, ACLEntry, DeveloperPolicyGrant, SupportACL}
+import com.gu.janus.model.*
 import fixtures.Fixtures.*
-import models.DeveloperPolicy
+import models.{AccountAccess, DeveloperPolicy}
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -20,6 +20,17 @@ class UserAccessTest
 
   import UserAccess.*
 
+  /** Flattens a [[userAccess]] result into a flat set of all permissions
+    * (including those derived from developer policies), for use in assertions
+    * that do not care about the per-account grouping.
+    */
+  private def allPermissions(
+      result: Map[AwsAccount, AccountAccess]
+  ): Set[Permission] =
+    result.values.flatMap { aa =>
+      aa.permissions ++ aa.developerPolicies.map(DeveloperPolicies.toPermission)
+    }.toSet
+
   "userAccess" - {
     val testAccess =
       ACL(
@@ -34,12 +45,14 @@ class UserAccessTest
     }
 
     "returns the user's permissions if they exist" in {
-      val permissions = userAccess("test.user", testAccess, Set.empty).value
+      val permissions =
+        allPermissions(userAccess("test.user", testAccess, Set.empty).value)
       permissions should (contain(fooDev) and contain(barDev))
     }
 
     "include default permissions in all users' available permissions" in {
-      val access = userAccess("test.user", testAccess, Set.empty).value
+      val access =
+        allPermissions(userAccess("test.user", testAccess, Set.empty).value)
       testAccess.defaultPermissions foreach { perm =>
         access should contain(perm)
       }
@@ -47,13 +60,10 @@ class UserAccessTest
 
     "deduplicates a user's permissions" in {
       val permissions = Set(fooDev, barDev, fooDev, barDev)
-      val access =
+      val acl =
         ACL(Map("test.user" -> ACLEntry(permissions, Set.empty)), Set.empty)
-      userAccess(
-        "test.user",
-        access,
-        Set.empty
-      ).value shouldEqual (permissions ++ access.defaultPermissions)
+      val result = allPermissions(userAccess("test.user", acl, Set.empty).value)
+      result shouldEqual (permissions ++ acl.defaultPermissions)
     }
 
     "includes permissions derived from matching developer policies" in {
@@ -69,7 +79,8 @@ class UserAccessTest
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
         Set.empty
       )
-      val permissions = userAccess("test.user", acl, Set(policy)).value
+      val permissions =
+        allPermissions(userAccess("test.user", acl, Set(policy)).value)
       val policyPermission = DeveloperPolicies.toPermission(policy)
       permissions should contain(policyPermission)
     }
@@ -89,9 +100,9 @@ class UserAccessTest
       )
       val policyPermission = DeveloperPolicies.toPermission(policy)
       val permissionsWithPolicy =
-        userAccess("test.user", acl, Set(policy)).value
+        allPermissions(userAccess("test.user", acl, Set(policy)).value)
       val permissionsWithoutPolicy =
-        userAccess("test.user", acl, Set.empty).value
+        allPermissions(userAccess("test.user", acl, Set.empty).value)
       // Base ACL permissions are preserved in the result
       permissionsWithPolicy should contain(fooDev)
       permissionsWithoutPolicy should contain(fooDev)
@@ -114,7 +125,8 @@ class UserAccessTest
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
         Set.empty
       )
-      val permissions = userAccess("test.user", acl, Set(unmatchedPolicy)).value
+      val permissions =
+        allPermissions(userAccess("test.user", acl, Set(unmatchedPolicy)).value)
       val unmatchedPermission = DeveloperPolicies.toPermission(unmatchedPolicy)
       permissions should not contain unmatchedPermission
     }
@@ -131,8 +143,37 @@ class UserAccessTest
         Map("test.user" -> ACLEntry(Set(fooDev), Set.empty)),
         Set.empty
       )
-      val permissions = userAccess("test.user", acl, Set(policy)).value
+      val permissions =
+        allPermissions(userAccess("test.user", acl, Set(policy)).value)
       permissions shouldEqual Set(fooDev)
+    }
+
+    "groups permissions by account" in {
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev, barDev), Set.empty)),
+        Set.empty
+      )
+      val result = userAccess("test.user", acl, Set.empty).value
+      result(fooAct).permissions should contain(fooDev)
+      result(barAct).permissions should contain(barDev)
+    }
+
+    "groups developer policies by account separately from permissions" in {
+      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val policy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "p1",
+        "grant-id",
+        None,
+        fooAct
+      )
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
+        Set.empty
+      )
+      val result = userAccess("test.user", acl, Set(policy)).value
+      result(fooAct).permissions should contain(fooDev)
+      result(fooAct).developerPolicies should contain(policy)
     }
 
     "property: result only contains developer policy permissions for grants the user holds" in {
@@ -160,7 +201,8 @@ class UserAccessTest
             Set.empty
           )
 
-          val result = userAccess("test.user", acl, policies).value
+          val result =
+            allPermissions(userAccess("test.user", acl, policies).value)
 
           // Every policy that produced a permission must have a matching grant
           val permissionsFromPolicies =
@@ -173,7 +215,7 @@ class UserAccessTest
               sourcePolicy
                 .forall(p => !userGrants.exists(_.id == p.policyGrantId))
             }
-          unexpectedPermissions shouldBe empty
+          unexpectedPermissions should be(empty)
       }
     }
   }

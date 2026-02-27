@@ -10,7 +10,7 @@ import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
-import models.{DeveloperPolicy, PasskeyAuthenticator}
+import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.DeveloperPolicyFinder
@@ -96,16 +96,20 @@ class Janus(
       val currentUserFutureSupportPeriods =
         futureRotaSlotsForUser(now, janusData.support, username(request.user))
       (for {
-        permissions <- userSupportAccess(
+        supportPermissions <- userSupportAccess(
           username(request.user),
           now,
           janusData.support
         )
-        awsAccountAccess = orderedAccountAccess(permissions)
+        accountAccesses = supportPermissions
+          .groupBy(_.account)
+          .view
+          .mapValues(perms => AccountAccess(perms.toList, Nil))
+          .toMap
       } yield {
         Ok(
           views.html.support.support(
-            awsAccountAccess,
+            orderedAccountAccess(accountAccesses),
             currentSupportUsers,
             supportUsersInNextPeriod,
             currentUserFutureSupportPeriods,
