@@ -36,7 +36,7 @@ object DeveloperPolicies {
     Permission.fromManagedPolicyArns(
       account = policy.account,
       label = developerPolicySlug(policy.policyName),
-      description = policy.description.getOrElse("No description."),
+      description = policy.description.getOrElse("No description"),
       managedPolicyArns = List(policy.policyArn.toString)
     )
 
