@@ -1,6 +1,6 @@
 package logic
 
-import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant, Permission}
 import models.{AccountAccess, AwsAccountAccess, DeveloperPolicy}
 
 object AccountOrdering {
@@ -14,6 +14,7 @@ object AccountOrdering {
     */
   def orderedAccountAccess(
       accountAccess: Map[AwsAccount, AccountAccess],
+      userPolicyGrants: Set[DeveloperPolicyGrant],
       favourites: List[String] = Nil
   ): List[AwsAccountAccess] =
     accountAccess.toList
@@ -25,12 +26,11 @@ object AccountOrdering {
         else favIndex
       }
       .map { case (account, access) =>
+        val temp: Map[DeveloperPolicyGrant, List[DeveloperPolicy]] = ???
         AwsAccountAccess(
           awsAccount = account,
-          access = AccountAccess(
-            permissions = access.permissions.sorted,
-            developerPolicies = access.developerPolicies.sorted
-          ),
+          permissions = access.permissions.sorted,
+          groupedDeveloperPolicies = ???,
           isFavourite = favourites.contains(account.authConfigKey)
         )
       }

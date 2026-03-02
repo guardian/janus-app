@@ -50,8 +50,16 @@ class Janus(
           janusData.access,
           developerPolicyFinder.getDeveloperPolicies
         )
+        userPolicyGrants = lookupUserPolicyGrants(
+          username(request.user),
+          janusData.access
+        )
         favourites = Favourites.fromCookie(request.cookies.get("favourites"))
-        awsAccountAccess = orderedAccountAccess(permissions, favourites)
+        awsAccountAccess = orderedAccountAccess(
+          permissions,
+          userPolicyGrants,
+          favourites
+        )
       } yield {
         Ok(
           views.html
@@ -73,7 +81,11 @@ class Janus(
           janusData.admin,
           developerPolicyFinder.getDeveloperPolicies
         )
-        awsAccountAccess = orderedAccountAccess(permissions)
+        userPolicyGrants = lookupUserPolicyGrants(
+          username(request.user),
+          janusData.admin
+        )
+        awsAccountAccess = orderedAccountAccess(permissions, userPolicyGrants)
       } yield {
         Ok(
           views.html.admin(
@@ -109,7 +121,8 @@ class Janus(
       } yield {
         Ok(
           views.html.support.support(
-            orderedAccountAccess(accountAccesses),
+            // support doesn't work with developer policy grants, so we can pass an empty set here
+            orderedAccountAccess(accountAccesses, Set.empty),
             currentSupportUsers,
             supportUsersInNextPeriod,
             currentUserFutureSupportPeriods,

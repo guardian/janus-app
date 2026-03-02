@@ -1,9 +1,16 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, AwsAccount, Permission, SupportACL}
+import com.gu.janus.model.{
+  ACL,
+  AwsAccount,
+  DeveloperPolicyGrant,
+  Permission,
+  SupportACL
+}
 import logic.DeveloperPolicies.toPermission
 import models.{AccountAccess, DeveloperPolicy}
+import software.amazon.awssdk.http.auth.aws.internal.signer.DefaultV4PayloadSigner
 
 import java.time.Instant
 
@@ -54,6 +61,16 @@ object UserAccess {
     */
   def hasAccess(username: String, acl: ACL): Boolean = {
     acl.userAccess.keySet.contains(username)
+  }
+
+  def lookupUserPolicyGrants(
+      username: String,
+      acl: ACL
+  ): Set[DeveloperPolicyGrant] = {
+    acl.userAccess
+      .get(username)
+      .map(_.policyGrants)
+      .getOrElse(Set.empty)
   }
 
   // support access
