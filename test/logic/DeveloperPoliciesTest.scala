@@ -1,13 +1,15 @@
 package logic
 
-import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant}
-import models.{
-  AwsAccountDeveloperPolicyStatus,
-  DeveloperPolicy,
-  DeveloperPolicySnapshot,
-  FailureSnapshot
+import com.gu.janus.model.AwsAccount
+import logic.DeveloperPolicies.{
+  DEVELOPER_POLICY_NAMESPACE_PREFIX,
+  developerPolicySlug,
+  toDeveloperPolicy,
+  toPermission
 }
+import models.DeveloperPolicy
 import org.scalacheck.Gen
+import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
@@ -18,6 +20,7 @@ import java.time.Instant
 class DeveloperPoliciesTest
     extends AnyFreeSpec
     with Matchers
+    with OptionValues
     with ScalaCheckPropertyChecks {
 
   private val timestamp = Instant.now()
@@ -34,238 +37,6 @@ class DeveloperPoliciesTest
       .description("Description")
       .build()
 
-  "getDeveloperPoliciesByGrant" - {
-    "should return empty list when cache is empty" in {
-      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
-        Map.empty,
-        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
-      )
-
-      result shouldBe empty
-    }
-
-    "should return empty list when no accounts have snapshots" in {
-      val cache = Map(
-        AwsAccount("123", "acc1") -> AwsAccountDeveloperPolicyStatus(
-          None,
-          None
-        ),
-        AwsAccount("456", "acc2") -> AwsAccountDeveloperPolicyStatus(
-          None,
-          Some(FailureSnapshot("error", timestamp))
-        )
-      )
-
-      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
-        cache,
-        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
-      )
-
-      result shouldBe empty
-    }
-
-    "should return empty list when no policies match the developer policy ID" in {
-      val cache = Map(
-        AwsAccount("123", "acc") -> AwsAccountDeveloperPolicyStatus(
-          Some(
-            DeveloperPolicySnapshot(
-              List(
-                DeveloperPolicy(
-                  "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1",
-                  "p1",
-                  "other-id",
-                  None,
-                  account
-                ),
-                DeveloperPolicy(
-                  "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p2",
-                  "p2",
-                  "different-id",
-                  None,
-                  account
-                )
-              ),
-              timestamp
-            )
-          ),
-          None
-        )
-      )
-
-      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
-        cache,
-        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
-      )
-
-      result shouldBe empty
-    }
-
-    "should return single matching policy from single account" in {
-      val matchingPolicy =
-        DeveloperPolicy(
-          "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1",
-          "p1",
-          "dev-pol-id",
-          None,
-          account
-        )
-      val cache = Map(
-        AwsAccount("123", "acc") -> AwsAccountDeveloperPolicyStatus(
-          Some(DeveloperPolicySnapshot(List(matchingPolicy), timestamp)),
-          None
-        )
-      )
-
-      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
-        cache,
-        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
-      )
-
-      result should contain only matchingPolicy
-    }
-
-    "should filter matching policies from mixed list" in {
-      val matching =
-        DeveloperPolicy(
-          "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1",
-          "p1",
-          "dev-pol-id",
-          None,
-          account
-        )
-      val cache = Map(
-        AwsAccount("123", "acc") -> AwsAccountDeveloperPolicyStatus(
-          Some(
-            DeveloperPolicySnapshot(
-              List(
-                DeveloperPolicy(
-                  "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p0",
-                  "p0",
-                  "other",
-                  None,
-                  account
-                ),
-                matching,
-                DeveloperPolicy(
-                  "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p2",
-                  "r2",
-                  "different",
-                  None,
-                  account
-                )
-              ),
-              timestamp
-            )
-          ),
-          None
-        )
-      )
-
-      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
-        cache,
-        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
-      )
-
-      result should contain only matching
-    }
-
-    "should aggregate matching policies from multiple accounts" in {
-      val policy1 =
-        DeveloperPolicy(
-          "arn:aws:iam::111:policy/developer-policy/dev-pol-id/p1",
-          "p1",
-          "dev-pol-id",
-          None,
-          account
-        )
-      val policy2 =
-        DeveloperPolicy(
-          "arn:aws:iam::222:policy/developer-policy/dev-pol-id/p2",
-          "p2",
-          "dev-pol-id",
-          None,
-          account
-        )
-      val cache = Map(
-        AwsAccount("111", "acc1") -> AwsAccountDeveloperPolicyStatus(
-          Some(DeveloperPolicySnapshot(List(policy1), timestamp)),
-          None
-        ),
-        AwsAccount("222", "acc2") -> AwsAccountDeveloperPolicyStatus(
-          Some(DeveloperPolicySnapshot(List(policy2), timestamp)),
-          None
-        )
-      )
-
-      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
-        cache,
-        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
-      )
-
-      result should contain theSameElementsAs List(policy1, policy2)
-    }
-
-    "should handle accounts with mixed snapshot states" in {
-      val matchingPolicy =
-        DeveloperPolicy(
-          "arn:aws:iam::111:policy/developer-policy/dev-pol-id/p1",
-          "p1",
-          "dev-pol-id",
-          None,
-          account
-        )
-      val cache = Map(
-        AwsAccount("111", "acc1") -> AwsAccountDeveloperPolicyStatus(
-          Some(DeveloperPolicySnapshot(List(matchingPolicy), timestamp)),
-          None
-        ),
-        AwsAccount("222", "acc2") -> AwsAccountDeveloperPolicyStatus(
-          None,
-          None
-        ),
-        AwsAccount("333", "acc3") -> AwsAccountDeveloperPolicyStatus(
-          None,
-          Some(FailureSnapshot("error", timestamp))
-        )
-      )
-
-      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
-        cache,
-        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
-      )
-
-      result should contain only matchingPolicy
-    }
-
-    "property: result should only contain policies with matching developer policy ID" in {
-      forAll(Gen.listOfN(5, Gen.alphaStr), Gen.alphaStr) {
-        (ids: List[String], targetId: String) =>
-          val policies = ids.zipWithIndex.map { case (id, idx) =>
-            DeveloperPolicy(
-              s"arn:aws:iam::123:policy/developer-policy/dev-pol-id/p$idx",
-              s"p$idx",
-              id,
-              None,
-              account
-            )
-          }
-          val cache = Map(
-            AwsAccount("123", "acc") -> AwsAccountDeveloperPolicyStatus(
-              Some(DeveloperPolicySnapshot(policies, timestamp)),
-              None
-            )
-          )
-
-          val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
-            cache,
-            DeveloperPolicyGrant("Test", targetId)
-          )
-
-          result.forall(_.policyGrantId == targetId) shouldBe true
-      }
-    }
-  }
-
   "toDeveloperPolicy" - {
     "should return None when developer policy grant ID is absent" in {
       val policy = Policy
@@ -275,7 +46,7 @@ class DeveloperPoliciesTest
         .policyName("p1")
         .build()
 
-      val result = DeveloperPolicies.toDeveloperPolicy(account, policy)
+      val result = toDeveloperPolicy(account, policy)
 
       result shouldBe None
     }
@@ -287,7 +58,7 @@ class DeveloperPoliciesTest
         .path("/developer-policy/dev-pol-id/")
         .policyName("p1")
         .build()
-      val result = DeveloperPolicies.toDeveloperPolicy(account, policy)
+      val result = toDeveloperPolicy(account, policy)
 
       result shouldBe Some(
         DeveloperPolicy(
@@ -308,7 +79,7 @@ class DeveloperPoliciesTest
         .policyName("p1")
         .description("")
         .build()
-      val result = DeveloperPolicies.toDeveloperPolicy(account, policy)
+      val result = toDeveloperPolicy(account, policy)
 
       result shouldBe Some(
         DeveloperPolicy(
@@ -329,7 +100,7 @@ class DeveloperPoliciesTest
         .policyName("p1")
         .description("   ")
         .build()
-      val result = DeveloperPolicies.toDeveloperPolicy(account, policy)
+      val result = toDeveloperPolicy(account, policy)
 
       result shouldBe Some(
         DeveloperPolicy(
@@ -343,7 +114,7 @@ class DeveloperPoliciesTest
     }
 
     "should include description when present" in {
-      val result = DeveloperPolicies.toDeveloperPolicy(account, policy)
+      val result = toDeveloperPolicy(account, policy)
 
       result.flatMap(_.description) shouldBe Some("Description")
     }
@@ -352,17 +123,10 @@ class DeveloperPoliciesTest
   "developerPolicySlug" - {
     "always prefixes slug with DEVELOPER_POLICY_NAMESPACE_PREFIX" in {
       forAll(Gen.asciiPrintableStr) { rawPolicyName =>
-        val slug = DeveloperPolicies.developerPolicySlug(rawPolicyName, account)
+        val slug = developerPolicySlug(rawPolicyName)
         slug.startsWith(
-          DeveloperPolicies.DEVELOPER_POLICY_NAMESPACE_PREFIX
+          DEVELOPER_POLICY_NAMESPACE_PREFIX
         ) shouldBe true
-      }
-    }
-
-    "always includes account auth config key in slug" in {
-      forAll(Gen.asciiPrintableStr) { rawPolicyName =>
-        val slug = DeveloperPolicies.developerPolicySlug(rawPolicyName, account)
-        slug.contains(account.authConfigKey) shouldBe true
       }
     }
 
@@ -377,7 +141,7 @@ class DeveloperPoliciesTest
       )
 
       for ((rawPolicyName, expected) <- testCases) {
-        val slug = DeveloperPolicies.developerPolicySlug(rawPolicyName, account)
+        val slug = developerPolicySlug(rawPolicyName)
         slug should endWith(s"-$expected")
       }
     }
@@ -385,10 +149,65 @@ class DeveloperPoliciesTest
     "produces different slugs for policy names that differ only in special characters" in {
       val policyNames =
         List("policy.name", "policy,name", "policy+name", "policy@name")
-      val slugs =
-        policyNames.map(DeveloperPolicies.developerPolicySlug(_, account))
+      val slugs = policyNames.map(developerPolicySlug)
 
       slugs.distinct.size shouldBe policyNames.size
+    }
+  }
+
+  "toPermission" - {
+    val developerPolicy = DeveloperPolicy(
+      "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1",
+      "p1",
+      "dev-pol-id",
+      Some("A description"),
+      account
+    )
+
+    "uses the policy slug as the permission label" in {
+      val permission = toPermission(developerPolicy)
+      permission.label shouldBe developerPolicySlug(developerPolicy.policyName)
+    }
+
+    "uses the policy account" in {
+      val permission = toPermission(developerPolicy)
+      permission.account shouldBe account
+    }
+
+    "uses the policy description when present" in {
+      val permission = toPermission(developerPolicy)
+      permission.description shouldBe "A description"
+    }
+
+    "uses a fallback description when none is present" in {
+      val noDesc = developerPolicy.copy(description = None)
+      val permission = toPermission(noDesc)
+      permission.description should not be empty
+    }
+
+    "uses the policy ARN as the managed policy ARN" in {
+      val permission = toPermission(developerPolicy)
+      permission.managedPolicyArns.value should contain(
+        developerPolicy.policyArn.toString
+      )
+    }
+
+    "property: permission id is composed of account key and policy slug" in {
+      forAll(
+        Gen.alphaNumStr.suchThat(_.nonEmpty),
+        Gen.alphaNumStr.suchThat(_.nonEmpty)
+      ) { (policyName, accountKey) =>
+        val acc = AwsAccount("Test Account", accountKey)
+        val pol = DeveloperPolicy(
+          s"arn:aws:iam::123:policy/developer-policy/grant-id/$policyName",
+          policyName,
+          "grant-id",
+          None,
+          acc
+        )
+        val permission = toPermission(pol)
+        permission.id shouldBe s"${acc.authConfigKey}-${developerPolicySlug(policyName)}"
+      }
     }
   }
 }
