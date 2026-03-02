@@ -1,7 +1,6 @@
 package models
 
 import com.gu.janus.model.{AwsAccount, Permission}
-import logic.DeveloperPolicies
 import software.amazon.awssdk.arns.Arn
 
 import java.time.Instant
@@ -13,8 +12,7 @@ import scala.util.Try
   * @param policyArn
   *   ARN
   * @param policyGrantId
-  *   Corresponds to
-  *   [[com.gu.janus.model.DeveloperPolicyGrant.id]]
+  *   Corresponds to [[com.gu.janus.model.DeveloperPolicyGrant.id]]
   * @param description
   *   Description for display in Janus UI
   * @param account
@@ -26,9 +24,7 @@ case class DeveloperPolicy(
     policyGrantId: String,
     description: Option[String],
     account: AwsAccount
-) {
-  val slug: String = DeveloperPolicies.developerPolicySlug(policyName, account)
-}
+)
 
 object DeveloperPolicy {
   def apply(

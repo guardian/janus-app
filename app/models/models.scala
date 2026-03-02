@@ -9,7 +9,6 @@ import play.api.http.Status.{
   UNAUTHORIZED
 }
 import play.api.libs.json.{Json, Writes}
-import software.amazon.awssdk.arns.Arn
 
 enum AccountConfigStatus:
   case FederationConfigError(causedBy: Throwable)
@@ -17,9 +16,17 @@ enum AccountConfigStatus:
   case ConfigWarn(accounts: Set[String])
   case ConfigError(accounts: Set[String])
 
+/** Describes both the static Janus permissions and the dynamically-loaded
+  * developer policies available to a user for a given AWS account.
+  */
+case class AccountAccess(
+    permissions: List[Permission],
+    developerPolicies: List[DeveloperPolicy]
+)
+
 case class AwsAccountAccess(
     awsAccount: AwsAccount,
-    permissions: List[Permission],
+    access: AccountAccess,
     isFavourite: Boolean
 )
 

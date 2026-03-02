@@ -1,0 +1,33 @@
+@import com.gu.janus.model.AwsAccount
+@import models.DeveloperPolicy
+
+@()
+
+<div class="developer-policy-documentation-container">
+    <div class="developer-policy-documentation-text">
+        <p>
+            Developer policies allow teams to provision access to AWS from their own application stacks
+            without needing to hard-code bespoke permissions in Janus' configuration.
+            Janus discovers developer policies by looking for eligible IAM policies in each AWS account.
+        </p>
+        <p>
+            The Grant ID comes from the AWS policy's path, and can link this policy with a Janus user's
+            permissions using a Developer Policy Grant.
+            A Developer Policy Grant will allow a Janus user to access all matching developer policies.
+        </p>
+    </div>
+    <div class="developer-policy-documentation-example">
+        <ul class="developer-policy-container developer-policy-container--single">
+            @fragments.developerPolicyList(
+                DeveloperPolicy(
+                    policyArnString = "arn:aws:iam::aws:policy/ReadOnlyAccess",
+                    policyName = "aws-policy-name",
+                    policyGrantId = "grant-id-can-link-to-janus-access",
+                    description = Some("Example developer policy: This is the AWS IAM Policy's description"),
+                    account = AwsAccount("ExampleAccount", "123456789012"),
+                ),
+                unlinkableExample = true
+            )
+        </ul>
+    </div>
+</div>

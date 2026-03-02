@@ -10,9 +10,10 @@ import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
-import models.PasskeyAuthenticator
+import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
+import services.DeveloperPolicyFinder
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.model.Credentials
@@ -29,7 +30,8 @@ class Janus(
     stsClient: StsClient,
     configuration: Configuration,
     passkeysEnablingCookieName: String,
-    passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator]
+    passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
+    developerPolicyFinder: DeveloperPolicyFinder
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
@@ -43,7 +45,11 @@ class Janus(
       val displayMode =
         Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
       (for {
-        permissions <- userAccess(username(request.user), janusData.access)
+        permissions <- userAccess(
+          username(request.user),
+          janusData.access,
+          developerPolicyFinder.getDeveloperPolicies
+        )
         favourites = Favourites.fromCookie(request.cookies.get("favourites"))
         awsAccountAccess = orderedAccountAccess(permissions, favourites)
       } yield {
@@ -62,7 +68,11 @@ class Janus(
   def admin: Action[AnyContent] =
     authAction { implicit request =>
       (for {
-        permissions <- userAccess(username(request.user), janusData.admin)
+        permissions <- userAccess(
+          username(request.user),
+          janusData.admin,
+          developerPolicyFinder.getDeveloperPolicies
+        )
         awsAccountAccess = orderedAccountAccess(permissions)
       } yield {
         Ok(
@@ -86,16 +96,20 @@ class Janus(
       val currentUserFutureSupportPeriods =
         futureRotaSlotsForUser(now, janusData.support, username(request.user))
       (for {
-        permissions <- userSupportAccess(
+        supportPermissions <- userSupportAccess(
           username(request.user),
           now,
           janusData.support
         )
-        awsAccountAccess = orderedAccountAccess(permissions)
+        accountAccesses = supportPermissions
+          .groupBy(_.account)
+          .view
+          .mapValues(perms => AccountAccess(perms.toList, Nil))
+          .toMap
       } yield {
         Ok(
           views.html.support.support(
-            awsAccountAccess,
+            orderedAccountAccess(accountAccesses),
             currentSupportUsers,
             supportUsersInNextPeriod,
             currentUserFutureSupportPeriods,
@@ -152,7 +166,8 @@ class Janus(
           request.user,
           permissionId,
           JConsole,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          developerPolicyFinder.getDeveloperPolicies
         )
         loginUrl = Federation.generateLoginUrl(credentials, host)
       } yield {
@@ -173,7 +188,8 @@ class Janus(
           request.user,
           permissionId,
           JConsole,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          developerPolicyFinder.getDeveloperPolicies
         )
         loginUrl = Federation.generateLoginUrl(credentials, host)
       } yield {
@@ -202,7 +218,8 @@ class Janus(
           request.user,
           permissionId,
           JCredentials,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          developerPolicyFinder.getDeveloperPolicies
         )
       } yield {
         Ok(
@@ -229,7 +246,8 @@ class Janus(
         accountCredentials <- multiAccountAssumption(
           request.user,
           permissionIds,
-          Customisation.durationParams(request)
+          Customisation.durationParams(request),
+          developerPolicyFinder.getDeveloperPolicies
         )
         expiry <- accountCredentials.headOption.map { case (_, creds) =>
           creds.expiration
@@ -269,17 +287,19 @@ class Janus(
       user: UserIdentity,
       permissionId: String,
       accessType: JanusAccessType,
-      durationParams: (Option[Duration], Option[ZoneId])
+      durationParams: (Option[Duration], Option[ZoneId]),
+      developerPolicies: Set[DeveloperPolicy]
   ): Option[(Credentials, Permission)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
-      permission <- checkUserPermission(
+      (permission, hasExplicitAccess) <- checkUserPermissionWithSource(
         username(user),
         permissionId,
         Instant.now(),
         janusData.access,
         janusData.admin,
-        janusData.support
+        janusData.support,
+        developerPolicies
       )
       duration = Federation.duration(
         permission,
@@ -299,7 +319,8 @@ class Janus(
         permission,
         accessType,
         duration,
-        janusData.access
+        janusData.access,
+        hasExplicitAccess
       )
       _ = AuditTrailDB.insert(auditLog)
     } yield {
@@ -313,10 +334,11 @@ class Janus(
   private def multiAccountAssumption(
       user: UserIdentity,
       permissionIds: List[String],
-      durationParams: (Option[Duration], Option[ZoneId])
+      durationParams: (Option[Duration], Option[ZoneId]),
+      developerPolicies: Set[DeveloperPolicy]
   ): Option[List[(AwsAccount, Credentials)]] = {
     permissionIds
-      .map(assumeRole(user, _, JCredentials, durationParams))
+      .map(assumeRole(user, _, JCredentials, durationParams, developerPolicies))
       .map(_.map { case (credentials, permission) =>
         permission.account -> credentials
       })
