@@ -5,7 +5,7 @@
 
 @(account: AwsAccount, status: AwsAccountDeveloperPolicyStatus, serviceEnabled: Boolean, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
-@main(s"Developer Policies Status for ${account.name}", Some(user), janusData) {
+@main(s"Developer policies status for ${account.name}", Some(user), janusData) {
     <div class="container">
         @(status.policySnapshot, status.failureStatus) match {
             case (_, Some(failure)) => {
@@ -21,7 +21,7 @@
                     </span>
                     <i class="error material-icons small">error_outline</i>
                 </div>
-                <h1 class="header orange-text">@account.name developer policy status</h1>
+                <h1 class="header orange-text">@account.name developer policies</h1>
 
                 <div class="developer-policy-error">
                     <p>
@@ -45,7 +45,9 @@
                     </span>
                     <i class="success material-icons small">check</i>
                 </div>
-                <h1 class="header orange-text">@account.name policies status</h1>
+                <h1 class="header orange-text">@account.name developer policies</h1>
+
+                @fragments.developerPolicyDocumentation()
             }
             case (None, None) => {
                 <span class="right valign-wrapper">
@@ -57,7 +59,7 @@
                         <i class="material-icons small">sync_problem</i>
                     }
                 </span>
-                <h1 class="header orange-text">@account.name policies status</h1>
+                <h1 class="header orange-text">@account.name developer policies</h1>
                 @if(serviceEnabled) {
                     <p class="developer-policy-notice">
                         Developer policy information has not yet been loaded.

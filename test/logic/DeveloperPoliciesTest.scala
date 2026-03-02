@@ -1,6 +1,6 @@
 package logic
 
-import com.gu.janus.model.{AwsAccount, ProvisionedRole}
+import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant}
 import models.{
   AwsAccountDeveloperPolicyStatus,
   DeveloperPolicy,
@@ -20,8 +20,6 @@ class DeveloperPoliciesTest
     with Matchers
     with ScalaCheckPropertyChecks {
 
-  private val provisionedRoleId = "dev-pol-id"
-
   private val timestamp = Instant.now()
 
   private val account =
@@ -36,11 +34,11 @@ class DeveloperPoliciesTest
       .description("Description")
       .build()
 
-  "getDeveloperPoliciesByProvisionedRole" - {
+  "getDeveloperPoliciesByGrant" - {
     "should return empty list when cache is empty" in {
-      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
         Map.empty,
-        ProvisionedRole("Test Role", "dev-pol-id")
+        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
       )
 
       result shouldBe empty
@@ -58,9 +56,9 @@ class DeveloperPoliciesTest
         )
       )
 
-      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
         cache,
-        ProvisionedRole("Test Role", "dev-pol-id")
+        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
       )
 
       result shouldBe empty
@@ -94,9 +92,9 @@ class DeveloperPoliciesTest
         )
       )
 
-      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
         cache,
-        ProvisionedRole("Test Role", "dev-pol-id")
+        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
       )
 
       result shouldBe empty
@@ -118,9 +116,9 @@ class DeveloperPoliciesTest
         )
       )
 
-      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
         cache,
-        ProvisionedRole("Test Role", "dev-pol-id")
+        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
       )
 
       result should contain only matchingPolicy
@@ -163,9 +161,9 @@ class DeveloperPoliciesTest
         )
       )
 
-      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
         cache,
-        ProvisionedRole("Test Role", "dev-pol-id")
+        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
       )
 
       result should contain only matching
@@ -199,9 +197,9 @@ class DeveloperPoliciesTest
         )
       )
 
-      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
         cache,
-        ProvisionedRole("Test Role", "dev-pol-id")
+        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
       )
 
       result should contain theSameElementsAs List(policy1, policy2)
@@ -231,9 +229,9 @@ class DeveloperPoliciesTest
         )
       )
 
-      val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
+      val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
         cache,
-        ProvisionedRole("Test Role", "dev-pol-id")
+        DeveloperPolicyGrant("Test Grant", "dev-pol-id")
       )
 
       result should contain only matchingPolicy
@@ -258,18 +256,18 @@ class DeveloperPoliciesTest
             )
           )
 
-          val result = DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
+          val result = DeveloperPolicies.getDeveloperPoliciesByGrant(
             cache,
-            ProvisionedRole("Test", targetId)
+            DeveloperPolicyGrant("Test", targetId)
           )
 
-          result.forall(_.provisionedRoleId == targetId) shouldBe true
+          result.forall(_.policyGrantId == targetId) shouldBe true
       }
     }
   }
 
   "toDeveloperPolicy" - {
-    "should return None when provisioned role ID is absent" in {
+    "should return None when developer policy grant ID is absent" in {
       val policy = Policy
         .builder()
         .arn("arn:aws:iam::123:policy/developer-policy/p1")
