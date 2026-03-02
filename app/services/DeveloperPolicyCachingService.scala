@@ -4,7 +4,7 @@ import aws.{Clients, Iam}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import cats.implicits.toTraverseOps
-import com.gu.janus.model.{AwsAccount, ProvisionedRole}
+import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant}
 import fs2.Stream
 import logic.DeveloperPolicies
 import models.{
@@ -29,12 +29,12 @@ import scala.concurrent.duration.FiniteDuration
   * particular [[ProvisionedRole]].
   */
 trait DeveloperPolicyFinder {
-  def getDeveloperPoliciesByProvisionedRole(
-      role: ProvisionedRole
+  def getDeveloperPoliciesByGrant(
+      grant: DeveloperPolicyGrant
   ): List[DeveloperPolicy]
 }
 
-/** For use where we want to know the status of the [[ProvisionedRole]] data
+/** For use where we want to know the status of the [[DeveloperPolicy]] data
   * we've cached.
   */
 trait DeveloperPolicyStatusManager {
@@ -43,9 +43,8 @@ trait DeveloperPolicyStatusManager {
   def getCacheStatus: Map[AwsAccount, AwsAccountDeveloperPolicyStatus]
 }
 
-/** Fetches and keeps a cache of [[DeveloperPolicy]]s that have a
-  * [[com.gu.janus.model.ProvisionedRole]] tag attached to them. Policy data is
-  * fetched from across multiple accounts.
+/** Fetches and keeps a cache of [[DeveloperPolicy]]s. Policy data is fetched
+  * from across multiple accounts.
   *
   * @param accounts
   *   AWS accounts to search
@@ -114,12 +113,12 @@ class DeveloperPolicyCachingService(
     } else
       Stream.eval(logger.warn("Developer policy caching has been disabled!"))
 
-  override def getDeveloperPoliciesByProvisionedRole(
-      role: ProvisionedRole
+  override def getDeveloperPoliciesByGrant(
+      grant: DeveloperPolicyGrant
   ): List[DeveloperPolicy] =
-    DeveloperPolicies.getDeveloperPoliciesByProvisionedRole(
+    DeveloperPolicies.getDeveloperPoliciesByGrant(
       cache.readOnlySnapshot().toMap,
-      role
+      grant
     )
 
   override def getCacheStatus

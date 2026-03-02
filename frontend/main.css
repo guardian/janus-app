@@ -349,6 +349,9 @@ a.copy-text--button__small {
     line-height: 52px;
     border-left: solid 1px #ffe0b2;
 }
+.disabled .copy-text__feedback {
+    border-left: solid 1px #ccc;
+}
 
 .copy-text--confirm, .copy-text--warn {
     display: none;
@@ -515,45 +518,55 @@ a.copy-text--button__small {
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.developer-policy-item-header {
-    padding: 10px;
-    font-weight: bold;
-    font-size: large;
+
+.developer-policy-item-key {
+    font-family: monospace;
+    padding: 5px 10px;
+    background-color: #eef7ff;
+    border-radius: 5px 5px 0 0;
+    border-bottom: solid 1px #006064;
+    font-size: small;
+    color: #424242;
+    overflow: hidden;
+    overflow-wrap: break-word;
 }
 
 .developer-policy-item-janus {
     display: flex;
     flex-direction: column;
-    border: solid 1px #bbb;
+    border: solid 1px #006064;
     border-bottom: none;
     border-radius: 5px 5px 0 0;
-    padding-bottom: 5px;
 }
+
 .developer-policy-item-aws {
-    background-color: #eef7ff;
-    padding: 10px 10px 16px 10px;
-    border: solid 1px #006064;
+    display: flex;
+    flex-direction: column;
+}
+
+.developer-policy-item-policy {
+    background-color: #f5f5f5;
+    padding: 10px;
+    border: solid 1px #bbb;
     border-radius: 0 0 5px 5px;
 }
 
-.developer-policy-item-entry {
-    padding: 5px 10px;
-}
 
 .expand {
     flex: 1;
 }
 
-.developer-policy-chip {
-    height: auto !important;
-}
-
-.developer-policy-chip, .developer-policy-name {
+.developer-policy-name {
+    overflow: hidden;
+    overflow-wrap: break-word;
     font-family: monospace;
+    font-size: small;
 }
 
 .developer-policy-description {
-    font-size: small;
+    padding: 10px 10px;
+    border-right: solid 1px #bbb;
+    border-left: solid 1px #bbb;
 }
 
 .developer-policy-item-cta {
@@ -574,6 +587,37 @@ a.copy-text--button__small {
 .developer-policy-error {
     padding-left: 14px;
     border-left: solid 5px #f44336;
+}
+
+.developer-policy-documentation-container {
+    display: grid;
+    grid-template-columns: 3fr minmax(300px, 2fr);
+    gap: 20px;
+    align-items: start;
+}
+
+@media screen and (max-width: 720px) {
+    .developer-policy-documentation-container {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+
+    .developer-policy-container--single {
+        margin-top: 0px;
+    }
+}
+
+.developer-policy-documentation-text {
+    min-width: 0;
+}
+
+.developer-policy-documentation-example {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.developer-policy-container--single {
+    grid-template-columns: 1fr;
 }
 
 .rotate{
