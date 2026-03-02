@@ -1,6 +1,6 @@
 @import logic.DeveloperPolicies.developerPolicyLink
 
-@(policy: DeveloperPolicy, disabled: Boolean = false)
+@(policy: DeveloperPolicy, unlinkableExample: Boolean = false)
 
 <li class="developer-policy-item">
     <div class="developer-policy-item-janus">
@@ -17,7 +17,7 @@
                 @policy.policyName
             </div>
             <div class="developer-policy-item-cta">
-                <a class="copy-text--button__cta waves-effect waves-light btn @if(disabled){disabled}" href="@developerPolicyLink(policy)" target="_blank" rel="noopener noreferrer">
+                <a class="copy-text--button__cta waves-effect waves-light btn @if(unlinkableExample){disabled}" href="@developerPolicyLink(policy)" target="_blank" rel="noopener noreferrer">
                     View in AWS console
                     <div class="copy-text__feedback">
                         <i class="material-icons copy-text--default icon-small">open_in_new</i>
