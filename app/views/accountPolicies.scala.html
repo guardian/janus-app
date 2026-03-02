@@ -7,7 +7,7 @@
 
 @(accountAndStatuses: List[(AwsAccount, AwsAccountDeveloperPolicyStatus)], serviceEnabled: Boolean, refreshFrequency: FiniteDuration, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
-@main(s"Developer policies status", Some(user), janusData) {
+@main("Developer policies status", Some(user), janusData) {
     <div class="container">
         <div class="developer-policy-service-config right valign-wrapper">
             @if(serviceEnabled) {
