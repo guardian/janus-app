@@ -3,7 +3,7 @@ package logic
 import com.gu.janus.model.{AwsAccount, Permission}
 import fixtures.Fixtures.*
 import logic.AccountOrdering.given
-import models.AccountAccess
+import models.{AccountAccess, DeveloperPolicy}
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -17,7 +17,8 @@ class AccountOrderingTest extends AnyFreeSpec with Matchers with OptionValues {
     * for use with [[orderedAccountAccess]], with no developer policies.
     */
   private def toAccountAccessMap(
-      perms: Set[Permission]
+      perms: Set[Permission],
+      developerPolicies: Set[DeveloperPolicy]
   ): Map[AwsAccount, AccountAccess] =
     perms
       .groupBy(_.account)
@@ -27,45 +28,70 @@ class AccountOrderingTest extends AnyFreeSpec with Matchers with OptionValues {
 
   "userAccountAccess" - {
     val perms = Set(bazDev, fooS3, fooDev, fooCf, barDev, quxDev, quxCf)
+    val policyGrants = Set(policyGrantAlpha, policyGrantBeta, policyGrantGamma)
 
-    "given no favourites" - {
-      "sorts accounts by the number of available permissions, descending" in {
-        orderedAccountAccess(toAccountAccessMap(perms), Nil)
-          .map(_.awsAccount) shouldEqual List(fooAct, quxAct, barAct, bazAct)
-      }
-    }
-
-    "given favourite accounts" - {
-      "puts a favourite first" in {
-        orderedAccountAccess(toAccountAccessMap(perms), List("baz"))
-          .map(_.awsAccount)
-          .head shouldEqual bazAct
+    "orders aws accounts" - {
+      "given no favourites" - {
+        "sorts accounts by the number of available permissions, descending" in {
+          orderedAccountAccess(toAccountAccessMap(perms), policyGrants, Nil)
+            .map(_.awsAccount) shouldEqual List(fooAct, quxAct, barAct, bazAct)
+        }
       }
 
-      "preserves sorting of non-favourite accounts" in {
-        orderedAccountAccess(toAccountAccessMap(perms), List("baz"))
-          .map(_.awsAccount)
-          .tail shouldEqual List(fooAct, quxAct, barAct)
-      }
+      "given favourite accounts" - {
+        "puts a favourite first" in {
+          orderedAccountAccess(
+            toAccountAccessMap(perms),
+            policyGrants,
+            List("baz")
+          )
+            .map(_.awsAccount)
+            .head shouldEqual bazAct
+        }
 
-      "sorts favourites by provided order" in {
-        orderedAccountAccess(toAccountAccessMap(perms), List("baz", "bar")).map(
-          _.awsAccount
-        ) shouldEqual List(bazAct, barAct, fooAct, quxAct)
+        "preserves sorting of non-favourite accounts" in {
+          orderedAccountAccess(
+            toAccountAccessMap(perms),
+            policyGrants,
+            List("baz")
+          )
+            .map(_.awsAccount)
+            .tail shouldEqual List(fooAct, quxAct, barAct)
+        }
+
+        "sorts favourites by provided order" in {
+          orderedAccountAccess(
+            toAccountAccessMap(perms),
+            policyGrants,
+            List("baz", "bar")
+          ).map(
+            _.awsAccount
+          ) shouldEqual List(bazAct, barAct, fooAct, quxAct)
+        }
       }
     }
 
     "sorts the account permissions" in {
-      val fooPerms = orderedAccountAccess(toAccountAccessMap(perms), Nil)
-        .find(_.awsAccount == fooAct)
-        .value
-        .access
-        .permissions
+      val fooPerms =
+        orderedAccountAccess(toAccountAccessMap(perms), policyGrants, Nil)
+          .find(_.awsAccount == fooAct)
+          .value
+          .permissions
       fooPerms shouldEqual List(
         developerPermission(fooAct),
         s3ManagerPermission(fooAct),
         accountAdminPermission(fooAct)
       )
+    }
+    
+    "developer policies" - {
+      "discovers policies matching the user's grants" in {
+        
+      }
+      
+      "groups policies by account and grant" in {
+        
+      }
     }
   }
 

@@ -1,6 +1,6 @@
 package fixtures
 
-import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant, Permission}
 import com.gu.janus.policy.Iam.Policy
 
 object Fixtures {
@@ -44,4 +44,8 @@ object Fixtures {
     )
   def s3ManagerPermission(awsAccount: AwsAccount) =
     Permission(awsAccount, "s3-all", "S3 Read and Write", Policy(Seq.empty))
+
+  val policyGrantAlpha = DeveloperPolicyGrant(name = "alpha", id = "alpha-id")
+  val policyGrantBeta = DeveloperPolicyGrant(name = "beta", id = "beta-id")
+  val policyGrantGamma = DeveloperPolicyGrant(name = "gamma", id = "gamma-id")
 }
