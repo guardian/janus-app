@@ -13,8 +13,7 @@ import scala.util.Try
   * @param policyArn
   *   ARN
   * @param policyGrantId
-  *   Corresponds to
-  *   [[com.gu.janus.model.DeveloperPolicyGrant.id]]
+  *   Corresponds to [[com.gu.janus.model.DeveloperPolicyGrant.id]]
   * @param description
   *   Description for display in Janus UI
   * @param account
