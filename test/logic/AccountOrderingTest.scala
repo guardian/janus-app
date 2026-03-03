@@ -19,8 +19,8 @@ class AccountOrderingTest
     with ScalaCheckDrivenPropertyChecks {
   import AccountOrdering.*
 
-  /** Converts a flat set of permissions into a Map[AwsAccount, AccountAccess]
-    * for use with [[orderedAccountAccess]], with no developer policies.
+  /** Converts a flat set of permissions and developer policies into a
+    * Map[AwsAccount, AccountAccess] for use with [[orderedAccountAccess]].
     */
   private def toAccountAccessMap(
       perms: Set[Permission],
