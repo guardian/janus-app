@@ -235,6 +235,30 @@ class UserAccessTest
     }
   }
 
+  "policyGrantsForUser" - {
+    val grant1 = DeveloperPolicyGrant("Grant 1", "grant-1")
+    val grant2 = DeveloperPolicyGrant("Grant 2", "grant-2")
+    val acl = ACL(
+      Map(
+        "user.with.grants" -> ACLEntry(Set(fooDev), Set(grant1, grant2)),
+        "user.with.one.grant" -> ACLEntry(Set(fooDev), Set(grant1)),
+        "user.with.no.grants" -> ACLEntry(Set(fooDev), Set.empty)
+      ),
+      Set.empty
+    )
+
+    "returns the set of grants for a user that has them" in {
+      policyGrantsForUser("user.with.grants", acl) shouldEqual Set(
+        grant1,
+        grant2
+      )
+    }
+
+    "returns an empty set for a user that has no grants" in {
+      policyGrantsForUser("user.with.no.grants", acl) shouldEqual Set.empty
+    }
+  }
+
   "support functions" - {
     val baseline = ZonedDateTime
       .of(2016, 7, 19, 11, 0, 0, 0, ZoneId.of("Europe/London"))
