@@ -3,69 +3,169 @@ package logic
 import com.gu.janus.model.{AwsAccount, Permission}
 import fixtures.Fixtures.*
 import logic.AccountOrdering.given
-import models.AccountAccess
+import models.{AccountAccess, DeveloperPolicy}
+import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import scala.util.Random.shuffle
 
-class AccountOrderingTest extends AnyFreeSpec with Matchers with OptionValues {
+class AccountOrderingTest
+    extends AnyFreeSpec
+    with Matchers
+    with OptionValues
+    with ScalaCheckDrivenPropertyChecks {
   import AccountOrdering.*
 
   /** Converts a flat set of permissions into a Map[AwsAccount, AccountAccess]
     * for use with [[orderedAccountAccess]], with no developer policies.
     */
   private def toAccountAccessMap(
-      perms: Set[Permission]
-  ): Map[AwsAccount, AccountAccess] =
-    perms
-      .groupBy(_.account)
-      .view
-      .mapValues(ps => AccountAccess(ps.toList, Nil))
-      .toMap
+      perms: Set[Permission],
+      developerPolicies: Set[DeveloperPolicy]
+  ): Map[AwsAccount, AccountAccess] = {
+    val allAccounts = perms.map(_.account) ++ developerPolicies.map(_.account)
+    allAccounts.map { account =>
+      account -> AccountAccess(
+        permissions = perms.filter(_.account == account).toList,
+        developerPolicies =
+          developerPolicies.filter(_.account == account).toList
+      )
+    }.toMap
+  }
 
   "userAccountAccess" - {
     val perms = Set(bazDev, fooS3, fooDev, fooCf, barDev, quxDev, quxCf)
+    val devPolicies = Set(
+      developerPolicyAlphaFoo1,
+      developerPolicyAlphaFoo2,
+      developerPolicyAlphaBar,
+      developerPolicyBetaFoo,
+      developerPolicyBetaBar,
+      developerPolicyGammaBaz,
+      developerPolicyDeltaQux
+    )
+    val devPolicyGrants = Set(grantAlpha, grantBeta, grantGamma)
+    val awsAccountsAccess = toAccountAccessMap(perms, devPolicies)
 
-    "given no favourites" - {
-      "sorts accounts by the number of available permissions, descending" in {
-        orderedAccountAccess(toAccountAccessMap(perms), Nil)
-          .map(_.awsAccount) shouldEqual List(fooAct, quxAct, barAct, bazAct)
+    "orders accounts" - {
+      "given no favourites" - {
+        "sorts accounts by the number of available permissions, descending" in {
+          val result =
+            orderedAccountAccess(awsAccountsAccess, devPolicyGrants)
+              .map(_.awsAccount)
+          result shouldEqual List(fooAct, quxAct, barAct, bazAct)
+        }
       }
-    }
 
-    "given favourite accounts" - {
-      "puts a favourite first" in {
-        orderedAccountAccess(toAccountAccessMap(perms), List("baz"))
-          .map(_.awsAccount)
-          .head shouldEqual bazAct
-      }
+      "given favourite accounts" - {
+        "puts a favourite first" in {
+          val result = orderedAccountAccess(
+            awsAccountsAccess,
+            devPolicyGrants,
+            List("baz")
+          )
+            .map(_.awsAccount)
+            .head
+          result shouldEqual bazAct
+        }
 
-      "preserves sorting of non-favourite accounts" in {
-        orderedAccountAccess(toAccountAccessMap(perms), List("baz"))
-          .map(_.awsAccount)
-          .tail shouldEqual List(fooAct, quxAct, barAct)
-      }
+        "preserves sorting of non-favourite accounts" in {
+          val result = orderedAccountAccess(
+            awsAccountsAccess,
+            devPolicyGrants,
+            List("baz")
+          )
+            .map(_.awsAccount)
+            .tail
+          result shouldEqual List(fooAct, quxAct, barAct)
+        }
 
-      "sorts favourites by provided order" in {
-        orderedAccountAccess(toAccountAccessMap(perms), List("baz", "bar")).map(
-          _.awsAccount
-        ) shouldEqual List(bazAct, barAct, fooAct, quxAct)
+        "sorts favourites by provided order" in {
+          val result =
+            orderedAccountAccess(
+              awsAccountsAccess,
+              devPolicyGrants,
+              List("baz", "bar")
+            )
+              .map(_.awsAccount)
+          result shouldEqual List(bazAct, barAct, fooAct, quxAct)
+        }
       }
     }
 
     "sorts the account permissions" in {
-      val fooPerms = orderedAccountAccess(toAccountAccessMap(perms), Nil)
-        .find(_.awsAccount == fooAct)
-        .value
-        .access
-        .permissions
+      val fooPerms =
+        orderedAccountAccess(awsAccountsAccess, devPolicyGrants, Nil)
+          .find(_.awsAccount == fooAct)
+          .value
+          .permissions
       fooPerms shouldEqual List(
         developerPermission(fooAct),
         s3ManagerPermission(fooAct),
         accountAdminPermission(fooAct)
       )
+    }
+
+    "handles developer policy access" - {
+      "groups policies by grant, within an account" in {
+        val fooPolicies =
+          orderedAccountAccess(awsAccountsAccess, devPolicyGrants)
+            .find(_.awsAccount == fooAct)
+            .value
+            .developerPolicies
+        fooPolicies shouldEqual Map(
+          grantAlpha -> List(
+            developerPolicyAlphaFoo1,
+            developerPolicyAlphaFoo2
+          ),
+          grantBeta -> List(developerPolicyBetaFoo)
+        )
+      }
+
+      "does not include developer policies for which the user does not have a grant" in {
+        val fooPolicies =
+          orderedAccountAccess(awsAccountsAccess, Set(grantAlpha))
+            .find(
+              // no grants for this account's developer policy
+              _.awsAccount == quxAct
+            )
+            .value
+            .developerPolicies
+        fooPolicies shouldEqual Map.empty
+      }
+
+      "orders developer policies alphabetically by name within each group" in {
+        val genAlphaFooDevPolicy: Gen[DeveloperPolicy] =
+          for {
+            policyNum <- Gen.choose(1, 20)
+            name <- Gen.alphaNumStr
+          } yield {
+            DeveloperPolicy(
+              policyArnString =
+                s"arn:aws:iam::123456789012:policy/alpha-$policyNum",
+              policyName = name,
+              policyGrantId = grantAlpha.id,
+              description = Some(s"Alpha policy $policyNum: $name"),
+              account = fooAct
+            )
+          }
+
+        forAll(Gen.listOfN(10, genAlphaFooDevPolicy)) { devPolicies =>
+          val awsAccountsAccess =
+            toAccountAccessMap(Set.empty, devPolicies.toSet)
+          val matchingPolicies =
+            orderedAccountAccess(awsAccountsAccess, Set(grantAlpha))
+              .find(_.awsAccount == fooAct)
+              .value
+              .developerPolicies
+          matchingPolicies shouldEqual Map(
+            grantAlpha -> devPolicies.sortBy(_.policyName)
+          )
+        }
+      }
     }
   }
 

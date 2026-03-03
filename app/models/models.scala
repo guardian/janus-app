@@ -1,7 +1,7 @@
 package models
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant, Permission}
 import play.api.http.Status.{
   BAD_REQUEST,
   FORBIDDEN,
@@ -26,7 +26,8 @@ case class AccountAccess(
 
 case class AwsAccountAccess(
     awsAccount: AwsAccount,
-    access: AccountAccess,
+    permissions: List[Permission],
+    developerPolicies: Map[DeveloperPolicyGrant, List[DeveloperPolicy]],
     isFavourite: Boolean
 )
 
