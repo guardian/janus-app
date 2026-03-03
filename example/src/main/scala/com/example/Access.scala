@@ -27,7 +27,7 @@ object Access {
   val acl = ACL(
     users
       .map((user, permissions) =>
-        user -> ACLEntry(permissions, roles = Set.empty)
+        user -> ACLEntry(permissions, policyGrants = Set.empty)
       )
       .toMap,
     defaultPermissions
