@@ -140,7 +140,8 @@ class AppComponents(context: ApplicationLoader.Context)
       Clients.stsClient,
       configuration,
       passkeysEnablingCookieName,
-      passkeyAuthenticatorMetadata
+      passkeyAuthenticatorMetadata,
+      developerPolicyCachingService
     ),
     new PasskeyController(
       controllerComponents,

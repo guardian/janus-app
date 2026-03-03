@@ -1,22 +1,12 @@
 package logic
 
-import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant}
-import models.{AwsAccountDeveloperPolicyStatus, DeveloperPolicy}
+import com.gu.janus.model.{AwsAccount, Permission}
+import models.DeveloperPolicy
 import software.amazon.awssdk.services.iam.model.Policy
 
 import java.net.URLEncoder
 
 object DeveloperPolicies {
-
-  def getDeveloperPoliciesByGrant(
-      cache: Map[AwsAccount, AwsAccountDeveloperPolicyStatus],
-      grant: DeveloperPolicyGrant
-  ): List[DeveloperPolicy] =
-    cache.values
-      .flatMap(_.policySnapshot)
-      .flatMap(_.policies)
-      .filter(_.policyGrantId == grant.id)
-      .toList
 
   /** Creates a DeveloperPolicy from an AWS IAM managed policy if it's possible.
     *
@@ -42,6 +32,14 @@ object DeveloperPolicies {
       account
     )
 
+  def toPermission(policy: DeveloperPolicy): Permission =
+    Permission.fromManagedPolicyArns(
+      account = policy.account,
+      label = developerPolicySlug(policy.policyName),
+      description = policy.description.getOrElse("No description"),
+      managedPolicyArns = List(policy.policyArn.toString)
+    )
+
   /** To get a URL-safe slug for a [[DeveloperPolicy]], we use the IAM policy
     * name.
     *
@@ -56,12 +54,9 @@ object DeveloperPolicies {
     * uniqueness (avoiding collisions from AWS policy names that differ only in
     * special characters like `.`, `,`, `+`, `@`, etc.).
     */
-  def developerPolicySlug(
-      policyName: String,
-      account: AwsAccount
-  ): String = {
+  private[logic] def developerPolicySlug(policyName: String): String = {
     val encodedPolicyName = URLEncoder.encode(policyName, "UTF-8")
-    s"$DEVELOPER_POLICY_NAMESPACE_PREFIX-${account.authConfigKey}-$encodedPolicyName"
+    s"$DEVELOPER_POLICY_NAMESPACE_PREFIX$encodedPolicyName"
   }
   private[logic] val DEVELOPER_POLICY_NAMESPACE_PREFIX = "iam-"
 
