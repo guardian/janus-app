@@ -8,6 +8,7 @@ import com.gu.janus.model.*
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
+import logic.AccountOrdering.orderedAccountAccess
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
 import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
@@ -45,18 +46,33 @@ class Janus(
       val displayMode =
         Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
       (for {
-        permissions <- userAccess(
+        accountsAccess <- userAccess(
           username(request.user),
           janusData.access,
           developerPolicyFinder.getDeveloperPolicies
         )
+        userPolicyGrants = policyGrantsForUser(
+          username(request.user),
+          janusData.access
+        )
         favourites = Favourites.fromCookie(request.cookies.get("favourites"))
-        awsAccountAccess = orderedAccountAccess(permissions, favourites)
+        uiAccountAccess = orderedAccountAccess(
+          accountsAccess,
+          userPolicyGrants,
+          favourites
+        )
+        tmp = uiAccountAccess.map { accountAccess =>
+          val tmp = accountAccess.developerPolicies.toList
+
+          logger.info(
+            s"User ${username(request.user)} has access to ${accountAccess.permissions.size} permissions for account ${accountAccess.awsAccount.name}"
+          )
+        }
       } yield {
         Ok(
           views.html
             .index(
-              awsAccountAccess,
+              uiAccountAccess,
               request.user,
               janusData,
               displayMode
@@ -68,16 +84,20 @@ class Janus(
   def admin: Action[AnyContent] =
     authAction { implicit request =>
       (for {
-        permissions <- userAccess(
+        accountsAccess <- userAccess(
           username(request.user),
           janusData.admin,
           developerPolicyFinder.getDeveloperPolicies
         )
-        awsAccountAccess = orderedAccountAccess(permissions)
+        userPolicyGrants = policyGrantsForUser(
+          username(request.user),
+          janusData.admin
+        )
+        uiAccountAccess = orderedAccountAccess(accountsAccess, userPolicyGrants)
       } yield {
         Ok(
           views.html.admin(
-            awsAccountAccess,
+            uiAccountAccess,
             request.user,
             janusData
           )
@@ -101,15 +121,17 @@ class Janus(
           now,
           janusData.support
         )
-        accountAccesses = supportPermissions
+        rawAccountAccesses = supportPermissions
           .groupBy(_.account)
           .view
           .mapValues(perms => AccountAccess(perms.toList, Nil))
           .toMap
+        // support doesn't work with developer policies, so we can pass an empty set
+        accountsAccess = orderedAccountAccess(rawAccountAccesses, Set.empty)
       } yield {
         Ok(
           views.html.support.support(
-            orderedAccountAccess(accountAccesses),
+            accountsAccess,
             currentSupportUsers,
             supportUsersInNextPeriod,
             currentUserFutureSupportPeriods,

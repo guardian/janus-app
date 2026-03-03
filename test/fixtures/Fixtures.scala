@@ -1,7 +1,8 @@
 package fixtures
 
-import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant, Permission}
 import com.gu.janus.policy.Iam.Policy
+import models.DeveloperPolicy
 
 object Fixtures {
   val fooAct = AwsAccount("Foo", "foo")
@@ -44,4 +45,59 @@ object Fixtures {
     )
   def s3ManagerPermission(awsAccount: AwsAccount) =
     Permission(awsAccount, "s3-all", "S3 Read and Write", Policy(Seq.empty))
+
+  val grantAlpha = DeveloperPolicyGrant(name = "alpha", id = "alpha-id")
+  val grantBeta = DeveloperPolicyGrant(name = "beta", id = "beta-id")
+  val grantGamma = DeveloperPolicyGrant(name = "gamma", id = "gamma-id")
+  val grantDelta = DeveloperPolicyGrant(name = "delta", id = "delta-id")
+
+  val developerPolicyAlphaFoo1 = DeveloperPolicy(
+    policyArnString = "arn:aws:iam::123456789012:policy/alpha1",
+    policyName = "alpha-1",
+    policyGrantId = grantAlpha.id,
+    description = Some("Alpha policy"),
+    account = fooAct
+  )
+  val developerPolicyAlphaFoo2 = DeveloperPolicy(
+    policyArnString = "arn:aws:iam::123456789012:policy/alpha2",
+    policyName = "alpha-2",
+    policyGrantId = grantAlpha.id,
+    description = Some("Alpha policy"),
+    account = fooAct
+  )
+  val developerPolicyAlphaBar = DeveloperPolicy(
+    policyArnString = "arn:aws:iam::123456789012:policy/alpha",
+    policyName = "alpha",
+    policyGrantId = grantAlpha.id,
+    description = Some("Alpha policy"),
+    account = barAct
+  )
+  val developerPolicyBetaFoo = DeveloperPolicy(
+    policyArnString = "arn:aws:iam::123456789012:policy/beta",
+    policyName = "beta",
+    policyGrantId = grantBeta.id,
+    description = Some("Beta policy"),
+    account = fooAct
+  )
+  val developerPolicyBetaBar = DeveloperPolicy(
+    policyArnString = "arn:aws:iam::123456789012:policy/beta",
+    policyName = "beta",
+    policyGrantId = grantBeta.id,
+    description = Some("Beta policy"),
+    account = barAct
+  )
+  val developerPolicyGammaBaz = DeveloperPolicy(
+    policyArnString = "arn:aws:iam::123456789012:policy/gamma",
+    policyName = "gamma",
+    policyGrantId = grantGamma.id,
+    description = Some("Gamma policy"),
+    account = bazAct
+  )
+  val developerPolicyDeltaQux = DeveloperPolicy(
+    policyArnString = "arn:aws:iam::123456789012:policy/delta",
+    policyName = "delta",
+    policyGrantId = grantDelta.id,
+    description = Some("Delta policy"),
+    account = quxAct
+  )
 }
