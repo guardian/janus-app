@@ -14,7 +14,10 @@ object Admin {
   private val fullAdminAccess = allAccounts.flatMap(_.accountAdmin)
   private val fullAdmin = fullAdminUsers
     .map(adminUser =>
-      adminUser -> ACLEntry(permissions = fullAdminAccess, policyGrants = Set.empty)
+      adminUser -> ACLEntry(
+        permissions = fullAdminAccess,
+        policyGrants = Set.empty
+      )
     )
     .toMap
 
