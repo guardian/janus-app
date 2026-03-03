@@ -50,7 +50,7 @@ class AccountOrderingTest
     val devPolicyGrants = Set(grantAlpha, grantBeta, grantGamma)
     val awsAccountsAccess = toAccountAccessMap(perms, devPolicies)
 
-    "orders accounts" - {
+    "orders AWS accounts" - {
       "given no favourites" - {
         "sorts accounts by the number of available permissions, descending" in {
           val result =
@@ -125,23 +125,12 @@ class AccountOrderingTest
         )
       }
 
-      "does not include developer policies for which the user does not have a grant" in {
-        val fooPolicies =
-          orderedAccountAccess(awsAccountsAccess, Set(grantAlpha))
-            .find(
-              // no grants for this account's developer policy
-              _.awsAccount == quxAct
-            )
-            .value
-            .developerPolicies
-        fooPolicies shouldEqual Map.empty
-      }
-
       "orders developer policies alphabetically by name within each group" in {
         val genAlphaFooDevPolicy: Gen[DeveloperPolicy] =
           for {
-            policyNum <- Gen.choose(1, 20)
-            name <- Gen.alphaNumStr
+            policyNum <- Gen.choose(1, 100)
+            nameLength <- Gen.choose(5, 40)
+            name <- Gen.listOfN(nameLength, Gen.alphaChar).map(_.mkString(""))
           } yield {
             DeveloperPolicy(
               policyArnString =
@@ -154,17 +143,34 @@ class AccountOrderingTest
           }
 
         forAll(Gen.listOfN(10, genAlphaFooDevPolicy)) { devPolicies =>
-          val awsAccountsAccess =
-            toAccountAccessMap(Set.empty, devPolicies.toSet)
-          val matchingPolicies =
-            orderedAccountAccess(awsAccountsAccess, Set(grantAlpha))
-              .find(_.awsAccount == fooAct)
-              .value
-              .developerPolicies
-          matchingPolicies shouldEqual Map(
-            grantAlpha -> devPolicies.sortBy(_.policyName)
-          )
+          whenever(
+            // make sure the generated policies have unique names
+            devPolicies.map(_.policyName).distinct.size == devPolicies.size
+          ) {
+            val awsAccountsAccess =
+              toAccountAccessMap(Set.empty, devPolicies.toSet)
+            val result =
+              orderedAccountAccess(awsAccountsAccess, Set(grantAlpha))
+                .find(_.awsAccount == fooAct)
+                .value
+                .developerPolicies
+            result shouldEqual Map(
+              grantAlpha -> devPolicies.sortBy(_.policyName)
+            )
+          }
         }
+      }
+
+      "does not include developer policies for which the user does not have a grant" in {
+        val fooPolicies =
+          orderedAccountAccess(awsAccountsAccess, Set(grantAlpha))
+            .find(
+              // no grants for this account's developer policy
+              _.awsAccount == quxAct
+            )
+            .value
+            .developerPolicies
+        fooPolicies shouldEqual Map.empty
       }
     }
   }

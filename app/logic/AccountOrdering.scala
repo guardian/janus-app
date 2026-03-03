@@ -33,9 +33,12 @@ object AccountOrdering {
             .flatMap { policy =>
               userPolicyGrants
                 .find(_.id == policy.policyGrantId)
-                .map(_ -> policy)
+                .map(grant => grant -> policy)
             }
-            .groupMap(_._1)(_._2),
+            .groupMap(_._1)(_._2)
+            .map { (grant, grantedPolicies) =>
+              grant -> grantedPolicies.sortBy(_.policyName)
+            },
           isFavourite = favourites.contains(account.authConfigKey)
         )
       }
