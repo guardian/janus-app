@@ -158,7 +158,7 @@ class AccountOrderingTest
             // make sure the generated policies have unique names
             devPolicies.map(_.policyName).distinct.size == devPolicies.size &&
               // we need at least two policies to test the ordering
-              devPolicies.nonEmpty
+              devPolicies.length >= 2
           ) {
             val awsAccountsAccess =
               toAccountAccessMap(Set.empty, devPolicies.toSet)
