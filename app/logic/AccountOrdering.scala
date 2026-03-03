@@ -36,6 +36,8 @@ object AccountOrdering {
                 .map(grant => grant -> policy)
             }
             .groupMap(_._1)(_._2)
+            .toList
+            .sortBy { case (grant, _) => grant.name }
             .map { (grant, grantedPolicies) =>
               grant -> grantedPolicies.sortBy(_.policyName)
             },

@@ -73,7 +73,7 @@
                   This section is a temporary view of developer policies - improvement to UI coming.
                   See https://trello.com/c/K7CliJ5h/3963-design-and-implement-ui-changes-to-facilitate-choosing-credentials-to-fetch
                 *@
-                @for(policyPerm <- accountAccess.developerPolicies.toList.flatMap(_._2).map(DeveloperPolicies.toPermission)) {
+                @for(policyPerm <- accountAccess.developerPolicies.flatMap(_._2).map(DeveloperPolicies.toPermission)) {
                     <div class="card-content card-content--permission-heading">
                         <p>
                             @policyPerm.description

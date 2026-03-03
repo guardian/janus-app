@@ -116,13 +116,24 @@ class AccountOrderingTest
             .find(_.awsAccount == fooAct)
             .value
             .developerPolicies
-        fooPolicies shouldEqual Map(
+        // toSet because we aren't testing the order of groups here
+        fooPolicies.toSet shouldEqual Set(
           grantAlpha -> List(
             developerPolicyAlphaFoo1,
             developerPolicyAlphaFoo2
           ),
           grantBeta -> List(developerPolicyBetaFoo)
         )
+      }
+
+      "should order the grant groups alphabetically by name" in {
+        val result =
+          orderedAccountAccess(awsAccountsAccess, devPolicyGrants)
+            .find(_.awsAccount == fooAct)
+            .value
+            .developerPolicies
+            .map(_._1)
+        result shouldEqual List(grantAlpha, grantBeta)
       }
 
       "orders developer policies alphabetically by name within each group" in {
@@ -145,7 +156,9 @@ class AccountOrderingTest
         forAll(Gen.listOfN(10, genAlphaFooDevPolicy)) { devPolicies =>
           whenever(
             // make sure the generated policies have unique names
-            devPolicies.map(_.policyName).distinct.size == devPolicies.size
+            devPolicies.map(_.policyName).distinct.size == devPolicies.size &&
+              // we need at least two policies to test the ordering
+              devPolicies.nonEmpty
           ) {
             val awsAccountsAccess =
               toAccountAccessMap(Set.empty, devPolicies.toSet)
@@ -154,7 +167,7 @@ class AccountOrderingTest
                 .find(_.awsAccount == fooAct)
                 .value
                 .developerPolicies
-            result shouldEqual Map(
+            result shouldEqual List(
               grantAlpha -> devPolicies.sortBy(_.policyName)
             )
           }
@@ -170,7 +183,7 @@ class AccountOrderingTest
             )
             .value
             .developerPolicies
-        fooPolicies shouldEqual Map.empty
+        fooPolicies shouldEqual Nil
       }
     }
   }

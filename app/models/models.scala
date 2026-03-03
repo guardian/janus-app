@@ -27,7 +27,7 @@ case class AccountAccess(
 case class AwsAccountAccess(
     awsAccount: AwsAccount,
     permissions: List[Permission],
-    developerPolicies: Map[DeveloperPolicyGrant, List[DeveloperPolicy]],
+    developerPolicies: List[(DeveloperPolicyGrant, List[DeveloperPolicy])],
     isFavourite: Boolean
 )
 
