@@ -2,7 +2,7 @@ package logic
 
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.{ACL, AuditLog, JanusAccessType, Permission}
-import logic.UserAccess.{hasExplicitAccess, username}
+import logic.UserAccess.username
 import play.api.Logging
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
 
@@ -83,7 +83,8 @@ object AuditTrail extends Logging {
       permission: Permission,
       janusAccessType: JanusAccessType,
       duration: Duration,
-      acl: ACL
+      acl: ACL,
+      hasExplicitAccess: Boolean
   ): AuditLog =
     AuditLog(
       permission.account.authConfigKey,
@@ -92,7 +93,7 @@ object AuditTrail extends Logging {
       duration,
       permission.label,
       janusAccessType,
-      !hasExplicitAccess(username(user), permission, acl)
+      !hasExplicitAccess
     )
 
   /** Extract nice error message from db conversion.

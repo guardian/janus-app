@@ -8,7 +8,7 @@ import sbtversionpolicy.withsbtrelease.ReleaseVersion
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.41.26"
+val awsSdkVersion = "2.41.31"
 val circeVersion = "0.14.15"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
@@ -38,7 +38,7 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.21.0"
+val jacksonVersion = "2.21.1"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
@@ -98,9 +98,9 @@ lazy val root: Project = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "32.0.2",
-      "com.gu.play-secret-rotation" %% "play-v30" % "16.1.0",
-      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "16.1.0",
+      "com.gu.play-googleauth" %% "play-v30" % "34.0.0",
+      "com.gu.play-secret-rotation" %% "play-v30" % "17.0.1",
+      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "17.0.1",
       "software.amazon.awssdk" % "arns" % awsSdkVersion,
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,

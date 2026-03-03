@@ -1,8 +1,9 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, ACLEntry, SupportACL}
+import com.gu.janus.model.*
 import fixtures.Fixtures.*
+import models.{AccountAccess, DeveloperPolicy}
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -19,6 +20,17 @@ class UserAccessTest
 
   import UserAccess.*
 
+  /** Flattens a [[userAccess]] result into a flat set of all permissions
+    * (including those derived from developer policies), for use in assertions
+    * that do not care about the per-account grouping.
+    */
+  private def allPermissions(
+      result: Map[AwsAccount, AccountAccess]
+  ): Set[Permission] =
+    result.values.flatMap { aa =>
+      aa.permissions ++ aa.developerPolicies.map(DeveloperPolicies.toPermission)
+    }.toSet
+
   "userAccess" - {
     val testAccess =
       ACL(
@@ -27,16 +39,20 @@ class UserAccessTest
       )
 
     "returns None if the user doesn't have any permissions" in {
-      userAccess("username.does.not.exist", testAccess) should equal(None)
+      userAccess("username.does.not.exist", testAccess, Set.empty) should equal(
+        None
+      )
     }
 
     "returns the user's permissions if they exist" in {
-      val permissions = userAccess("test.user", testAccess).value
+      val permissions =
+        allPermissions(userAccess("test.user", testAccess, Set.empty).value)
       permissions should (contain(fooDev) and contain(barDev))
     }
 
     "include default permissions in all users' available permissions" in {
-      val access = userAccess("test.user", testAccess).value
+      val access =
+        allPermissions(userAccess("test.user", testAccess, Set.empty).value)
       testAccess.defaultPermissions foreach { perm =>
         access should contain(perm)
       }
@@ -44,12 +60,163 @@ class UserAccessTest
 
     "deduplicates a user's permissions" in {
       val permissions = Set(fooDev, barDev, fooDev, barDev)
-      val access =
+      val acl =
         ACL(Map("test.user" -> ACLEntry(permissions, Set.empty)), Set.empty)
-      userAccess(
-        "test.user",
-        access
-      ).value shouldEqual (permissions ++ access.defaultPermissions)
+      val result = allPermissions(userAccess("test.user", acl, Set.empty).value)
+      result shouldEqual (permissions ++ acl.defaultPermissions)
+    }
+
+    "includes permissions derived from matching developer policies" in {
+      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val policy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "p1",
+        "grant-id",
+        None,
+        fooAct
+      )
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
+        Set.empty
+      )
+      val permissions =
+        allPermissions(userAccess("test.user", acl, Set(policy)).value)
+      val policyPermission = DeveloperPolicies.toPermission(policy)
+      permissions should contain(policyPermission)
+    }
+
+    "a matching policyGrant results in additional permissions beyond the base ACL permissions" in {
+      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val policy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "p1",
+        "grant-id",
+        None,
+        fooAct
+      )
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
+        Set.empty
+      )
+      val policyPermission = DeveloperPolicies.toPermission(policy)
+      val permissionsWithPolicy =
+        allPermissions(userAccess("test.user", acl, Set(policy)).value)
+      val permissionsWithoutPolicy =
+        allPermissions(userAccess("test.user", acl, Set.empty).value)
+      // Base ACL permissions are preserved in the result
+      permissionsWithPolicy should contain(fooDev)
+      permissionsWithoutPolicy should contain(fooDev)
+      // The only addition is exactly the policy-derived permission
+      (permissionsWithPolicy -- permissionsWithoutPolicy) shouldEqual Set(
+        policyPermission
+      )
+    }
+
+    "does not include developer policies whose grant ID does not match any ACL entry grant" in {
+      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val unmatchedPolicy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/other-id/p1",
+        "p1",
+        "other-id",
+        None,
+        fooAct
+      )
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
+        Set.empty
+      )
+      val permissions =
+        allPermissions(userAccess("test.user", acl, Set(unmatchedPolicy)).value)
+      val unmatchedPermission = DeveloperPolicies.toPermission(unmatchedPolicy)
+      permissions should not contain unmatchedPermission
+    }
+
+    "does not include developer policies when the user has no policy grants" in {
+      val policy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "p1",
+        "grant-id",
+        None,
+        fooAct
+      )
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev), Set.empty)),
+        Set.empty
+      )
+      val permissions =
+        allPermissions(userAccess("test.user", acl, Set(policy)).value)
+      permissions shouldEqual Set(fooDev)
+    }
+
+    "groups permissions by account" in {
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev, barDev), Set.empty)),
+        Set.empty
+      )
+      val result = userAccess("test.user", acl, Set.empty).value
+      result(fooAct).permissions should contain(fooDev)
+      result(barAct).permissions should contain(barDev)
+    }
+
+    "groups developer policies by account separately from permissions" in {
+      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val policy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "p1",
+        "grant-id",
+        None,
+        fooAct
+      )
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
+        Set.empty
+      )
+      val result = userAccess("test.user", acl, Set(policy)).value
+      result(fooAct).permissions should contain(fooDev)
+      result(fooAct).developerPolicies should contain(policy)
+    }
+
+    "property: result only contains developer policy permissions for grants the user holds" in {
+      val grant1 = DeveloperPolicyGrant("Grant 1", "grant-alpha")
+      val grant2 = DeveloperPolicyGrant("Grant 2", "grant-beta")
+      val allGrants = List(grant1, grant2)
+
+      forAll(Gen.someOf(allGrants), Gen.someOf(allGrants)) {
+        (userGrantSeq, policyGrantSeq) =>
+          val userGrants = userGrantSeq.toSet
+          val policyGrants = policyGrantSeq.toSet
+
+          val policies = policyGrants.zipWithIndex.map { case (g, i) =>
+            DeveloperPolicy(
+              s"arn:aws:iam::123:policy/developer-policy/${g.id}/p$i",
+              s"p$i",
+              g.id,
+              None,
+              fooAct
+            )
+          }
+
+          val acl = ACL(
+            Map("test.user" -> ACLEntry(Set.empty, userGrants)),
+            Set.empty
+          )
+
+          val result =
+            allPermissions(userAccess("test.user", acl, policies).value)
+
+          // Every policy that produced a permission must have a matching grant
+          val permissionsFromPolicies =
+            policies.map(DeveloperPolicies.toPermission)
+          val unexpectedPermissions =
+            result.intersect(permissionsFromPolicies).filter { perm =>
+              val sourcePolicy = policies.find(
+                DeveloperPolicies.toPermission(_) == perm
+              )
+              sourcePolicy
+                .forall(p => !userGrants.exists(_.id == p.policyGrantId))
+            }
+          unexpectedPermissions should be(empty)
+      }
     }
   }
 
@@ -473,7 +640,7 @@ class UserAccessTest
     }
   }
 
-  "checkUserPermission" - {
+  "checkUserPermissionWithSource" - {
     val acl = ACL(
       Map(
         "user" -> ACLEntry(Set(fooDev), Set.empty)
@@ -492,50 +659,57 @@ class UserAccessTest
     )
 
     "returns the permission if a user has been granted access" in {
-      checkUserPermission(
+      val (permission, _) = checkUserPermissionWithSource(
         "user",
         fooDev.id,
         Instant.now(),
         acl,
         adminAcl,
-        supportAcl
-      ).value shouldEqual fooDev
+        supportAcl,
+        Set.empty
+      ).value
+      permission shouldEqual fooDev
     }
 
     "returns the permission if it has been granted via admin access" in {
       Inspectors.forAll(allTestPerms) { adminPermission =>
-        checkUserPermission(
+        val (permission, _) = checkUserPermissionWithSource(
           "admin",
           adminPermission.id,
           Instant.now(),
           acl,
           adminAcl,
-          supportAcl
-        ).value shouldEqual adminPermission
+          supportAcl,
+          Set.empty
+        ).value
+        permission shouldEqual adminPermission
       }
     }
 
     "returns the permission if it has been granted via support access" in {
       Inspectors.forAll(supportAcl.supportAccess) { supportPermission =>
-        checkUserPermission(
+        val (permission, _) = checkUserPermissionWithSource(
           "support.user",
           supportPermission.id,
           Instant.now(),
           acl,
           adminAcl,
-          supportAcl
-        ).value shouldEqual supportPermission
+          supportAcl,
+          Set.empty
+        ).value
+        permission shouldEqual supportPermission
       }
     }
 
     "returns None if the permission has not been granted to the user" in {
-      checkUserPermission(
+      checkUserPermissionWithSource(
         "no.permissions",
         fooDev.id,
         Instant.now(),
         acl,
         adminAcl,
-        supportAcl
+        supportAcl,
+        Set.empty
       ) shouldBe None
     }
   }
@@ -558,16 +732,28 @@ class UserAccessTest
       Set(fooDev)
     )
 
+    def isGrantedExplicitly(username: String): Boolean =
+      checkUserPermissionWithSource(
+        username,
+        fooDev.id,
+        Instant.now(),
+        acl,
+        adminAcl,
+        supportAcl,
+        Set.empty
+      )
+        .exists((_, explicit) => explicit)
+
     "returns true if a user has been granted explicit access" in {
-      hasExplicitAccess("user", fooDev, acl) shouldEqual true
+      isGrantedExplicitly("user") shouldEqual true
     }
 
     "returns false if an admin user does not have explicit access" in {
-      hasExplicitAccess("admin", fooDev, acl) shouldEqual false
+      isGrantedExplicitly("admin") shouldEqual false
     }
 
     "returns false if a support user does not have explicit access" in {
-      hasExplicitAccess("support.user", fooDev, acl) shouldEqual false
+      isGrantedExplicitly("support.user") shouldEqual false
     }
   }
 
@@ -598,7 +784,8 @@ class UserAccessTest
         Instant.now(),
         acl,
         admins,
-        supportAcl
+        supportAcl,
+        Set.empty
       ) shouldEqual Set(fooDev)
     }
 
@@ -609,7 +796,8 @@ class UserAccessTest
         Instant.now(),
         acl,
         admins,
-        supportAcl
+        supportAcl,
+        Set.empty
       ) shouldEqual Set(fooCf)
     }
 
@@ -620,7 +808,8 @@ class UserAccessTest
         Instant.now(),
         acl,
         admins,
-        supportAcl
+        supportAcl,
+        Set.empty
       ) shouldEqual Set(fooCf)
     }
 
@@ -631,7 +820,8 @@ class UserAccessTest
         Instant.now(),
         acl,
         admins,
-        supportAcl
+        supportAcl,
+        Set.empty
       ) shouldBe empty
     }
   }
