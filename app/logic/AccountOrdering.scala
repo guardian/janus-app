@@ -39,7 +39,7 @@ object AccountOrdering {
             .toList
             .sortBy { case (grant, _) => grant.name }
             .map { (grant, grantedPolicies) =>
-              grant -> grantedPolicies.sortBy(_.policyName)
+              grant -> grantedPolicies.sorted
             },
           isFavourite = favourites.contains(account.authConfigKey)
         )
@@ -60,6 +60,9 @@ object AccountOrdering {
       sortKey(p1) compare sortKey(p2)
     }
 
+  /** Orders developer policies by account name, then by policy name within each
+    * account.
+    */
   given Ordering[DeveloperPolicy] =
-    Ordering.by(policy => s"${policy.policyGrantId}:${policy.policyArn}")
+    Ordering.by(policy => (policy.account.name, policy.policyName))
 }

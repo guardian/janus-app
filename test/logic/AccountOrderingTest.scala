@@ -267,4 +267,29 @@ class AccountOrderingTest
       }
     }
   }
+
+  "developer policy ordering" - {
+    "orders developer policies by AWS account name" in {
+      val policies = List(
+        developerPolicyAlphaBar,
+        developerPolicyGammaBaz,
+        developerPolicyAlphaFoo1,
+        developerPolicyDeltaQux
+      )
+      1 to 20 foreach { _ =>
+        shuffle(policies).sorted shouldEqual policies
+      }
+    }
+
+    "orders alphabetically by policy name within an AWS account" in {
+      val policies = List(
+        developerPolicyAlphaFoo1,
+        developerPolicyAlphaFoo2,
+        developerPolicyBetaFoo
+      )
+      1 to 20 foreach { _ =>
+        shuffle(policies).sorted shouldEqual policies
+      }
+    }
+  }
 }
