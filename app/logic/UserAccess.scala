@@ -1,7 +1,13 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, AwsAccount, Permission, SupportACL}
+import com.gu.janus.model.{
+  ACL,
+  AwsAccount,
+  DeveloperPolicyGrant,
+  Permission,
+  SupportACL
+}
 import logic.DeveloperPolicies.toPermission
 import models.{AccountAccess, DeveloperPolicy}
 
@@ -55,6 +61,15 @@ object UserAccess {
   def hasAccess(username: String, acl: ACL): Boolean = {
     acl.userAccess.keySet.contains(username)
   }
+
+  def policyGrantsForUser(
+      username: String,
+      acl: ACL
+  ): Set[DeveloperPolicyGrant] =
+    acl.userAccess
+      .get(username)
+      .map(_.policyGrants)
+      .getOrElse(Set.empty)
 
   // support access
 
