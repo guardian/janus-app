@@ -9,10 +9,9 @@ import com.gu.playpasskeyauth.models.UserId
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
-import logic.AccountOrdering.orderedAccountAccess
 import logic.PlayHelpers.splitQuerystringParam
 import logic.{AuditTrail, Customisation, Date, Favourites}
-import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator, PasskeyMetadata, PasskeyRequest}
+import models.*
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.DeveloperPolicyFinder
@@ -35,7 +34,7 @@ class Janus(
     configuration: Configuration,
     passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
-    passkeyAuth: PasskeyAuth[UserIdentity, AnyContent]
+    passkeyAuth: PasskeyAuth[UserIdentity, AnyContent],
     developerPolicyFinder: DeveloperPolicyFinder
 )(using
     dynamodDB: DynamoDbClient,

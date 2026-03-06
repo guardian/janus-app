@@ -231,7 +231,8 @@ class AppComponents(context: ApplicationLoader.Context)
       configuration,
       passkeysEnablingCookieName,
       passkeyAuthenticatorMetadata,
-      passkeyAuth
+      passkeyAuth,
+      developerPolicyCachingService
     )(using dynamodDB, mode, assetsFinder, executionContext),
     new PasskeyController(
       controllerComponents,
