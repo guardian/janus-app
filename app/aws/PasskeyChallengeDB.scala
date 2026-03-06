@@ -1,4 +1,4 @@
-package services
+package aws
 
 import com.gu.playpasskeyauth.models.UserId
 import com.gu.playpasskeyauth.services.PasskeyChallengeRepository
@@ -18,7 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.jdk.CollectionConverters.*
 import scala.jdk.FutureConverters.*
 
-class DynamoPasskeyChallengeRepository(dynamoDb: DynamoDbAsyncClient)(using
+class PasskeyChallengeDB(dynamoDb: DynamoDbAsyncClient)(using
     ExecutionContext
 ) extends PasskeyChallengeRepository {
 

@@ -1,11 +1,11 @@
-import aws.Clients
+import _root_.aws.{Clients, PasskeyChallengeDB, PasskeyDB}
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
-import com.gu.playpasskeyauth.{PasskeyAuth, PasskeyAuthContext}
 import com.gu.playpasskeyauth.models.{HostApp, User, UserId}
 import com.gu.playpasskeyauth.web.*
+import com.gu.playpasskeyauth.{PasskeyAuth, PasskeyAuthContext}
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
@@ -21,11 +21,7 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
 import play.filters.csp.CSPComponents
 import router.Routes
-import services.{
-  DynamoPasskeyChallengeRepository,
-  DynamoPasskeyRepository,
-  DeveloperPolicyCachingService
-}
+import services.DeveloperPolicyCachingService
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.{
   DynamoDbAsyncClient,
@@ -181,12 +177,9 @@ class AppComponents(context: ApplicationLoader.Context)
         }
     }
 
-  private val passkeyRepo =
-    new DynamoPasskeyRepository(dynamoDbAsync, Clock.systemUTC())
+  private val passkeyRepo = new PasskeyDB(dynamoDbAsync, Clock.systemUTC())
 
-  private val challengeRepo = new DynamoPasskeyChallengeRepository(
-    dynamoDbAsync
-  )
+  private val challengeRepo = new PasskeyChallengeDB(dynamoDbAsync)
 
   given User[UserIdentity] with {
     extension (u: UserIdentity) {
