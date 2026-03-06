@@ -3,8 +3,8 @@ import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
-import com.gu.playpasskeyauth.PasskeyAuth
-import com.gu.playpasskeyauth.models.{HostApp, UserId, UserIdExtractor}
+import com.gu.playpasskeyauth.{PasskeyAuth, PasskeyAuthContext}
+import com.gu.playpasskeyauth.models.{HostApp, User, UserId}
 import com.gu.playpasskeyauth.web.*
 import com.typesafe.config.ConfigException
 import conf.Config
@@ -143,8 +143,6 @@ class AppComponents(context: ApplicationLoader.Context)
         request.user
     }
 
-  given UserIdExtractor[UserIdentity] = user => UserId(user.username)
-
   private val creationDataExtractor =
     new CreationDataExtractor[[A] =>> RequestWithUser[UserIdentity, A]] {
       override def findCreationData[A](
@@ -190,15 +188,26 @@ class AppComponents(context: ApplicationLoader.Context)
     dynamoDbAsync
   )
 
+  given User[UserIdentity] with {
+    extension (u: UserIdentity) {
+      def id: UserId = UserId(u.username)
+      def displayName: String = u.fullName
+    }
+  }
+
+  private val passkeyAuthContext = PasskeyAuthContext(
+    userAction = authAction.andThen(new UserAction(userExtractor)),
+    creationDataExtractor = creationDataExtractor,
+    authenticationDataExtractor = authenticationDataExtractor,
+    passkeyNameExtractor = passkeyNameExtractor
+  )
+
   private val passkeyAuth = new PasskeyAuth[UserIdentity, AnyContent](
     controllerComponents,
     app = HostApp(name = host, uri = URI.create(host)),
-    userAction = authAction.andThen(new UserAction(userExtractor)),
+    ctx = passkeyAuthContext,
     passkeyRepo,
     challengeRepo,
-    creationDataExtractor,
-    authenticationDataExtractor,
-    passkeyNameExtractor,
     registrationRedirect = routes.Janus.userAccount
   )
 

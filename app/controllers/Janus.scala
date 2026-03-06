@@ -169,7 +169,7 @@ class Janus(
         .listPasskeys(UserId(request.user.username))
         .map(
           _.map(passkey =>
-            PasskeyMetadata.fromPasskeyInfo(
+            PasskeyMetadata.fromPasskey(
               passkey,
               passkeyAuthenticatorMetadata.get(passkey.aaguid)
             )
