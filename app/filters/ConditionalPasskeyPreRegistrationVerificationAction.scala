@@ -1,13 +1,13 @@
 package filters
 
 import com.gu.googleauth.AuthAction.UserIdentityRequest
+import com.gu.playpasskeyauth.models.UserId
 import com.gu.playpasskeyauth.services.PasskeyRepository
 import com.gu.playpasskeyauth.web.RequestWithAuthenticationData
 import models.PasskeyRequest
 import play.api.Logging
 import play.api.libs.json.Json
 import play.api.mvc.*
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,31 +24,18 @@ class ConditionalPasskeyPreRegistrationVerificationAction(
     enablingCookieName: String,
     authAction: ActionBuilder[UserIdentityRequest, AnyContent],
     verificationAction: ActionBuilder[PasskeyRequest, AnyContent]
-)(using
-    dynamoDb: DynamoDbClient,
-    val executionContext: ExecutionContext
-) extends ActionBuilder[PasskeyRequest, AnyContent]
+)(using val executionContext: ExecutionContext)
+    extends ActionBuilder[PasskeyRequest, AnyContent]
     with Logging {
 
   override def parser: BodyParser[AnyContent] = authAction.parser
 
   private def hasPasskeyCredentials[A](
       request: UserIdentityRequest[A]
-  )(using
-      ExecutionContext
-  ): Either[Result, Boolean] = {
-    // TODO
-    ???
-//    Try(
-//      Await
-//        .result(passkeyDb.listPasskeys(UserId.from(request.user)), Duration.Inf)
-//    ) match {
-//      case Success(passkeys) => Right(passkeys.nonEmpty)
-//      case Failure(e)        =>
-//        logger.error(s"Failed to load passkey credentials: ${e.getMessage}", e)
-//        Left(Results.InternalServerError("Failed to verify credentials"))
-//    }
-  }
+  ): Future[Boolean] =
+    passkeyDb
+      .list(UserId(request.user.username))
+      .map(_.nonEmpty)
 
   override def invokeBlock[A](
       request: Request[A],
@@ -61,9 +48,8 @@ class ConditionalPasskeyPreRegistrationVerificationAction(
         val shouldCheckCredentials = passkeysEnabled && hasCookie
 
         if (shouldCheckCredentials) {
-          hasPasskeyCredentials(userRequest) match {
-            case Left(errorResult)     => Future.successful(errorResult)
-            case Right(hasCredentials) =>
+          hasPasskeyCredentials(userRequest)
+            .flatMap { hasCredentials =>
               if (hasCredentials) {
                 // All conditions met: apply verification
                 verificationAction.invokeBlock(request, block)
@@ -76,7 +62,18 @@ class ConditionalPasskeyPreRegistrationVerificationAction(
                 )
                 block(authRequest)
               }
-          }
+            }
+            .recoverWith { case e =>
+              logger.error(
+                s"Failed to load passkey credentials for ${userRequest.user.username}: ${e.getMessage}",
+                e
+              )
+              Future.successful(
+                Results.InternalServerError(
+                  Json.obj("error" -> "Failed to verify passkey credentials")
+                )
+              )
+            }
         } else {
           // Config disabled or cookie not present: bypass verification
           val authRequest = RequestWithAuthenticationData(
