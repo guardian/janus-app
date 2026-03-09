@@ -158,6 +158,10 @@ object UserAccess {
   }
 
   /** Combines a user's access from all sources, merging per account.
+    *
+    * Returns the merged access map together with the set of permissions that
+    * came exclusively from the explicit ACL (non-admin, non-support), so
+    * callers can determine access source without recomputing.
     */
   private def allUserAccountAccess(
       username: String,
@@ -166,7 +170,7 @@ object UserAccess {
       adminACL: ACL,
       supportACL: SupportACL,
       developerPolicies: Set[DeveloperPolicy]
-  ): Map[AwsAccount, AccountAccess] = {
+  ): (Map[AwsAccount, AccountAccess], Set[Permission]) = {
     val access =
       userAccess(username, acl, developerPolicies).getOrElse(Map.empty)
     val adminAccess =
@@ -181,7 +185,7 @@ object UserAccess {
 
     val allAccounts =
       access.keySet ++ adminAccess.keySet ++ supportAccess.keySet
-    allAccounts.map { account =>
+    val mergedAccess = allAccounts.map { account =>
       account -> AccountAccess(
         permissions = (
           access.get(account).map(_.permissions).getOrElse(Nil) ++
@@ -194,7 +198,16 @@ object UserAccess {
         ).distinct
       )
     }.toMap
+
+    (mergedAccess, allPermissionsFrom(access))
   }
+
+  private def allPermissionsFrom(
+      access: Map[AwsAccount, AccountAccess]
+  ): Set[Permission] =
+    access.values
+      .flatMap(aa => aa.permissions ++ aa.developerPolicies.map(toPermission))
+      .toSet
 
   /** All the accounts this user has any access to.
     */
@@ -205,15 +218,18 @@ object UserAccess {
       adminACL: ACL,
       supportACL: SupportACL,
       developerPolicies: Set[DeveloperPolicy]
-  ): Set[AwsAccount] =
-    allUserAccountAccess(
-      username,
-      date,
-      acl,
-      adminACL,
-      supportACL,
-      developerPolicies
-    ).keySet
+  ): Set[AwsAccount] = {
+    val (mergedAccess, _) =
+      allUserAccountAccess(
+        username,
+        date,
+        acl,
+        adminACL,
+        supportACL,
+        developerPolicies
+      )
+    mergedAccess.keySet
+  }
 
   /** Check if the provided user has been granted this permission, and whether
     * that permission was granted via explicit (ie. non-support, non-admin)
@@ -231,21 +247,16 @@ object UserAccess {
       supportACL: SupportACL,
       developerPolicies: Set[DeveloperPolicy]
   ): Option[(Permission, Boolean)] = {
-    val explicitPermissions =
-      userAccess(username, acl, developerPolicies)
-        .getOrElse(Map.empty)
-        .values
-        .flatMap(aa => aa.permissions ++ aa.developerPolicies.map(toPermission))
-        .toSet
-    val adminPermissions =
-      userAccess(username, adminACL, developerPolicies)
-        .getOrElse(Map.empty)
-        .values
-        .flatMap(aa => aa.permissions ++ aa.developerPolicies.map(toPermission))
-        .toSet
-    val supportPermissions =
-      userSupportAccess(username, date, supportACL).getOrElse(Set.empty)
-    val allPerms = explicitPermissions ++ adminPermissions ++ supportPermissions
+    val (mergedAccess, explicitPermissions) =
+      allUserAccountAccess(
+        username,
+        date,
+        acl,
+        adminACL,
+        supportACL,
+        developerPolicies
+      )
+    val allPerms = allPermissionsFrom(mergedAccess)
     allPerms
       .find(_.id == permissionId)
       .map(permission => (permission, explicitPermissions.contains(permission)))
@@ -262,19 +273,22 @@ object UserAccess {
       adminACL: ACL,
       supportACL: SupportACL,
       developerPolicies: Set[DeveloperPolicy]
-  ): Set[Permission] =
-    allUserAccountAccess(
-      username,
-      date,
-      acl,
-      adminACL,
-      supportACL,
-      developerPolicies
-    )
+  ): Set[Permission] = {
+    val (mergedAccess, _) =
+      allUserAccountAccess(
+        username,
+        date,
+        acl,
+        adminACL,
+        supportACL,
+        developerPolicies
+      )
+    mergedAccess
       .collect {
         case (account, access) if account.authConfigKey == accountId =>
           access.permissions ++ access.developerPolicies.map(toPermission)
       }
       .flatten
       .toSet
+  }
 }
