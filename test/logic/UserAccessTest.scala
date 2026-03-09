@@ -177,45 +177,58 @@ class UserAccessTest
     }
 
     "property: result only contains developer policy permissions for grants the user holds" in {
-      val grant1 = DeveloperPolicyGrant("Grant 1", "grant-alpha")
-      val grant2 = DeveloperPolicyGrant("Grant 2", "grant-beta")
-      val allGrants = List(grant1, grant2)
+      def generateDevPolicyAndGrant(
+          id: Int
+      ): (DeveloperPolicy, DeveloperPolicyGrant) = {
+        val grantId = s"grant-$id"
+        (
+          DeveloperPolicy(
+            s"arn:aws:iam::123:policy/developer-policy/$grantId/p$id",
+            s"p$id",
+            grantId,
+            None,
+            fooAct
+          ),
+          DeveloperPolicyGrant(s"Grant $id", grantId)
+        )
+      }
 
-      forAll(Gen.someOf(allGrants), Gen.someOf(allGrants)) {
-        (userGrantSeq, policyGrantSeq) =>
-          val userGrants = userGrantSeq.toSet
-          val policyGrants = policyGrantSeq.toSet
+      val (allDeveloperPolicies, allDeveloperPolicyGrants) =
+        (for (i <- 1 to 10) yield generateDevPolicyAndGrant(i)).unzip
 
-          val policies = policyGrants.zipWithIndex.map { case (g, i) =>
-            DeveloperPolicy(
-              s"arn:aws:iam::123:policy/developer-policy/${g.id}/p$i",
-              s"p$i",
-              g.id,
-              None,
-              fooAct
+      forAll(
+        Gen.someOf(allDeveloperPolicyGrants),
+        Gen.someOf(allDeveloperPolicies)
+      ) { (developerPolicyGrantsForUser, availablePolicies) =>
+        val acl = ACL(
+          Map(
+            "test.user" -> ACLEntry(
+              Set.empty,
+              developerPolicyGrantsForUser.toSet
             )
-          }
+          ),
+          Set.empty
+        )
 
-          val acl = ACL(
-            Map("test.user" -> ACLEntry(Set.empty, userGrants)),
-            Set.empty
+        val resultPerms =
+          allPermissions(
+            userAccess("test.user", acl, availablePolicies.toSet).value
           )
 
-          val result =
-            allPermissions(userAccess("test.user", acl, policies).value)
+        // The expected permissions are those derived from available policies
+        // whose grant is held by the user
+        val expected = availablePolicies
+          .filter(p =>
+            developerPolicyGrantsForUser.exists(_.id == p.policyGrantId)
+          )
+          .map(DeveloperPolicies.toPermission)
+          .toSet
 
-          // Every policy that produced a permission must have a matching grant
-          val permissionsFromPolicies =
-            policies.map(DeveloperPolicies.toPermission)
-          val unexpectedPermissions =
-            result.intersect(permissionsFromPolicies).filter { perm =>
-              val sourcePolicy = policies.find(
-                DeveloperPolicies.toPermission(_) == perm
-              )
-              sourcePolicy
-                .forall(p => !userGrants.exists(_.id == p.policyGrantId))
-            }
-          unexpectedPermissions should be(empty)
+        resultPerms.intersect(
+          availablePolicies
+            .map(DeveloperPolicies.toPermission)
+            .toSet
+        ) shouldEqual expected
       }
     }
   }
@@ -736,48 +749,61 @@ class UserAccessTest
         Set.empty
       ) shouldBe None
     }
-  }
 
-  "hasExplicitAccess" - {
-    val acl = ACL(
-      Map(
-        "user" -> ACLEntry(Set(fooDev), Set.empty)
-      ),
-      Set.empty
-    )
-    val adminAcl = ACL(Map("admin" -> ACLEntry(Set(fooDev), Set.empty)))
-    val supportAcl = SupportACL.create(
-      Map(
-        Instant.now().minus(Duration.ofDays(1)) -> (
-          "support.user",
-          "another.support.user"
-        )
-      ),
-      Set(fooDev)
-    )
-
-    def isGrantedExplicitly(username: String): Boolean =
-      checkUserPermissionWithSource(
-        username,
-        fooDev.id,
-        Instant.now(),
-        acl,
-        adminAcl,
-        supportAcl,
+    "explicit access flag" - {
+      val explicitAcl = ACL(
+        Map("user" -> ACLEntry(Set(fooDev), Set.empty)),
         Set.empty
       )
-        .exists((_, explicit) => explicit)
+      val adminAcl = ACL(Map("admin" -> ACLEntry(Set(fooDev), Set.empty)))
+      val supportAcl = SupportACL.create(
+        Map(
+          Instant.now().minus(Duration.ofDays(1)) -> (
+            "support.user",
+            "another.support.user"
+          )
+        ),
+        Set(fooDev)
+      )
 
-    "returns true if a user has been granted explicit access" in {
-      isGrantedExplicitly("user") shouldEqual true
-    }
+      "is true when the permission was granted via the explicit ACL" in {
+        val (_, explicitAccess) = checkUserPermissionWithSource(
+          "user",
+          fooDev.id,
+          Instant.now(),
+          explicitAcl,
+          adminAcl,
+          supportAcl,
+          Set.empty
+        ).value
+        explicitAccess shouldEqual true
+      }
 
-    "returns false if an admin user does not have explicit access" in {
-      isGrantedExplicitly("admin") shouldEqual false
-    }
+      "is false when the permission was granted via admin access only" in {
+        val (_, explicitAccess) = checkUserPermissionWithSource(
+          "admin",
+          fooDev.id,
+          Instant.now(),
+          explicitAcl,
+          adminAcl,
+          supportAcl,
+          Set.empty
+        ).value
+        explicitAccess shouldEqual false
+      }
 
-    "returns false if a support user does not have explicit access" in {
-      isGrantedExplicitly("support.user") shouldEqual false
+      "is false when the permission was granted via support access only" in {
+        val (_, explicitAccess) = checkUserPermissionWithSource(
+          "support.user",
+          fooDev.id,
+          Instant.now(),
+          explicitAcl,
+          adminAcl,
+          supportAcl,
+          Set.empty
+        ).value
+        explicitAccess shouldEqual false
+      }
     }
   }
 
