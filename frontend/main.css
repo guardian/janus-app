@@ -276,6 +276,9 @@ textarea.textarea--aws-profile-id.aws-profile-id {
     font-weight: 700;
     padding: 12px 17px 2px 17px;
 }
+.aws-account-body .card-content.card-content--permission-body {
+    padding: 2px 17px 2px 17px;
+}
 
 input[type=text]#revocation-confirmation {
     font-family: Roboto, sans-serif;
