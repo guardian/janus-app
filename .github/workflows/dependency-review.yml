@@ -21,7 +21,7 @@ jobs:
       - uses: guardian/setup-scala@cc7b39e238d789370aa98fa5f07e609b6527657d # v1.1.0
       - uses: scalacenter/sbt-dependency-submission@f43202114d7522a4b233e052f82c2eea8d658134 # v3.2.1
       
-      - uses: actions/dependency-review-action@05fe4576374b728f0c523d6a13d64c25081e0803 # v4.8.3
+      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
         with:
           fail-on-severity: high
           comment-summary-in-pr: always
