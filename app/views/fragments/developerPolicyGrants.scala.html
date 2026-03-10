@@ -1,0 +1,59 @@
+@import models.AwsAccountAccess
+@import logic.Customisation.displayColour
+@import models.DisplayMode
+@import models.DisplayMode.*
+
+@import logic.DeveloperPolicies
+@(accountAccess: AwsAccountAccess, allowFavs: Boolean, displayMode: DisplayMode = Normal)
+
+                @for((grant, policies) <- accountAccess.developerPolicies
+                ) {
+                    <div class="card-content card-content--aws-account-header @displayColour(displayMode) darken-4 white-text">
+                        <p>@grant.name</p>
+                    </div>
+                    @for(policyPerm <- policies.map(DeveloperPolicies.toPermission)) {
+                        <div class="card-content card-content--permission-heading">
+                            <p>
+                                @if(policyPerm.description == "No description") {
+                                @policyPerm.label
+                            } else {
+                                @policyPerm.description
+                            }
+                                @if(policyPerm.shortTerm) {
+                                    <i class="material-icons tooltipped" data-position="bottom" data-delay="50" data-tooltip="This permission only grants short-term access">error</i>
+                                }
+                            </p>
+                        </div>
+                        <div class="card-action card-action--permission">
+                            <div class="card-action-group__row row">
+                                <div class="card-action-group col m6 s12">
+                                    <a href="/console?permissionId=@policyPerm.id"
+                                       class="waves-effect waves-light btn federation__link federation__link--cta federation__link--@if(policyPerm.shortTerm) {short} else {standard} card-action-link--spaced"
+                                    >
+                                        <i class="material-icons">cloud</i>
+                                    </a>
+                                    <a href="/consoleUrl?permissionId=@policyPerm.id"
+                                       class="right waves-effect waves-light btn-flat federation__link janus-btn--flat card-action-link--tight federation__link--@if(policyPerm.shortTerm) {short} else {standard}"
+                                    >
+                                        <i class="material-icons black-text">link</i>
+                                    </a>
+                                </div>
+                                <div class="card-action-group card-action-group--divider col m6 s12">
+                                    <a href="/credentials?permissionId=@policyPerm.id"
+                                       class="waves-effect waves-light btn federation__link federation__link--cta federation__link--credentials federation__link--@if(policyPerm.shortTerm) {short} else {standard}"
+                                    >
+                                        <i class="material-icons">vpn_key</i>
+                                    </a>
+                                    @if(!policyPerm.shortTerm) {
+                                        <div class="multi-select__container right">
+                                            <label class="multi-select__label">
+                                                <input class="multi-select__checkbox" type="checkbox" name="@policyPerm.id" id="@policyPerm.id" data-permission-id="@policyPerm.id">
+                                                <span></span>
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
