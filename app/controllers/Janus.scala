@@ -12,9 +12,16 @@ import logic.*
 import logic.PlayHelpers.splitQuerystringParam
 import models.AccessSource.Internal
 import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
+import logic.{AuditTrail, Customisation, Date, DeveloperPolicies, Favourites}
+import models.{
+  AccountAccess,
+  DeveloperPolicy,
+  DeveloperPolicyCacheStatus,
+  PasskeyAuthenticator
+}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
-import services.DeveloperPolicyFinder
+import services.{DeveloperPolicyFinder, DeveloperPolicyStatusManager}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.model.Credentials
@@ -32,7 +39,8 @@ class Janus(
     configuration: Configuration,
     passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
-    developerPolicyFinder: DeveloperPolicyFinder
+    developerPolicyFinder: DeveloperPolicyFinder,
+    developerPolicyStatusManager: DeveloperPolicyStatusManager
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
@@ -61,11 +69,20 @@ class Janus(
           userPolicyGrants,
           favourites
         )
+        cacheStatus = DeveloperPolicyCacheStatus.Failure
+//        cacheStatus = DeveloperPolicyCacheStatus.Empty
+//        cacheStatus = DeveloperPolicyCacheStatus.Disabled
+//        cacheStatus = DeveloperPolicyCacheStatus.Success
+//        cacheStatus = DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+//          developerPolicyStatusManager.getCacheStatus,
+//          developerPolicyStatusManager.fetchEnabled
+//        )
       } yield {
         Ok(
           views.html
             .index(
               uiAccountAccess,
+              cacheStatus,
               request.user,
               janusData,
               displayMode
