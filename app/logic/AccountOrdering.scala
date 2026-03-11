@@ -19,7 +19,9 @@ object AccountOrdering {
   ): List[AwsAccountAccess] =
     accountAccess.toList
       .sortBy { case (account, _) => account.name.toLowerCase }
-      .sortBy { case (_, access) => access.permissions.size * -1 }
+      .sortBy { case (_, access) =>
+        (access.permissions.size + access.developerPolicies.size) * -1
+      }
       .sortBy { case (account, _) =>
         val favIndex = favourites.indexOf(account.authConfigKey)
         if (favIndex < 0) favIndex + favourites.size + 1
