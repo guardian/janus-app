@@ -1,15 +1,33 @@
 @import com.gu.googleauth.UserIdentity
-@import com.gu.janus.model.JanusData
-@import models.AwsAccountAccess
+@import com.gu.janus.model.{AwsAccount, JanusData}
 @import helper.*
-@import models.DisplayMode
+@import models.{AwsAccountAccess, AwsAccountDeveloperPolicyStatus, DeveloperPolicy, DeveloperPolicySnapshot, DisplayMode, FailureSnapshot}
 @import play.api.Mode
 
-@(accountAccesses: List[AwsAccountAccess], user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountAccesses: List[AwsAccountAccess], cacheStatus: DeveloperPolicyCacheStatus, user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Your permissions", Some(user), janusData, displayMode) {
     <div class="container">
         <h1 class="header orange-text hide">Your permissions</h1>
+        @cacheStatus match {
+            case DeveloperPolicyCacheStatus.Failure => {
+                <div class="cache-status card-panel red lighten-4" role="status" aria-live="polite">
+                  Developer policy failures detected. Visit the <a href="/policies-status">policies status page</a> for more information.
+                </div>
+            }
+            case DeveloperPolicyCacheStatus.Empty => {
+                <div class="cache-status card-panel yellow lighten-4" role="status" aria-live="polite">
+                    Developer policy cache is empty - try refreshing in a few moments.
+                </div>
+
+            }
+            case DeveloperPolicyCacheStatus.Disabled => {
+                <div class="cache-status card-panel red lighten-4" role="status" aria-live="polite">
+                    The developer policy service is disabled. Please contact DevX Security for further information.
+                </div>
+            }
+            case DeveloperPolicyCacheStatus.Success => {}
+        }
         <div class="index-main__container">
             @form(routes.Janus.favourite()) {
                 @CSRF.formField
