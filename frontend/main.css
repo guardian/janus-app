@@ -269,6 +269,9 @@ textarea.textarea--aws-profile-id.aws-profile-id {
     padding: 3px 17px;
 }
 
+.cache-status.card-panel {
+    margin: 20px 0 -10px;
+}
 .aws-account-body .card-action.card-action--permission {
     padding: 2px 17px 12px 17px;
 }
