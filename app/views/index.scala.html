@@ -12,7 +12,7 @@
         @cacheStatus match {
             case DeveloperPolicyCacheStatus.Failure => {
                 <div class="cache-status card-panel red lighten-4" role="status" aria-live="polite">
-                  Developer policy failures detected. Visit the <a href="/policies-status">policies status page</a> for more information.
+                  Developer policy failures detected. Visit the <a href="@routes.AccountsController.accountDeveloperPolicies">policies status page</a> for more information.
                 </div>
             }
             case DeveloperPolicyCacheStatus.Empty => {
