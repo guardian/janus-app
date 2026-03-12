@@ -8,14 +8,15 @@ import com.gu.janus.model.*
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
-import logic.PlayHelpers.splitQuerystringParam
 import logic.*
+import logic.PlayHelpers.splitQuerystringParam
 import logic.SupportUserAccess.{
   activeSupportUsers,
   futureRotaSlotsForUser,
   nextSupportUsers,
   userSupportAccess
 }
+import models.AccessSource.Explicit
 import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
@@ -312,7 +313,7 @@ class Janus(
   ): Option[(Credentials, Permission)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
-      (permission, hasExplicitAccess) <- checkUserPermissionWithSource(
+      (permission, accessSource) <- checkUserPermissionWithSource(
         username(user),
         permissionId,
         Instant.now(),
@@ -340,7 +341,7 @@ class Janus(
         accessType,
         duration,
         janusData.access,
-        hasExplicitAccess
+        accessSource == Explicit
       )
       _ = AuditTrailDB.insert(auditLog)
     } yield {

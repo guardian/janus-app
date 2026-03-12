@@ -3,8 +3,8 @@ package logic
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.*
 import logic.DeveloperPolicies.toPermission
-import logic.SupportUserAccess.userSupportAccess
-import models.{AccountAccess, DeveloperPolicy}
+import models.AccessSource.{Admin, Explicit, Support}
+import models.*
 
 import java.time.Instant
 
@@ -70,6 +70,41 @@ object UserAccess {
       .map(_.policyGrants)
       .getOrElse(Set.empty)
 
+  private def totalUserAccess(
+      username: String,
+      date: Instant,
+      explicitAcl: ACL,
+      adminAcl: ACL,
+      supportACL: SupportACL,
+      developerPolicies: Set[DeveloperPolicy]
+  ): Map[AwsAccount, UserAccountAccess] = {
+
+    val explicit =
+      userAccess(username, explicitAcl, developerPolicies).getOrElse(Map.empty)
+    val admin =
+      userAccess(username, adminAcl, developerPolicies).getOrElse(Map.empty)
+    val support =
+      SupportUserAccess
+        .userSupportAccess(username, date, supportACL)
+        .getOrElse(Set.empty)
+        .groupBy(_.account)
+        .view
+        .mapValues(perms =>
+          AccountAccess(permissions = perms.toList, developerPolicies = Nil)
+        )
+        .toMap
+
+    val allAccounts = explicit.keySet ++ admin.keySet ++ support.keySet
+
+    allAccounts.map { account =>
+      account -> UserAccountAccess(
+        explicit = explicit.getOrElse(account, AccountAccess.empty),
+        admin = admin.getOrElse(account, AccountAccess.empty),
+        support = support.getOrElse(account, AccountAccess.empty)
+      )
+    }.toMap
+  }
+
   /** Check if the provided user has been granted this permission, and whether
     * that permission was granted via explicit (ie. non-support, non-admin)
     * access.
@@ -85,29 +120,32 @@ object UserAccess {
       adminAcl: ACL,
       supportACL: SupportACL,
       developerPolicies: Set[DeveloperPolicy]
-  ): Option[(Permission, Boolean)] = {
-    val explicit = userPermissions(username, explicitAcl, developerPolicies)
-    val admin = userPermissions(username, adminAcl, developerPolicies)
-    val support =
-      userSupportAccess(username, date, supportACL).getOrElse(Set.empty)
-    val allPerms = explicit ++ admin ++ support
-    allPerms
-      .find(_.id == permissionId)
-      .map(permission => (permission, explicit.contains(permission)))
-  }
+  ): Option[(Permission, AccessSource)] =
+    totalUserAccess(
+      username,
+      date,
+      explicitAcl,
+      adminAcl,
+      supportACL,
+      developerPolicies
+    ).values.flatMap { access =>
+      findSource(access, permissionId)
+    }.headOption
 
-  private[logic] def userPermissions(
-      username: String,
-      acl: ACL,
-      developerPolicies: Set[DeveloperPolicy]
-  ): Set[Permission] =
-    userAccess(username, acl, developerPolicies)
-      .map(
-        _.values
-          .flatMap(aa =>
-            aa.permissions ++ aa.developerPolicies.map(toPermission)
-          )
-          .toSet
-      )
-      .getOrElse(Set.empty)
+  private def findSource(
+      access: UserAccountAccess,
+      permissionId: String
+  ): Option[(Permission, AccessSource)] =
+    findSource(access.explicit, permissionId, Explicit)
+      .orElse(findSource(access.admin, permissionId, Admin))
+      .orElse(findSource(access.support, permissionId, Support))
+
+  private def findSource(
+      access: AccountAccess,
+      permissionId: String,
+      sourceAcl: AccessSource
+  ): Option[(Permission, AccessSource)] =
+    (access.permissions ++ access.developerPolicies.map(toPermission))
+      .find(_.id == permissionId)
+      .map(p => (p, sourceAcl))
 }
