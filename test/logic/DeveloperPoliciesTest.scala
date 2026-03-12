@@ -7,7 +7,13 @@ import logic.DeveloperPolicies.{
   toDeveloperPolicy,
   toPermission
 }
-import models.DeveloperPolicy
+import models.{
+  AwsAccountDeveloperPolicyStatus,
+  DeveloperPolicy,
+  DeveloperPolicyCacheStatus,
+  DeveloperPolicySnapshot,
+  FailureSnapshot
+}
 import org.scalacheck.Gen
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
@@ -208,6 +214,105 @@ class DeveloperPoliciesTest
         val permission = toPermission(pol)
         permission.id shouldBe s"${acc.authConfigKey}-${developerPolicySlug(policyName)}"
       }
+    }
+  }
+
+  "lookupDeveloperPolicyCacheStatus" - {
+    val now = Instant.now()
+    val accountA = AwsAccount("Account A", "a")
+    val accountB = AwsAccount("Account B", "b")
+    val samplePolicy =
+      DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/policy",
+        "policy",
+        "grant-id",
+        None,
+        accountA
+      )
+    val nonEmptySnapshot =
+      DeveloperPolicySnapshot(List(samplePolicy), now)
+    val nonEmptyStatus =
+      AwsAccountDeveloperPolicyStatus.success(nonEmptySnapshot)
+
+    "returns Failure if any account has a failure when enabled " in {
+      val failure = AwsAccountDeveloperPolicyStatus.failure(
+        cachedPolicySnapshot = Some(nonEmptySnapshot),
+        failureStatus =
+          FailureSnapshot("Failed to fetch developer policies", now)
+      )
+      val statuses = Map(accountA -> failure, accountB -> nonEmptyStatus)
+
+      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+        statuses,
+        serviceEnabled = true
+      ) shouldBe DeveloperPolicyCacheStatus.Failure
+    }
+
+    "Failure takes precedence over Empty when enabled" in {
+      val failure = AwsAccountDeveloperPolicyStatus.failure(
+        cachedPolicySnapshot = None,
+        failureStatus =
+          FailureSnapshot("Failed to fetch developer policies", now)
+      )
+      val emptyStatus = AwsAccountDeveloperPolicyStatus.empty
+      val statuses = Map(accountA -> failure, accountB -> emptyStatus)
+
+      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+        statuses,
+        serviceEnabled = true
+      ) shouldBe DeveloperPolicyCacheStatus.Failure
+    }
+
+    "returns Disabled when service is disabled even if some policySnapshots are empty" in {
+      val emptyStatus = AwsAccountDeveloperPolicyStatus.empty
+      val statuses = Map(accountA -> emptyStatus, accountB -> nonEmptyStatus)
+
+      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+        statuses,
+        serviceEnabled = false
+      ) shouldBe DeveloperPolicyCacheStatus.Disabled
+    }
+
+    "returns Empty when enabled and any account has no policySnapshot" in {
+      val emptyStatus = AwsAccountDeveloperPolicyStatus.empty
+      val statuses = Map(accountA -> emptyStatus, accountB -> nonEmptyStatus)
+
+      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+        statuses,
+        serviceEnabled = true
+      ) shouldBe DeveloperPolicyCacheStatus.Empty
+    }
+
+    "returns Success when enabled, no failures, and every account has a policySnapshot" in {
+      val statuses = Map(accountA -> nonEmptyStatus, accountB -> nonEmptyStatus)
+      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+        statuses,
+        serviceEnabled = true
+      ) shouldBe DeveloperPolicyCacheStatus.Success
+    }
+
+    "empty map case: Success when enabled, Disabled when disabled" in {
+      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+        Map.empty,
+        serviceEnabled = true
+      ) shouldBe DeveloperPolicyCacheStatus.Success
+      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+        Map.empty,
+        serviceEnabled = false
+      ) shouldBe DeveloperPolicyCacheStatus.Disabled
+    }
+
+    "treats Some(DeveloperPolicySnapshot(Nil, ...)) as present (not Empty)" in {
+      val snapshotWithNoPolicies = DeveloperPolicySnapshot(Nil, now)
+      val statusWithEmptyListSnapshot =
+        AwsAccountDeveloperPolicyStatus.success(snapshotWithNoPolicies)
+      val statuses =
+        Map(accountA -> statusWithEmptyListSnapshot, accountB -> nonEmptyStatus)
+
+      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+        statuses,
+        serviceEnabled = true
+      ) shouldBe DeveloperPolicyCacheStatus.Success
     }
   }
 }
