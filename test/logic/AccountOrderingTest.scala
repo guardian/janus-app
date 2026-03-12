@@ -56,7 +56,7 @@ class AccountOrderingTest
           val result =
             orderedAccountAccess(awsAccountsAccess, devPolicyGrants)
               .map(_.awsAccount)
-          result shouldEqual List(fooAct, quxAct, barAct, bazAct)
+          result shouldEqual List(fooAct, barAct, quxAct, bazAct)
         }
       }
 
@@ -80,7 +80,7 @@ class AccountOrderingTest
           )
             .map(_.awsAccount)
             .tail
-          result shouldEqual List(fooAct, quxAct, barAct)
+          result shouldEqual List(fooAct, barAct, quxAct)
         }
 
         "sorts favourites by provided order" in {
