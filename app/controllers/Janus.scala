@@ -8,9 +8,14 @@ import com.gu.janus.model.*
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
-import logic.AccountOrdering.orderedAccountAccess
 import logic.PlayHelpers.splitQuerystringParam
-import logic.{AuditTrail, Customisation, Date, Favourites}
+import logic.*
+import logic.SupportUserAccess.{
+  activeSupportUsers,
+  futureRotaSlotsForUser,
+  nextSupportUsers,
+  userSupportAccess
+}
 import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
