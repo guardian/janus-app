@@ -3,7 +3,7 @@ package logic
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.*
 import fixtures.Fixtures.*
-import models.DeveloperPolicy
+import models.{AccessSource, DeveloperPolicy}
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -20,7 +20,7 @@ class UserAccessTest
 
   import UserAccess.*
 
-  "userAccess" - {
+  "internalUserAccess" - {
     val testAccess =
       ACL(
         Map("test.user" -> ACLEntry(Set(fooDev, barDev), Set.empty)),
@@ -28,22 +28,52 @@ class UserAccessTest
       )
 
     "returns None if the user doesn't have any permissions" in {
-      userAccess("username.does.not.exist", testAccess, Set.empty) should equal(
+      internalUserAccess(
+        "username.does.not.exist",
+        JanusData(
+          Set.empty,
+          testAccess,
+          ACL(Map.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set.empty
+      ) should equal(
         None
       )
     }
 
     "returns the user's permissions if they exist" in {
-      val permissions =
-        userPermissions("test.user", testAccess, Set.empty)
-      permissions should (contain(fooDev) and contain(barDev))
+      val result = internalUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          testAccess,
+          ACL(Map.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set.empty
+      ).value
+      result.values.flatMap(_.permissions) should (contain(fooDev) and contain(
+        barDev
+      ))
     }
 
-    "include default permissions in all users' available permissions" in {
-      val access =
-        userPermissions("test.user", testAccess, Set.empty)
+    "includes default permissions in all users' available permissions" in {
+      val result = internalUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          testAccess,
+          ACL(Map.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set.empty
+      ).value
       testAccess.defaultPermissions foreach { perm =>
-        access should contain(perm)
+        result.values.flatMap(_.permissions) should contain(perm)
       }
     }
 
@@ -51,8 +81,20 @@ class UserAccessTest
       val permissions = Set(fooDev, barDev, fooDev, barDev)
       val acl =
         ACL(Map("test.user" -> ACLEntry(permissions, Set.empty)), Set.empty)
-      val result = userPermissions("test.user", acl, Set.empty)
-      result shouldEqual (permissions ++ acl.defaultPermissions)
+      val result = internalUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          acl,
+          ACL(Map.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set.empty
+      ).value
+      result.values
+        .flatMap(_.permissions)
+        .toSet shouldEqual (permissions ++ acl.defaultPermissions)
     }
 
     "includes permissions derived from matching developer policies" in {
@@ -68,13 +110,21 @@ class UserAccessTest
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
         Set.empty
       )
-      val permissions =
-        userPermissions("test.user", acl, Set(policy))
-      val policyPermission = DeveloperPolicies.toPermission(policy)
-      permissions should contain(policyPermission)
+      val result = internalUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          acl,
+          ACL(Map.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set(policy)
+      ).value
+      result(fooAct).developerPolicies should contain(policy)
     }
 
-    "a matching policyGrant results in additional permissions beyond the base ACL permissions" in {
+    "a matching policyGrant results in additional developer policies beyond the base ACL permissions" in {
       val grant = DeveloperPolicyGrant("My Grant", "grant-id")
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
@@ -87,18 +137,32 @@ class UserAccessTest
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
         Set.empty
       )
-      val policyPermission = DeveloperPolicies.toPermission(policy)
-      val permissionsWithPolicy =
-        userPermissions("test.user", acl, Set(policy))
-      val permissionsWithoutPolicy =
-        userPermissions("test.user", acl, Set.empty)
-      // Base ACL permissions are preserved in the result
-      permissionsWithPolicy should contain(fooDev)
-      permissionsWithoutPolicy should contain(fooDev)
-      // The only addition is exactly the policy-derived permission
-      (permissionsWithPolicy -- permissionsWithoutPolicy) shouldEqual Set(
-        policyPermission
-      )
+      val resultWithPolicy = internalUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          acl,
+          ACL(Map.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set(policy)
+      ).value
+      val resultWithoutPolicy = internalUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          acl,
+          ACL(Map.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set.empty
+      ).value
+      resultWithPolicy(fooAct).permissions should contain(fooDev)
+      resultWithoutPolicy(fooAct).permissions should contain(fooDev)
+      resultWithPolicy(fooAct).developerPolicies should contain(policy)
+      resultWithoutPolicy(fooAct).developerPolicies shouldEqual Nil
     }
 
     "does not include developer policies whose grant ID does not match any ACL entry grant" in {
@@ -114,10 +178,18 @@ class UserAccessTest
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
         Set.empty
       )
-      val permissions =
-        userPermissions("test.user", acl, Set(unmatchedPolicy))
-      val unmatchedPermission = DeveloperPolicies.toPermission(unmatchedPolicy)
-      permissions should not contain unmatchedPermission
+      val result = internalUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          acl,
+          ACL(Map.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set(unmatchedPolicy)
+      ).value
+      result(fooAct).developerPolicies should not contain unmatchedPolicy
     }
 
     "does not include developer policies when the user has no policy grants" in {
@@ -132,9 +204,19 @@ class UserAccessTest
         Map("test.user" -> ACLEntry(Set(fooDev), Set.empty)),
         Set.empty
       )
-      val permissions =
-        userPermissions("test.user", acl, Set(policy))
-      permissions shouldEqual Set(fooDev)
+      val result = internalUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          acl,
+          ACL(Map.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set(policy)
+      ).value
+      result(fooAct).permissions shouldEqual List(fooDev)
+      result(fooAct).developerPolicies shouldEqual Nil
     }
 
     "groups permissions by account" in {
@@ -142,7 +224,17 @@ class UserAccessTest
         Map("test.user" -> ACLEntry(Set(fooDev, barDev), Set.empty)),
         Set.empty
       )
-      val result = userAccess("test.user", acl, Set.empty).value
+      val result = internalUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          acl,
+          ACL(Map.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set.empty
+      ).value
       result(fooAct).permissions should contain(fooDev)
       result(barAct).permissions should contain(barDev)
     }
@@ -160,12 +252,34 @@ class UserAccessTest
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
         Set.empty
       )
-      val result = userAccess("test.user", acl, Set(policy)).value
+      val result = internalUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          acl,
+          ACL(Map.empty),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set(policy)
+      ).value
       result(fooAct).permissions should contain(fooDev)
       result(fooAct).developerPolicies should contain(policy)
     }
 
-    "property: result only contains developer policy permissions for grants the user holds" in {
+    "does not return results from the admin ACL" in {
+      val adminOnlyUser = "admin.only"
+      val janusData = JanusData(
+        accounts = Set.empty,
+        access = ACL(Map.empty),
+        admin = ACL(Map(adminOnlyUser -> ACLEntry(Set(fooDev), Set.empty))),
+        support = SupportACL.create(Map.empty, Set.empty),
+        permissionsRepo = None
+      )
+      internalUserAccess(adminOnlyUser, janusData, Set.empty) shouldEqual None
+    }
+
+    "property: result only contains developer policies for grants the user holds" in {
       def generateDevPolicyAndGrant(
           id: Int
       ): (DeveloperPolicy, DeveloperPolicyGrant) = {
@@ -199,24 +313,147 @@ class UserAccessTest
           Set.empty
         )
 
-        val resultPerms =
-          userPermissions("test.user", acl, availablePolicies.toSet)
+        val resultPolicies =
+          internalUserAccess(
+            "test.user",
+            JanusData(
+              Set.empty,
+              acl,
+              ACL(Map.empty),
+              SupportACL.create(Map.empty, Set.empty),
+              None
+            ),
+            availablePolicies.toSet
+          )
+            .map(_.values.flatMap(_.developerPolicies).toSet)
+            .getOrElse(Set.empty)
 
-        // The expected permissions are those derived from available policies
-        // whose grant is held by the user
         val expected = availablePolicies
           .filter(p =>
             developerPolicyGrantsForUser.exists(_.id == p.policyGrantId)
           )
-          .map(DeveloperPolicies.toPermission)
           .toSet
 
-        resultPerms.intersect(
-          availablePolicies
-            .map(DeveloperPolicies.toPermission)
-            .toSet
-        ) shouldEqual expected
+        resultPolicies shouldEqual expected
       }
+    }
+  }
+
+  "adminUserAccess" - {
+    val testAccess =
+      ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev, barDev), Set.empty)),
+        Set(bazDev, quxDev)
+      )
+
+    "returns None if the user doesn't have any permissions" in {
+      adminUserAccess(
+        "username.does.not.exist",
+        JanusData(
+          Set.empty,
+          ACL(Map.empty),
+          testAccess,
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set.empty
+      ) should equal(
+        None
+      )
+    }
+
+    "returns the user's permissions if they exist" in {
+      val result = adminUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          ACL(Map.empty),
+          testAccess,
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set.empty
+      ).value
+      result.values.flatMap(_.permissions) should (contain(fooDev) and contain(
+        barDev
+      ))
+    }
+
+    "includes default permissions in all users' available permissions" in {
+      val result = adminUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          ACL(Map.empty),
+          testAccess,
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set.empty
+      ).value
+      testAccess.defaultPermissions foreach { perm =>
+        result.values.flatMap(_.permissions) should contain(perm)
+      }
+    }
+
+    "groups permissions by account" in {
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev, barDev), Set.empty)),
+        Set.empty
+      )
+      val result = adminUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          ACL(Map.empty),
+          acl,
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set.empty
+      ).value
+      result(fooAct).permissions should contain(fooDev)
+      result(barAct).permissions should contain(barDev)
+    }
+
+    "groups developer policies by account separately from permissions" in {
+      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val policy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "p1",
+        "grant-id",
+        None,
+        fooAct
+      )
+      val acl = ACL(
+        Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
+        Set.empty
+      )
+      val result = adminUserAccess(
+        "test.user",
+        JanusData(
+          Set.empty,
+          ACL(Map.empty),
+          acl,
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        ),
+        Set(policy)
+      ).value
+      result(fooAct).permissions should contain(fooDev)
+      result(fooAct).developerPolicies should contain(policy)
+    }
+
+    "does not return results from the internal ACL" in {
+      val internalOnlyUser = "internal.only"
+      val janusData = JanusData(
+        accounts = Set.empty,
+        access = ACL(Map(internalOnlyUser -> ACLEntry(Set(fooDev), Set.empty))),
+        admin = ACL(Map("admin.user" -> ACLEntry(Set(barDev), Set.empty))),
+        support = SupportACL.create(Map.empty, Set.empty),
+        permissionsRepo = None
+      )
+      adminUserAccess(internalOnlyUser, janusData, Set.empty) shouldEqual None
     }
   }
 
@@ -276,15 +513,20 @@ class UserAccessTest
       ),
       allTestPerms
     )
+    val janusData = JanusData(
+      accounts = Set.empty,
+      access = acl,
+      admin = adminAcl,
+      support = supportAcl,
+      permissionsRepo = None
+    )
 
     "returns the permission if a user has been granted access" in {
       val (permission, _) = checkUserPermissionWithSource(
         "user",
         fooDev.id,
         Instant.now(),
-        acl,
-        adminAcl,
-        supportAcl,
+        janusData,
         Set.empty
       ).value
       permission shouldEqual fooDev
@@ -296,9 +538,7 @@ class UserAccessTest
           "admin",
           adminPermission.id,
           Instant.now(),
-          acl,
-          adminAcl,
-          supportAcl,
+          janusData,
           Set.empty
         ).value
         permission shouldEqual adminPermission
@@ -311,9 +551,7 @@ class UserAccessTest
           "support.user",
           supportPermission.id,
           Instant.now(),
-          acl,
-          adminAcl,
-          supportAcl,
+          janusData,
           Set.empty
         ).value
         permission shouldEqual supportPermission
@@ -325,15 +563,13 @@ class UserAccessTest
         "no.permissions",
         fooDev.id,
         Instant.now(),
-        acl,
-        adminAcl,
-        supportAcl,
+        janusData,
         Set.empty
       ) shouldBe None
     }
 
-    "explicit access flag" - {
-      val explicitAcl = ACL(
+    "access source" - {
+      val internalAcl = ACL(
         Map("user" -> ACLEntry(Set(fooDev), Set.empty)),
         Set.empty
       )
@@ -347,44 +583,45 @@ class UserAccessTest
         ),
         Set(fooDev)
       )
+      val janusData = JanusData(
+        accounts = Set.empty,
+        access = internalAcl,
+        admin = adminAcl,
+        support = supportAcl,
+        permissionsRepo = None
+      )
 
-      "is true when the permission was granted via the explicit ACL" in {
-        val (_, explicitAccess) = checkUserPermissionWithSource(
+      "is Internal when the permission was granted via the internal ACL" in {
+        val (_, source) = checkUserPermissionWithSource(
           "user",
           fooDev.id,
           Instant.now(),
-          explicitAcl,
-          adminAcl,
-          supportAcl,
+          janusData,
           Set.empty
         ).value
-        explicitAccess shouldEqual true
+        source shouldEqual AccessSource.Internal
       }
 
-      "is false when the permission was granted via admin access only" in {
-        val (_, explicitAccess) = checkUserPermissionWithSource(
+      "is Admin when the permission was granted via admin access only" in {
+        val (_, source) = checkUserPermissionWithSource(
           "admin",
           fooDev.id,
           Instant.now(),
-          explicitAcl,
-          adminAcl,
-          supportAcl,
+          janusData,
           Set.empty
         ).value
-        explicitAccess shouldEqual false
+        source shouldEqual AccessSource.Admin
       }
 
-      "is false when the permission was granted via support access only" in {
-        val (_, explicitAccess) = checkUserPermissionWithSource(
+      "is Support when the permission was granted via support access only" in {
+        val (_, source) = checkUserPermissionWithSource(
           "support.user",
           fooDev.id,
           Instant.now(),
-          explicitAcl,
-          adminAcl,
-          supportAcl,
+          janusData,
           Set.empty
         ).value
-        explicitAccess shouldEqual false
+        source shouldEqual AccessSource.Support
       }
     }
   }

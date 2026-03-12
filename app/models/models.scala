@@ -2,6 +2,7 @@ package models
 
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant, Permission}
+import models.AccessSource.{Admin, Internal, Support}
 import play.api.http.Status.{
   BAD_REQUEST,
   FORBIDDEN,
@@ -16,6 +17,18 @@ enum AccountConfigStatus:
   case ConfigWarn(accounts: Set[String])
   case ConfigError(accounts: Set[String])
 
+  /** Which ACL a user has been granted access in.
+    */
+enum AccessSource {
+  case
+    /** Access given explicitly in the standard ACL */
+    Internal,
+    /** Access given in the admin ACL */
+    Admin,
+    /** Access given in the support ACL */
+    Support
+}
+
 /** Describes both the static Janus permissions and the dynamically-loaded
   * developer policies available to a user for a given AWS account.
   */
@@ -23,6 +36,29 @@ case class AccountAccess(
     permissions: List[Permission],
     developerPolicies: List[DeveloperPolicy]
 )
+
+object AccountAccess {
+  def empty = AccountAccess(permissions = Nil, developerPolicies = Nil)
+}
+
+/** Representation of access within a single [[AwsAccount]] separated out by
+  * source ACL.
+  *
+  * @param internal
+  * @param admin
+  * @param support
+  */
+case class SourcedAccountAccess(
+    internal: AccountAccess,
+    admin: AccountAccess,
+    support: AccountAccess
+) {
+  def bySource: List[(AccountAccess, AccessSource)] = List(
+    internal -> Internal,
+    admin -> Admin,
+    support -> Support
+  )
+}
 
 case class AwsAccountAccess(
     awsAccount: AwsAccount,
