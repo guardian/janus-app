@@ -67,14 +67,11 @@ class Janus(
           userPolicyGrants,
           favourites
         )
-        cacheStatus = DeveloperPolicyCacheStatus.Failure
-//        cacheStatus = DeveloperPolicyCacheStatus.Empty
-//        cacheStatus = DeveloperPolicyCacheStatus.Disabled
-//        cacheStatus = DeveloperPolicyCacheStatus.Success
-//        cacheStatus = DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
-//          developerPolicyStatusManager.getCacheStatus,
-//          developerPolicyStatusManager.fetchEnabled
-//        )
+
+        cacheStatus = DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+          developerPolicyStatusManager.getCacheStatus,
+          developerPolicyStatusManager.fetchEnabled
+        )
       } yield {
         Ok(
           views.html
