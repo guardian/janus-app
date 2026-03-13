@@ -10,12 +10,6 @@ import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.*
 import logic.PlayHelpers.splitQuerystringParam
-import logic.SupportUserAccess.{
-  activeSupportUsers,
-  futureRotaSlotsForUser,
-  nextSupportUsers,
-  userSupportAccess
-}
 import models.AccessSource.Internal
 import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
 import play.api.mvc.*
