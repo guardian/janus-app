@@ -8,9 +8,9 @@ import com.gu.janus.model.*
 import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
-import logic.AccountOrdering.orderedAccountAccess
+import logic.*
 import logic.PlayHelpers.splitQuerystringParam
-import logic.{AuditTrail, Customisation, Date, Favourites}
+import models.AccessSource.Internal
 import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
@@ -46,9 +46,9 @@ class Janus(
       val displayMode =
         Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
       (for {
-        accountsAccess <- userAccess(
+        accountsAccess <- internalUserAccess(
           username(request.user),
-          janusData.access,
+          janusData,
           developerPolicyFinder.getDeveloperPolicies
         )
         userPolicyGrants = policyGrantsForUser(
@@ -77,9 +77,9 @@ class Janus(
   def admin: Action[AnyContent] =
     authAction { implicit request =>
       (for {
-        accountsAccess <- userAccess(
+        accountsAccess <- adminUserAccess(
           username(request.user),
-          janusData.admin,
+          janusData,
           developerPolicyFinder.getDeveloperPolicies
         )
         userPolicyGrants = policyGrantsForUser(
@@ -307,13 +307,11 @@ class Janus(
   ): Option[(Credentials, Permission)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
-      (permission, hasExplicitAccess) <- checkUserPermissionWithSource(
+      (permission, accessSource) <- checkUserPermissionWithSource(
         username(user),
         permissionId,
         Instant.now(),
-        janusData.access,
-        janusData.admin,
-        janusData.support,
+        janusData,
         developerPolicies
       )
       duration = Federation.duration(
@@ -335,7 +333,7 @@ class Janus(
         accessType,
         duration,
         janusData.access,
-        hasExplicitAccess
+        accessSource == Internal
       )
       _ = AuditTrailDB.insert(auditLog)
     } yield {
