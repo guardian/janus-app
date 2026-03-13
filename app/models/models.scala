@@ -2,7 +2,6 @@ package models
 
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant, Permission}
-import models.AccessSource.{Admin, Internal, Support}
 import play.api.http.Status.{
   BAD_REQUEST,
   FORBIDDEN,
@@ -21,7 +20,7 @@ enum AccountConfigStatus:
     */
 enum AccessSource {
   case
-    /** Access given explicitly in the standard ACL */
+    /** Access given in the standard ACL, including default permissions */
     Internal,
     /** Access given in the admin ACL */
     Admin,
@@ -48,13 +47,7 @@ case class SourcedAccountAccess(
     internal: AccountAccess,
     admin: AccountAccess,
     support: AccountAccess
-) {
-  def bySource: List[(AccountAccess, AccessSource)] = List(
-    internal -> Internal,
-    admin -> Admin,
-    support -> Support
-  )
-}
+)
 
 case class AwsAccountAccess(
     awsAccount: AwsAccount,

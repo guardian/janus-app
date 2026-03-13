@@ -104,7 +104,7 @@ class UserAccessTest
         "p1",
         "grant-id",
         None,
-        fooAct
+        fooAccount
       )
       val acl = ACL(
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
@@ -121,48 +121,82 @@ class UserAccessTest
         ),
         Set(policy)
       ).value
-      result(fooAct).developerPolicies should contain(policy)
+      result(fooAccount).developerPolicies should contain(policy)
     }
 
-    "a matching policyGrant results in additional developer policies beyond the base ACL permissions" in {
+    "a matching policyGrant results in additional developer policies beyond the base ACL permissions" - {
       val grant = DeveloperPolicyGrant("My Grant", "grant-id")
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
         None,
-        fooAct
+        fooAccount
       )
       val acl = ACL(
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
         Set.empty
       )
-      val resultWithPolicy = internalUserAccess(
-        "test.user",
-        JanusData(
-          Set.empty,
-          acl,
-          ACL(Map.empty),
-          SupportACL.create(Map.empty, Set.empty),
-          None
-        ),
-        Set(policy)
-      ).value
-      val resultWithoutPolicy = internalUserAccess(
-        "test.user",
-        JanusData(
-          Set.empty,
-          acl,
-          ACL(Map.empty),
-          SupportACL.create(Map.empty, Set.empty),
-          None
-        ),
-        Set.empty
-      ).value
-      resultWithPolicy(fooAct).permissions should contain(fooDev)
-      resultWithoutPolicy(fooAct).permissions should contain(fooDev)
-      resultWithPolicy(fooAct).developerPolicies should contain(policy)
-      resultWithoutPolicy(fooAct).developerPolicies shouldEqual Nil
+
+      "access includes permission granted by ACL" in {
+        val resultWithPolicy = internalUserAccess(
+          "test.user",
+          JanusData(
+            Set.empty,
+            acl,
+            ACL(Map.empty),
+            SupportACL.create(Map.empty, Set.empty),
+            None
+          ),
+          Set(policy)
+        ).value
+        resultWithPolicy(fooAccount).permissions should contain(fooDev)
+      }
+
+      "access includes permission granted by ACL when there are no developer policies available" in {
+        val resultWithoutPolicy = internalUserAccess(
+          "test.user",
+          JanusData(
+            Set.empty,
+            acl,
+            ACL(Map.empty),
+            SupportACL.create(Map.empty, Set.empty),
+            None
+          ),
+          Set.empty
+        ).value
+        resultWithoutPolicy(fooAccount).permissions should contain(fooDev)
+      }
+
+      "access includes developer policy matching developer policy grant" in {
+        val resultWithPolicy = internalUserAccess(
+          "test.user",
+          JanusData(
+            Set.empty,
+            acl,
+            ACL(Map.empty),
+            SupportACL.create(Map.empty, Set.empty),
+            None
+          ),
+          Set(policy)
+        ).value
+        resultWithPolicy(fooAccount).developerPolicies should contain(policy)
+      }
+
+      "access has no developer policies when there are none available" in {
+        val resultWithoutPolicy = internalUserAccess(
+          "test.user",
+          JanusData(
+            Set.empty,
+            acl,
+            ACL(Map.empty),
+            SupportACL.create(Map.empty, Set.empty),
+            None
+          ),
+          Set.empty
+        ).value
+        resultWithoutPolicy(fooAccount).developerPolicies shouldEqual Nil
+      }
     }
 
     "does not include developer policies whose grant ID does not match any ACL entry grant" in {
@@ -172,7 +206,7 @@ class UserAccessTest
         "p1",
         "other-id",
         None,
-        fooAct
+        fooAccount
       )
       val acl = ACL(
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
@@ -189,16 +223,16 @@ class UserAccessTest
         ),
         Set(unmatchedPolicy)
       ).value
-      result(fooAct).developerPolicies should not contain unmatchedPolicy
+      result(fooAccount).developerPolicies should not contain unmatchedPolicy
     }
 
-    "does not include developer policies when the user has no policy grants" in {
+    "does not include developer policies when the user has no policy grants" - {
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
         None,
-        fooAct
+        fooAccount
       )
       val acl = ACL(
         Map("test.user" -> ACLEntry(Set(fooDev), Set.empty)),
@@ -215,8 +249,14 @@ class UserAccessTest
         ),
         Set(policy)
       ).value
-      result(fooAct).permissions shouldEqual List(fooDev)
-      result(fooAct).developerPolicies shouldEqual Nil
+
+      "access includes permission granted by ACL" in {
+        result(fooAccount).permissions shouldEqual List(fooDev)
+      }
+
+      "access has no developer policies" in {
+        result(fooAccount).developerPolicies shouldEqual Nil
+      }
     }
 
     "groups permissions by account" in {
@@ -235,7 +275,7 @@ class UserAccessTest
         ),
         Set.empty
       ).value
-      result(fooAct).permissions should contain(fooDev)
+      result(fooAccount).permissions should contain(fooDev)
       result(barAct).permissions should contain(barDev)
     }
 
@@ -246,7 +286,7 @@ class UserAccessTest
         "p1",
         "grant-id",
         None,
-        fooAct
+        fooAccount
       )
       val acl = ACL(
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
@@ -263,8 +303,8 @@ class UserAccessTest
         ),
         Set(policy)
       ).value
-      result(fooAct).permissions should contain(fooDev)
-      result(fooAct).developerPolicies should contain(policy)
+      result(fooAccount).permissions should contain(fooDev)
+      result(fooAccount).developerPolicies should contain(policy)
     }
 
     "does not return results from the admin ACL" in {
@@ -290,7 +330,7 @@ class UserAccessTest
             s"p$id",
             grantId,
             None,
-            fooAct
+            fooAccount
           ),
           DeveloperPolicyGrant(s"Grant $id", grantId)
         )
@@ -412,7 +452,7 @@ class UserAccessTest
         ),
         Set.empty
       ).value
-      result(fooAct).permissions should contain(fooDev)
+      result(fooAccount).permissions should contain(fooDev)
       result(barAct).permissions should contain(barDev)
     }
 
@@ -423,7 +463,7 @@ class UserAccessTest
         "p1",
         "grant-id",
         None,
-        fooAct
+        fooAccount
       )
       val acl = ACL(
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
@@ -440,8 +480,8 @@ class UserAccessTest
         ),
         Set(policy)
       ).value
-      result(fooAct).permissions should contain(fooDev)
-      result(fooAct).developerPolicies should contain(policy)
+      result(fooAccount).permissions should contain(fooDev)
+      result(fooAccount).developerPolicies should contain(policy)
     }
 
     "does not return results from the internal ACL" in {

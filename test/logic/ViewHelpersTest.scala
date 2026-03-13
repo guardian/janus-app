@@ -13,7 +13,7 @@ class ViewHelpersTest extends AnyFreeSpec with Matchers {
   "shellCredentials" - {
     "for a single account" - {
       val creds = List(
-        fooAct -> Credentials
+        fooAccount -> Credentials
           .builder()
           .accessKeyId("foo-key")
           .secretAccessKey("foo-secret")
@@ -38,7 +38,7 @@ class ViewHelpersTest extends AnyFreeSpec with Matchers {
 
       "includes account name on each command" in {
         val lines = shellCredentials(creds).split('\n')
-        all(lines) should include(s"--profile ${fooAct.authConfigKey}")
+        all(lines) should include(s"--profile ${fooAccount.authConfigKey}")
       }
 
       "puts leading space on all commands to exclude from bash history" in {
@@ -54,7 +54,7 @@ class ViewHelpersTest extends AnyFreeSpec with Matchers {
 
     "for multiple accounts" - {
       val multiCreds = List(
-        fooAct -> Credentials
+        fooAccount -> Credentials
           .builder()
           .accessKeyId("foo-key")
           .secretAccessKey("foo-secret")

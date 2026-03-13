@@ -5,14 +5,14 @@ import com.gu.janus.policy.Iam.Policy
 import models.DeveloperPolicy
 
 object Fixtures {
-  val fooAct = AwsAccount("Foo", "foo")
+  val fooAccount = AwsAccount("Foo", "foo")
   val barAct = AwsAccount("Bar", "bar")
   val bazAct = AwsAccount("Baz", "baz")
   val quxAct = AwsAccount("Qux", "qux")
 
-  val fooDev = developerPermission(fooAct)
-  val fooCf = accountAdminPermission(fooAct)
-  val fooS3 = s3ManagerPermission(fooAct)
+  val fooDev = developerPermission(fooAccount)
+  val fooCf = accountAdminPermission(fooAccount)
+  val fooS3 = s3ManagerPermission(fooAccount)
 
   val barDev = developerPermission(barAct)
   val barCf = accountAdminPermission(barAct)
@@ -56,14 +56,14 @@ object Fixtures {
     policyName = "alpha-1",
     policyGrantId = grantAlpha.id,
     description = Some("Alpha policy"),
-    account = fooAct
+    account = fooAccount
   )
   val developerPolicyAlphaFoo2 = DeveloperPolicy(
     policyArnString = "arn:aws:iam::123456789012:policy/alpha2",
     policyName = "alpha-2",
     policyGrantId = grantAlpha.id,
     description = Some("Alpha policy"),
-    account = fooAct
+    account = fooAccount
   )
   val developerPolicyAlphaBar = DeveloperPolicy(
     policyArnString = "arn:aws:iam::123456789012:policy/alpha",
@@ -77,7 +77,7 @@ object Fixtures {
     policyName = "beta",
     policyGrantId = grantBeta.id,
     description = Some("Beta policy"),
-    account = fooAct
+    account = fooAccount
   )
   val developerPolicyBetaBar = DeveloperPolicy(
     policyArnString = "arn:aws:iam::123456789012:policy/beta",

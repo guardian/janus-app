@@ -4,6 +4,7 @@ import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.*
 import logic.DeveloperPolicies.toPermission
 import models.*
+import models.AccessSource.{Admin, Internal, Support}
 
 import java.time.Instant
 
@@ -34,7 +35,16 @@ object UserAccess {
       supportData = None,
       developerPolicies
     )
-    Option.when(access.nonEmpty)(access.view.mapValues(toAccountAccess).toMap)
+    Option.when(access.nonEmpty)(
+      access.view
+        .mapValues(sourced =>
+          AccountAccess(
+            permissions = sourced.internal.permissions,
+            developerPolicies = sourced.internal.developerPolicies
+          )
+        )
+        .toMap
+    )
   }
 
   /** A user's access in the admin ACL.
@@ -54,22 +64,17 @@ object UserAccess {
       supportData = None,
       developerPolicies
     )
-    Option.when(access.nonEmpty)(access.view.mapValues(toAccountAccess).toMap)
-  }
-
-  /** Flattens into a structure that's useful where we only need to know about
-    * types of permissions and we don't need information about which ACL
-    * permission comes from.
-    */
-  private def toAccountAccess(access: SourcedAccountAccess) =
-    AccountAccess(
-      permissions = access.internal.permissions ++
-        access.admin.permissions ++
-        access.support.permissions,
-      developerPolicies = access.internal.developerPolicies ++
-        access.admin.developerPolicies ++
-        access.support.developerPolicies
+    Option.when(access.nonEmpty)(
+      access.view
+        .mapValues(sourced =>
+          AccountAccess(
+            permissions = sourced.admin.permissions,
+            developerPolicies = sourced.admin.developerPolicies
+          )
+        )
+        .toMap
     )
+  }
 
   /** Checks if the username is explicitly mentioned in the provided ACL.
     */
@@ -100,7 +105,15 @@ object UserAccess {
       date: Instant,
       janusData: JanusData,
       developerPolicies: Set[DeveloperPolicy]
-  ): Option[(Permission, AccessSource)] =
+  ): Option[(Permission, AccessSource)] = {
+    def bySource(
+        access: SourcedAccountAccess
+    ): List[(AccountAccess, AccessSource)] = List(
+      access.internal -> Internal,
+      access.admin -> Admin,
+      access.support -> Support
+    )
+
     totalUserAccess(
       username,
       Some(janusData.access),
@@ -108,12 +121,13 @@ object UserAccess {
       Some((janusData.support, date)),
       developerPolicies
     ).valuesIterator.flatMap { access =>
-      access.bySource.flatMap((aa, src) =>
+      bySource(access).flatMap((aa, src) =>
         (aa.permissions ++ aa.developerPolicies.map(toPermission))
           .find(_.id == permissionId)
           .map((_, src))
       )
     }.nextOption
+  }
 
   /** This is the central logic for the public-facing methods that need to
     * determine what access a user has.
@@ -127,6 +141,22 @@ object UserAccess {
     * depends on the context of the call. In some cases we don't need to know
     * about support access and in others we don't need to know about admin
     * access.
+    *
+    * @param username
+    *   User whose access we're determining
+    * @param internalAcl
+    *   If included, results will include access from this ACL
+    * @param adminAcl
+    *   If included, results will include access from this admin ACL
+    * @param supportData
+    *   If included, results will include support access. The second value of
+    *   this pair is the instant in the support rota where access is being
+    *   determined. So it will only include the user if they have a shift on the
+    *   support rota that's active at the given instant.
+    * @param developerPolicies
+    *   All the [[DeveloperPolicy]]s that Janus knows about. The user might have
+    *   a grant for some of these and their permissions will be included in the
+    *   method result.
     */
   private def totalUserAccess(
       username: String,
@@ -176,9 +206,9 @@ object UserAccess {
 
     val support =
       supportData
-        .map((acl, date) =>
+        .map((acl, when) =>
           val perms =
-            userSupportAccess(username, date, acl).getOrElse(Set.empty)
+            userSupportAccess(username, when, acl).getOrElse(Set.empty)
           perms
             .groupBy(_.account)
             .view
