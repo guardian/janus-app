@@ -100,7 +100,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
       }
 
       "should return an FederationConfigError if the janusData lists one or more accounts" in {
-        val janusData = testJanusData.copy(accounts = Set(fooAccount, barAct))
+        val janusData = testJanusData.copy(accounts = Set(fooAct, barAct))
         val result = Config.validateAccountConfig(janusData, emptyConfig)
 
         result shouldBe a[FederationConfigError]
@@ -141,7 +141,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
           )
         )
         val janusData =
-          testJanusData.copy(accounts = Set(fooAccount, barAct, bazAct))
+          testJanusData.copy(accounts = Set(fooAct, barAct, bazAct))
 
         Config.validateAccountConfig(
           janusData,
@@ -162,7 +162,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
           )
         )
         val janusData =
-          testJanusData.copy(accounts = Set(fooAccount, barAct, bazAct))
+          testJanusData.copy(accounts = Set(fooAct, barAct, bazAct))
 
         Config.validateAccountConfig(
           janusData,
@@ -182,7 +182,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
           )
         )
         val janusData =
-          testJanusData.copy(accounts = Set(fooAccount, barAct, bazAct))
+          testJanusData.copy(accounts = Set(fooAct, barAct, bazAct))
 
         Config.validateAccountConfig(
           janusData,
@@ -203,7 +203,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
                |""".stripMargin
           )
         )
-        val janusData = testJanusData.copy(accounts = Set(fooAccount, bazAct))
+        val janusData = testJanusData.copy(accounts = Set(fooAct, bazAct))
 
         Config.validateAccountConfig(
           janusData,
@@ -224,7 +224,7 @@ class ConfigTest extends AnyFreeSpec with Matchers {
                |""".stripMargin
           )
         )
-        val janusData = testJanusData.copy(accounts = Set(fooAccount))
+        val janusData = testJanusData.copy(accounts = Set(fooAct))
 
         Config.validateAccountConfig(
           janusData,

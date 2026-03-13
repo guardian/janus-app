@@ -56,7 +56,7 @@ class AccountOrderingTest
           val result =
             orderedAccountAccess(awsAccountsAccess, devPolicyGrants)
               .map(_.awsAccount)
-          result shouldEqual List(fooAccount, quxAct, barAct, bazAct)
+          result shouldEqual List(fooAct, quxAct, barAct, bazAct)
         }
       }
 
@@ -80,7 +80,7 @@ class AccountOrderingTest
           )
             .map(_.awsAccount)
             .tail
-          result shouldEqual List(fooAccount, quxAct, barAct)
+          result shouldEqual List(fooAct, quxAct, barAct)
         }
 
         "sorts favourites by provided order" in {
@@ -91,7 +91,7 @@ class AccountOrderingTest
               List("baz", "bar")
             )
               .map(_.awsAccount)
-          result shouldEqual List(bazAct, barAct, fooAccount, quxAct)
+          result shouldEqual List(bazAct, barAct, fooAct, quxAct)
         }
       }
     }
@@ -99,13 +99,13 @@ class AccountOrderingTest
     "sorts the account permissions" in {
       val fooPerms =
         orderedAccountAccess(awsAccountsAccess, devPolicyGrants, Nil)
-          .find(_.awsAccount == fooAccount)
+          .find(_.awsAccount == fooAct)
           .value
           .permissions
       fooPerms shouldEqual List(
-        developerPermission(fooAccount),
-        s3ManagerPermission(fooAccount),
-        accountAdminPermission(fooAccount)
+        developerPermission(fooAct),
+        s3ManagerPermission(fooAct),
+        accountAdminPermission(fooAct)
       )
     }
 
@@ -113,7 +113,7 @@ class AccountOrderingTest
       "groups policies by grant, within an account" in {
         val fooPolicies =
           orderedAccountAccess(awsAccountsAccess, devPolicyGrants)
-            .find(_.awsAccount == fooAccount)
+            .find(_.awsAccount == fooAct)
             .value
             .developerPolicies
         // toSet because we aren't testing the order of groups here
@@ -129,7 +129,7 @@ class AccountOrderingTest
       "should order the grant groups alphabetically by name" in {
         val result =
           orderedAccountAccess(awsAccountsAccess, devPolicyGrants)
-            .find(_.awsAccount == fooAccount)
+            .find(_.awsAccount == fooAct)
             .value
             .developerPolicies
             .map(_._1)
@@ -149,7 +149,7 @@ class AccountOrderingTest
               policyName = name,
               policyGrantId = grantAlpha.id,
               description = Some(s"Alpha policy $policyNum: $name"),
-              account = fooAccount
+              account = fooAct
             )
           }
 
@@ -164,7 +164,7 @@ class AccountOrderingTest
               toAccountAccessMap(Set.empty, devPolicies.toSet)
             val result =
               orderedAccountAccess(awsAccountsAccess, Set(grantAlpha))
-                .find(_.awsAccount == fooAccount)
+                .find(_.awsAccount == fooAct)
                 .value
                 .developerPolicies
             result shouldEqual List(
@@ -191,81 +191,73 @@ class AccountOrderingTest
   "Permission's ordering" - {
     "preserve dev before admin" in {
       val perms =
-        List(
-          developerPermission(fooAccount),
-          accountAdminPermission(fooAccount)
-        )
+        List(developerPermission(fooAct), accountAdminPermission(fooAct))
       perms.sorted shouldEqual perms
     }
 
     "put dev before admin" in {
       val perms =
-        List(
-          developerPermission(fooAccount),
-          accountAdminPermission(fooAccount)
-        )
+        List(developerPermission(fooAct), accountAdminPermission(fooAct))
       perms.reverse.sorted shouldEqual perms
     }
 
     "preserve dev before another permission" in {
-      val perms =
-        List(developerPermission(fooAccount), s3ReaderPermission(fooAccount))
+      val perms = List(developerPermission(fooAct), s3ReaderPermission(fooAct))
       perms.sorted shouldEqual perms
     }
 
     "put dev before another permission" in {
-      val perms =
-        List(developerPermission(fooAccount), s3ReaderPermission(fooAccount))
+      val perms = List(developerPermission(fooAct), s3ReaderPermission(fooAct))
       perms.reverse.sorted shouldEqual perms
     }
 
     "preserve admin after another permission" in {
       val perms =
-        List(s3ReaderPermission(fooAccount), accountAdminPermission(fooAccount))
+        List(s3ReaderPermission(fooAct), accountAdminPermission(fooAct))
       perms.sorted shouldEqual perms
     }
 
     "put admin after another permission" in {
       val perms =
-        List(s3ReaderPermission(fooAccount), accountAdminPermission(fooAccount))
+        List(s3ReaderPermission(fooAct), accountAdminPermission(fooAct))
       perms.reverse.sorted shouldEqual perms
     }
 
     "preserves dev - other - admin" in {
       val perms = List(
-        developerPermission(fooAccount),
-        s3ReaderPermission(fooAccount),
-        accountAdminPermission(fooAccount)
+        developerPermission(fooAct),
+        s3ReaderPermission(fooAct),
+        accountAdminPermission(fooAct)
       )
       perms.sorted shouldEqual perms
     }
 
     "puts dev - other - admin" in {
       val perms = List(
-        developerPermission(fooAccount),
-        s3ReaderPermission(fooAccount),
-        accountAdminPermission(fooAccount)
+        developerPermission(fooAct),
+        s3ReaderPermission(fooAct),
+        accountAdminPermission(fooAct)
       )
       perms.reverse.sorted shouldEqual perms
     }
 
     "orders alphabetically for non dev/admin permissions" in {
       val perms = List(
-        kinesisReadPermission(fooAccount),
-        lambdaPermission(fooAccount),
-        s3ManagerPermission(fooAccount),
-        s3ReaderPermission(fooAccount)
+        kinesisReadPermission(fooAct),
+        lambdaPermission(fooAct),
+        s3ManagerPermission(fooAct),
+        s3ReaderPermission(fooAct)
       )
       perms.reverse.sorted shouldEqual perms
     }
 
     "always returns the correct order" - {
       val permissions = List(
-        developerPermission(fooAccount),
-        kinesisReadPermission(fooAccount),
-        lambdaPermission(fooAccount),
-        s3ReaderPermission(fooAccount),
-        accountAdminPermission(fooAccount)
+        developerPermission(fooAct),
+        kinesisReadPermission(fooAct),
+        lambdaPermission(fooAct),
+        s3ReaderPermission(fooAct),
+        accountAdminPermission(fooAct)
       )
 
       "for shuffled permissions" in {

@@ -17,7 +17,7 @@ class AccountsTest
     with Matchers
     with ScalaCheckDrivenPropertyChecks {
 
-  private val accounts = Set(fooAccount, barAct, bazAct, quxAct)
+  private val accounts = Set(fooAct, barAct, bazAct, quxAct)
   val acl = ACL(
     Map(
       "test.user" -> ACLEntry(Set(fooDev), Set.empty),
@@ -67,7 +67,7 @@ class AccountsTest
     }
 
     "fetches all the permissions for an account, ordered by username" in {
-      Accounts.accountPermissions(fooAccount, acl) shouldEqual List(
+      Accounts.accountPermissions(fooAct, acl) shouldEqual List(
         UserPermissions("test.admin", Set(fooCf)),
         UserPermissions("test.all", Set(fooDev, fooCf)),
         UserPermissions("test.other", Set(fooS3)),
@@ -156,8 +156,8 @@ class AccountsTest
     "should return full account information when given an existing account key" in {
       Accounts.lookupAccountDeveloperPolicies(
         accountsWithSuccessfullyFetchedTrivialPolicies,
-        fooAccount,
-        Success[String](fooAccount.authConfigKey)
+        fooAct,
+        Success[String](fooAct.authConfigKey)
       ) shouldEqual Set(
         DeveloperPolicy(
           Arn
@@ -170,7 +170,7 @@ class AccountsTest
           "awsResource",
           "provisionedRoleIdFoo",
           Some("descriptionFoo"),
-          fooAccount
+          fooAct
         )
       )
     }
@@ -179,7 +179,7 @@ class AccountsTest
       Accounts
         .lookupAccountDeveloperPolicies(
           accountsWithSuccessfullyFetchedTrivialPolicies,
-          fooAccount,
+          fooAct,
           Failure[String](new Exception("Unable to look up this account"))
         )
         .isEmpty shouldBe true
@@ -190,7 +190,7 @@ class AccountsTest
     "should return full account info when the snapshot has succeeded for this account" in {
       Accounts.successfulPoliciesForThisAccount(
         accountsWithSuccessfullyFetchedTrivialPolicies,
-        fooAccount.authConfigKey
+        fooAct.authConfigKey
       ) shouldEqual List(
         DeveloperPolicy(
           Arn
@@ -203,7 +203,7 @@ class AccountsTest
           "awsResource",
           "provisionedRoleIdFoo",
           Some("descriptionFoo"),
-          fooAccount
+          fooAct
         )
       )
     }
@@ -211,7 +211,7 @@ class AccountsTest
       Accounts
         .successfulPoliciesForThisAccount(
           accountsWithOnlyFailedFetches,
-          fooAccount.authConfigKey
+          fooAct.authConfigKey
         )
         .isEmpty shouldBe true
     }
@@ -222,7 +222,7 @@ class AccountsTest
       Accounts
         .errorPoliciesForThisAccount(
           accountsWithSuccessfullyFetchedTrivialPolicies,
-          fooAccount.authConfigKey
+          fooAct.authConfigKey
         )
         .isEmpty shouldBe true
     }
@@ -230,7 +230,7 @@ class AccountsTest
     "should return the failure when the snapshot has failed" in {
       Accounts.errorPoliciesForThisAccount(
         accountsWithOnlyFailedFetches,
-        fooAccount.authConfigKey
+        fooAct.authConfigKey
       ) shouldBe Some("Failed to fetch Foo")
     }
   }
