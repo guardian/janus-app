@@ -42,11 +42,7 @@ object AccountAccess {
 }
 
 /** Representation of access within a single [[AwsAccount]] separated out by
-  * source ACL.
-  *
-  * @param internal
-  * @param admin
-  * @param support
+  * source ACL. This allows us to see permissions by source and by type.
   */
 case class SourcedAccountAccess(
     internal: AccountAccess,
