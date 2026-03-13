@@ -21,8 +21,8 @@ modules:
 
 # Optional: Ports to forward
 forwardPorts:
-  - 9100 # same port on host and container
-  - 1234 # same port on host and container
+  - 9100 # Play app (actual actions)
+  - 1234 # Frontend app (assets for web)
 
 # Optional: Mount directories from host to container
 mounts:
