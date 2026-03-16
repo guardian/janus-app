@@ -16,12 +16,37 @@ enum AccountConfigStatus:
   case ConfigWarn(accounts: Set[String])
   case ConfigError(accounts: Set[String])
 
+  /** Which ACL a user has been granted access in.
+    */
+enum AccessSource {
+  case
+    /** Access given in the standard ACL, including default permissions */
+    Internal,
+    /** Access given in the admin ACL */
+    Admin,
+    /** Access given in the support ACL */
+    Support
+}
+
 /** Describes both the static Janus permissions and the dynamically-loaded
   * developer policies available to a user for a given AWS account.
   */
 case class AccountAccess(
     permissions: List[Permission],
     developerPolicies: List[DeveloperPolicy]
+)
+
+object AccountAccess {
+  def empty = AccountAccess(permissions = Nil, developerPolicies = Nil)
+}
+
+/** Representation of access within a single [[AwsAccount]] separated out by
+  * source ACL. This allows us to see permissions by source and by type.
+  */
+case class SourcedAccountAccess(
+    internal: AccountAccess,
+    admin: AccountAccess,
+    support: AccountAccess
 )
 
 case class AwsAccountAccess(

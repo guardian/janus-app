@@ -1,15 +1,10 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{
-  ACL,
-  AwsAccount,
-  DeveloperPolicyGrant,
-  Permission,
-  SupportACL
-}
+import com.gu.janus.model.*
 import logic.DeveloperPolicies.toPermission
-import models.{AccountAccess, DeveloperPolicy}
+import models.*
+import models.AccessSource.{Admin, Internal, Support}
 
 import java.time.Instant
 
@@ -20,48 +15,76 @@ object UserAccess {
   def username(user: UserIdentity): String =
     user.email.split("@").head.toLowerCase
 
-  /** A user's basic access. Note that default permissions are available for
-    * anyone mentioned in the Access list.
+  /** A user's access in the internal ACL. Note that default permissions are
+    * available for anyone mentioned in the ACL.
     *
-    * Returns an [[AccountAccess]] per [[AwsAccount]], preserving the
-    * distinction between static Janus permissions and dynamically-loaded
-    * developer policies.
+    * If the user appears in the ACL, this will return an [[AccountAccess]] per
+    * [[AwsAccount]], preserving the distinction between static Janus
+    * permissions and dynamically-loaded developer policies. There will be a key
+    * for any AWS account to which the user has access.
     */
-  def userAccess(
+  def internalUserAccess(
       username: String,
-      acl: ACL,
+      janusData: JanusData,
       developerPolicies: Set[DeveloperPolicy]
-  ): Option[Map[AwsAccount, AccountAccess]] =
-    acl.userAccess
-      .get(username)
-      .map { aclEntry =>
-        val permissions = aclEntry.permissions ++ acl.defaultPermissions
-        val grantedPolicyIds = aclEntry.policyGrants.map(_.id)
-        val matchedPolicies = developerPolicies.filter { policy =>
-          grantedPolicyIds.contains(policy.policyGrantId)
-        }
-
-        val permsByAccount: Map[AwsAccount, List[Permission]] =
-          permissions.groupBy(_.account).view.mapValues(_.toList).toMap
-
-        val policiesByAccount: Map[AwsAccount, List[DeveloperPolicy]] =
-          matchedPolicies.groupBy(_.account).view.mapValues(_.toList).toMap
-
-        val allAccounts = permsByAccount.keySet ++ policiesByAccount.keySet
-        allAccounts.map { account =>
-          account -> AccountAccess(
-            permissions = permsByAccount.getOrElse(account, Nil),
-            developerPolicies = policiesByAccount.getOrElse(account, Nil)
+  ): Option[Map[AwsAccount, AccountAccess]] = {
+    val access = totalUserAccess(
+      username,
+      internalAcl = Some(janusData.access),
+      adminAcl = None,
+      supportData = None,
+      developerPolicies
+    )
+    Option.when(access.nonEmpty)(
+      access.view
+        .mapValues(sourced =>
+          AccountAccess(
+            permissions = sourced.internal.permissions,
+            developerPolicies = sourced.internal.developerPolicies
           )
-        }.toMap
-      }
+        )
+        .toMap
+    )
+  }
+
+  /** A user's access in the admin ACL.
+    *
+    * As above, if the user appears in the ACL, this will return an
+    * [[AccountAccess]] for all AWS accounts to which the user has access.
+    */
+  def adminUserAccess(
+      username: String,
+      janusData: JanusData,
+      developerPolicies: Set[DeveloperPolicy]
+  ): Option[Map[AwsAccount, AccountAccess]] = {
+    val access = totalUserAccess(
+      username,
+      internalAcl = None,
+      adminAcl = Some(janusData.admin),
+      supportData = None,
+      developerPolicies
+    )
+    Option.when(access.nonEmpty)(
+      access.view
+        .mapValues(sourced =>
+          AccountAccess(
+            permissions = sourced.admin.permissions,
+            developerPolicies = sourced.admin.developerPolicies
+          )
+        )
+        .toMap
+    )
+  }
 
   /** Checks if the username is explicitly mentioned in the provided ACL.
     */
   def hasAccess(username: String, acl: ACL): Boolean = {
-    acl.userAccess.keySet.contains(username)
+    acl.userAccess.contains(username)
   }
 
+  /** Returns the set of developer policy grants explicitly assigned to the user
+    * in the ACL, if any.
+    */
   def policyGrantsForUser(
       username: String,
       acl: ACL
@@ -71,7 +94,141 @@ object UserAccess {
       .map(_.policyGrants)
       .getOrElse(Set.empty)
 
-  // support access
+  /** Check if the provided user has been granted the permission with the given
+    * ID and, if so, which ACL gave access.
+    *
+    * The source is useful because it allows us to include it in the audit log.
+    */
+  def checkUserPermissionWithSource(
+      username: String,
+      permissionId: String,
+      date: Instant,
+      janusData: JanusData,
+      developerPolicies: Set[DeveloperPolicy]
+  ): Option[(Permission, AccessSource)] = {
+    def bySource(
+        access: SourcedAccountAccess
+    ): List[(AccountAccess, AccessSource)] = List(
+      access.internal -> Internal,
+      access.admin -> Admin,
+      access.support -> Support
+    )
+
+    totalUserAccess(
+      username,
+      Some(janusData.access),
+      Some(janusData.admin),
+      Some((janusData.support, date)),
+      developerPolicies
+    ).valuesIterator.flatMap { access =>
+      bySource(access).flatMap((aa, src) =>
+        (aa.permissions ++ aa.developerPolicies.map(toPermission))
+          .find(_.id == permissionId)
+          .map((_, src))
+      )
+    }.nextOption
+  }
+
+  /** This is the central logic for the public-facing methods that need to
+    * determine what access a user has.
+    *
+    * The given ACLs are merged to give a single model of the user's total
+    * access. The result is that for all accounts the user has access to we have
+    * a rich model of the source of each permission and the type of permission
+    * granted to the user.
+    *
+    * The individual ACLs are all optional so that the total access given
+    * depends on the context of the call. In some cases we don't need to know
+    * about support access and in others we don't need to know about admin
+    * access.
+    *
+    * @param username
+    *   User whose access we're determining
+    * @param internalAcl
+    *   If included, results will include access from this ACL
+    * @param adminAcl
+    *   If included, results will include access from this admin ACL
+    * @param supportData
+    *   If included, results will include support access. The second value of
+    *   this pair is the instant in the support rota where access is being
+    *   determined. So it will only include the user if they have a shift on the
+    *   support rota that's active at the given instant.
+    * @param developerPolicies
+    *   All the [[DeveloperPolicy]]s that Janus knows about. The user might have
+    *   a grant for some of these and their permissions will be included in the
+    *   method result.
+    */
+  private def totalUserAccess(
+      username: String,
+      internalAcl: Option[ACL],
+      adminAcl: Option[ACL],
+      supportData: Option[(SupportACL, Instant)],
+      developerPolicies: Set[DeveloperPolicy]
+  ): Map[AwsAccount, SourcedAccountAccess] = {
+    def userAccess(
+        username: String,
+        acl: ACL,
+        developerPolicies: Set[DeveloperPolicy]
+    ): Option[Map[AwsAccount, AccountAccess]] =
+      acl.userAccess
+        .get(username)
+        .map { aclEntry =>
+          val permissions = aclEntry.permissions ++ acl.defaultPermissions
+          val grantedPolicyIds = aclEntry.policyGrants.map(_.id)
+          val matchedPolicies = developerPolicies.filter { policy =>
+            grantedPolicyIds.contains(policy.policyGrantId)
+          }
+
+          val permsByAccount =
+            permissions.groupBy(_.account).view.mapValues(_.toList).toMap
+
+          val policiesByAccount =
+            matchedPolicies.groupBy(_.account).view.mapValues(_.toList).toMap
+
+          val allAccounts = permsByAccount.keySet ++ policiesByAccount.keySet
+          allAccounts.map { account =>
+            account -> AccountAccess(
+              permissions = permsByAccount.getOrElse(account, Nil),
+              developerPolicies = policiesByAccount.getOrElse(account, Nil)
+            )
+          }.toMap
+        }
+
+    val internal =
+      internalAcl
+        .flatMap(acl => userAccess(username, acl, developerPolicies))
+        .getOrElse(Map.empty)
+
+    val admin =
+      adminAcl
+        .flatMap(acl => userAccess(username, acl, developerPolicies))
+        .getOrElse(Map.empty)
+
+    val support =
+      supportData
+        .map((acl, when) =>
+          val perms =
+            userSupportAccess(username, when, acl).getOrElse(Set.empty)
+          perms
+            .groupBy(_.account)
+            .view
+            .mapValues(ps =>
+              AccountAccess(permissions = ps.toList, developerPolicies = Nil)
+            )
+            .toMap
+        )
+        .getOrElse(Map.empty)
+
+    val allAccounts = internal.keySet ++ admin.keySet ++ support.keySet
+
+    allAccounts.map { account =>
+      account -> SourcedAccountAccess(
+        internal = internal.getOrElse(account, AccountAccess.empty),
+        admin = admin.getOrElse(account, AccountAccess.empty),
+        support = support.getOrElse(account, AccountAccess.empty)
+      )
+    }.toMap
+  }
 
   def userSupportAccess(
       username: String,
@@ -156,125 +313,4 @@ object UserAccess {
       }
       .getOrElse(Nil)
   }
-
-  /** Combines a user's access from all sources, merging per account.
-    */
-  private def allUserAccountAccess(
-      username: String,
-      date: Instant,
-      acl: ACL,
-      adminACL: ACL,
-      supportACL: SupportACL,
-      developerPolicies: Set[DeveloperPolicy]
-  ): Map[AwsAccount, AccountAccess] = {
-    val access =
-      userAccess(username, acl, developerPolicies).getOrElse(Map.empty)
-    val adminAccess =
-      userAccess(username, adminACL, developerPolicies).getOrElse(Map.empty)
-    val supportAccess: Map[AwsAccount, AccountAccess] =
-      userSupportAccess(username, date, supportACL)
-        .getOrElse(Set.empty)
-        .groupBy(_.account)
-        .view
-        .mapValues(perms => AccountAccess(perms.toList, Nil))
-        .toMap
-
-    val allAccounts =
-      access.keySet ++ adminAccess.keySet ++ supportAccess.keySet
-    allAccounts.map { account =>
-      account -> AccountAccess(
-        permissions = (
-          access.get(account).map(_.permissions).getOrElse(Nil) ++
-            adminAccess.get(account).map(_.permissions).getOrElse(Nil) ++
-            supportAccess.get(account).map(_.permissions).getOrElse(Nil)
-        ).distinct,
-        developerPolicies = (
-          access.get(account).map(_.developerPolicies).getOrElse(Nil) ++
-            adminAccess.get(account).map(_.developerPolicies).getOrElse(Nil)
-        ).distinct
-      )
-    }.toMap
-  }
-
-  /** All the accounts this user has any access to.
-    */
-  def allUserAccounts(
-      username: String,
-      date: Instant,
-      acl: ACL,
-      adminACL: ACL,
-      supportACL: SupportACL,
-      developerPolicies: Set[DeveloperPolicy]
-  ): Set[AwsAccount] =
-    allUserAccountAccess(
-      username,
-      date,
-      acl,
-      adminACL,
-      supportACL,
-      developerPolicies
-    ).keySet
-
-  /** Check if the provided user has been granted this permission, and whether
-    * that permission was granted via explicit (ie. non-support, non-admin)
-    * access.
-    *
-    * @return
-    *   Some(permission, isExplicitAccess) iff user has the permission.
-    */
-  def checkUserPermissionWithSource(
-      username: String,
-      permissionId: String,
-      date: Instant,
-      acl: ACL,
-      adminACL: ACL,
-      supportACL: SupportACL,
-      developerPolicies: Set[DeveloperPolicy]
-  ): Option[(Permission, Boolean)] = {
-    val explicitPermissions =
-      userAccess(username, acl, developerPolicies)
-        .getOrElse(Map.empty)
-        .values
-        .flatMap(aa => aa.permissions ++ aa.developerPolicies.map(toPermission))
-        .toSet
-    val adminPermissions =
-      userAccess(username, adminACL, developerPolicies)
-        .getOrElse(Map.empty)
-        .values
-        .flatMap(aa => aa.permissions ++ aa.developerPolicies.map(toPermission))
-        .toSet
-    val supportPermissions =
-      userSupportAccess(username, date, supportACL).getOrElse(Set.empty)
-    val allPerms = explicitPermissions ++ adminPermissions ++ supportPermissions
-    allPerms
-      .find(_.id == permissionId)
-      .map(permission => (permission, explicitPermissions.contains(permission)))
-  }
-
-  /** Checks if a user has access to an account and returns appropriate
-    * permissions (if any).
-    */
-  def userAccountAccess(
-      username: String,
-      accountId: String,
-      date: Instant,
-      acl: ACL,
-      adminACL: ACL,
-      supportACL: SupportACL,
-      developerPolicies: Set[DeveloperPolicy]
-  ): Set[Permission] =
-    allUserAccountAccess(
-      username,
-      date,
-      acl,
-      adminACL,
-      supportACL,
-      developerPolicies
-    )
-      .collect {
-        case (account, access) if account.authConfigKey == accountId =>
-          access.permissions ++ access.developerPolicies.map(toPermission)
-      }
-      .flatten
-      .toSet
 }
