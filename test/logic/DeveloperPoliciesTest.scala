@@ -14,7 +14,7 @@ import models.{
   DeveloperPolicySnapshot,
   FailureSnapshot
 }
-import org.scalacheck.Gen
+import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -28,8 +28,6 @@ class DeveloperPoliciesTest
     with Matchers
     with OptionValues
     with ScalaCheckPropertyChecks {
-
-  private val timestamp = Instant.now()
 
   private val account =
     AwsAccount(name = "Account Name", authConfigKey = "accId")
@@ -218,100 +216,117 @@ class DeveloperPoliciesTest
   }
 
   "lookupDeveloperPolicyCacheStatus" - {
-    val now = Instant.now()
-    val accountA = AwsAccount("Account A", "a")
-    val accountB = AwsAccount("Account B", "b")
-    val samplePolicy =
-      DeveloperPolicy(
-        "arn:aws:iam::123:policy/developer-policy/grant-id/policy",
-        "policy",
-        "grant-id",
-        None,
-        accountA
+    val genAwsAccount: Gen[AwsAccount] =
+      for {
+        name <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+        key <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+      } yield AwsAccount(name, key)
+
+    val genInstant: Gen[Instant] =
+      Gen.posNum[Long].map(Instant.ofEpochMilli)
+
+    val genFailureSnapshot: Gen[FailureSnapshot] =
+      for {
+        msg <- Gen.alphaStr.suchThat(_.nonEmpty)
+        failureInstant <- genInstant
+      } yield FailureSnapshot(msg, failureInstant)
+
+    val genDeveloperPolicy: Gen[DeveloperPolicy] =
+      for {
+        account <- genAwsAccount
+        policyName <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+        grantId <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+        description <- Gen.option(Gen.alphaStr.suchThat(_.nonEmpty))
+      } yield DeveloperPolicy(
+        s"arn:aws:iam::123456789012:policy/developer-policy/$grantId/$policyName",
+        policyName,
+        grantId,
+        description,
+        account
       )
-    val nonEmptySnapshot =
-      DeveloperPolicySnapshot(List(samplePolicy), now)
-    val nonEmptyStatus =
-      AwsAccountDeveloperPolicyStatus.success(nonEmptySnapshot)
 
-    "returns Failure if any account has a failure when enabled " in {
-      val failure = AwsAccountDeveloperPolicyStatus.failure(
-        cachedPolicySnapshot = Some(nonEmptySnapshot),
-        failureStatus =
-          FailureSnapshot("Failed to fetch developer policies", now)
+    val genDeveloperPolicySnapshot: Gen[DeveloperPolicySnapshot] =
+      for {
+        policies <- Gen.nonEmptyListOf(genDeveloperPolicy)
+        snapshotInstant <- genInstant
+      } yield DeveloperPolicySnapshot(policies, snapshotInstant)
+
+    val genSuccessStatus: Gen[AwsAccountDeveloperPolicyStatus] =
+      genDeveloperPolicySnapshot.map(AwsAccountDeveloperPolicyStatus.success)
+
+    // Covers both failure-with-stale-cache and failure-with-no-cache
+    val genFailureStatus: Gen[AwsAccountDeveloperPolicyStatus] =
+      for {
+        cached <- Gen.option(genDeveloperPolicySnapshot)
+        failure <- genFailureSnapshot
+      } yield AwsAccountDeveloperPolicyStatus.failure(cached, failure)
+
+    val genNonFailureStatus: Gen[AwsAccountDeveloperPolicyStatus] =
+      Gen.oneOf(
+        genSuccessStatus,
+        Gen.const(AwsAccountDeveloperPolicyStatus.empty)
       )
-      val statuses = Map(accountA -> failure, accountB -> nonEmptyStatus)
 
-      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
-        statuses,
-        serviceEnabled = true
-      ) shouldBe DeveloperPolicyCacheStatus.Failure
-    }
+    "Failure takes precedence regardless of what other statuses are present" in {
+      forAll(
+        Gen.mapOf(Gen.zip(genAwsAccount, genNonFailureStatus)),
+        Gen.zip(genAwsAccount, genFailureStatus),
+        Arbitrary.arbitrary[Boolean]
+      ) { (otherStatuses, accountAndStatus, serviceEnabled) =>
+        val (failingAccount, failureStatus) = accountAndStatus
+        val statuses = otherStatuses + (failingAccount -> failureStatus)
 
-    "Failure takes precedence over Empty when enabled" in {
-      val failure = AwsAccountDeveloperPolicyStatus.failure(
-        cachedPolicySnapshot = None,
-        failureStatus =
-          FailureSnapshot("Failed to fetch developer policies", now)
-      )
-      val emptyStatus = AwsAccountDeveloperPolicyStatus.empty
-      val statuses = Map(accountA -> failure, accountB -> emptyStatus)
-
-      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
-        statuses,
-        serviceEnabled = true
-      ) shouldBe DeveloperPolicyCacheStatus.Failure
-    }
-
-    "returns Disabled when service is disabled even if some policySnapshots are empty" in {
-      val emptyStatus = AwsAccountDeveloperPolicyStatus.empty
-      val statuses = Map(accountA -> emptyStatus, accountB -> nonEmptyStatus)
-
-      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
-        statuses,
-        serviceEnabled = false
-      ) shouldBe DeveloperPolicyCacheStatus.Disabled
-    }
-
-    "returns Empty when enabled and any account has no policySnapshot" in {
-      val emptyStatus = AwsAccountDeveloperPolicyStatus.empty
-      val statuses = Map(accountA -> emptyStatus, accountB -> nonEmptyStatus)
-
-      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
-        statuses,
-        serviceEnabled = true
-      ) shouldBe DeveloperPolicyCacheStatus.Empty
-    }
-
-    "returns Success when enabled, no failures, and every account has a policySnapshot" in {
-      val statuses = Map(accountA -> nonEmptyStatus, accountB -> nonEmptyStatus)
-      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
-        statuses,
-        serviceEnabled = true
-      ) shouldBe DeveloperPolicyCacheStatus.Success
-    }
-
-    "no AWS account entries in cache (empty status map)" - {
-      "returns Success when the developer policy service is enabled" in {
         DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
-          Map.empty,
-          serviceEnabled = true
-        ) shouldBe DeveloperPolicyCacheStatus.Success
+          statuses,
+          serviceEnabled
+        ) shouldBe DeveloperPolicyCacheStatus.Failure
       }
-      "returns Disabled when developer policy service is disabled" in {
+    }
+
+    "returns Disabled (not Empty) when service is disabled, regardless of whether snapshots are missing" in {
+      forAll(
+        Gen.mapOf(Gen.zip(genAwsAccount, genNonFailureStatus))
+      ) { statuses =>
         DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
-          Map.empty,
+          statuses,
           serviceEnabled = false
         ) shouldBe DeveloperPolicyCacheStatus.Disabled
       }
     }
 
+    "returns Empty when enabled and at least one account has an empty status" in {
+      forAll(
+        Gen.mapOf(Gen.zip(genAwsAccount, genSuccessStatus)),
+        genAwsAccount
+      ) { (successStatuses, emptyAccount) =>
+        val statuses =
+          successStatuses + (emptyAccount -> AwsAccountDeveloperPolicyStatus.empty)
+
+        DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+          statuses,
+          serviceEnabled = true
+        ) shouldBe DeveloperPolicyCacheStatus.Empty
+      }
+    }
+
+    "returns Success when enabled and all accounts have a policySnapshot" in {
+      forAll(
+        Gen.mapOf(Gen.zip(genAwsAccount, genSuccessStatus))
+      ) { statuses =>
+        DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+          statuses,
+          serviceEnabled = true
+        ) shouldBe DeveloperPolicyCacheStatus.Success
+      }
+    }
+
     "treats Some(DeveloperPolicySnapshot(Nil, ...)) as present (not Empty)" in {
-      val snapshotWithNoPolicies = DeveloperPolicySnapshot(Nil, now)
-      val statusWithEmptyListSnapshot =
-        AwsAccountDeveloperPolicyStatus.success(snapshotWithNoPolicies)
-      val statuses =
-        Map(accountA -> statusWithEmptyListSnapshot, accountB -> nonEmptyStatus)
+      val snapshotWithNoPolicies = DeveloperPolicySnapshot(Nil, Instant.now())
+      val statuses = Map(
+        AwsAccount("Account A", "a") -> AwsAccountDeveloperPolicyStatus.success(
+          snapshotWithNoPolicies
+        )
+      )
 
       DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
         statuses,
