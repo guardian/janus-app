@@ -32,7 +32,6 @@ class Janus(
     configuration: Configuration,
     passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
-    developerPolicyStatusManager: DeveloperPolicyStatusManager,
     developerPolicyService: DeveloperPolicyFinder
       with DeveloperPolicyStatusManager
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
@@ -65,8 +64,8 @@ class Janus(
         )
 
         cacheStatus = DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
-          developerPolicyStatusManager.getCacheStatus,
-          developerPolicyStatusManager.fetchEnabled
+          developerPolicyService.getCacheStatus,
+          developerPolicyService.fetchEnabled
         )
       } yield {
         Ok(
