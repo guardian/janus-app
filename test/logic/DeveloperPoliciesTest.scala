@@ -291,15 +291,19 @@ class DeveloperPoliciesTest
       ) shouldBe DeveloperPolicyCacheStatus.Success
     }
 
-    "empty map case: Success when enabled, Disabled when disabled" in {
-      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
-        Map.empty,
-        serviceEnabled = true
-      ) shouldBe DeveloperPolicyCacheStatus.Success
-      DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
-        Map.empty,
-        serviceEnabled = false
-      ) shouldBe DeveloperPolicyCacheStatus.Disabled
+    "no AWS account entries in cache (empty status map)" - {
+      "returns Success when the developer policy service is enabled" in {
+        DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+          Map.empty,
+          serviceEnabled = true
+        ) shouldBe DeveloperPolicyCacheStatus.Success
+      }
+      "returns Disabled when developer policy service is disabled" in {
+        DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+          Map.empty,
+          serviceEnabled = false
+        ) shouldBe DeveloperPolicyCacheStatus.Disabled
+      }
     }
 
     "treats Some(DeveloperPolicySnapshot(Nil, ...)) as present (not Empty)" in {
