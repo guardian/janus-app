@@ -92,7 +92,11 @@ class WriterTest extends AnyFreeSpec with Matchers {
         false
       )
       val grant =
-        DeveloperPolicyGrant("Test Grant Name", "test-grant-id")
+        DeveloperPolicyGrant(
+          "Test Grant Name",
+          "test-grant-id",
+          shortTerm = false
+        )
 
       "includes user in ACL" in {
         val janusData = JanusData(
@@ -120,7 +124,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
           None
         )
         Writer.toConfig(janusData) should include(
-          s"""grantName = \"\"\"Test Grant Name\"\"\""""
+          "grantName = \"\"\"Test Grant Name\"\"\", grantId = \"test-grant-id\", shortTerm = false"
         )
       }
 
@@ -140,9 +144,11 @@ class WriterTest extends AnyFreeSpec with Matchers {
         )
       }
 
-      "includes multiple DeveloperPolicyGrants for a single user" in {
-        val grant1 = DeveloperPolicyGrant("Grant1", "grant-1-id")
-        val grant2 = DeveloperPolicyGrant("Grant2", "grant-2-id")
+      "includes multiple DeveloperPolicyGrants for a single user" - {
+        val grant1 =
+          DeveloperPolicyGrant("Grant1", "grant-1-id", shortTerm = false)
+        val grant2 =
+          DeveloperPolicyGrant("Grant2", "grant-2-id", shortTerm = true)
         val janusData = JanusData(
           Set(account1),
           access = ACL(
@@ -154,17 +160,29 @@ class WriterTest extends AnyFreeSpec with Matchers {
           None
         )
         val config = Writer.toConfig(janusData)
-        config should include("grantName = \"\"\"Grant1\"\"\"")
-        config should include("grantName = \"\"\"Grant2\"\"\"")
+
+        "includes Grant1" in {
+          config should include(
+            "grantName = \"\"\"Grant1\"\"\", grantId = \"grant-1-id\", shortTerm = false"
+          )
+        }
+
+        "includes Grant2" in {
+          config should include(
+            "grantName = \"\"\"Grant2\"\"\", grantId = \"grant-2-id\", shortTerm = true"
+          )
+        }
       }
 
-      "includes multiple permissions and multiple policy grants for a single user" in {
+      "includes multiple permissions and multiple policy grants for a single user" - {
         val perm1 =
           Permission(account1, "perm1", "Permission 1", simplePolicy, false)
         val perm2 =
           Permission(account1, "perm2", "Permission 2", simplePolicy, false)
-        val grant1 = DeveloperPolicyGrant("Grant1", "grant-1-id")
-        val grant2 = DeveloperPolicyGrant("Grant2", "grant-2-id")
+        val grant1 =
+          DeveloperPolicyGrant("Grant1", "grant-1-id", shortTerm = true)
+        val grant2 =
+          DeveloperPolicyGrant("Grant2", "grant-2-id", shortTerm = false)
         val janusData = JanusData(
           Set(account1),
           access = ACL(
@@ -176,10 +194,26 @@ class WriterTest extends AnyFreeSpec with Matchers {
           None
         )
         val config = Writer.toConfig(janusData)
-        config should include("""label = "perm1"""")
-        config should include("""label = "perm2"""")
-        config should include("grantName = \"\"\"Grant1\"\"\"")
-        config should include("grantName = \"\"\"Grant2\"\"\"")
+
+        "includes perm1" in {
+          config should include("""label = "perm1"""")
+        }
+
+        "includes perm2" in {
+          config should include("""label = "perm2"""")
+        }
+
+        "includes Grant1" in {
+          config should include(
+            "grantName = \"\"\"Grant1\"\"\", grantId = \"grant-1-id\", shortTerm = true"
+          )
+        }
+
+        "includes Grant2" in {
+          config should include(
+            "grantName = \"\"\"Grant2\"\"\", grantId = \"grant-2-id\", shortTerm = false"
+          )
+        }
       }
     }
 
@@ -192,7 +226,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         false
       )
       val grant =
-        DeveloperPolicyGrant("AdminGrant", "admin-grant-id")
+        DeveloperPolicyGrant("AdminGrant", "admin-grant-id", shortTerm = false)
 
       "includes user in admin ACL" in {
         val janusData = JanusData(
@@ -220,7 +254,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
           None
         )
         Writer.toConfig(janusData) should include(
-          s"""grantName = \"\"\"AdminGrant\"\"\""""
+          "grantName = \"\"\"AdminGrant\"\"\", grantId = \"admin-grant-id\", shortTerm = false"
         )
       }
 
@@ -240,11 +274,19 @@ class WriterTest extends AnyFreeSpec with Matchers {
         )
       }
 
-      "includes multiple DeveloperPolicyGrants for a single user" in {
+      "includes multiple DeveloperPolicyGrants for a single user" - {
         val grant1 =
-          DeveloperPolicyGrant("AdminGrant1", "admin-grant-1-id")
+          DeveloperPolicyGrant(
+            "AdminGrant1",
+            "admin-grant-1-id",
+            shortTerm = false
+          )
         val grant2 =
-          DeveloperPolicyGrant("AdminGrant2", "admin-grant-2-id")
+          DeveloperPolicyGrant(
+            "AdminGrant2",
+            "admin-grant-2-id",
+            shortTerm = true
+          )
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
@@ -256,11 +298,21 @@ class WriterTest extends AnyFreeSpec with Matchers {
           None
         )
         val config = Writer.toConfig(janusData)
-        config should include("grantName = \"\"\"AdminGrant1\"\"\"")
-        config should include("grantName = \"\"\"AdminGrant2\"\"\"")
+
+        "includes AdminGrant1" in {
+          config should include(
+            "grantName = \"\"\"AdminGrant1\"\"\", grantId = \"admin-grant-1-id\", shortTerm = false"
+          )
+        }
+
+        "includes AdminGrant2" in {
+          config should include(
+            "grantName = \"\"\"AdminGrant2\"\"\", grantId = \"admin-grant-2-id\", shortTerm = true"
+          )
+        }
       }
 
-      "includes multiple permissions and multiple DeveloperPolicyGrants for a single user" in {
+      "includes multiple permissions and multiple DeveloperPolicyGrants for a single user" - {
         val perm1 = Permission(
           account1,
           "adminPerm1",
@@ -276,9 +328,17 @@ class WriterTest extends AnyFreeSpec with Matchers {
           false
         )
         val grant1 =
-          DeveloperPolicyGrant("AdminGrant1", "admin-grant-1-id")
+          DeveloperPolicyGrant(
+            "AdminGrant1",
+            "admin-grant-1-id",
+            shortTerm = false
+          )
         val grant2 =
-          DeveloperPolicyGrant("AdminGrant2", "admin-grant-2-id")
+          DeveloperPolicyGrant(
+            "AdminGrant2",
+            "admin-grant-2-id",
+            shortTerm = true
+          )
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
@@ -292,10 +352,26 @@ class WriterTest extends AnyFreeSpec with Matchers {
           None
         )
         val config = Writer.toConfig(janusData)
-        config should include("""label = "adminPerm1"""")
-        config should include("""label = "adminPerm2"""")
-        config should include("grantName = \"\"\"AdminGrant1\"\"\"")
-        config should include("grantName = \"\"\"AdminGrant2\"\"\"")
+
+        "includes adminPerm1" in {
+          config should include("""label = "adminPerm1"""")
+        }
+
+        "includes adminPerm2" in {
+          config should include("""label = "adminPerm2"""")
+        }
+
+        "includes AdminGrant1" in {
+          config should include(
+            "grantName = \"\"\"AdminGrant1\"\"\", grantId = \"admin-grant-1-id\", shortTerm = false"
+          )
+        }
+
+        "includes AdminGrant2" in {
+          config should include(
+            "grantName = \"\"\"AdminGrant2\"\"\", grantId = \"admin-grant-2-id\", shortTerm = true"
+          )
+        }
       }
     }
   }

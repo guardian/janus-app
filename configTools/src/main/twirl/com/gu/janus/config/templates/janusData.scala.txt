@@ -44,7 +44,7 @@ janus {
                         @permissionReference(permission)
                     }
                     @for(grant <- aclEntry.policyGrants) {
-                        { grantName = """@grant.name""", grantId = "@grant.id" }
+                        { grantName = """@grant.name""", grantId = "@grant.id", shortTerm = @grant.shortTerm }
                     }
                 ]
             },
@@ -59,7 +59,7 @@ janus {
                         @permissionReference(permission)
                     }
                     @for(grant <- aclEntry.policyGrants) {
-                        { grantName = """@grant.name""", grantId = "@grant.id" }
+                        { grantName = """@grant.name""", grantId = "@grant.id", shortTerm = @grant.shortTerm }
                     }
                 ]
             }

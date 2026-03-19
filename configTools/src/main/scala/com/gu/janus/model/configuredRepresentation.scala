@@ -37,8 +37,27 @@ case class ConfiguredAclEntry(
 
 case class ConfiguredDeveloperPolicyGrantAclEntry(
     grantName: String,
-    grantId: String
+    grantId: String,
+    shortTerm: Boolean
 )
+
+/* We have a bespoke decoder here so that we can make fields optionally present,
+ * which makes it easier to deploy and roll back janus and janus-app independently if necessary.
+ * We aren't reliant on the field being present.
+ */
+given Decoder[ConfiguredDeveloperPolicyGrantAclEntry] =
+  Decoder.forProduct3(
+    "grantName",
+    "grantId",
+    "shortTerm"
+  ) { (grantName: String, grantId: String, shortTerm: Option[Boolean]) =>
+    ConfiguredDeveloperPolicyGrantAclEntry(
+      grantName,
+      grantId,
+      // If missing, defaults to false
+      shortTerm.getOrElse(false)
+    )
+  }
 
 given Decoder[ConfiguredAclEntry | ConfiguredDeveloperPolicyGrantAclEntry] =
   Decoder[ConfiguredAclEntry]

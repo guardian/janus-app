@@ -364,7 +364,8 @@ class LoaderTest
         "user1" -> List(
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant",
-            "grant-id"
+            "grant-id",
+            shortTerm = false
           )
         )
       )
@@ -381,7 +382,36 @@ class LoaderTest
 
       "returns correct policy grant" in {
         entries.head._2.policyGrants shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id")
+          DeveloperPolicyGrant("MyGrant", "grant-id", shortTerm = false)
+        )
+      }
+    }
+
+    "parses a DeveloperPolicyGrant ACL entry without shortTerm attribute" - {
+      val configWithoutShortTerm = ConfigFactory.parseString(
+        """
+          |janus.access {
+          |  defaultPermissions = []
+          |  acl {
+          |    user1 = [{
+          |      grantName = "Grant1"
+          |      grantId = "grant-id"
+          |    }]
+          |  }
+          |}
+          |""".stripMargin
+      )
+
+      val result = Loader.loadAccess(configWithoutShortTerm, Set.empty)
+      val acl = result.value
+
+      "returns single entry" in {
+        acl.userAccess should have size 1
+      }
+
+      "defaults shortTerm to false" in {
+        acl.userAccess("user1").policyGrants shouldEqual Set(
+          DeveloperPolicyGrant("Grant1", "grant-id", shortTerm = false)
         )
       }
     }
@@ -391,11 +421,13 @@ class LoaderTest
         "user1" -> List(
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant",
-            "grant-id"
+            "grant-id",
+            shortTerm = false
           ),
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant2",
-            "grant-id-2"
+            "grant-id-2",
+            shortTerm = true
           )
         )
       )
@@ -412,8 +444,8 @@ class LoaderTest
 
       "returns correct policy grants" in {
         entries.head._2.policyGrants shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id"),
-          DeveloperPolicyGrant("MyGrant2", "grant-id-2")
+          DeveloperPolicyGrant("MyGrant", "grant-id", shortTerm = false),
+          DeveloperPolicyGrant("MyGrant2", "grant-id-2", shortTerm = true)
         )
       }
     }
@@ -424,7 +456,8 @@ class LoaderTest
           ConfiguredAclEntry("test-account", "test-permission"),
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant",
-            "grant-id"
+            "grant-id",
+            shortTerm = false
           )
         )
       )
@@ -443,7 +476,7 @@ class LoaderTest
 
       "returns correct policies" in {
         entries.flatMap(_._2.policyGrants).toSet shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id")
+          DeveloperPolicyGrant("MyGrant", "grant-id", shortTerm = false)
         )
       }
     }

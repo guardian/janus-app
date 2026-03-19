@@ -164,7 +164,8 @@ object Loader {
                 current.permissions,
                 current.policyGrants + DeveloperPolicyGrant(
                   entry.grantName,
-                  entry.grantId
+                  entry.grantId,
+                  entry.shortTerm
                 )
               )
             )
