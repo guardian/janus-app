@@ -3,6 +3,7 @@ package logic
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.*
 import fixtures.Fixtures.*
+import logic.DeveloperPolicies.policyGrantsForUser
 import models.{AccessSource, DeveloperPolicy}
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
@@ -98,7 +99,8 @@ class UserAccessTest
     }
 
     "includes permissions derived from matching developer policies" in {
-      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val grant =
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -125,7 +127,8 @@ class UserAccessTest
     }
 
     "a matching policyGrant results in additional developer policies beyond the base ACL permissions" - {
-      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val grant =
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -200,7 +203,8 @@ class UserAccessTest
     }
 
     "does not include developer policies whose grant ID does not match any ACL entry grant" in {
-      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val grant =
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val unmatchedPolicy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/other-id/p1",
         "p1",
@@ -280,7 +284,8 @@ class UserAccessTest
     }
 
     "groups developer policies by account separately from permissions" in {
-      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val grant =
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -332,7 +337,7 @@ class UserAccessTest
             None,
             fooAct
           ),
-          DeveloperPolicyGrant(s"Grant $id", grantId)
+          DeveloperPolicyGrant(s"Grant $id", grantId, shortTerm = false)
         )
       }
 
@@ -457,7 +462,8 @@ class UserAccessTest
     }
 
     "groups developer policies by account separately from permissions" in {
-      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val grant =
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -513,8 +519,8 @@ class UserAccessTest
   }
 
   "policyGrantsForUser" - {
-    val grant1 = DeveloperPolicyGrant("Grant 1", "grant-1")
-    val grant2 = DeveloperPolicyGrant("Grant 2", "grant-2")
+    val grant1 = DeveloperPolicyGrant("Grant 1", "grant-1", shortTerm = false)
+    val grant2 = DeveloperPolicyGrant("Grant 2", "grant-2", shortTerm = false)
     val acl = ACL(
       Map(
         "user.with.grants" -> ACLEntry(Set(fooDev), Set(grant1, grant2)),

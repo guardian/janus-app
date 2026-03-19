@@ -364,7 +364,8 @@ class LoaderTest
         "user1" -> List(
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant",
-            "grant-id"
+            "grant-id",
+            shortTerm = false
           )
         )
       )
@@ -381,7 +382,7 @@ class LoaderTest
 
       "returns correct policy grant" in {
         entries.head._2.policyGrants shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id")
+          DeveloperPolicyGrant("MyGrant", "grant-id", shortTerm = false)
         )
       }
     }
@@ -391,11 +392,13 @@ class LoaderTest
         "user1" -> List(
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant",
-            "grant-id"
+            "grant-id",
+            shortTerm = false
           ),
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant2",
-            "grant-id-2"
+            "grant-id-2",
+            shortTerm = false
           )
         )
       )
@@ -412,8 +415,8 @@ class LoaderTest
 
       "returns correct policy grants" in {
         entries.head._2.policyGrants shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id"),
-          DeveloperPolicyGrant("MyGrant2", "grant-id-2")
+          DeveloperPolicyGrant("MyGrant", "grant-id", shortTerm = false),
+          DeveloperPolicyGrant("MyGrant2", "grant-id-2", shortTerm = false)
         )
       }
     }
@@ -424,7 +427,8 @@ class LoaderTest
           ConfiguredAclEntry("test-account", "test-permission"),
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant",
-            "grant-id"
+            "grant-id",
+            shortTerm = false
           )
         )
       )
@@ -443,7 +447,7 @@ class LoaderTest
 
       "returns correct policies" in {
         entries.flatMap(_._2.policyGrants).toSet shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id")
+          DeveloperPolicyGrant("MyGrant", "grant-id", shortTerm = false)
         )
       }
     }

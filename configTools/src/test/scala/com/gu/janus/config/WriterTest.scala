@@ -92,7 +92,11 @@ class WriterTest extends AnyFreeSpec with Matchers {
         false
       )
       val grant =
-        DeveloperPolicyGrant("Test Grant Name", "test-grant-id")
+        DeveloperPolicyGrant(
+          "Test Grant Name",
+          "test-grant-id",
+          shortTerm = false
+        )
 
       "includes user in ACL" in {
         val janusData = JanusData(
@@ -141,8 +145,10 @@ class WriterTest extends AnyFreeSpec with Matchers {
       }
 
       "includes multiple DeveloperPolicyGrants for a single user" in {
-        val grant1 = DeveloperPolicyGrant("Grant1", "grant-1-id")
-        val grant2 = DeveloperPolicyGrant("Grant2", "grant-2-id")
+        val grant1 =
+          DeveloperPolicyGrant("Grant1", "grant-1-id", shortTerm = false)
+        val grant2 =
+          DeveloperPolicyGrant("Grant2", "grant-2-id", shortTerm = false)
         val janusData = JanusData(
           Set(account1),
           access = ACL(
@@ -163,8 +169,10 @@ class WriterTest extends AnyFreeSpec with Matchers {
           Permission(account1, "perm1", "Permission 1", simplePolicy, false)
         val perm2 =
           Permission(account1, "perm2", "Permission 2", simplePolicy, false)
-        val grant1 = DeveloperPolicyGrant("Grant1", "grant-1-id")
-        val grant2 = DeveloperPolicyGrant("Grant2", "grant-2-id")
+        val grant1 =
+          DeveloperPolicyGrant("Grant1", "grant-1-id", shortTerm = false)
+        val grant2 =
+          DeveloperPolicyGrant("Grant2", "grant-2-id", shortTerm = false)
         val janusData = JanusData(
           Set(account1),
           access = ACL(
@@ -192,7 +200,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         false
       )
       val grant =
-        DeveloperPolicyGrant("AdminGrant", "admin-grant-id")
+        DeveloperPolicyGrant("AdminGrant", "admin-grant-id", shortTerm = false)
 
       "includes user in admin ACL" in {
         val janusData = JanusData(
@@ -242,9 +250,17 @@ class WriterTest extends AnyFreeSpec with Matchers {
 
       "includes multiple DeveloperPolicyGrants for a single user" in {
         val grant1 =
-          DeveloperPolicyGrant("AdminGrant1", "admin-grant-1-id")
+          DeveloperPolicyGrant(
+            "AdminGrant1",
+            "admin-grant-1-id",
+            shortTerm = false
+          )
         val grant2 =
-          DeveloperPolicyGrant("AdminGrant2", "admin-grant-2-id")
+          DeveloperPolicyGrant(
+            "AdminGrant2",
+            "admin-grant-2-id",
+            shortTerm = false
+          )
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
@@ -276,9 +292,17 @@ class WriterTest extends AnyFreeSpec with Matchers {
           false
         )
         val grant1 =
-          DeveloperPolicyGrant("AdminGrant1", "admin-grant-1-id")
+          DeveloperPolicyGrant(
+            "AdminGrant1",
+            "admin-grant-1-id",
+            shortTerm = false
+          )
         val grant2 =
-          DeveloperPolicyGrant("AdminGrant2", "admin-grant-2-id")
+          DeveloperPolicyGrant(
+            "AdminGrant2",
+            "admin-grant-2-id",
+            shortTerm = false
+          )
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),

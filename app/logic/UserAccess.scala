@@ -2,7 +2,7 @@ package logic
 
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.*
-import logic.DeveloperPolicies.toPermission
+import logic.DeveloperPolicies.{policyGrantsForUser, toPermission}
 import models.*
 import models.AccessSource.{Admin, Internal, Support}
 
@@ -82,18 +82,6 @@ object UserAccess {
     acl.userAccess.contains(username)
   }
 
-  /** Returns the set of developer policy grants explicitly assigned to the user
-    * in the ACL, if any.
-    */
-  def policyGrantsForUser(
-      username: String,
-      acl: ACL
-  ): Set[DeveloperPolicyGrant] =
-    acl.userAccess
-      .get(username)
-      .map(_.policyGrants)
-      .getOrElse(Set.empty)
-
   /** Check if the provided user has been granted the permission with the given
     * ID and, if so, which ACL gave access.
     *
@@ -122,7 +110,16 @@ object UserAccess {
       developerPolicies
     ).valuesIterator.flatMap { access =>
       bySource(access).flatMap((aa, src) =>
-        (aa.permissions ++ aa.developerPolicies.map(toPermission))
+        val policyGrants = src match {
+          case Internal => policyGrantsForUser(username, acl = janusData.access)
+          case Admin    => policyGrantsForUser(username, acl = janusData.admin)
+          case Support  => Set.empty
+        }
+        (aa.permissions ++ aa.developerPolicies.flatMap { policy =>
+          policyGrants
+            .find(_.id == policy.policyGrantId)
+            .map(toPermission(policy, _))
+        })
           .find(_.id == permissionId)
           .map((_, src))
       )

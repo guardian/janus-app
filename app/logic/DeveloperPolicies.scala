@@ -1,6 +1,6 @@
 package logic
 
-import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.model.{ACL, AwsAccount, DeveloperPolicyGrant, Permission}
 import models.DeveloperPolicy
 import software.amazon.awssdk.services.iam.model.Policy
 
@@ -32,12 +32,16 @@ object DeveloperPolicies {
       account
     )
 
-  def toPermission(policy: DeveloperPolicy): Permission =
+  def toPermission(
+      policy: DeveloperPolicy,
+      grant: DeveloperPolicyGrant
+  ): Permission =
     Permission.fromManagedPolicyArns(
       account = policy.account,
       label = developerPolicySlug(policy.policyName),
       description = policy.description.getOrElse("No description"),
-      managedPolicyArns = List(policy.policyArn.toString)
+      managedPolicyArns = List(policy.policyArn.toString),
+      shortTerm = grant.shortTerm
     )
 
   /** To get a URL-safe slug for a [[DeveloperPolicy]], we use the IAM policy
@@ -65,4 +69,16 @@ object DeveloperPolicies {
     */
   def developerPolicyLink(policy: DeveloperPolicy): String =
     s"https://console.aws.amazon.com/iam/home#/policies/${policy.policyArn}"
+
+  /** Returns the set of developer policy grants explicitly assigned to the user
+    * in the ACL, if any.
+    */
+  def policyGrantsForUser(
+      username: String,
+      acl: ACL
+  ): Set[DeveloperPolicyGrant] =
+    acl.userAccess
+      .get(username)
+      .map(_.policyGrants)
+      .getOrElse(Set.empty)
 }

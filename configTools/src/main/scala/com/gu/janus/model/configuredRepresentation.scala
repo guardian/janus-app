@@ -37,8 +37,27 @@ case class ConfiguredAclEntry(
 
 case class ConfiguredDeveloperPolicyGrantAclEntry(
     grantName: String,
-    grantId: String
+    grantId: String,
+    shortTerm: Boolean = false
 )
+
+// Makes it easier to roll back because decoding should work regardless of whether new fields are present or not
+given Decoder[ConfiguredDeveloperPolicyGrantAclEntry] =
+  Decoder.forProduct3(
+    "grantName",
+    "grantId",
+    "shortTerm"
+  ) { (grantName: String, grantId: String, shortTerm: Option[Boolean]) =>
+    ConfiguredDeveloperPolicyGrantAclEntry(
+      grantName,
+      grantId,
+      shortTerm.getOrElse(false)
+    )
+  }(
+    Decoder[String],
+    Decoder[String],
+    Decoder[Option[Boolean]]
+  )
 
 given Decoder[ConfiguredAclEntry | ConfiguredDeveloperPolicyGrantAclEntry] =
   Decoder[ConfiguredAclEntry]

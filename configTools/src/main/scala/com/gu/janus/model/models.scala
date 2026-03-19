@@ -176,7 +176,8 @@ case class DeveloperPolicyGrant(
       * group. Each relevant policy will be found by a path prefix identifying
       * it as a developer policy and a path slug that matches this id.
       */
-    id: String
+    id: String,
+    shortTerm: Boolean
 )
 
 sealed abstract class JanusAccessType(override val toString: String)
