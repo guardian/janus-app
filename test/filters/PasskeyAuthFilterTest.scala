@@ -1,14 +1,22 @@
 package filters
 
 import com.gu.googleauth.{AuthAction, UserIdentity}
+import com.gu.playpasskeyauth.models.{Passkey, PasskeyId, PasskeyName, UserId}
+import com.gu.playpasskeyauth.services.PasskeyVerificationService
+import com.webauthn4j.data.{
+  AuthenticationData,
+  PublicKeyCredentialCreationOptions,
+  PublicKeyCredentialRequestOptions
+}
+import play.api.libs.json.JsValue
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.mvc.{AnyContentAsFormUrlEncoded, Cookie, Results}
 import play.api.test.{FakeHeaders, FakeRequest}
-import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 
 class PasskeyAuthFilterTest
     extends AnyFreeSpec
@@ -16,13 +24,38 @@ class PasskeyAuthFilterTest
     with ScalaFutures
     with Results {
 
-  given DynamoDbClient = {
-    // Stub implementation for testing
-    val mockClient = new DynamoDbClient {
-      override def serviceName(): String = "dynamodb-mock"
-      override def close(): Unit = {}
-    }
-    mockClient
+  private val noOpVerificationService = new PasskeyVerificationService {
+    override def buildCreationOptions(
+        userId: UserId,
+        userName: String
+    ): Future[PublicKeyCredentialCreationOptions] =
+      Future.failed(new UnsupportedOperationException)
+
+    override def registerPasskey(
+        userId: UserId,
+        passkeyName: PasskeyName,
+        creationResponse: JsValue
+    ): Future[Unit] = Future.failed(new UnsupportedOperationException)
+
+    override def listPasskeys(userId: UserId): Future[List[Passkey]] =
+      Future.failed(new UnsupportedOperationException)
+
+    override def deletePasskey(
+        userId: UserId,
+        passkeyId: PasskeyId
+    ): Future[Unit] =
+      Future.failed(new UnsupportedOperationException)
+
+    override def buildAuthenticationOptions(
+        userId: UserId
+    ): Future[PublicKeyCredentialRequestOptions] =
+      Future.failed(new UnsupportedOperationException)
+
+    override def verifyPasskey(
+        userId: UserId,
+        authenticationResponse: JsValue
+    ): Future[AuthenticationData] =
+      Future.failed(new UnsupportedOperationException)
   }
 
   private val testHost = "test.example.com"
@@ -68,7 +101,7 @@ class PasskeyAuthFilterTest
 
     "bypass authentication when disabled" in {
       val filter = new PasskeyAuthFilter(
-        host = testHost,
+        passkeyVerificationService = noOpVerificationService,
         passkeysEnabled = false,
         enablingCookieName = testCookieName
       )
@@ -76,12 +109,12 @@ class PasskeyAuthFilterTest
       val request = createRequestWithCookie(validFormBody)
       val result = filter.filter(request).futureValue
 
-      result shouldBe None
+      result.isEmpty shouldBe true
     }
 
     "bypass authentication when enabling cookie is not present" in {
       val filter = new PasskeyAuthFilter(
-        host = testHost,
+        passkeyVerificationService = noOpVerificationService,
         passkeysEnabled = true,
         enablingCookieName = testCookieName
       )
@@ -89,7 +122,7 @@ class PasskeyAuthFilterTest
       val request = createRequestWithoutCookie(validFormBody)
       val result = filter.filter(request).futureValue
 
-      result shouldBe None
+      result.isEmpty shouldBe true
     }
   }
 }

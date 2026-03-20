@@ -1,5 +1,8 @@
 import aws.Clients
 import com.gu.googleauth.AuthAction
+import com.gu.googleauth.UserIdentity
+import com.gu.playpasskeyauth.{PasskeyAuth, PasskeyAuthContext}
+import com.gu.playpasskeyauth.models.{HostApp, PasskeyUser, UserId}
 import com.gu.play.secretrotation.*
 import com.gu.play.secretrotation.aws.parameterstore
 import com.typesafe.config.ConfigException
@@ -17,9 +20,14 @@ import play.filters.HttpFiltersComponents
 import play.filters.csp.CSPComponents
 import router.Routes
 import services.DeveloperPolicyCachingService
+import services.passkeyauth.{
+  DynamoPasskeyChallengeRepository,
+  DynamoPasskeyRepository
+}
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
+import java.net.URI
 import java.time.Duration
 import scala.util.chaining.scalaUtilChainingOps
 
@@ -116,9 +124,32 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeysEnablingCookieName: String =
     configuration.get[String]("passkeys.enablingCookieName")
 
+  private given PasskeyUser[UserIdentity] with
+    extension (u: UserIdentity)
+      def id: UserId = UserId(u.username)
+      def displayName: String = u.fullName
+
+  private val passkeyAuth = new PasskeyAuth[UserIdentity, AnyContent](
+    controllerComponents,
+    HostApp("Janus", URI.create(host)),
+    PasskeyAuthContext[UserIdentity, AnyContent](
+      actionBuilder = controllerComponents.actionBuilder,
+      userExtractor = _ =>
+        throw new IllegalStateException(
+          "User extraction is not used by Janus wiring"
+        ),
+      creationDataExtractor = _ => None,
+      authenticationDataExtractor = _ => None,
+      passkeyNameExtractor = _ => None
+    ),
+    new DynamoPasskeyRepository,
+    new DynamoPasskeyChallengeRepository,
+    routes.Janus.userAccount
+  )
+
   private val passkeyAuthFilter =
     new PasskeyAuthFilter(
-      host,
+      passkeyVerificationService = passkeyAuth.verificationService,
       passkeysEnabled,
       passkeysEnablingCookieName
     )
