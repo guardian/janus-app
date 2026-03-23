@@ -14,7 +14,7 @@ import models.AccessSource.Internal
 import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
-import services.DeveloperPolicyFinder
+import services.{DeveloperPolicyFinder, DeveloperPolicyStatusManager}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sts.StsClient
 import software.amazon.awssdk.services.sts.model.Credentials
@@ -32,7 +32,8 @@ class Janus(
     configuration: Configuration,
     passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
-    developerPolicyFinder: DeveloperPolicyFinder
+    developerPolicyService: DeveloperPolicyFinder
+      with DeveloperPolicyStatusManager
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
@@ -49,7 +50,7 @@ class Janus(
         accountsAccess <- internalUserAccess(
           username(request.user),
           janusData,
-          developerPolicyFinder.getDeveloperPolicies
+          developerPolicyService.getDeveloperPolicies
         )
         userPolicyGrants = policyGrantsForUser(
           username(request.user),
@@ -61,11 +62,17 @@ class Janus(
           userPolicyGrants,
           favourites
         )
+
+        cacheStatus = DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+          developerPolicyService.getCacheStatus,
+          developerPolicyService.fetchEnabled
+        )
       } yield {
         Ok(
           views.html
             .index(
               uiAccountAccess,
+              cacheStatus,
               request.user,
               janusData,
               displayMode
@@ -80,7 +87,7 @@ class Janus(
         accountsAccess <- adminUserAccess(
           username(request.user),
           janusData,
-          developerPolicyFinder.getDeveloperPolicies
+          developerPolicyService.getDeveloperPolicies
         )
         userPolicyGrants = policyGrantsForUser(
           username(request.user),
@@ -182,7 +189,7 @@ class Janus(
           permissionId,
           JConsole,
           Customisation.durationParams(request),
-          developerPolicyFinder.getDeveloperPolicies
+          developerPolicyService.getDeveloperPolicies
         )
         loginUrl = Federation.generateLoginUrl(credentials, host)
       } yield {
@@ -204,7 +211,7 @@ class Janus(
           permissionId,
           JConsole,
           Customisation.durationParams(request),
-          developerPolicyFinder.getDeveloperPolicies
+          developerPolicyService.getDeveloperPolicies
         )
         loginUrl = Federation.generateLoginUrl(credentials, host)
       } yield {
@@ -234,7 +241,7 @@ class Janus(
           permissionId,
           JCredentials,
           Customisation.durationParams(request),
-          developerPolicyFinder.getDeveloperPolicies
+          developerPolicyService.getDeveloperPolicies
         )
       } yield {
         Ok(
@@ -262,7 +269,7 @@ class Janus(
           request.user,
           permissionIds,
           Customisation.durationParams(request),
-          developerPolicyFinder.getDeveloperPolicies
+          developerPolicyService.getDeveloperPolicies
         )
         expiry <- accountCredentials.headOption.map { case (_, creds) =>
           creds.expiration
