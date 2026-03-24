@@ -71,6 +71,10 @@ case class AwsAccountDeveloperPolicyStatus(
     failureStatus: Option[FailureSnapshot]
 )
 
+enum DeveloperPolicyCacheStatus {
+  case Success, Empty, Disabled, Failure
+}
+
 object AwsAccountDeveloperPolicyStatus {
 
   /** Convenience constructor for a successful data fetch. */
