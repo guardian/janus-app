@@ -1,7 +1,11 @@
 package logic
 
 import com.gu.janus.model.{AwsAccount, Permission}
-import models.DeveloperPolicy
+import models.{
+  AwsAccountDeveloperPolicyStatus,
+  DeveloperPolicy,
+  DeveloperPolicyCacheStatus
+}
 import software.amazon.awssdk.services.iam.model.Policy
 
 import java.net.URLEncoder
@@ -65,4 +69,20 @@ object DeveloperPolicies {
     */
   def developerPolicyLink(policy: DeveloperPolicy): String =
     s"https://console.aws.amazon.com/iam/home#/policies/${policy.policyArn}"
+
+  def lookupDeveloperPolicyCacheStatus(
+      accountAndStatuses: Map[AwsAccount, AwsAccountDeveloperPolicyStatus],
+      serviceEnabled: Boolean
+  ): DeveloperPolicyCacheStatus = {
+    val failureExists = accountAndStatuses.exists { case (_, status) =>
+      status.failureStatus.isDefined
+    }
+    val emptyExists = accountAndStatuses.exists { case (_, status) =>
+      status.policySnapshot.isEmpty
+    }
+    if (failureExists) DeveloperPolicyCacheStatus.Failure
+    else if (!serviceEnabled) DeveloperPolicyCacheStatus.Disabled
+    else if (emptyExists) DeveloperPolicyCacheStatus.Empty
+    else DeveloperPolicyCacheStatus.Success
+  }
 }
