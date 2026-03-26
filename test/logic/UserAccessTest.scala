@@ -98,8 +98,7 @@ class UserAccessTest
     }
 
     "includes permissions derived from matching developer policies" in {
-      val grant =
-        DeveloperPolicyGrant("Grant1", "grant-id", shortTerm = false)
+      val grant = DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -127,7 +126,7 @@ class UserAccessTest
 
     "a matching policyGrant results in additional developer policies beyond the base ACL permissions" - {
       val grant =
-        DeveloperPolicyGrant("Grant1", "grant-id", shortTerm = false)
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -203,7 +202,7 @@ class UserAccessTest
 
     "does not include developer policies whose grant ID does not match any ACL entry grant" in {
       val grant =
-        DeveloperPolicyGrant("Grant1", "grant-id", shortTerm = false)
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val unmatchedPolicy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/other-id/p1",
         "p1",
@@ -284,7 +283,7 @@ class UserAccessTest
 
     "groups developer policies by account separately from permissions" in {
       val grant =
-        DeveloperPolicyGrant("Grant1", "grant-id", shortTerm = false)
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -462,7 +461,7 @@ class UserAccessTest
 
     "groups developer policies by account separately from permissions" in {
       val grant =
-        DeveloperPolicyGrant("Grant1", "grant-id", shortTerm = false)
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -632,19 +631,25 @@ class UserAccessTest
         permissionsRepo = None
       )
 
-      val (permission, source) = checkUserPermissionWithSource(
-        "internal.user",
-        derivedPermission.id,
-        Instant.now(),
-        janusData,
-        Set(policy)
-      ).value
-
       "derived permission is short term" in {
+        val (permission, source) = checkUserPermissionWithSource(
+          "internal.user",
+          derivedPermission.id,
+          Instant.now(),
+          janusData,
+          Set(policy)
+        ).value
         permission.shortTerm shouldEqual true
       }
 
       "source is Internal ACL" in {
+        val (permission, source) = checkUserPermissionWithSource(
+          "internal.user",
+          derivedPermission.id,
+          Instant.now(),
+          janusData,
+          Set(policy)
+        ).value
         source shouldEqual AccessSource.Internal
       }
     }
@@ -668,19 +673,25 @@ class UserAccessTest
         permissionsRepo = None
       )
 
-      val (permission, source) = checkUserPermissionWithSource(
-        "admin.user",
-        derivedPermission.id,
-        Instant.now(),
-        janusData,
-        Set(policy)
-      ).value
-
       "derived permission is short term" in {
+        val (permission, source) = checkUserPermissionWithSource(
+          "admin.user",
+          derivedPermission.id,
+          Instant.now(),
+          janusData,
+          Set(policy)
+        ).value
         permission.shortTerm shouldEqual true
       }
 
       "source is Admin ACL" in {
+        val (permission, source) = checkUserPermissionWithSource(
+          "admin.user",
+          derivedPermission.id,
+          Instant.now(),
+          janusData,
+          Set(policy)
+        ).value
         source shouldEqual AccessSource.Admin
       }
     }

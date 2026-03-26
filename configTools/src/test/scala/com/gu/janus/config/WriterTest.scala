@@ -159,15 +159,16 @@ class WriterTest extends AnyFreeSpec with Matchers {
           SupportACL.create(Map.empty, Set.empty),
           None
         )
-        val config = Writer.toConfig(janusData)
 
         "includes Grant1" in {
+          val config = Writer.toConfig(janusData)
           config should include(
             "grantName = \"\"\"Grant1\"\"\", grantId = \"grant-1-id\", shortTerm = false"
           )
         }
 
         "includes Grant2" in {
+          val config = Writer.toConfig(janusData)
           config should include(
             "grantName = \"\"\"Grant2\"\"\", grantId = \"grant-2-id\", shortTerm = true"
           )
@@ -193,23 +194,26 @@ class WriterTest extends AnyFreeSpec with Matchers {
           SupportACL.create(Map.empty, Set.empty),
           None
         )
-        val config = Writer.toConfig(janusData)
 
         "includes perm1" in {
+          val config = Writer.toConfig(janusData)
           config should include("""label = "perm1"""")
         }
 
         "includes perm2" in {
+          val config = Writer.toConfig(janusData)
           config should include("""label = "perm2"""")
         }
 
         "includes Grant1" in {
+          val config = Writer.toConfig(janusData)
           config should include(
             "grantName = \"\"\"Grant1\"\"\", grantId = \"grant-1-id\", shortTerm = true"
           )
         }
 
         "includes Grant2" in {
+          val config = Writer.toConfig(janusData)
           config should include(
             "grantName = \"\"\"Grant2\"\"\", grantId = \"grant-2-id\", shortTerm = false"
           )
@@ -297,15 +301,16 @@ class WriterTest extends AnyFreeSpec with Matchers {
           SupportACL.create(Map.empty, Set.empty),
           None
         )
-        val config = Writer.toConfig(janusData)
 
         "includes AdminGrant1" in {
+          val config = Writer.toConfig(janusData)
           config should include(
             "grantName = \"\"\"AdminGrant1\"\"\", grantId = \"admin-grant-1-id\", shortTerm = false"
           )
         }
 
         "includes AdminGrant2" in {
+          val config = Writer.toConfig(janusData)
           config should include(
             "grantName = \"\"\"AdminGrant2\"\"\", grantId = \"admin-grant-2-id\", shortTerm = true"
           )
@@ -351,23 +356,26 @@ class WriterTest extends AnyFreeSpec with Matchers {
           SupportACL.create(Map.empty, Set.empty),
           None
         )
-        val config = Writer.toConfig(janusData)
 
         "includes adminPerm1" in {
+          val config = Writer.toConfig(janusData)
           config should include("""label = "adminPerm1"""")
         }
 
         "includes adminPerm2" in {
+          val config = Writer.toConfig(janusData)
           config should include("""label = "adminPerm2"""")
         }
 
         "includes AdminGrant1" in {
+          val config = Writer.toConfig(janusData)
           config should include(
             "grantName = \"\"\"AdminGrant1\"\"\", grantId = \"admin-grant-1-id\", shortTerm = false"
           )
         }
 
         "includes AdminGrant2" in {
+          val config = Writer.toConfig(janusData)
           config should include(
             "grantName = \"\"\"AdminGrant2\"\"\", grantId = \"admin-grant-2-id\", shortTerm = true"
           )
