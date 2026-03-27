@@ -98,7 +98,8 @@ class UserAccessTest
     }
 
     "includes permissions derived from matching developer policies" in {
-      val grant = DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
+      val grant =
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",

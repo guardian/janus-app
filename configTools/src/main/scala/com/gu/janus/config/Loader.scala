@@ -165,7 +165,7 @@ object Loader {
                 current.policyGrants + DeveloperPolicyGrant(
                   entry.grantName,
                   entry.grantId,
-                  entry.shortTerm
+                  entry.shortTerm.getOrElse(false)
                 )
               )
             )

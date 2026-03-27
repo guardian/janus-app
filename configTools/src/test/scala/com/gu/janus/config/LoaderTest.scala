@@ -375,7 +375,7 @@ class LoaderTest
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant",
             "grant-id",
-            shortTerm = false
+            shortTerm = Some(false)
           )
         )
       )
@@ -437,12 +437,12 @@ class LoaderTest
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant",
             "grant-id",
-            shortTerm = false
+            shortTerm = Some(false)
           ),
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant2",
             "grant-id-2",
-            shortTerm = true
+            shortTerm = Some(true)
           )
         )
       )
@@ -472,13 +472,13 @@ class LoaderTest
     "parses mixed permission and policy grant entries for same user" - {
       val acl = Map(
         "user1" -> List(
-        ConfiguredAclEntry("test-account", "test-permission"),
-        ConfiguredDeveloperPolicyGrantAclEntry(
-          "MyGrant",
-          "grant-id",
-          shortTerm = false
+          ConfiguredAclEntry("test-account", "test-permission"),
+          ConfiguredDeveloperPolicyGrantAclEntry(
+            "MyGrant",
+            "grant-id",
+            shortTerm = Some(false)
+          )
         )
-      )
       )
 
       "returns single entry" in {
