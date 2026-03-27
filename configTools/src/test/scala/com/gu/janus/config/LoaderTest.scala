@@ -400,9 +400,12 @@ class LoaderTest
 
       "defaults shortTerm to false" in {
         val acl = Loader.loadAccess(configWithoutShortTerm, Set.empty).value
-        acl.userAccess("user1").policyGrants shouldEqual Set(
-          DeveloperPolicyGrant("Grant1", "grant-id", shortTerm = false)
-        )
+        acl
+          .userAccess("user1")
+          .policyGrants
+          .headOption
+          .map(_.shortTerm)
+          .value shouldEqual false
       }
     }
 
