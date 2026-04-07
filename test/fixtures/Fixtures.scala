@@ -46,10 +46,14 @@ object Fixtures {
   def s3ManagerPermission(awsAccount: AwsAccount) =
     Permission(awsAccount, "s3-all", "S3 Read and Write", Policy(Seq.empty))
 
-  val grantAlpha = DeveloperPolicyGrant(name = "alpha", id = "alpha-id")
-  val grantBeta = DeveloperPolicyGrant(name = "beta", id = "beta-id")
-  val grantGamma = DeveloperPolicyGrant(name = "gamma", id = "gamma-id")
-  val grantDelta = DeveloperPolicyGrant(name = "delta", id = "delta-id")
+  val grantAlpha =
+    DeveloperPolicyGrant(name = "alpha", id = "alpha-id", shortTerm = false)
+  val grantBeta =
+    DeveloperPolicyGrant(name = "beta", id = "beta-id", shortTerm = false)
+  val grantGamma =
+    DeveloperPolicyGrant(name = "gamma", id = "gamma-id", shortTerm = false)
+  val grantDelta =
+    DeveloperPolicyGrant(name = "delta", id = "delta-id", shortTerm = false)
 
   val developerPolicyAlphaFoo1 = DeveloperPolicy(
     policyArnString = "arn:aws:iam::123456789012:policy/alpha1",

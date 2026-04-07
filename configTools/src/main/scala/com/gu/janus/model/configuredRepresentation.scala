@@ -37,7 +37,11 @@ case class ConfiguredAclEntry(
 
 case class ConfiguredDeveloperPolicyGrantAclEntry(
     grantName: String,
-    grantId: String
+    grantId: String,
+    /* Optional so that producing and consuming code
+     * can be deployed independently without breaking anything
+     */
+    shortTerm: Option[Boolean]
 )
 
 given Decoder[ConfiguredAclEntry | ConfiguredDeveloperPolicyGrantAclEntry] =

@@ -176,7 +176,13 @@ case class DeveloperPolicyGrant(
       * group. Each relevant policy will be found by a path prefix identifying
       * it as a developer policy and a path slug that matches this id.
       */
-    id: String
+    id: String,
+
+    /** Determines max TTL for access token. If true, sessions use the
+      * short-term settings (default 1 hour, up to a maximum of 3 hours) instead
+      * of a full working day.
+      */
+    shortTerm: Boolean
 )
 
 sealed abstract class JanusAccessType(override val toString: String)
