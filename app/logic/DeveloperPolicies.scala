@@ -1,6 +1,6 @@
 package logic
 
-import com.gu.janus.model.{AwsAccount, Permission}
+import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant, Permission}
 import models.{
   AwsAccountDeveloperPolicyStatus,
   DeveloperPolicy,
@@ -36,12 +36,16 @@ object DeveloperPolicies {
       account
     )
 
-  def toPermission(policy: DeveloperPolicy): Permission =
+  def toPermission(
+      policy: DeveloperPolicy,
+      grant: DeveloperPolicyGrant
+  ): Permission =
     Permission.fromManagedPolicyArns(
       account = policy.account,
       label = developerPolicySlug(policy.policyName),
       description = policy.description.getOrElse("No description"),
-      managedPolicyArns = List(policy.policyArn.toString)
+      managedPolicyArns = List(policy.policyArn.toString),
+      shortTerm = grant.shortTerm
     )
 
   /** To get a URL-safe slug for a [[DeveloperPolicy]], we use the IAM policy

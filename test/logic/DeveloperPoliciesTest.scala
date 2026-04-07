@@ -1,6 +1,6 @@
 package logic
 
-import com.gu.janus.model.AwsAccount
+import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant}
 import logic.DeveloperPolicies.{
   DEVELOPER_POLICY_NAMESPACE_PREFIX,
   developerPolicySlug,
@@ -167,33 +167,52 @@ class DeveloperPoliciesTest
       Some("A description"),
       account
     )
+    val grant = DeveloperPolicyGrant("grant", "dev-pol-id", shortTerm = false)
 
     "uses the policy slug as the permission label" in {
-      val permission = toPermission(developerPolicy)
+      val permission = toPermission(developerPolicy, grant)
       permission.label shouldBe developerPolicySlug(developerPolicy.policyName)
     }
 
     "uses the policy account" in {
-      val permission = toPermission(developerPolicy)
+      val permission = toPermission(developerPolicy, grant)
       permission.account shouldBe account
     }
 
     "uses the policy description when present" in {
-      val permission = toPermission(developerPolicy)
+      val permission = toPermission(developerPolicy, grant)
       permission.description shouldBe "A description"
     }
 
     "uses a fallback description when none is present" in {
       val noDesc = developerPolicy.copy(description = None)
-      val permission = toPermission(noDesc)
+      val permission = toPermission(noDesc, grant)
       permission.description should not be empty
     }
 
     "uses the policy ARN as the managed policy ARN" in {
-      val permission = toPermission(developerPolicy)
+      val permission = toPermission(developerPolicy, grant)
       permission.managedPolicyArns.value should contain(
         developerPolicy.policyArn.toString
       )
+    }
+
+    "maps shortTerm from the developer policy grant" - {
+      "permission isn't short-term when grant isn't short-term" in {
+        val longSessionPermission = toPermission(developerPolicy, grant)
+        longSessionPermission.shortTerm shouldBe false
+      }
+
+      "permission is short-term when grant is short-term" in {
+        val shortTermGrant = DeveloperPolicyGrant(
+          "short-term-grant",
+          "dev-pol-id",
+          shortTerm = true
+        )
+        val shortSessionPermission =
+          toPermission(developerPolicy, shortTermGrant)
+        shortSessionPermission.shortTerm shouldBe true
+      }
     }
 
     "property: permission id is composed of account key and policy slug" in {
@@ -209,7 +228,7 @@ class DeveloperPoliciesTest
           None,
           acc
         )
-        val permission = toPermission(pol)
+        val permission = toPermission(pol, grant)
         permission.id shouldBe s"${acc.authConfigKey}-${developerPolicySlug(policyName)}"
       }
     }
