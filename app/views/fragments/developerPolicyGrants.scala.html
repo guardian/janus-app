@@ -11,7 +11,7 @@
                     <div class="card-content card-content--aws-account-header @displayColour(displayMode) darken-4 white-text">
                         <p>@grant.name</p>
                     </div>
-                    @for(policyPerm <- policies.map(DeveloperPolicies.toPermission)) {
+                    @for(policyPerm <- policies.map(DeveloperPolicies.toPermission(_, grant))) {
                         <div class="card-content card-content--permission-heading">
                             <p>
                                 @if(policyPerm.description == "No description") {
