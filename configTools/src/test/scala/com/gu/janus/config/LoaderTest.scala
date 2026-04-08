@@ -22,15 +22,13 @@ class LoaderTest
 
   "fromConfig" - {
     "parses the full example" in {
-      val result = Loader.fromConfig(testConfig)
-      val janusData = result.value
+      val janusData = Loader.fromConfig(testConfig).value
       // TODO: check the data here as well
       janusData.permissionsRepo shouldEqual Some("https://example.com/")
     }
 
     "parses an example without a permissions repo" in {
-      val result = Loader.fromConfig(testConfigWithoutPermissionsRepo)
-      val janusData = result.value
+      val janusData = Loader.fromConfig(testConfigWithoutPermissionsRepo).value
       // TODO: check the data here as well
       janusData.permissionsRepo shouldEqual None
     }
@@ -44,16 +42,15 @@ class LoaderTest
     }
 
     "loads example with no permissions repository" in {
-      val result = Loader.loadPermissionsRepo(testConfigWithoutPermissionsRepo)
-      val permissionsRepo = result.value
+      val permissionsRepo =
+        Loader.loadPermissionsRepo(testConfigWithoutPermissionsRepo).value
       permissionsRepo shouldEqual None
     }
   }
 
   "loadAccounts" - {
     "loads the example file's accounts" in {
-      val result = Loader.loadAccounts(testConfig)
-      val accounts = result.value
+      val accounts = Loader.loadAccounts(testConfig).value
       accounts.map(_.authConfigKey) shouldEqual Set(
         "main-account",
         "website",
@@ -65,8 +62,7 @@ class LoaderTest
   "loadPermissions" - {
     "loads the example file's permissions" in {
       val accounts = Loader.loadAccounts(testConfig).value
-      val result = Loader.loadPermissions(testConfig, accounts)
-      val permissions = result.value
+      val permissions = Loader.loadPermissions(testConfig, accounts).value
       permissions.map(_.id) should contain("main-account-test-permission")
     }
   }
@@ -76,8 +72,7 @@ class LoaderTest
       "and extracts the default permissions" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
-        val access = result.value
+        val access = Loader.loadAccess(testConfig, permissions).value
         access.defaultPermissions shouldEqual Set(
           Permission(
             AwsAccount("Testing account", "aws-test-account"),
@@ -98,8 +93,7 @@ class LoaderTest
       "and extracts the ACL" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
-        val access = result.value
+        val access = Loader.loadAccess(testConfig, permissions).value
         access.userAccess
           .get("employee1")
           .value
@@ -120,8 +114,7 @@ class LoaderTest
       "properly extracts a standard inline-policy permission" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
-        val access = result.value
+        val access = Loader.loadAccess(testConfig, permissions).value
         val userPermissions = access.userAccess.get("employee1").value
         val websiteDeveloperPermission =
           userPermissions.permissions
@@ -140,8 +133,7 @@ class LoaderTest
       "properly extracts a permission with managed ARNs" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
-        val access = result.value
+        val access = Loader.loadAccess(testConfig, permissions).value
         val userPermissions = access.userAccess.get("employee3").value
         val websiteDeveloperPermission =
           userPermissions.permissions
@@ -160,8 +152,7 @@ class LoaderTest
       "properly extracts a permission with an inline policy document and managed policy ARNs" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadAccess(testConfig, permissions)
-        val access = result.value
+        val access = Loader.loadAccess(testConfig, permissions).value
         val userPermissions = access.userAccess.get("employee3").value
         val websiteDeveloperPermission =
           userPermissions.permissions
@@ -185,8 +176,7 @@ class LoaderTest
     "loads the example file's admin definition" in {
       val accounts = Loader.loadAccounts(testConfig).value
       val permissions = Loader.loadPermissions(testConfig, accounts).value
-      val result = Loader.loadAdmin(testConfig, permissions)
-      val adminAcl = result.value
+      val adminAcl = Loader.loadAdmin(testConfig, permissions).value
       adminAcl.userAccess
         .get("employee1")
         .value
@@ -202,8 +192,7 @@ class LoaderTest
       "extracts the support permissions" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadSupport(testConfig, permissions)
-        val supportAcl = result.value
+        val supportAcl = Loader.loadSupport(testConfig, permissions).value
         supportAcl.supportAccess.map(_.id) shouldEqual Set(
           "website-developer",
           "aws-test-account-developer"
@@ -213,8 +202,7 @@ class LoaderTest
       "extracts the rota" in {
         val accounts = Loader.loadAccounts(testConfig).value
         val permissions = Loader.loadPermissions(testConfig, accounts).value
-        val result = Loader.loadSupport(testConfig, permissions)
-        val supportAcl = result.value
+        val supportAcl = Loader.loadSupport(testConfig, permissions).value
         supportAcl.rota shouldEqual Map(
           ZonedDateTime
             .of(
@@ -287,26 +275,27 @@ class LoaderTest
     val permissions = Set(testPermission, anotherPermission, anotherPermission2)
 
     "returns empty list for empty ACL" in {
-      val result = Loader.parseAclEntries(Map.empty, permissions)
-      result.value shouldEqual List.empty
+      val entries = Loader.parseAclEntries(Map.empty, permissions).value
+      entries shouldEqual List.empty
     }
 
     "parses a single user with a single permission" - {
       val acl = Map(
         "user1" -> List(ConfiguredAclEntry("test-account", "test-permission"))
       )
-      val result = Loader.parseAclEntries(acl, permissions)
-      val entries = result.value
 
       "returns a single entry" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries should have size 1
       }
 
       "returns correct permissions" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries.head._2.permissions shouldEqual Set(testPermission)
       }
 
       "returns no policy grants" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries.head._2.policyGrants shouldBe empty
       }
     }
@@ -318,14 +307,14 @@ class LoaderTest
           ConfiguredAclEntry("test-account-2", "another-permission")
         )
       )
-      val result = Loader.parseAclEntries(acl, permissions)
-      val entries = result.value
 
       "returns single entry" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries should have size 1
       }
 
       "returns correct permissions" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries.flatMap(_._2.permissions).toSet shouldEqual Set(
           testPermission,
           anotherPermission2
@@ -340,18 +329,19 @@ class LoaderTest
           ConfiguredAclEntry("test-account", "another-permission")
         )
       )
-      val result = Loader.parseAclEntries(acl, permissions)
-      val entries = result.value
 
       "returns two entries" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries should have size 2
       }
 
       "returns correct user names" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries.map(_._1).toSet shouldEqual Set("user1", "user2")
       }
 
       "returns correct permissions" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries.flatMap(_._2.permissions).toSet shouldEqual Set(
           testPermission,
           anotherPermission
@@ -364,25 +354,58 @@ class LoaderTest
         "user1" -> List(
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant",
-            "grant-id"
+            "grant-id",
+            shortTerm = Some(false)
           )
         )
       )
-      val result = Loader.parseAclEntries(acl, permissions)
-      val entries = result.value
 
       "returns single entry" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries should have size 1
       }
 
       "returns no permissions" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries.head._2.permissions shouldBe empty
       }
 
       "returns correct policy grant" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries.head._2.policyGrants shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id")
+          DeveloperPolicyGrant("MyGrant", "grant-id", shortTerm = false)
         )
+      }
+    }
+
+    "parses a DeveloperPolicyGrant ACL entry without shortTerm attribute" - {
+      val configWithoutShortTerm = ConfigFactory.parseString(
+        """
+          |janus.access {
+          |  defaultPermissions = []
+          |  acl {
+          |    user1 = [{
+          |      grantName = "Grant1"
+          |      grantId = "grant-id"
+          |    }]
+          |  }
+          |}
+          |""".stripMargin
+      )
+
+      "returns single entry" in {
+        val acl = Loader.loadAccess(configWithoutShortTerm, Set.empty).value
+        acl.userAccess should have size 1
+      }
+
+      "defaults shortTerm to false" in {
+        val acl = Loader.loadAccess(configWithoutShortTerm, Set.empty).value
+        acl
+          .userAccess("user1")
+          .policyGrants
+          .headOption
+          .map(_.shortTerm)
+          .value shouldEqual false
       }
     }
 
@@ -391,29 +414,32 @@ class LoaderTest
         "user1" -> List(
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant",
-            "grant-id"
+            "grant-id",
+            shortTerm = Some(false)
           ),
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant2",
-            "grant-id-2"
+            "grant-id-2",
+            shortTerm = Some(true)
           )
         )
       )
-      val result = Loader.parseAclEntries(acl, permissions)
-      val entries = result.value
 
       "returns single entry" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries should have size 1
       }
 
       "returns no permissions" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries.head._2.permissions shouldBe empty
       }
 
       "returns correct policy grants" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries.head._2.policyGrants shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id"),
-          DeveloperPolicyGrant("MyGrant2", "grant-id-2")
+          DeveloperPolicyGrant("MyGrant", "grant-id", shortTerm = false),
+          DeveloperPolicyGrant("MyGrant2", "grant-id-2", shortTerm = true)
         )
       }
     }
@@ -424,26 +450,28 @@ class LoaderTest
           ConfiguredAclEntry("test-account", "test-permission"),
           ConfiguredDeveloperPolicyGrantAclEntry(
             "MyGrant",
-            "grant-id"
+            "grant-id",
+            shortTerm = Some(false)
           )
         )
       )
-      val result = Loader.parseAclEntries(acl, permissions)
-      val entries = result.value
 
       "returns single entry" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries should have size 1
       }
 
       "returns correct permissions" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries.flatMap(_._2.permissions).toSet shouldEqual Set(
           testPermission
         )
       }
 
       "returns correct policies" in {
+        val entries = Loader.parseAclEntries(acl, permissions).value
         entries.flatMap(_._2.policyGrants).toSet shouldEqual Set(
-          DeveloperPolicyGrant("MyGrant", "grant-id")
+          DeveloperPolicyGrant("MyGrant", "grant-id", shortTerm = false)
         )
       }
     }
@@ -454,13 +482,14 @@ class LoaderTest
           ConfiguredAclEntry("test-account", "nonexistent-permission")
         )
       )
-      val result = Loader.parseAclEntries(acl, permissions)
 
       "returns failure value" in {
+        val result = Loader.parseAclEntries(acl, permissions)
         result.isLeft shouldBe true
       }
 
       "failure value is correct" in {
+        val result = Loader.parseAclEntries(acl, permissions)
         result.left.value should include("nonexistent-permission")
       }
     }
@@ -471,13 +500,14 @@ class LoaderTest
           ConfiguredAclEntry("nonexistent-account", "test-permission")
         )
       )
-      val result = Loader.parseAclEntries(acl, permissions)
 
       "returns failure value" in {
+        val result = Loader.parseAclEntries(acl, permissions)
         result.isLeft shouldBe true
       }
 
       "failure value is correct" in {
+        val result = Loader.parseAclEntries(acl, permissions)
         result.left.value should include("nonexistent-account")
       }
     }

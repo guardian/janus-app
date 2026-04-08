@@ -122,7 +122,17 @@ object UserAccess {
       developerPolicies
     ).valuesIterator.flatMap { access =>
       bySource(access).flatMap((aa, src) =>
-        (aa.permissions ++ aa.developerPolicies.map(toPermission))
+        // We're only interested in the grants that have been given in the current source ACL
+        val policyGrants = src match {
+          case Internal => policyGrantsForUser(username, acl = janusData.access)
+          case Admin    => policyGrantsForUser(username, acl = janusData.admin)
+          case Support  => Set.empty
+        }
+        (aa.permissions ++ aa.developerPolicies.flatMap { policy =>
+          policyGrants
+            .find(_.id == policy.policyGrantId)
+            .map(toPermission(policy, _))
+        })
           .find(_.id == permissionId)
           .map((_, src))
       )

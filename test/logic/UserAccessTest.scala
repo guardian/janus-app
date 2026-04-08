@@ -98,7 +98,8 @@ class UserAccessTest
     }
 
     "includes permissions derived from matching developer policies" in {
-      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val grant =
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -125,7 +126,8 @@ class UserAccessTest
     }
 
     "a matching policyGrant results in additional developer policies beyond the base ACL permissions" - {
-      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val grant =
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -200,7 +202,8 @@ class UserAccessTest
     }
 
     "does not include developer policies whose grant ID does not match any ACL entry grant" in {
-      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val grant =
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val unmatchedPolicy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/other-id/p1",
         "p1",
@@ -280,7 +283,8 @@ class UserAccessTest
     }
 
     "groups developer policies by account separately from permissions" in {
-      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val grant =
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -332,7 +336,7 @@ class UserAccessTest
             None,
             fooAct
           ),
-          DeveloperPolicyGrant(s"Grant $id", grantId)
+          DeveloperPolicyGrant(s"Grant $id", grantId, shortTerm = false)
         )
       }
 
@@ -457,7 +461,8 @@ class UserAccessTest
     }
 
     "groups developer policies by account separately from permissions" in {
-      val grant = DeveloperPolicyGrant("My Grant", "grant-id")
+      val grant =
+        DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
@@ -513,8 +518,8 @@ class UserAccessTest
   }
 
   "policyGrantsForUser" - {
-    val grant1 = DeveloperPolicyGrant("Grant 1", "grant-1")
-    val grant2 = DeveloperPolicyGrant("Grant 2", "grant-2")
+    val grant1 = DeveloperPolicyGrant("Grant 1", "grant-1", shortTerm = false)
+    val grant2 = DeveloperPolicyGrant("Grant 2", "grant-2", shortTerm = false)
     val acl = ACL(
       Map(
         "user.with.grants" -> ACLEntry(Set(fooDev), Set(grant1, grant2)),
@@ -606,6 +611,90 @@ class UserAccessTest
         janusData,
         Set.empty
       ) shouldBe None
+    }
+
+    "returns a short-term DeveloperPolicy permission from Internal ACL" - {
+      val grant =
+        DeveloperPolicyGrant("Short term grant", "grant-id", shortTerm = true)
+      val policy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "p1",
+        "grant-id",
+        None,
+        fooAct
+      )
+      val derivedPermission = DeveloperPolicies.toPermission(policy, grant)
+      val janusData = JanusData(
+        accounts = Set.empty,
+        access = ACL(Map("internal.user" -> ACLEntry(Set.empty, Set(grant)))),
+        admin = ACL(Map.empty),
+        support = SupportACL.create(Map.empty, Set.empty),
+        permissionsRepo = None
+      )
+
+      "derived permission is short term" in {
+        val (permission, source) = checkUserPermissionWithSource(
+          "internal.user",
+          derivedPermission.id,
+          Instant.now(),
+          janusData,
+          Set(policy)
+        ).value
+        permission.shortTerm shouldEqual true
+      }
+
+      "source is Internal ACL" in {
+        val (permission, source) = checkUserPermissionWithSource(
+          "internal.user",
+          derivedPermission.id,
+          Instant.now(),
+          janusData,
+          Set(policy)
+        ).value
+        source shouldEqual AccessSource.Internal
+      }
+    }
+
+    "returns a short-term DeveloperPolicy permission from Admin ACL" - {
+      val grant =
+        DeveloperPolicyGrant("Short term grant", "grant-id", shortTerm = true)
+      val policy = DeveloperPolicy(
+        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "p1",
+        "grant-id",
+        None,
+        fooAct
+      )
+      val derivedPermission = DeveloperPolicies.toPermission(policy, grant)
+      val janusData = JanusData(
+        accounts = Set.empty,
+        access = ACL(Map.empty),
+        admin = ACL(Map("admin.user" -> ACLEntry(Set.empty, Set(grant)))),
+        support = SupportACL.create(Map.empty, Set.empty),
+        permissionsRepo = None
+      )
+
+      "derived permission is short term" in {
+        val (permission, source) = checkUserPermissionWithSource(
+          "admin.user",
+          derivedPermission.id,
+          Instant.now(),
+          janusData,
+          Set(policy)
+        ).value
+        permission.shortTerm shouldEqual true
+      }
+
+      "source is Admin ACL" in {
+        val (permission, source) = checkUserPermissionWithSource(
+          "admin.user",
+          derivedPermission.id,
+          Instant.now(),
+          janusData,
+          Set(policy)
+        ).value
+        source shouldEqual AccessSource.Admin
+      }
     }
 
     "access source" - {
