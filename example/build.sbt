@@ -7,7 +7,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "example",
     libraryDependencies ++= Seq(
-      "com.gu" %% "janus-config-tools" % "9.0.0",
+      "com.gu" %% "janus-config-tools" % "10.0.0",
       "org.scalatest" %% "scalatest" % "3.2.20" % Test
     )
   )
