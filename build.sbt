@@ -12,7 +12,7 @@ val awsSdkVersion = "2.42.20"
 val circeVersion = "0.14.15"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
-  "org.scalatest" %% "scalatest" % "3.2.19" % Test,
+  "org.scalatest" %% "scalatest" % "3.2.20" % Test,
   "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
   "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
   "ch.qos.logback" % "logback-classic" % "1.5.32"
@@ -99,8 +99,8 @@ lazy val root: Project = (project in file("."))
       ws,
       filters,
       "com.gu.play-googleauth" %% "play-v30" % "35.0.1",
-      "com.gu.play-secret-rotation" %% "play-v30" % "17.0.3",
-      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "17.0.3",
+      "com.gu.play-secret-rotation" %% "play-v30" % "17.0.4",
+      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "17.0.4",
       "software.amazon.awssdk" % "arns" % awsSdkVersion,
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
