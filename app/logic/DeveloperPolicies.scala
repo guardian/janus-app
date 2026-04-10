@@ -14,9 +14,6 @@ object DeveloperPolicies {
 
   /** Creates a DeveloperPolicy from an AWS IAM managed policy if it's possible.
     *
-    * It's assumed that the managed policy will have a path with the structure
-    * "/developer-policy/<developer-policy-id>/".
-    *
     * @param account
     *   AWS account holding the source policy.
     * @param policy
@@ -25,16 +22,23 @@ object DeveloperPolicies {
   def toDeveloperPolicy(
       account: AwsAccount,
       policy: Policy
-  ): Option[DeveloperPolicy] =
+  ): Option[DeveloperPolicy] = {
+    /* Incoming AWS managed policy path should have structure:
+     * /developer-policy/guardian/<repo-name>/<stack>/<stage>/<grant-id>/
+     */
+    val pathParts = policy.path.split('/')
     for {
-      policyGrantId <- policy.path.split('/').lift(2)
+      // We expect 7 parts including empty string at start
+      pathSections <- Option.when(pathParts.length == 7)(pathParts.tail)
+      grantId <- pathSections.lift(5).filter(_.nonEmpty)
     } yield DeveloperPolicy(
       policyArnString = policy.arn,
       policyName = policy.policyName,
-      policyGrantId,
+      policyGrantId = grantId,
       description = Option(policy.description).filter(!_.isBlank),
       account
     )
+  }
 
   def toPermission(
       policy: DeveloperPolicy,

@@ -35,38 +35,68 @@ class DeveloperPoliciesTest
   private val policy: Policy =
     Policy
       .builder()
-      .arn("arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1")
-      .path("/developer-policy/dev-pol-id/")
+      .arn(
+        "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1"
+      )
+      .path("/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/")
       .policyName("p1")
       .description("Description")
       .build()
 
   "toDeveloperPolicy" - {
-    "should return None when developer policy grant ID is absent" in {
+    "should return None when the path has fewer than 6 sections" in {
       val policy = Policy
         .builder()
-        .arn("arn:aws:iam::123:policy/developer-policy/p1")
-        .path("/developer-policy/")
+        .arn("arn:aws:iam::123:policy/developer-policy/guardian/janus-app/p1")
+        .path("/developer-policy/guardian/janus-app/")
         .policyName("p1")
         .build()
 
-      val result = toDeveloperPolicy(account, policy)
+      toDeveloperPolicy(account, policy) shouldBe None
+    }
 
-      result shouldBe None
+    "should return None when the path has more than 6 sections" in {
+      val policy = Policy
+        .builder()
+        .arn(
+          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/extra/p1"
+        )
+        .path(
+          "/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/extra/"
+        )
+        .policyName("p1")
+        .build()
+
+      toDeveloperPolicy(account, policy) shouldBe None
+    }
+
+    "should return None when the grant ID segment is empty" in {
+      val policy = Policy
+        .builder()
+        .arn(
+          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD//p1"
+        )
+        .path("/developer-policy/guardian/janus-app/my-stack/PROD//")
+        .policyName("p1")
+        .build()
+
+      toDeveloperPolicy(account, policy) shouldBe None
     }
 
     "should return developer policy with only required fields when description is absent" in {
       val policy = Policy
         .builder()
-        .arn("arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1")
-        .path("/developer-policy/dev-pol-id/")
+        .arn(
+          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1"
+        )
+        .path("/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/")
         .policyName("p1")
         .build()
       val result = toDeveloperPolicy(account, policy)
 
       result shouldBe Some(
         DeveloperPolicy(
-          "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1",
+          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
           "p1",
           "dev-pol-id",
           None,
@@ -78,8 +108,10 @@ class DeveloperPoliciesTest
     "should return developer policy with only required fields when description is empty" in {
       val policy = Policy
         .builder()
-        .arn("arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1")
-        .path("/developer-policy/dev-pol-id/")
+        .arn(
+          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1"
+        )
+        .path("/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/")
         .policyName("p1")
         .description("")
         .build()
@@ -87,7 +119,7 @@ class DeveloperPoliciesTest
 
       result shouldBe Some(
         DeveloperPolicy(
-          "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1",
+          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
           "p1",
           "dev-pol-id",
           None,
@@ -99,8 +131,10 @@ class DeveloperPoliciesTest
     "should return developer policy with only required fields when description is whitespace" in {
       val policy = Policy
         .builder()
-        .arn("arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1")
-        .path("/developer-policy/dev-pol-id/")
+        .arn(
+          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1"
+        )
+        .path("/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/")
         .policyName("p1")
         .description("   ")
         .build()
@@ -108,7 +142,7 @@ class DeveloperPoliciesTest
 
       result shouldBe Some(
         DeveloperPolicy(
-          "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1",
+          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
           "p1",
           "dev-pol-id",
           None,
