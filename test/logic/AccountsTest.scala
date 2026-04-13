@@ -172,7 +172,7 @@ class AccountsTest
             .resource("awsResource")
             .build(),
           policyName = "awsResource",
-          policyGrantId = "provisionedRoleIdFoo",
+          policyGrantId = "developerPolicyIdFoo",
           stackName = "test-stack",
           stage = "PROD",
           description = "descriptionFoo",
@@ -207,7 +207,7 @@ class AccountsTest
             .service("awsService")
             .build(),
           policyName = "awsResource",
-          policyGrantId = "provisionedRoleIdFoo",
+          policyGrantId = "developerPolicyIdFoo",
           stackName = "test-stack",
           stage = "PROD",
           description = "descriptionFoo",

@@ -165,10 +165,11 @@ class DeveloperPolicyCachingService(
     for {
       awsPolicy <- Iam.getPolicyDetails(iam, summary)
       policy <- IO.fromOption(
-        DeveloperPolicies.toDeveloperPolicy(
-          account,
-          awsPolicy
-        )
+        DeveloperPolicies
+          .toDeveloperPolicy(account, awsPolicy)
+          .orElse(
+            DeveloperPolicies.toDeveloperPolicyFromOldPolicy(account, awsPolicy)
+          )
       )(
         new Exception(
           s"Policy path doesn't contain developer policy ID at expected position in IAM policy ${awsPolicy.arn}"

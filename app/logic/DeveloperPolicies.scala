@@ -45,6 +45,25 @@ object DeveloperPolicies {
     )
   }
 
+  def toDeveloperPolicyFromOldPolicy(
+      account: AwsAccount,
+      policy: Policy
+  ): Option[DeveloperPolicy] =
+    /* Old AWS managed policy path structure was:
+     * /developer-policy/<grant-id>/
+     */
+    for {
+      policyGrantId <- policy.path.split('/').lift(2)
+    } yield DeveloperPolicy(
+      policyArnString = policy.arn,
+      policyName = policy.policyName,
+      policyGrantId,
+      stackName = "unknown",
+      stage = "unknown",
+      description = Option(policy.description).getOrElse("unknown"),
+      account
+    )
+
   def toPermission(
       policy: DeveloperPolicy,
       grant: DeveloperPolicyGrant
