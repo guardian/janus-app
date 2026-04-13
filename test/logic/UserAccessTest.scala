@@ -101,10 +101,11 @@ class UserAccessTest
       val grant =
         DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
-        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/grant-id/p1",
         "p1",
         "grant-id",
         "test-stack",
+        "PROD",
         "A description",
         fooAct
       )
@@ -130,10 +131,11 @@ class UserAccessTest
       val grant =
         DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
-        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/grant-id/p1",
         "p1",
         "grant-id",
         "test-stack",
+        "PROD",
         "A description",
         fooAct
       )
@@ -207,10 +209,11 @@ class UserAccessTest
       val grant =
         DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val unmatchedPolicy = DeveloperPolicy(
-        "arn:aws:iam::123:policy/developer-policy/other-id/p1",
+        "arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/other-id/p1",
         "p1",
         "other-id",
         "test-stack",
+        "PROD",
         "A description",
         fooAct
       )
@@ -234,10 +237,11 @@ class UserAccessTest
 
     "does not include developer policies when the user has no policy grants" - {
       val policy = DeveloperPolicy(
-        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/grant-id/p1",
         "p1",
         "grant-id",
         "test-stack",
+        "PROD",
         "A description",
         fooAct
       )
@@ -290,10 +294,11 @@ class UserAccessTest
       val grant =
         DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
-        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/grant-id/p1",
         "p1",
         "grant-id",
         "test-stack",
+        "PROD",
         "A description",
         fooAct
       )
@@ -335,10 +340,11 @@ class UserAccessTest
         val grantId = s"grant-$id"
         (
           DeveloperPolicy(
-            s"arn:aws:iam::123:policy/developer-policy/$grantId/p$id",
+            s"arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/$grantId/p$id",
             s"p$id",
             grantId,
             "test-stack",
+            "PROD",
             "A description",
             fooAct
           ),
@@ -470,10 +476,11 @@ class UserAccessTest
       val grant =
         DeveloperPolicyGrant("My Grant", "grant-id", shortTerm = false)
       val policy = DeveloperPolicy(
-        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/grant-id/p1",
         "p1",
         "grant-id",
         "test-stack",
+        "PROD",
         "A description",
         fooAct
       )
@@ -624,10 +631,11 @@ class UserAccessTest
       val grant =
         DeveloperPolicyGrant("Short term grant", "grant-id", shortTerm = true)
       val policy = DeveloperPolicy(
-        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/grant-id/p1",
         "p1",
         "grant-id",
         "test-stack",
+        "PROD",
         "A description",
         fooAct
       )
@@ -667,10 +675,11 @@ class UserAccessTest
       val grant =
         DeveloperPolicyGrant("Short term grant", "grant-id", shortTerm = true)
       val policy = DeveloperPolicy(
-        "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
+        "arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/grant-id/p1",
         "p1",
         "grant-id",
         "test-stack",
+        "PROD",
         "A description",
         fooAct
       )

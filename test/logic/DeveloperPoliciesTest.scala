@@ -47,6 +47,7 @@ class DeveloperPoliciesTest
         policyName = "p1",
         policyGrantId = "dev-pol-id",
         stackName = "my-stack",
+        stage = "PROD",
         description = "Description",
         account
       )
@@ -157,10 +158,11 @@ class DeveloperPoliciesTest
 
   "toPermission" - {
     val developerPolicy = DeveloperPolicy(
-      "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1",
+      "arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/dev-pol-id/p1",
       "p1",
       "dev-pol-id",
       "test-stack",
+      "PROD",
       "A description",
       account
     )
@@ -213,10 +215,11 @@ class DeveloperPoliciesTest
       ) { (policyName, accountKey) =>
         val acc = AwsAccount("Test Account", accountKey)
         val pol = DeveloperPolicy(
-          s"arn:aws:iam::123:policy/developer-policy/grant-id/$policyName",
+          s"arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/grant-id/$policyName",
           policyName,
           "grant-id",
           "test-stack",
+          "PROD",
           "A description",
           acc
         )
@@ -248,12 +251,14 @@ class DeveloperPoliciesTest
         policyName <- Gen.alphaNumStr.suchThat(_.nonEmpty)
         grantId <- Gen.alphaNumStr.suchThat(_.nonEmpty)
         stackName <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+        stage <- Gen.alphaNumStr.suchThat(_.nonEmpty)
         description <- Gen.alphaStr.suchThat(_.nonEmpty)
       } yield DeveloperPolicy(
-        s"arn:aws:iam::123456789012:policy/developer-policy/$grantId/$policyName",
+        s"arn:aws:iam::123456789012:policy/guardian/test-repo/$stackName/$stage/$grantId/$policyName",
         policyName,
         grantId,
         stackName,
+        stage,
         description,
         account
       )

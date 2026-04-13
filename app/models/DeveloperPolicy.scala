@@ -23,6 +23,7 @@ case class DeveloperPolicy(
     policyName: String,
     policyGrantId: String,
     stackName: String,
+    stage: String,
     description: String,
     account: AwsAccount
 )
@@ -33,6 +34,7 @@ object DeveloperPolicy {
       policyName: String,
       policyGrantId: String,
       stackName: String,
+      stage: String,
       description: String,
       account: AwsAccount
   ): DeveloperPolicy = DeveloperPolicy(
@@ -40,6 +42,7 @@ object DeveloperPolicy {
     policyName,
     policyGrantId,
     stackName,
+    stage,
     description,
     account
   )

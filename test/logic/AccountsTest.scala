@@ -92,18 +92,19 @@ class AccountsTest
           DeveloperPolicySnapshot(
             List(
               DeveloperPolicy(
-                Arn
+                policyArn = Arn
                   .builder()
                   .accountId(s"awsAccount-${a.authConfigKey}")
                   .partition("awsPartition")
                   .service("awsService")
                   .resource("awsResource")
                   .build(),
-                "awsResource",
-                s"provisionedRoleId${a.name}",
-                "test-stack",
-                s"description${a.name}",
-                a
+                policyName = "awsResource",
+                policyGrantId = s"developerPolicyId${a.name}",
+                stackName = "test-stack",
+                stage = "PROD",
+                description = s"description${a.name}",
+                account = a
               )
             ),
             Instant.now()
@@ -132,18 +133,19 @@ class AccountsTest
             DeveloperPolicySnapshot(
               List(
                 DeveloperPolicy(
-                  Arn
+                  policyArn = Arn
                     .builder()
                     .accountId(s"awsAccount-${a.authConfigKey}")
                     .partition("awsPartition")
                     .service("awsService")
                     .resource("awsResource")
                     .build(),
-                  "awsResource",
-                  s"provisionedRoleId${a.name}",
-                  "test-stack",
-                  s"description${a.name}",
-                  a
+                  policyName = "awsResource",
+                  policyGrantId = s"provisionedRoleId${a.name}",
+                  stackName = "test-stack",
+                  stage = "PROD",
+                  description = s"description${a.name}",
+                  account = a
                 )
               ),
               Instant.now()
@@ -162,18 +164,19 @@ class AccountsTest
         Success[String](fooAct.authConfigKey)
       ) shouldEqual Set(
         DeveloperPolicy(
-          Arn
+          policyArn = Arn
             .builder()
             .accountId("awsAccount-foo")
             .partition("awsPartition")
             .service("awsService")
             .resource("awsResource")
             .build(),
-          "awsResource",
-          "provisionedRoleIdFoo",
-          "test-stack",
-          "descriptionFoo",
-          fooAct
+          policyName = "awsResource",
+          policyGrantId = "provisionedRoleIdFoo",
+          stackName = "test-stack",
+          stage = "PROD",
+          description = "descriptionFoo",
+          account = fooAct
         )
       )
     }
@@ -196,18 +199,19 @@ class AccountsTest
         fooAct.authConfigKey
       ) shouldEqual List(
         DeveloperPolicy(
-          Arn
+          policyArn = Arn
             .builder()
             .accountId("awsAccount-foo")
             .resource("awsResource")
             .partition("awsPartition")
             .service("awsService")
             .build(),
-          "awsResource",
-          "provisionedRoleIdFoo",
-          "test-stack",
-          "descriptionFoo",
-          fooAct
+          policyName = "awsResource",
+          policyGrantId = "provisionedRoleIdFoo",
+          stackName = "test-stack",
+          stage = "PROD",
+          description = "descriptionFoo",
+          account = fooAct
         )
       )
     }
@@ -312,18 +316,19 @@ class AccountsTest
             .toSet
         returnedRoles shouldBe accounts.map(a =>
           DeveloperPolicy(
-            Arn
+            policyArn = Arn
               .builder()
               .accountId(s"awsAccount-${a.authConfigKey}")
               .partition("awsPartition")
               .service("awsService")
               .resource("awsResource")
               .build(),
-            "awsResource",
-            s"provisionedRoleId${a.name}",
-            "test-stack",
-            s"description${a.name}",
-            a
+            policyName = "awsResource",
+            policyGrantId = s"provisionedRoleId${a.name}",
+            stackName = "test-stack",
+            stage = "PROD",
+            description = s"description${a.name}",
+            account = a
           )
         )
       }
