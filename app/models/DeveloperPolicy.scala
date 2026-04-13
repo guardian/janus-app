@@ -11,8 +11,14 @@ import scala.util.Try
   *
   * @param policyArn
   *   ARN
+  * @param policyName
+  *   Name of source AWS managed policy
   * @param policyGrantId
   *   Corresponds to [[com.gu.janus.model.DeveloperPolicyGrant.id]]
+  * @param stackName
+  *   Name of stack containing the policy
+  * @param stage
+  *   Deployment stage where resources are available
   * @param description
   *   Description for display in Janus UI
   * @param account
