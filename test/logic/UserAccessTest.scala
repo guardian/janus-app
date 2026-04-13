@@ -104,6 +104,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
+        "test-stack",
         "A description",
         fooAct
       )
@@ -132,6 +133,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
+        "test-stack",
         "A description",
         fooAct
       )
@@ -208,6 +210,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/other-id/p1",
         "p1",
         "other-id",
+        "test-stack",
         "A description",
         fooAct
       )
@@ -234,6 +237,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
+        "test-stack",
         "A description",
         fooAct
       )
@@ -289,6 +293,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
+        "test-stack",
         "A description",
         fooAct
       )
@@ -333,6 +338,7 @@ class UserAccessTest
             s"arn:aws:iam::123:policy/developer-policy/$grantId/p$id",
             s"p$id",
             grantId,
+            "test-stack",
             "A description",
             fooAct
           ),
@@ -467,6 +473,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
+        "test-stack",
         "A description",
         fooAct
       )
@@ -620,6 +627,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
+        "test-stack",
         "A description",
         fooAct
       )
@@ -662,6 +670,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
+        "test-stack",
         "A description",
         fooAct
       )

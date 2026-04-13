@@ -101,6 +101,7 @@ class AccountsTest
                   .build(),
                 "awsResource",
                 s"provisionedRoleId${a.name}",
+                "test-stack",
                 s"description${a.name}",
                 a
               )
@@ -140,6 +141,7 @@ class AccountsTest
                     .build(),
                   "awsResource",
                   s"provisionedRoleId${a.name}",
+                  "test-stack",
                   s"description${a.name}",
                   a
                 )
@@ -169,6 +171,7 @@ class AccountsTest
             .build(),
           "awsResource",
           "provisionedRoleIdFoo",
+          "test-stack",
           "descriptionFoo",
           fooAct
         )
@@ -202,6 +205,7 @@ class AccountsTest
             .build(),
           "awsResource",
           "provisionedRoleIdFoo",
+          "test-stack",
           "descriptionFoo",
           fooAct
         )
@@ -317,6 +321,7 @@ class AccountsTest
               .build(),
             "awsResource",
             s"provisionedRoleId${a.name}",
+            "test-stack",
             s"description${a.name}",
             a
           )

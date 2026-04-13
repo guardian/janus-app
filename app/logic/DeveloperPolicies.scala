@@ -31,11 +31,13 @@ object DeveloperPolicies {
       // We expect 7 parts including empty string at start
       pathSections <- Option.when(pathParts.length == 7)(pathParts.tail)
       policyGrantId <- pathSections.lift(5).filter(!_.isBlank)
+      stackName <- pathSections.lift(3).filter(!_.isBlank)
       description <- Option(policy.description).filter(!_.isBlank)
     } yield DeveloperPolicy(
       policyArnString = policy.arn,
       policyName = policy.policyName,
       policyGrantId,
+      stackName,
       description,
       account
     )

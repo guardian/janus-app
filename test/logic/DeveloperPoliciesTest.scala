@@ -42,9 +42,11 @@ class DeveloperPoliciesTest
       val result = toDeveloperPolicy(account, policy)
 
       result.value shouldBe DeveloperPolicy(
-        policyArnString = "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
+        policyArnString =
+          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
         policyName = "p1",
         policyGrantId = "dev-pol-id",
+        stackName = "my-stack",
         description = "Description",
         account
       )
@@ -158,6 +160,7 @@ class DeveloperPoliciesTest
       "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1",
       "p1",
       "dev-pol-id",
+      "test-stack",
       "A description",
       account
     )
@@ -177,7 +180,6 @@ class DeveloperPoliciesTest
       val permission = toPermission(developerPolicy, grant)
       permission.description shouldBe "A description"
     }
-
 
     "uses the policy ARN as the managed policy ARN" in {
       val permission = toPermission(developerPolicy, grant)
@@ -214,6 +216,7 @@ class DeveloperPoliciesTest
           s"arn:aws:iam::123:policy/developer-policy/grant-id/$policyName",
           policyName,
           "grant-id",
+          "test-stack",
           "A description",
           acc
         )
@@ -244,11 +247,13 @@ class DeveloperPoliciesTest
         account <- genAwsAccount
         policyName <- Gen.alphaNumStr.suchThat(_.nonEmpty)
         grantId <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+        stackName <- Gen.alphaNumStr.suchThat(_.nonEmpty)
         description <- Gen.alphaStr.suchThat(_.nonEmpty)
       } yield DeveloperPolicy(
         s"arn:aws:iam::123456789012:policy/developer-policy/$grantId/$policyName",
         policyName,
         grantId,
+        stackName,
         description,
         account
       )

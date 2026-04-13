@@ -22,6 +22,7 @@ case class DeveloperPolicy(
     policyArn: Arn,
     policyName: String,
     policyGrantId: String,
+    stackName: String,
     description: String,
     account: AwsAccount
 )
@@ -31,12 +32,14 @@ object DeveloperPolicy {
       policyArnString: String,
       policyName: String,
       policyGrantId: String,
+      stackName: String,
       description: String,
       account: AwsAccount
   ): DeveloperPolicy = DeveloperPolicy(
     Arn.fromString(policyArnString),
     policyName,
     policyGrantId,
+    stackName,
     description,
     account
   )

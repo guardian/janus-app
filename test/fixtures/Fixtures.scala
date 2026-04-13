@@ -59,6 +59,7 @@ object Fixtures {
     policyArnString = "arn:aws:iam::123456789012:policy/alpha1",
     policyName = "alpha-1",
     policyGrantId = grantAlpha.id,
+    stackName = "test-stack",
     description = "Alpha policy",
     account = fooAct
   )
@@ -66,6 +67,7 @@ object Fixtures {
     policyArnString = "arn:aws:iam::123456789012:policy/alpha2",
     policyName = "alpha-2",
     policyGrantId = grantAlpha.id,
+    stackName = "test-stack",
     description = "Alpha policy",
     account = fooAct
   )
@@ -73,6 +75,7 @@ object Fixtures {
     policyArnString = "arn:aws:iam::123456789012:policy/alpha",
     policyName = "alpha",
     policyGrantId = grantAlpha.id,
+    stackName = "test-stack",
     description = "Alpha policy",
     account = barAct
   )
@@ -80,6 +83,7 @@ object Fixtures {
     policyArnString = "arn:aws:iam::123456789012:policy/beta",
     policyName = "beta",
     policyGrantId = grantBeta.id,
+    stackName = "test-stack",
     description = "Beta policy",
     account = fooAct
   )
@@ -87,6 +91,7 @@ object Fixtures {
     policyArnString = "arn:aws:iam::123456789012:policy/beta",
     policyName = "beta",
     policyGrantId = grantBeta.id,
+    stackName = "test-stack",
     description = "Beta policy",
     account = barAct
   )
@@ -94,6 +99,7 @@ object Fixtures {
     policyArnString = "arn:aws:iam::123456789012:policy/gamma",
     policyName = "gamma",
     policyGrantId = grantGamma.id,
+    stackName = "test-stack",
     description = "Gamma policy",
     account = bazAct
   )
@@ -101,6 +107,7 @@ object Fixtures {
     policyArnString = "arn:aws:iam::123456789012:policy/delta",
     policyName = "delta",
     policyGrantId = grantDelta.id,
+    stackName = "test-stack",
     description = "Delta policy",
     account = quxAct
   )
