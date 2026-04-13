@@ -9,8 +9,14 @@ import models.{
 import software.amazon.awssdk.services.iam.model.Policy
 
 import java.net.URLEncoder
+import scala.util.matching.Regex
 
 object DeveloperPolicies {
+
+  /* Matches: /developer-policy/guardian/<repo-name>/<stack>/<stage>/<grant-id>/
+   * Each captured segment must contain at least one non-whitespace character. */
+  private val DeveloperPolicyPath: Regex =
+    """/developer-policy/guardian/[^\s/]+/([^\s/]+)/([^\s/]+)/([^\s/]+)/""".r
 
   /** Creates a DeveloperPolicy from an AWS IAM managed policy if it's possible.
     *
@@ -22,17 +28,10 @@ object DeveloperPolicies {
   def toDeveloperPolicy(
       account: AwsAccount,
       policy: Policy
-  ): Option[DeveloperPolicy] = {
-    /* Incoming AWS managed policy path should have structure:
-     * /developer-policy/guardian/<repo-name>/<stack>/<stage>/<grant-id>/
-     */
-    val pathParts = policy.path.split('/')
+  ): Option[DeveloperPolicy] =
     for {
-      // We expect 7 parts including empty string at start
-      pathSections <- Option.when(pathParts.length == 7)(pathParts.tail)
-      stackName <- pathSections.lift(3).filter(!_.isBlank)
-      stage <- pathSections.lift(4).filter(!_.isBlank)
-      policyGrantId <- pathSections.lift(5).filter(!_.isBlank)
+      case DeveloperPolicyPath(stackName, stage, policyGrantId) <-
+        DeveloperPolicyPath.findFirstMatchIn(policy.path)
       description <- Option(policy.description).filter(!_.isBlank)
     } yield DeveloperPolicy(
       policyArnString = policy.arn,
@@ -43,7 +42,6 @@ object DeveloperPolicies {
       description,
       account
     )
-  }
 
   def toDeveloperPolicyFromOldPolicy(
       account: AwsAccount,
