@@ -104,7 +104,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
-        None,
+        "A description",
         fooAct
       )
       val acl = ACL(
@@ -132,7 +132,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
-        None,
+        "A description",
         fooAct
       )
       val acl = ACL(
@@ -208,7 +208,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/other-id/p1",
         "p1",
         "other-id",
-        None,
+        "A description",
         fooAct
       )
       val acl = ACL(
@@ -234,7 +234,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
-        None,
+        "A description",
         fooAct
       )
       val acl = ACL(
@@ -289,7 +289,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
-        None,
+        "A description",
         fooAct
       )
       val acl = ACL(
@@ -333,7 +333,7 @@ class UserAccessTest
             s"arn:aws:iam::123:policy/developer-policy/$grantId/p$id",
             s"p$id",
             grantId,
-            None,
+            "A description",
             fooAct
           ),
           DeveloperPolicyGrant(s"Grant $id", grantId, shortTerm = false)
@@ -467,7 +467,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
-        None,
+        "A description",
         fooAct
       )
       val acl = ACL(
@@ -620,7 +620,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
-        None,
+        "A description",
         fooAct
       )
       val derivedPermission = DeveloperPolicies.toPermission(policy, grant)
@@ -662,7 +662,7 @@ class UserAccessTest
         "arn:aws:iam::123:policy/developer-policy/grant-id/p1",
         "p1",
         "grant-id",
-        None,
+        "A description",
         fooAct
       )
       val derivedPermission = DeveloperPolicies.toPermission(policy, grant)

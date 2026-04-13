@@ -30,12 +30,13 @@ object DeveloperPolicies {
     for {
       // We expect 7 parts including empty string at start
       pathSections <- Option.when(pathParts.length == 7)(pathParts.tail)
-      grantId <- pathSections.lift(5).filter(_.nonEmpty)
+      policyGrantId <- pathSections.lift(5).filter(!_.isBlank)
+      description <- Option(policy.description).filter(!_.isBlank)
     } yield DeveloperPolicy(
       policyArnString = policy.arn,
       policyName = policy.policyName,
-      policyGrantId = grantId,
-      description = Option(policy.description).filter(!_.isBlank),
+      policyGrantId,
+      description,
       account
     )
   }
@@ -47,7 +48,7 @@ object DeveloperPolicies {
     Permission.fromManagedPolicyArns(
       account = policy.account,
       label = developerPolicySlug(policy.policyName),
-      description = policy.description.getOrElse("No description"),
+      description = policy.description,
       managedPolicyArns = List(policy.policyArn.toString),
       shortTerm = grant.shortTerm
     )

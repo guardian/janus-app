@@ -101,7 +101,7 @@ class AccountsTest
                   .build(),
                 "awsResource",
                 s"provisionedRoleId${a.name}",
-                Some(s"description${a.name}"),
+                s"description${a.name}",
                 a
               )
             ),
@@ -140,7 +140,7 @@ class AccountsTest
                     .build(),
                   "awsResource",
                   s"provisionedRoleId${a.name}",
-                  Some(s"description${a.name}"),
+                  s"description${a.name}",
                   a
                 )
               ),
@@ -169,7 +169,7 @@ class AccountsTest
             .build(),
           "awsResource",
           "provisionedRoleIdFoo",
-          Some("descriptionFoo"),
+          "descriptionFoo",
           fooAct
         )
       )
@@ -202,7 +202,7 @@ class AccountsTest
             .build(),
           "awsResource",
           "provisionedRoleIdFoo",
-          Some("descriptionFoo"),
+          "descriptionFoo",
           fooAct
         )
       )
@@ -317,7 +317,7 @@ class AccountsTest
               .build(),
             "awsResource",
             s"provisionedRoleId${a.name}",
-            Some(s"description${a.name}"),
+            s"description${a.name}",
             a
           )
         )

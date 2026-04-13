@@ -7,13 +7,7 @@ import logic.DeveloperPolicies.{
   toDeveloperPolicy,
   toPermission
 }
-import models.{
-  AwsAccountDeveloperPolicyStatus,
-  DeveloperPolicy,
-  DeveloperPolicyCacheStatus,
-  DeveloperPolicySnapshot,
-  FailureSnapshot
-}
+import models.*
 import org.scalacheck.{Arbitrary, Gen}
 import org.scalatest.OptionValues
 import org.scalatest.freespec.AnyFreeSpec
@@ -44,6 +38,18 @@ class DeveloperPoliciesTest
       .build()
 
   "toDeveloperPolicy" - {
+    "should return a DeveloperPolicy when arguments are good" in {
+      val result = toDeveloperPolicy(account, policy)
+
+      result.value shouldBe DeveloperPolicy(
+        policyArnString = "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
+        policyName = "p1",
+        policyGrantId = "dev-pol-id",
+        description = "Description",
+        account
+      )
+    }
+
     "should return None when the path has fewer than 6 sections" in {
       val policy = Policy
         .builder()
@@ -83,29 +89,7 @@ class DeveloperPoliciesTest
       toDeveloperPolicy(account, policy) shouldBe None
     }
 
-    "should return developer policy with only required fields when description is absent" in {
-      val policy = Policy
-        .builder()
-        .arn(
-          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1"
-        )
-        .path("/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/")
-        .policyName("p1")
-        .build()
-      val result = toDeveloperPolicy(account, policy)
-
-      result shouldBe Some(
-        DeveloperPolicy(
-          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
-          "p1",
-          "dev-pol-id",
-          None,
-          account
-        )
-      )
-    }
-
-    "should return developer policy with only required fields when description is empty" in {
+    "should return None when description is empty" in {
       val policy = Policy
         .builder()
         .arn(
@@ -115,20 +99,11 @@ class DeveloperPoliciesTest
         .policyName("p1")
         .description("")
         .build()
-      val result = toDeveloperPolicy(account, policy)
 
-      result shouldBe Some(
-        DeveloperPolicy(
-          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
-          "p1",
-          "dev-pol-id",
-          None,
-          account
-        )
-      )
+      toDeveloperPolicy(account, policy) shouldBe None
     }
 
-    "should return developer policy with only required fields when description is whitespace" in {
+    "should return None when description is whitespace" in {
       val policy = Policy
         .builder()
         .arn(
@@ -138,23 +113,8 @@ class DeveloperPoliciesTest
         .policyName("p1")
         .description("   ")
         .build()
-      val result = toDeveloperPolicy(account, policy)
 
-      result shouldBe Some(
-        DeveloperPolicy(
-          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
-          "p1",
-          "dev-pol-id",
-          None,
-          account
-        )
-      )
-    }
-
-    "should include description when present" in {
-      val result = toDeveloperPolicy(account, policy)
-
-      result.flatMap(_.description) shouldBe Some("Description")
+      toDeveloperPolicy(account, policy) shouldBe None
     }
   }
 
@@ -198,7 +158,7 @@ class DeveloperPoliciesTest
       "arn:aws:iam::123:policy/developer-policy/dev-pol-id/p1",
       "p1",
       "dev-pol-id",
-      Some("A description"),
+      "A description",
       account
     )
     val grant = DeveloperPolicyGrant("grant", "dev-pol-id", shortTerm = false)
@@ -213,16 +173,11 @@ class DeveloperPoliciesTest
       permission.account shouldBe account
     }
 
-    "uses the policy description when present" in {
+    "uses the policy description" in {
       val permission = toPermission(developerPolicy, grant)
       permission.description shouldBe "A description"
     }
 
-    "uses a fallback description when none is present" in {
-      val noDesc = developerPolicy.copy(description = None)
-      val permission = toPermission(noDesc, grant)
-      permission.description should not be empty
-    }
 
     "uses the policy ARN as the managed policy ARN" in {
       val permission = toPermission(developerPolicy, grant)
@@ -259,7 +214,7 @@ class DeveloperPoliciesTest
           s"arn:aws:iam::123:policy/developer-policy/grant-id/$policyName",
           policyName,
           "grant-id",
-          None,
+          "A description",
           acc
         )
         val permission = toPermission(pol, grant)
@@ -289,7 +244,7 @@ class DeveloperPoliciesTest
         account <- genAwsAccount
         policyName <- Gen.alphaNumStr.suchThat(_.nonEmpty)
         grantId <- Gen.alphaNumStr.suchThat(_.nonEmpty)
-        description <- Gen.option(Gen.alphaStr.suchThat(_.nonEmpty))
+        description <- Gen.alphaStr.suchThat(_.nonEmpty)
       } yield DeveloperPolicy(
         s"arn:aws:iam::123456789012:policy/developer-policy/$grantId/$policyName",
         policyName,

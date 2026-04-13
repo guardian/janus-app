@@ -148,7 +148,7 @@ class AccountOrderingTest
                 s"arn:aws:iam::123456789012:policy/alpha-$policyNum",
               policyName = name,
               policyGrantId = grantAlpha.id,
-              description = Some(s"Alpha policy $policyNum: $name"),
+              description = s"Alpha policy $policyNum: $name",
               account = fooAct
             )
           }

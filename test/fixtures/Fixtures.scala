@@ -59,49 +59,49 @@ object Fixtures {
     policyArnString = "arn:aws:iam::123456789012:policy/alpha1",
     policyName = "alpha-1",
     policyGrantId = grantAlpha.id,
-    description = Some("Alpha policy"),
+    description = "Alpha policy",
     account = fooAct
   )
   val developerPolicyAlphaFoo2 = DeveloperPolicy(
     policyArnString = "arn:aws:iam::123456789012:policy/alpha2",
     policyName = "alpha-2",
     policyGrantId = grantAlpha.id,
-    description = Some("Alpha policy"),
+    description = "Alpha policy",
     account = fooAct
   )
   val developerPolicyAlphaBar = DeveloperPolicy(
     policyArnString = "arn:aws:iam::123456789012:policy/alpha",
     policyName = "alpha",
     policyGrantId = grantAlpha.id,
-    description = Some("Alpha policy"),
+    description = "Alpha policy",
     account = barAct
   )
   val developerPolicyBetaFoo = DeveloperPolicy(
     policyArnString = "arn:aws:iam::123456789012:policy/beta",
     policyName = "beta",
     policyGrantId = grantBeta.id,
-    description = Some("Beta policy"),
+    description = "Beta policy",
     account = fooAct
   )
   val developerPolicyBetaBar = DeveloperPolicy(
     policyArnString = "arn:aws:iam::123456789012:policy/beta",
     policyName = "beta",
     policyGrantId = grantBeta.id,
-    description = Some("Beta policy"),
+    description = "Beta policy",
     account = barAct
   )
   val developerPolicyGammaBaz = DeveloperPolicy(
     policyArnString = "arn:aws:iam::123456789012:policy/gamma",
     policyName = "gamma",
     policyGrantId = grantGamma.id,
-    description = Some("Gamma policy"),
+    description = "Gamma policy",
     account = bazAct
   )
   val developerPolicyDeltaQux = DeveloperPolicy(
     policyArnString = "arn:aws:iam::123456789012:policy/delta",
     policyName = "delta",
     policyGrantId = grantDelta.id,
-    description = Some("Delta policy"),
+    description = "Delta policy",
     account = quxAct
   )
 }
