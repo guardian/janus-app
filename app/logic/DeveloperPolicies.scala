@@ -56,7 +56,7 @@ object DeveloperPolicies {
       policyArnString = policy.arn,
       policyName = policy.policyName,
       policyGrantId,
-      stackName = "unknown",
+      stack = "unknown",
       stage = "unknown",
       description = Option(policy.description).getOrElse("unknown"),
       account

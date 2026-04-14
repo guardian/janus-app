@@ -148,7 +148,7 @@ class AccountOrderingTest
                 s"arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/${grantAlpha.id}/$name",
               policyName = name,
               policyGrantId = grantAlpha.id,
-              stackName = "test-stack",
+              stack = "test-stack",
               stage = "PROD",
               description = s"Alpha policy $policyNum: $name",
               account = fooAct

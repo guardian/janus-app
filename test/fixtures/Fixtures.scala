@@ -60,7 +60,7 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/alpha-id/alpha-1",
     policyName = "alpha-1",
     policyGrantId = grantAlpha.id,
-    stackName = "test-stack",
+    stack = "test-stack",
     stage = "PROD",
     description = "Alpha policy",
     account = fooAct
@@ -70,7 +70,7 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/alpha-id/alpha-2",
     policyName = "alpha-2",
     policyGrantId = grantAlpha.id,
-    stackName = "test-stack",
+    stack = "test-stack",
     stage = "PROD",
     description = "Alpha policy",
     account = fooAct
@@ -80,7 +80,7 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/alpha-id/alpha",
     policyName = "alpha",
     policyGrantId = grantAlpha.id,
-    stackName = "test-stack",
+    stack = "test-stack",
     stage = "PROD",
     description = "Alpha policy",
     account = barAct
@@ -90,7 +90,7 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/beta-id/beta",
     policyName = "beta",
     policyGrantId = grantBeta.id,
-    stackName = "test-stack",
+    stack = "test-stack",
     stage = "PROD",
     description = "Beta policy",
     account = fooAct
@@ -100,7 +100,7 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/beta-id/beta",
     policyName = "beta",
     policyGrantId = grantBeta.id,
-    stackName = "test-stack",
+    stack = "test-stack",
     stage = "PROD",
     description = "Beta policy",
     account = barAct
@@ -110,7 +110,7 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/gamma-id/gamma",
     policyName = "gamma",
     policyGrantId = grantGamma.id,
-    stackName = "test-stack",
+    stack = "test-stack",
     stage = "PROD",
     description = "Gamma policy",
     account = bazAct
@@ -120,7 +120,7 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/delta-id/delta",
     policyName = "delta",
     policyGrantId = grantDelta.id,
-    stackName = "test-stack",
+    stack = "test-stack",
     stage = "PROD",
     description = "Delta policy",
     account = quxAct

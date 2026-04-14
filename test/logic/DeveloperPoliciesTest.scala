@@ -46,7 +46,7 @@ class DeveloperPoliciesTest
           "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
         policyName = "p1",
         policyGrantId = "dev-pol-id",
-        stackName = "my-stack",
+        stack = "my-stack",
         stage = "PROD",
         description = "Description",
         account

@@ -101,7 +101,7 @@ class AccountsTest
                   .build(),
                 policyName = "awsResource",
                 policyGrantId = s"developerPolicyId${a.name}",
-                stackName = "test-stack",
+                stack = "test-stack",
                 stage = "PROD",
                 description = s"description${a.name}",
                 account = a
@@ -142,7 +142,7 @@ class AccountsTest
                     .build(),
                   policyName = "awsResource",
                   policyGrantId = s"provisionedRoleId${a.name}",
-                  stackName = "test-stack",
+                  stack = "test-stack",
                   stage = "PROD",
                   description = s"description${a.name}",
                   account = a
@@ -173,7 +173,7 @@ class AccountsTest
             .build(),
           policyName = "awsResource",
           policyGrantId = "developerPolicyIdFoo",
-          stackName = "test-stack",
+          stack = "test-stack",
           stage = "PROD",
           description = "descriptionFoo",
           account = fooAct
@@ -208,7 +208,7 @@ class AccountsTest
             .build(),
           policyName = "awsResource",
           policyGrantId = "developerPolicyIdFoo",
-          stackName = "test-stack",
+          stack = "test-stack",
           stage = "PROD",
           description = "descriptionFoo",
           account = fooAct
@@ -325,7 +325,7 @@ class AccountsTest
               .build(),
             policyName = "awsResource",
             policyGrantId = s"provisionedRoleId${a.name}",
-            stackName = "test-stack",
+            stack = "test-stack",
             stage = "PROD",
             description = s"description${a.name}",
             account = a
