@@ -9,13 +9,28 @@ import models.{
 import software.amazon.awssdk.services.iam.model.Policy
 
 import java.net.URLEncoder
+import scala.util.matching.Regex
 
 object DeveloperPolicies {
 
+  /* Matches: /developer-policy/guardian/<repo-name>/<stack>/<stage>/<grant-id>/
+   * Each captured segment must contain at least one non-whitespace character. */
+  private val DeveloperPolicyPath: Regex =
+    """/developer-policy/guardian/[^\s/]+/([^\s/]+)/([^\s/]+)/([^\s/]+)/""".r
+
+  /** A temporary solution while we have two forms of managed policy to parse.
+    * This can be removed when all developer policies are built using GuCDK
+    * v63.1.0 or equivalent.
+    */
+  def toDeveloperPolicyWithFallback(
+      account: AwsAccount,
+      policy: Policy
+  ): Option[DeveloperPolicy] =
+    toDeveloperPolicy(account, policy).orElse(
+      toDeveloperPolicyFromOldPolicy(account, policy)
+    )
+
   /** Creates a DeveloperPolicy from an AWS IAM managed policy if it's possible.
-    *
-    * It's assumed that the managed policy will have a path with the structure
-    * "/developer-policy/<developer-policy-id>/".
     *
     * @param account
     *   AWS account holding the source policy.
@@ -27,12 +42,35 @@ object DeveloperPolicies {
       policy: Policy
   ): Option[DeveloperPolicy] =
     for {
+      case DeveloperPolicyPath(stackName, stage, policyGrantId) <-
+        DeveloperPolicyPath.findFirstMatchIn(policy.path)
+      description <- Option(policy.description).filter(!_.isBlank)
+    } yield DeveloperPolicy(
+      policyArnString = policy.arn,
+      policyName = policy.policyName,
+      policyGrantId,
+      stackName,
+      stage,
+      description,
+      account
+    )
+
+  private[logic] def toDeveloperPolicyFromOldPolicy(
+      account: AwsAccount,
+      policy: Policy
+  ): Option[DeveloperPolicy] =
+    /* Old AWS managed policy path structure was:
+     * /developer-policy/<grant-id>/
+     */
+    for {
       policyGrantId <- policy.path.split('/').lift(2)
     } yield DeveloperPolicy(
       policyArnString = policy.arn,
       policyName = policy.policyName,
       policyGrantId,
-      description = Option(policy.description).filter(!_.isBlank),
+      stack = "unknown",
+      stage = "unknown",
+      description = Option(policy.description).getOrElse("unknown"),
       account
     )
 
@@ -43,7 +81,7 @@ object DeveloperPolicies {
     Permission.fromManagedPolicyArns(
       account = policy.account,
       label = developerPolicySlug(policy.policyName),
-      description = policy.description.getOrElse("No description"),
+      description = policy.description,
       managedPolicyArns = List(policy.policyArn.toString),
       shortTerm = grant.shortTerm
     )

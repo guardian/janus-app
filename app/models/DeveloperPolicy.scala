@@ -11,8 +11,14 @@ import scala.util.Try
   *
   * @param policyArn
   *   ARN
+  * @param policyName
+  *   Name of source AWS managed policy
   * @param policyGrantId
   *   Corresponds to [[com.gu.janus.model.DeveloperPolicyGrant.id]]
+  * @param stack
+  *   Name of stack containing the policy
+  * @param stage
+  *   Deployment stage where resources are available
   * @param description
   *   Description for display in Janus UI
   * @param account
@@ -22,7 +28,9 @@ case class DeveloperPolicy(
     policyArn: Arn,
     policyName: String,
     policyGrantId: String,
-    description: Option[String],
+    stack: String,
+    stage: String,
+    description: String,
     account: AwsAccount
 )
 
@@ -31,12 +39,16 @@ object DeveloperPolicy {
       policyArnString: String,
       policyName: String,
       policyGrantId: String,
-      description: Option[String],
+      stack: String,
+      stage: String,
+      description: String,
       account: AwsAccount
   ): DeveloperPolicy = DeveloperPolicy(
     Arn.fromString(policyArnString),
     policyName,
     policyGrantId,
+    stack,
+    stage,
     description,
     account
   )

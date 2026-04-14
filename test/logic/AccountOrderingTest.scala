@@ -145,10 +145,12 @@ class AccountOrderingTest
           } yield {
             DeveloperPolicy(
               policyArnString =
-                s"arn:aws:iam::123456789012:policy/alpha-$policyNum",
+                s"arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/${grantAlpha.id}/$name",
               policyName = name,
               policyGrantId = grantAlpha.id,
-              description = Some(s"Alpha policy $policyNum: $name"),
+              stack = "test-stack",
+              stage = "PROD",
+              description = s"Alpha policy $policyNum: $name",
               account = fooAct
             )
           }
