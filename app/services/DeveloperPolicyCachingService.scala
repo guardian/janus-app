@@ -165,7 +165,7 @@ class DeveloperPolicyCachingService(
     for {
       awsPolicy <- Iam.getPolicyDetails(iam, summary)
       policy <- IO.fromOption(
-        DeveloperPolicies.toDeveloperPolicy(
+        DeveloperPolicies.toDeveloperPolicyWithFallback(
           account,
           awsPolicy
         )
