@@ -18,6 +18,18 @@ object DeveloperPolicies {
   private val DeveloperPolicyPath: Regex =
     """/developer-policy/guardian/[^\s/]+/([^\s/]+)/([^\s/]+)/([^\s/]+)/""".r
 
+  /** A temporary solution while we have two forms of managed policy to parse.
+    * This can be removed when all developer policies are built using GuCDK
+    * v63.1.0 or equivalent.
+    */
+  def toDeveloperPolicyWithFallback(
+      account: AwsAccount,
+      policy: Policy
+  ): Option[DeveloperPolicy] =
+    toDeveloperPolicy(account, policy).orElse(
+      toDeveloperPolicyFromOldPolicy(account, policy)
+    )
+
   /** Creates a DeveloperPolicy from an AWS IAM managed policy if it's possible.
     *
     * @param account
@@ -43,7 +55,7 @@ object DeveloperPolicies {
       account
     )
 
-  def toDeveloperPolicyFromOldPolicy(
+  private[logic] def toDeveloperPolicyFromOldPolicy(
       account: AwsAccount,
       policy: Policy
   ): Option[DeveloperPolicy] =
