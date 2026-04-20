@@ -16,6 +16,10 @@
             <i class="material-icons tiny" aria-hidden="true">layers</i>
             @policy.stage
         </div>
+        <div class="developer-policy-stage grey-text" aria-label="Source repository: @policy.sourceRepo">
+            <i class="material-icons tiny" aria-hidden="true">folder</i>
+            <a href="https://github.com/@policy.sourceRepo" target="_blank" rel="noopener noreferrer">@policy.sourceRepo</a>
+        </div>
         <div class="developer-policy-item-policy">
             <div class="developer-policy-name grey-text" aria-label="IAM name of the role in AWS">
                 @policy.policyName
