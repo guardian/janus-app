@@ -48,9 +48,10 @@ class DeveloperPoliciesTest
           "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
         policyName = "p1",
         policyGrantId = "dev-pol-id",
+        sourceRepo = "guardian/janus-app",
         stack = "my-stack",
         stage = "PROD",
-        description = "Description",
+        friendlyName = "Description",
         account
       )
     }
@@ -140,9 +141,10 @@ class DeveloperPoliciesTest
           "arn:aws:iam::123:policy/developer-policy/old-grant-id/p1",
         policyName = "p1",
         policyGrantId = "old-grant-id",
+        sourceRepo = "guardian/unknown",
         stack = "unknown",
         stage = "unknown",
-        description = "Old description",
+        friendlyName = "Old description",
         account
       )
     }
@@ -157,7 +159,7 @@ class DeveloperPoliciesTest
 
       val result = toDeveloperPolicyFromOldPolicy(account, oldPolicy)
 
-      result.value.description shouldBe "unknown"
+      result.value.friendlyName shouldBe "unknown"
     }
 
     "should return None when the path has no third segment" in {
@@ -181,9 +183,10 @@ class DeveloperPoliciesTest
           "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
         policyName = "p1",
         policyGrantId = "dev-pol-id",
+        sourceRepo = "guardian/janus-app",
         stack = "my-stack",
         stage = "PROD",
-        description = "Description",
+        friendlyName = "Description",
         account
       )
     }
@@ -256,6 +259,7 @@ class DeveloperPoliciesTest
       "arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/dev-pol-id/p1",
       "p1",
       "dev-pol-id",
+      "guardian/test-repo",
       "test-stack",
       "PROD",
       "A description",
@@ -313,6 +317,7 @@ class DeveloperPoliciesTest
           s"arn:aws:iam::123:policy/guardian/test-repo/test-stack/PROD/grant-id/$policyName",
           policyName,
           "grant-id",
+          "guardian/test-repo",
           "test-stack",
           "PROD",
           "A description",
@@ -345,13 +350,15 @@ class DeveloperPoliciesTest
         account <- genAwsAccount
         policyName <- Gen.alphaNumStr.suchThat(_.nonEmpty)
         grantId <- Gen.alphaNumStr.suchThat(_.nonEmpty)
+        sourceRepo <- Gen.alphaNumStr.suchThat(_.nonEmpty)
         stackName <- Gen.alphaNumStr.suchThat(_.nonEmpty)
         stage <- Gen.alphaNumStr.suchThat(_.nonEmpty)
         description <- Gen.alphaStr.suchThat(_.nonEmpty)
       } yield DeveloperPolicy(
-        s"arn:aws:iam::123456789012:policy/guardian/test-repo/$stackName/$stage/$grantId/$policyName",
+        s"arn:aws:iam::123456789012:policy/guardian/$sourceRepo/$stackName/$stage/$grantId/$policyName",
         policyName,
         grantId,
+        s"guardian/$sourceRepo",
         stackName,
         stage,
         description,
