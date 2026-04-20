@@ -101,9 +101,10 @@ class AccountsTest
                   .build(),
                 policyName = "awsResource",
                 policyGrantId = s"developerPolicyId${a.name}",
+                sourceRepo = "guardian/janus-app",
                 stack = "test-stack",
                 stage = "PROD",
-                description = s"description${a.name}",
+                friendlyName = s"description${a.name}",
                 account = a
               )
             ),
@@ -142,9 +143,10 @@ class AccountsTest
                     .build(),
                   policyName = "awsResource",
                   policyGrantId = s"provisionedRoleId${a.name}",
+                  sourceRepo = "guardian/janus-app",
                   stack = "test-stack",
                   stage = "PROD",
-                  description = s"description${a.name}",
+                  friendlyName = s"description${a.name}",
                   account = a
                 )
               ),
@@ -173,9 +175,10 @@ class AccountsTest
             .build(),
           policyName = "awsResource",
           policyGrantId = "developerPolicyIdFoo",
+          sourceRepo = "guardian/janus-app",
           stack = "test-stack",
           stage = "PROD",
-          description = "descriptionFoo",
+          friendlyName = "descriptionFoo",
           account = fooAct
         )
       )
@@ -208,9 +211,10 @@ class AccountsTest
             .build(),
           policyName = "awsResource",
           policyGrantId = "developerPolicyIdFoo",
+          sourceRepo = "guardian/janus-app",
           stack = "test-stack",
           stage = "PROD",
-          description = "descriptionFoo",
+          friendlyName = "descriptionFoo",
           account = fooAct
         )
       )
@@ -325,9 +329,10 @@ class AccountsTest
               .build(),
             policyName = "awsResource",
             policyGrantId = s"provisionedRoleId${a.name}",
+            sourceRepo = "guardian/janus-app",
             stack = "test-stack",
             stage = "PROD",
-            description = s"description${a.name}",
+            friendlyName = s"description${a.name}",
             account = a
           )
         )

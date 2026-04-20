@@ -60,9 +60,10 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/alpha-id/alpha-1",
     policyName = "alpha-1",
     policyGrantId = grantAlpha.id,
+    sourceRepo = "guardian/test-repo",
     stack = "test-stack",
     stage = "PROD",
-    description = "Alpha policy",
+    friendlyName = "Alpha policy",
     account = fooAct
   )
   val developerPolicyAlphaFoo2 = DeveloperPolicy(
@@ -70,9 +71,10 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/alpha-id/alpha-2",
     policyName = "alpha-2",
     policyGrantId = grantAlpha.id,
+    sourceRepo = "guardian/test-repo",
     stack = "test-stack",
     stage = "PROD",
-    description = "Alpha policy",
+    friendlyName = "Alpha policy",
     account = fooAct
   )
   val developerPolicyAlphaBar = DeveloperPolicy(
@@ -80,9 +82,10 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/alpha-id/alpha",
     policyName = "alpha",
     policyGrantId = grantAlpha.id,
+    sourceRepo = "guardian/test-repo",
     stack = "test-stack",
     stage = "PROD",
-    description = "Alpha policy",
+    friendlyName = "Alpha policy",
     account = barAct
   )
   val developerPolicyBetaFoo = DeveloperPolicy(
@@ -90,9 +93,10 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/beta-id/beta",
     policyName = "beta",
     policyGrantId = grantBeta.id,
+    sourceRepo = "guardian/test-repo",
     stack = "test-stack",
     stage = "PROD",
-    description = "Beta policy",
+    friendlyName = "Beta policy",
     account = fooAct
   )
   val developerPolicyBetaBar = DeveloperPolicy(
@@ -100,9 +104,10 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/beta-id/beta",
     policyName = "beta",
     policyGrantId = grantBeta.id,
+    sourceRepo = "guardian/janus-app",
     stack = "test-stack",
     stage = "PROD",
-    description = "Beta policy",
+    friendlyName = "Beta policy",
     account = barAct
   )
   val developerPolicyGammaBaz = DeveloperPolicy(
@@ -110,9 +115,10 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/gamma-id/gamma",
     policyName = "gamma",
     policyGrantId = grantGamma.id,
+    sourceRepo = "guardian/janus-app",
     stack = "test-stack",
     stage = "PROD",
-    description = "Gamma policy",
+    friendlyName = "Gamma policy",
     account = bazAct
   )
   val developerPolicyDeltaQux = DeveloperPolicy(
@@ -120,9 +126,10 @@ object Fixtures {
       "arn:aws:iam::123456789012:policy/guardian/test-repo/test-stack/PROD/delta-id/delta",
     policyName = "delta",
     policyGrantId = grantDelta.id,
+    sourceRepo = "guardian/janus-app",
     stack = "test-stack",
     stage = "PROD",
-    description = "Delta policy",
+    friendlyName = "Delta policy",
     account = quxAct
   )
 }
