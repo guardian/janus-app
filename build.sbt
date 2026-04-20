@@ -98,7 +98,7 @@ lazy val root: Project = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "35.0.1",
+      "com.gu.play-googleauth" %% "play-v30" % "36.1.0",
       "com.gu.play-secret-rotation" %% "play-v30" % "17.0.4",
       "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "17.0.4",
       "software.amazon.awssdk" % "arns" % awsSdkVersion,
