@@ -288,6 +288,9 @@ textarea.textarea--aws-profile-id.aws-profile-id {
     font-weight: 700;
     padding: 12px 17px 2px 17px;
 }
+.card-content--permission-heading__text {
+    margin: 0;
+}
 
 input[type=text]#revocation-confirmation {
     font-family: Roboto, sans-serif;
@@ -635,22 +638,67 @@ a.copy-text--button__small {
     left: auto;
     transform: none;
     margin-bottom: 6px;
-    padding: 8px 12px;
-    background-color: #424242;
-    color: white;
+    background-color: #fff;
+    color: #212121;
     font-size: small;
     font-weight: normal;
-    max-width: min(280px, 80vw);
+    min-width: min(220px, 90vw);
+    max-width: min(320px, 90vw);
     white-space: normal;
     border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border-top: 3px solid #006064;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
     z-index: 10;
+    overflow: hidden;
 }
 
-.developer-policy-info-btn:hover + .developer-policy-info-tooltip,
-.developer-policy-info-btn:focus + .developer-policy-info-tooltip {
+.developer-policy-info-btn:hover ~ .developer-policy-info-tooltip,
+.developer-policy-info-btn:focus ~ .developer-policy-info-tooltip {
     display: block;
 }
+
+@media screen and (max-width: 600px) {
+    .card-content--permission-heading {
+        position: relative;
+    }
+    .developer-policy-info {
+        position: static;
+    }
+    .developer-policy-info-tooltip {
+        left: 0;
+        right: 0;
+        max-width: none;
+        min-width: 0;
+    }
+}
+
+.developer-policy-info-tooltip__key {
+    font-family: monospace;
+    font-size: small;
+    padding: 4px 10px;
+    background-color: #eef7ff;
+    border-bottom: 1px solid #006064;
+    color: #424242;
+    overflow-wrap: break-word;
+}
+
+.developer-policy-info-tooltip__body {
+    padding: 8px 10px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 8px;
+}
+
+.developer-policy-info-tooltip__label {
+    color: #757575;
+    white-space: nowrap;
+}
+
+.developer-policy-info-tooltip__value {
+    overflow-wrap: break-word;
+    min-width: 0;
+}
+
 
 .developer-policy-item-cta {
     padding-top: 10px;

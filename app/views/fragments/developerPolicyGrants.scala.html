@@ -13,7 +13,7 @@
                     </div>
                     @for((policy, policyPerm) <- policies.map(p => p -> DeveloperPolicies.toPermission(p, grant))) {
                         <div class="card-content card-content--permission-heading">
-                            <p>
+                            <div class="card-content--permission-heading__text">
                                 <span class="developer-policy-stage-inline" title="Stage: @policy.stage">
                                     <i class="material-icons tiny" aria-hidden="true">layers</i>
                                     <span class="sr-only">Stage:</span>
@@ -26,18 +26,29 @@
                                 <span class="developer-policy-info">
                                     <button type="button"
                                             class="developer-policy-info-btn"
-                                            aria-describedby="policy-info-@policyPerm.id">
+                                            aria-describedby="policy-info-sr-@policyPerm.id">
                                         <i class="material-icons tiny" aria-hidden="true">info_outline</i>
                                         <span class="sr-only">Policy details</span>
                                     </button>
-                                    <span id="policy-info-@policyPerm.id" class="developer-policy-info-tooltip" role="tooltip">
-                                        Defined in: @policy.sourceRepo<br>
-                                        Deployed in stack: @policy.stack<br>
-                                        Deployed to stage: @policy.stage<br>
-                                        AWS policy: @policy.policyName
+                                    <span id="policy-info-sr-@policyPerm.id" class="sr-only">
+                                        AWS policy: @policy.policyName.
+                                        Defined in: @policy.sourceRepo.
+                                        Deployed in stack: @policy.stack.
+                                        Deployed to stage: @policy.stage.
                                     </span>
+                                    <div class="developer-policy-info-tooltip" aria-hidden="true">
+                                        <div class="developer-policy-info-tooltip__key">@policy.policyName</div>
+                                        <div class="developer-policy-info-tooltip__body">
+                                            <span class="developer-policy-info-tooltip__label">Defined in</span>
+                                            <span class="developer-policy-info-tooltip__value">@policy.sourceRepo</span>
+                                            <span class="developer-policy-info-tooltip__label">Deployed in stack</span>
+                                            <span class="developer-policy-info-tooltip__value">@policy.stack</span>
+                                            <span class="developer-policy-info-tooltip__label">Deployed to stage</span>
+                                            <span class="developer-policy-info-tooltip__value">@policy.stage</span>
+                                        </div>
+                                    </div>
                                 </span>
-                            </p>
+                            </div>
                         </div>
                         <div class="card-action card-action--permission">
                             <div class="card-action-group__row row">
