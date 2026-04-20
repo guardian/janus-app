@@ -34,7 +34,7 @@
                                         Defined in: @policy.sourceRepo<br>
                                         Deployed in stack: @policy.stack<br>
                                         Deployed to stage: @policy.stage<br>
-                                        Policy name: @policy.policyName
+                                        AWS policy: @policy.policyName
                                     </span>
                                 </span>
                             </p>
@@ -71,4 +71,9 @@
                             </div>
                         </div>
                     }
+                }
+
+                @* Show a lower divider if there is content to divide *@
+                @if(accountAccess.developerPolicies.nonEmpty && accountAccess.permissions.nonEmpty) {
+                    <hr class="aws-account-body__section-divider">
                 }

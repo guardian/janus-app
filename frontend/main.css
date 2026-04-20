@@ -275,6 +275,11 @@ textarea.textarea--aws-profile-id.aws-profile-id {
 .aws-account-body .card-action.card-action--permission {
     padding: 2px 17px 12px 17px;
 }
+.aws-account-body__section-divider {
+    margin: 0;
+    border: none;
+    border-top: 4px solid #006064;
+}
 .aws-account-body .card-content.card-content--permission-heading {
     font-weight: 700;
     padding: 12px 17px 2px 17px;
