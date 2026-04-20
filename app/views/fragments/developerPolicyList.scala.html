@@ -12,6 +12,10 @@
         <div class="developer-policy-description expand" aria-label="Description of role">
             @policy.description
         </div>
+        <div class="developer-policy-stage grey-text" aria-label="Deployment stage: @policy.stage">
+            <i class="material-icons tiny" aria-hidden="true">layers</i>
+            @policy.stage
+        </div>
         <div class="developer-policy-item-policy">
             <div class="developer-policy-name grey-text" aria-label="IAM name of the role in AWS">
                 @policy.policyName

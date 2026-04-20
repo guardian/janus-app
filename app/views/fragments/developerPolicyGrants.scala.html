@@ -11,17 +11,32 @@
                     <div class="card-content card-content--aws-account-header @displayColour(displayMode) darken-4 white-text">
                         <p>@grant.name</p>
                     </div>
-                    @for(policyPerm <- policies.map(DeveloperPolicies.toPermission(_, grant))) {
+                    @for((policy, policyPerm) <- policies.map(p => p -> DeveloperPolicies.toPermission(p, grant))) {
                         <div class="card-content card-content--permission-heading">
                             <p>
-                                @if(policyPerm.description == "No description") {
-                                @policyPerm.label
-                            } else {
+                                <span class="developer-policy-stage-inline" title="Stage: @policy.stage">
+                                    <i class="material-icons tiny" aria-hidden="true">layers</i>
+                                    <span class="sr-only">Stage:</span>
+                                    @policy.stage
+                                </span>
                                 @policyPerm.description
-                            }
                                 @if(policyPerm.shortTerm) {
                                     <i class="material-icons tooltipped" data-position="bottom" data-delay="50" data-tooltip="This permission only grants short-term access">error</i>
                                 }
+                                <span class="developer-policy-info">
+                                    <button type="button"
+                                            class="developer-policy-info-btn"
+                                            aria-describedby="policy-info-@policyPerm.id">
+                                        <i class="material-icons tiny" aria-hidden="true">info_outline</i>
+                                        <span class="sr-only">Policy details</span>
+                                    </button>
+                                    <span id="policy-info-@policyPerm.id" class="developer-policy-info-tooltip" role="tooltip">
+                                        Defined in: @policy.sourceRepo<br>
+                                        Deployed in stack: @policy.stack<br>
+                                        Deployed to stage: @policy.stage<br>
+                                        Policy name: @policy.policyName
+                                    </span>
+                                </span>
                             </p>
                         </div>
                         <div class="card-action card-action--permission">

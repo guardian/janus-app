@@ -572,6 +572,77 @@ a.copy-text--button__small {
     border-left: solid 1px #bbb;
 }
 
+.developer-policy-stage {
+    padding: 4px 10px;
+    font-size: small;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border-right: solid 1px #bbb;
+    border-left: solid 1px #bbb;
+}
+
+.developer-policy-stage-inline {
+    font-size: small;
+    margin-right: 6px;
+    color: #006064;
+    font-weight: 500;
+}
+
+.developer-policy-stage-inline i {
+    /* Aligns the Material Icons font with adjacent text baseline */
+    vertical-align: -2px;
+    margin-right: 1px;
+}
+
+.developer-policy-info {
+    position: relative;
+    display: inline-block;
+}
+
+.developer-policy-info-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0 0 0 4px;
+    cursor: pointer;
+    vertical-align: middle;
+    color: #757575;
+}
+
+.developer-policy-info-btn:hover,
+.developer-policy-info-btn:focus {
+    color: #424242;
+    outline: 2px solid #006064;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.developer-policy-info-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    left: auto;
+    transform: none;
+    margin-bottom: 6px;
+    padding: 8px 12px;
+    background-color: #424242;
+    color: white;
+    font-size: small;
+    font-weight: normal;
+    max-width: min(280px, 80vw);
+    white-space: normal;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    z-index: 10;
+}
+
+.developer-policy-info-btn:hover + .developer-policy-info-tooltip,
+.developer-policy-info-btn:focus + .developer-policy-info-tooltip {
+    display: block;
+}
+
 .developer-policy-item-cta {
     padding-top: 10px;
     display: grid;
