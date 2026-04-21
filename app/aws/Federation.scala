@@ -33,9 +33,6 @@ object Federation {
 
   private val awsMinimumSessionLength = 900.seconds
 
-  private val usernameTagKey = "gu:janus:user"
-  private val permissionTagKey = "gu:janus:permission"
-
   private val signInUrl = "https://signin.aws.amazon.com/federation"
   private val consoleUrl = "https://console.aws.amazon.com/"
 
@@ -103,16 +100,6 @@ object Federation {
       .roleArn(roleArn)
       .roleSessionName(username)
       .durationSeconds(duration.getSeconds.toInt)
-      .tags(
-        // these tags are added to the assumed session
-        Tag.builder().key(usernameTagKey).value(username).build(),
-        Tag.builder().key(permissionTagKey).value(permission.id).build()
-      )
-      .transitiveTagKeys(
-        // these tags persist through chained role assumption to preserve governance information
-        usernameTagKey,
-        permissionTagKey
-      )
     permission.policy.foreach { policy =>
       requestBuilder.policy(policy)
     }
