@@ -16,7 +16,7 @@ object DeveloperPolicies {
   /* Matches: /developer-policy/guardian/<repo-name>/<stack>/<stage>/<grant-id>/
    * Each captured segment must contain at least one non-whitespace character. */
   private val DeveloperPolicyPath: Regex =
-    """/developer-policy/guardian/[^\s/]+/([^\s/]+)/([^\s/]+)/([^\s/]+)/""".r
+    """/developer-policy/(guardian/[^\s/]+)/([^\s/]+)/([^\s/]+)/([^\s/]+)/""".r
 
   /** A temporary solution while we have two forms of managed policy to parse.
     * This can be removed when all developer policies are built using GuCDK
@@ -42,16 +42,17 @@ object DeveloperPolicies {
       policy: Policy
   ): Option[DeveloperPolicy] =
     for {
-      case DeveloperPolicyPath(stackName, stage, policyGrantId) <-
+      case DeveloperPolicyPath(sourceRepo, stackName, stage, policyGrantId) <-
         DeveloperPolicyPath.findFirstMatchIn(policy.path)
-      description <- Option(policy.description).filter(!_.isBlank)
+      friendlyName <- Option(policy.description).filter(!_.isBlank)
     } yield DeveloperPolicy(
       policyArnString = policy.arn,
       policyName = policy.policyName,
       policyGrantId,
+      sourceRepo,
       stackName,
       stage,
-      description,
+      friendlyName,
       account
     )
 
@@ -68,9 +69,10 @@ object DeveloperPolicies {
       policyArnString = policy.arn,
       policyName = policy.policyName,
       policyGrantId,
+      sourceRepo = "guardian/unknown",
       stack = "unknown",
       stage = "unknown",
-      description = Option(policy.description).getOrElse("unknown"),
+      friendlyName = Option(policy.description).getOrElse("unknown"),
       account
     )
 
@@ -81,7 +83,7 @@ object DeveloperPolicies {
     Permission.fromManagedPolicyArns(
       account = policy.account,
       label = developerPolicySlug(policy.policyName),
-      description = policy.description,
+      description = policy.friendlyName,
       managedPolicyArns = List(policy.policyArn.toString),
       shortTerm = grant.shortTerm
     )
