@@ -11,18 +11,44 @@
                     <div class="card-content card-content--aws-account-header @displayColour(displayMode) darken-4 white-text">
                         <p>@grant.name</p>
                     </div>
-                    @for(policyPerm <- policies.map(DeveloperPolicies.toPermission(_, grant))) {
+                    @for((policy, policyPerm) <- policies.map(p => p -> DeveloperPolicies.toPermission(p, grant))) {
                         <div class="card-content card-content--permission-heading">
-                            <p>
-                                @if(policyPerm.description == "No description") {
-                                @policyPerm.label
-                            } else {
+                            <div class="card-content--permission-heading__text">
+                                <span class="developer-policy-stage-inline" title="Stage: @policy.stage">
+                                    <i class="material-icons tiny" aria-hidden="true">layers</i>
+                                    <span class="sr-only">Stage:</span>
+                                    @policy.stage
+                                </span>
                                 @policyPerm.description
-                            }
                                 @if(policyPerm.shortTerm) {
                                     <i class="material-icons tooltipped" data-position="bottom" data-delay="50" data-tooltip="This permission only grants short-term access">error</i>
                                 }
-                            </p>
+                                <span class="developer-policy-info">
+                                    <button type="button"
+                                            class="developer-policy-info-btn"
+                                            aria-describedby="policy-info-sr-@policyPerm.id">
+                                        <i class="material-icons tiny" aria-hidden="true">info_outline</i>
+                                        <span class="sr-only">Policy details</span>
+                                    </button>
+                                    <span id="policy-info-sr-@policyPerm.id" class="sr-only">
+                                        AWS policy: @policy.policyName.
+                                        Defined in: @policy.sourceRepo.
+                                        Deployed in stack: @policy.stack.
+                                        Deployed to stage: @policy.stage.
+                                    </span>
+                                    <div class="developer-policy-info-tooltip" aria-hidden="true">
+                                        <div class="developer-policy-info-tooltip__key">@policy.policyName</div>
+                                        <div class="developer-policy-info-tooltip__body">
+                                            <span class="developer-policy-info-tooltip__label">Defined in</span>
+                                            <span class="developer-policy-info-tooltip__value">@policy.sourceRepo</span>
+                                            <span class="developer-policy-info-tooltip__label">Deployed in stack</span>
+                                            <span class="developer-policy-info-tooltip__value">@policy.stack</span>
+                                            <span class="developer-policy-info-tooltip__label">Deployed to stage</span>
+                                            <span class="developer-policy-info-tooltip__value">@policy.stage</span>
+                                        </div>
+                                    </div>
+                                </span>
+                            </div>
                         </div>
                         <div class="card-action card-action--permission">
                             <div class="card-action-group__row row">
@@ -56,4 +82,9 @@
                             </div>
                         </div>
                     }
+                }
+
+                @* Show a lower divider if there is content to divide *@
+                @if(accountAccess.developerPolicies.nonEmpty && accountAccess.permissions.nonEmpty) {
+                    <hr class="aws-account-body__section-divider">
                 }

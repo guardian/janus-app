@@ -94,10 +94,15 @@ class Janus(
           janusData.admin
         )
         uiAccountAccess = orderedAccountAccess(accountsAccess, userPolicyGrants)
+        cacheStatus = DeveloperPolicies.lookupDeveloperPolicyCacheStatus(
+          developerPolicyService.getCacheStatus,
+          developerPolicyService.fetchEnabled
+        )
       } yield {
         Ok(
           views.html.admin(
             uiAccountAccess,
+            cacheStatus,
             request.user,
             janusData
           )

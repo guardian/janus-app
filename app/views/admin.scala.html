@@ -1,16 +1,16 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
-@import models.AwsAccountAccess
+@import models.{AwsAccountAccess, DeveloperPolicyCacheStatus}
 @import play.api.Mode
 
-@(accountAccesses: List[AwsAccountAccess], user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(accountAccesses: List[AwsAccountAccess], cacheStatus: DeveloperPolicyCacheStatus, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Admin", Some(user), janusData) {
     <div class="container">
         <div class="row">
             <div class="col s12">
                 <h1 class="header orange-text">Admin</h1>
-                <div class="card-panel">
+                <div class="card-panel admin-notice-panel">
                     <span>
                         As an administrator you have full access to all AWS accounts.
                         Please use this with care and try to let the team know what
@@ -22,7 +22,30 @@
             </div>
         </div>
 
-        @fragments.awsAccounts(accountAccesses, allowFavs = false)
+        <div role="region" aria-label="Developer policy status">
+            @cacheStatus match {
+                case DeveloperPolicyCacheStatus.Failure => {
+                    <div class="cache-status card-panel red lighten-4" role="status" aria-atomic="true">
+                        Developer policy failures detected - this may mean some permissions are not showing. Visit the <a href="@routes.AccountsController.accountDeveloperPolicies">policies status page</a> for more information.
+                    </div>
+                }
+                case DeveloperPolicyCacheStatus.Empty => {
+                    <div class="cache-status card-panel yellow lighten-4" role="status" aria-atomic="true">
+                        Developer policy cache is empty - this may mean some permissions are not showing. Try refreshing in a few moments.
+                    </div>
+                }
+                case DeveloperPolicyCacheStatus.Disabled => {
+                    <div class="cache-status card-panel red lighten-4" role="status" aria-atomic="true">
+                        The developer policy service is disabled - this may mean some permissions are not showing. Please contact DevX Security for further information.
+                    </div>
+                }
+                case DeveloperPolicyCacheStatus.Success => {}
+            }
+        </div>
+
+        <div class="admin-accounts-container">
+            @fragments.awsAccounts(accountAccesses, allowFavs = false)
+        </div>
     </div>
 
     @fragments.multiSelectHero()

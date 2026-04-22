@@ -79,7 +79,8 @@ button .btn, .btn-large {
     margin-top: -5px;
 }
 
-.index-main__container {
+.index-main__container,
+.admin-accounts-container {
     padding-top: 30px;
 }
 
@@ -272,12 +273,23 @@ textarea.textarea--aws-profile-id.aws-profile-id {
 .cache-status.card-panel {
     margin: 20px 0 -10px;
 }
+.admin-notice-panel {
+    margin-bottom: 0;
+}
 .aws-account-body .card-action.card-action--permission {
     padding: 2px 17px 12px 17px;
+}
+.aws-account-body__section-divider {
+    margin: 0;
+    border: none;
+    border-top: 4px solid #006064;
 }
 .aws-account-body .card-content.card-content--permission-heading {
     font-weight: 700;
     padding: 12px 17px 2px 17px;
+}
+.card-content--permission-heading__text {
+    margin: 0;
 }
 
 input[type=text]#revocation-confirmation {
@@ -571,6 +583,122 @@ a.copy-text--button__small {
     border-right: solid 1px #bbb;
     border-left: solid 1px #bbb;
 }
+
+.developer-policy-stage {
+    padding: 4px 10px;
+    font-size: small;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border-right: solid 1px #bbb;
+    border-left: solid 1px #bbb;
+}
+
+.developer-policy-stage-inline {
+    font-size: small;
+    margin-right: 6px;
+    color: #006064;
+    font-weight: 500;
+}
+
+.developer-policy-stage-inline i {
+    /* Aligns the Material Icons font with adjacent text baseline */
+    vertical-align: -2px;
+    margin-right: 1px;
+}
+
+.developer-policy-info {
+    position: relative;
+    display: inline-block;
+}
+
+.developer-policy-info-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0 0 0 4px;
+    cursor: pointer;
+    vertical-align: middle;
+    color: #757575;
+}
+
+.developer-policy-info-btn:hover,
+.developer-policy-info-btn:focus {
+    color: #424242;
+    outline: 2px solid #006064;
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+.developer-policy-info-tooltip {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    left: auto;
+    transform: none;
+    margin-bottom: 6px;
+    background-color: #fff;
+    color: #212121;
+    font-size: small;
+    font-weight: normal;
+    min-width: min(220px, 90vw);
+    max-width: min(320px, 90vw);
+    white-space: normal;
+    border-radius: 4px;
+    border-top: 3px solid #006064;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    z-index: 10;
+    overflow: hidden;
+}
+
+.developer-policy-info-btn:hover ~ .developer-policy-info-tooltip,
+.developer-policy-info-btn:focus ~ .developer-policy-info-tooltip {
+    display: block;
+}
+
+@media screen and (max-width: 600px) {
+    .card-content--permission-heading {
+        position: relative;
+    }
+    .developer-policy-info {
+        position: static;
+    }
+    .developer-policy-info-tooltip {
+        left: 0;
+        right: 0;
+        max-width: none;
+        min-width: 0;
+    }
+}
+
+.developer-policy-info-tooltip__key {
+    font-family: monospace;
+    font-size: small;
+    padding: 4px 10px;
+    background-color: #eef7ff;
+    border-bottom: 1px solid #006064;
+    color: #424242;
+    overflow-wrap: break-word;
+}
+
+.developer-policy-info-tooltip__body {
+    padding: 8px 10px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px 8px;
+}
+
+.developer-policy-info-tooltip__label {
+    color: #757575;
+    white-space: nowrap;
+}
+
+.developer-policy-info-tooltip__value {
+    overflow-wrap: break-word;
+    min-width: 0;
+}
+
 
 .developer-policy-item-cta {
     padding-top: 10px;
