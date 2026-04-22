@@ -18,18 +18,6 @@ object DeveloperPolicies {
   private val DeveloperPolicyPath: Regex =
     """/developer-policy/(guardian/[^\s/]+)/([^\s/]+)/([^\s/]+)/([^\s/]+)/""".r
 
-  /** A temporary solution while we have two forms of managed policy to parse.
-    * This can be removed when all developer policies are built using GuCDK
-    * v63.1.0 or equivalent.
-    */
-  def toDeveloperPolicyWithFallback(
-      account: AwsAccount,
-      policy: Policy
-  ): Option[DeveloperPolicy] =
-    toDeveloperPolicy(account, policy).orElse(
-      toDeveloperPolicyFromOldPolicy(account, policy)
-    )
-
   /** Creates a DeveloperPolicy from an AWS IAM managed policy if it's possible.
     *
     * @param account
@@ -53,26 +41,6 @@ object DeveloperPolicies {
       stackName,
       stage,
       friendlyName,
-      account
-    )
-
-  private[logic] def toDeveloperPolicyFromOldPolicy(
-      account: AwsAccount,
-      policy: Policy
-  ): Option[DeveloperPolicy] =
-    /* Old AWS managed policy path structure was:
-     * /developer-policy/<grant-id>/
-     */
-    for {
-      policyGrantId <- policy.path.split('/').lift(2)
-    } yield DeveloperPolicy(
-      policyArnString = policy.arn,
-      policyName = policy.policyName,
-      policyGrantId,
-      sourceRepo = "guardian/unknown",
-      stack = "unknown",
-      stage = "unknown",
-      friendlyName = Option(policy.description).getOrElse("unknown"),
       account
     )
 

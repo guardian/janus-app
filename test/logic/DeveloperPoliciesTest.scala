@@ -5,8 +5,6 @@ import logic.DeveloperPolicies.{
   DEVELOPER_POLICY_NAMESPACE_PREFIX,
   developerPolicySlug,
   toDeveloperPolicy,
-  toDeveloperPolicyFromOldPolicy,
-  toDeveloperPolicyWithFallback,
   toPermission
 }
 import models.*
@@ -121,101 +119,6 @@ class DeveloperPoliciesTest
         .build()
 
       toDeveloperPolicy(account, policy) shouldBe None
-    }
-  }
-
-  "toDeveloperPolicyFromOldPolicy" - {
-    "should return a DeveloperPolicy using the third path segment as the grant ID" in {
-      val oldPolicy = Policy
-        .builder()
-        .arn("arn:aws:iam::123:policy/developer-policy/old-grant-id/p1")
-        .path("/developer-policy/old-grant-id/")
-        .policyName("p1")
-        .description("Old description")
-        .build()
-
-      val result = toDeveloperPolicyFromOldPolicy(account, oldPolicy)
-
-      result.value shouldBe DeveloperPolicy(
-        policyArnString =
-          "arn:aws:iam::123:policy/developer-policy/old-grant-id/p1",
-        policyName = "p1",
-        policyGrantId = "old-grant-id",
-        sourceRepo = "guardian/unknown",
-        stack = "unknown",
-        stage = "unknown",
-        friendlyName = "Old description",
-        account
-      )
-    }
-
-    "should use 'unknown' as description when description is null" in {
-      val oldPolicy = Policy
-        .builder()
-        .arn("arn:aws:iam::123:policy/developer-policy/grant-x/pol")
-        .path("/developer-policy/grant-x/")
-        .policyName("pol")
-        .build()
-
-      val result = toDeveloperPolicyFromOldPolicy(account, oldPolicy)
-
-      result.value.friendlyName shouldBe "unknown"
-    }
-
-    "should return None when the path has no third segment" in {
-      val shortPathPolicy = Policy
-        .builder()
-        .arn("arn:aws:iam::123:policy/developer-policy/pol")
-        .path("/developer-policy/")
-        .policyName("pol")
-        .build()
-
-      toDeveloperPolicyFromOldPolicy(account, shortPathPolicy) shouldBe None
-    }
-  }
-
-  "toDeveloperPolicyWithFallback" - {
-    "should parse a new-style policy path successfully" in {
-      val result = toDeveloperPolicyWithFallback(account, policy)
-
-      result.value shouldBe DeveloperPolicy(
-        policyArnString =
-          "arn:aws:iam::123:policy/developer-policy/guardian/janus-app/my-stack/PROD/dev-pol-id/p1",
-        policyName = "p1",
-        policyGrantId = "dev-pol-id",
-        sourceRepo = "guardian/janus-app",
-        stack = "my-stack",
-        stage = "PROD",
-        friendlyName = "Description",
-        account
-      )
-    }
-
-    "should fall back to the old-style parse when the new-style parse fails" in {
-      val oldStylePolicy = Policy
-        .builder()
-        .arn("arn:aws:iam::123:policy/developer-policy/old-grant-id/p1")
-        .path("/developer-policy/old-grant-id/")
-        .policyName("p1")
-        .description("Old description")
-        .build()
-
-      val result = toDeveloperPolicyWithFallback(account, oldStylePolicy)
-
-      result.value.policyGrantId shouldBe "old-grant-id"
-      result.value.stack shouldBe "unknown"
-      result.value.stage shouldBe "unknown"
-    }
-
-    "should return None when neither parse succeeds" in {
-      val unrecognisedPolicy = Policy
-        .builder()
-        .arn("arn:aws:iam::123:policy/unrelated/")
-        .path("/")
-        .policyName("p1")
-        .build()
-
-      toDeveloperPolicyWithFallback(account, unrecognisedPolicy) shouldBe None
     }
   }
 
