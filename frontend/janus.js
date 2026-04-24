@@ -437,6 +437,23 @@ document.addEventListener("DOMContentLoaded", function () {
     console.error("Error setting up passkey functionality:", error);
   }
 
+  // developer policy chips: toggle secondary details (stack & repo)
+  document.querySelectorAll(".janus-chip--toggle").forEach(function (toggle) {
+    toggle.addEventListener("click", function () {
+      const allChipContainers = document.querySelectorAll(".developer-policy-chips");
+      const isExpanded = Array.from(allChipContainers).some(function (el) {
+        return el.classList.contains("developer-policy-chips--expanded");
+      });
+      allChipContainers.forEach(function (el) {
+        if (isExpanded) {
+          el.classList.remove("developer-policy-chips--expanded");
+        } else {
+          el.classList.add("developer-policy-chips--expanded");
+        }
+      });
+    });
+  });
+
   const flashMessage = document.getElementById("flash-message");
   if (flashMessage) {
     const flashMessages = {

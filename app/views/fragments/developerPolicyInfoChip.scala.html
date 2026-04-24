@@ -1,0 +1,15 @@
+@import logic.ViewHelpers.UIImage
+
+@(image: UIImage, label: String, tooltipText: String)(implicit assetsFinder: AssetsFinder)
+
+<span class="janus-chip grey-text text-darken-1">
+    @image match {
+        case UIImage.MaterialIcon(icon) => {
+            <i aria-hidden="true" class="material-icons grey-text text-darken-3 tooltipped" data-position="bottom" data-tooltip="@tooltipText">@icon</i>
+        }
+        case UIImage.AssetImage(path, alt) => {
+            <img src="@assetsFinder.path(path)" alt="@alt" class="janus-chip__image tooltipped" data-position="bottom" data-tooltip="@tooltipText">
+        }
+    }
+    @label
+</span>

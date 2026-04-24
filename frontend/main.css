@@ -177,6 +177,8 @@ button .btn, .btn-large {
 .card .card-action.card-action--audit-log {
     padding: 5px 17px;
     border-top: none;
+    background-color: transparent;
+    backdrop-filter: brightness(93%);
 }
 
 textarea.textarea--aws-profile-id.aws-profile-id {
@@ -267,7 +269,53 @@ textarea.textarea--aws-profile-id.aws-profile-id {
 }
 
 .card .card-content.card-content--aws-account-header {
-    padding: 3px 17px;
+    padding: 3px 16px;
+    border-radius: 2px 2px 0 0;
+}
+
+.card .card-content.card-content--permission-group-header {
+    padding: 3px 8px 3px 16px;
+    border-radius: 0;
+    border-bottom: solid 1px #cccccc80;
+    backdrop-filter: brightness(93%);
+}
+
+.developer-policy-grant-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 2px 10px;
+    align-items: center;
+}
+
+.developer-policy-grant-id {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: #42424280;
+    font-family: monospace;
+    font-size: 10px;
+}
+
+.developer-policy-grant-id .material-icons {
+    vertical-align: 0;
+    flex-shrink: 0;
+    font-size: 0.8rem;
+}
+
+.developer-policy-info {
+
+}
+.developer-policy-info dl {
+    margin: 0;
+}
+.developer-policy-info dl dt {
+    display: inline;
+    margin: 0;
+}
+.developer-policy-info dl dd {
+    display: inline;
+    margin: 0;
 }
 
 .cache-status.card-panel {
@@ -594,24 +642,6 @@ a.copy-text--button__small {
     border-left: solid 1px #bbb;
 }
 
-.developer-policy-stage-inline {
-    font-size: small;
-    margin-right: 6px;
-    color: #006064;
-    font-weight: 500;
-}
-
-.developer-policy-stage-inline i {
-    /* Aligns the Material Icons font with adjacent text baseline */
-    vertical-align: -2px;
-    margin-right: 1px;
-}
-
-.developer-policy-info {
-    position: relative;
-    display: inline-block;
-}
-
 .developer-policy-info-btn {
     background: none;
     border: none;
@@ -756,4 +786,51 @@ a.copy-text--button__small {
 }
 @keyframes spinner {
     to { transform: rotate(360deg); }
+}
+
+.developer-policy-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+.developer-policy-chips .janus-chip {
+    justify-content: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px 0 6px;
+    height: 24px;
+    font-size: 10px;
+    font-weight: normal;
+    border-radius: 2px;
+    border: solid 1px #cccccc80;
+    backdrop-filter: brightness(93%);
+}
+.janus-chip__image {
+    max-height: 13px;
+    max-width: 13px;
+}
+.developer-policy-chips--extra {
+    display: none;
+    contents: none;
+}
+.developer-policy-chips--expanded .developer-policy-chips--extra {
+    display: contents;
+}
+.developer-policy-chips--expanded .janus-chip--toggle {
+    display: none;
+}
+.janus-chip--toggle {
+    cursor: pointer;
+    border-style: dashed;
+    opacity: 0.6;
+    transition: opacity 0.15s ease;
+}
+.janus-chip--toggle:hover {
+    opacity: 1;
+}
+.janus-chip--toggle .material-icons {
+    font-size: 14px;
 }

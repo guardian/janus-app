@@ -4,7 +4,7 @@
 @import models.DisplayMode.*
 
 @import logic.DeveloperPolicies
-@(accountAccesses: List[AwsAccountAccess], allowFavs: Boolean, displayMode: DisplayMode = Normal)
+@(accountAccesses: List[AwsAccountAccess], allowFavs: Boolean, displayMode: DisplayMode = Normal)(implicit assetsFinder: AssetsFinder)
 
 <div class="row">
     @for((accountAccess, i) <- accountAccesses.zipWithIndex) {
@@ -72,7 +72,10 @@
                 }
                 </div>
                 <div class="card-action card-action--audit-log">
-                    <a class="grey-text darken-2" href="/audit/account/@accountAccess.awsAccount.authConfigKey">View audit trail <i class="material-icons">assignment</i></a>
+                    <a class="grey-text text-darken-2" href="/audit/account/@accountAccess.awsAccount.authConfigKey">
+                        <i class="material-icons">assignment</i>
+                        View audit trail
+                    </a>
                 </div>
             </div>
         </div>
