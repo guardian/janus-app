@@ -303,20 +303,6 @@ textarea.textarea--aws-profile-id.aws-profile-id {
     font-size: 0.8rem;
 }
 
-.developer-policy-info {
-
-}
-.developer-policy-info dl {
-    margin: 0;
-}
-.developer-policy-info dl dt {
-    display: inline;
-    margin: 0;
-}
-.developer-policy-info dl dd {
-    display: inline;
-    margin: 0;
-}
 
 .cache-status.card-panel {
     margin: 20px 0 -10px;
@@ -642,92 +628,6 @@ a.copy-text--button__small {
     border-left: solid 1px #bbb;
 }
 
-.developer-policy-info-btn {
-    background: none;
-    border: none;
-    padding: 0;
-    margin: 0 0 0 4px;
-    cursor: pointer;
-    vertical-align: middle;
-    color: #757575;
-}
-
-.developer-policy-info-btn:hover,
-.developer-policy-info-btn:focus {
-    color: #424242;
-    outline: 2px solid #006064;
-    outline-offset: 2px;
-    border-radius: 2px;
-}
-
-.developer-policy-info-tooltip {
-    display: none;
-    position: absolute;
-    bottom: 100%;
-    right: 0;
-    left: auto;
-    transform: none;
-    margin-bottom: 6px;
-    background-color: #fff;
-    color: #212121;
-    font-size: small;
-    font-weight: normal;
-    min-width: min(220px, 90vw);
-    max-width: min(320px, 90vw);
-    white-space: normal;
-    border-radius: 4px;
-    border-top: 3px solid #006064;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-    z-index: 10;
-    overflow: hidden;
-}
-
-.developer-policy-info-btn:hover ~ .developer-policy-info-tooltip,
-.developer-policy-info-btn:focus ~ .developer-policy-info-tooltip {
-    display: block;
-}
-
-@media screen and (max-width: 600px) {
-    .card-content--permission-heading {
-        position: relative;
-    }
-    .developer-policy-info {
-        position: static;
-    }
-    .developer-policy-info-tooltip {
-        left: 0;
-        right: 0;
-        max-width: none;
-        min-width: 0;
-    }
-}
-
-.developer-policy-info-tooltip__key {
-    font-family: monospace;
-    font-size: small;
-    padding: 4px 10px;
-    background-color: #eef7ff;
-    border-bottom: 1px solid #006064;
-    color: #424242;
-    overflow-wrap: break-word;
-}
-
-.developer-policy-info-tooltip__body {
-    padding: 8px 10px;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 2px 8px;
-}
-
-.developer-policy-info-tooltip__label {
-    color: #757575;
-    white-space: nowrap;
-}
-
-.developer-policy-info-tooltip__value {
-    overflow-wrap: break-word;
-    min-width: 0;
-}
 
 
 .developer-policy-item-cta {
