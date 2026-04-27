@@ -356,14 +356,19 @@ input[type=text].input--slim {
     border: none;
     margin-top: 7px;
     cursor: pointer;
+    border-radius: 10px;
 }
 
+.card-content--aws-account-header__button--favourite:hover,
 .card-content--aws-account-header__button--favourite:focus {
-    background-color: transparent;
+    background-color: #EECC2060;
 }
 
 .card-content--aws-account-header__button--favourite i {
     color: white;
+}
+.card-content--aws-account-header__button--favourite:focus i {
+    color: #EECC20;
 }
 
 .collapsible--fixed-paragraphs .collapsible-body p {
@@ -761,6 +766,11 @@ a.copy-text--button__small {
     transition: opacity 0.15s ease;
 }
 .developer-policy-chips--policy-name-copy:hover {
+    opacity: 1;
+}
+.developer-policy-chips--policy-name-copy:focus {
+    background-color: transparent;
+    backdrop-filter: brightness(85%);
     opacity: 1;
 }
 .developer-policy-chips--policy-name-copy .material-icons {
