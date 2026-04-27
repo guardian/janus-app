@@ -740,7 +740,6 @@ a.copy-text--button__small {
 }
 .developer-policy-chips .developer-policy-chips--policy-name {
     display: flex;
-    width: 100%;
     min-width: 0;
     font-family: monospace;
     font-size: 9px;
@@ -749,6 +748,7 @@ a.copy-text--button__small {
     backdrop-filter: brightness(96%);
 }
 .developer-policy-chips--policy-name-text {
+    flex-grow: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
