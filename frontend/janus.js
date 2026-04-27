@@ -439,7 +439,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // developer policy chips: toggle secondary details (stack & repo)
   document.querySelectorAll(".janus-chip--toggle").forEach(function (toggle) {
-    toggle.addEventListener("click", function () {
+    function handleToggle() {
       const allChipContainers = document.querySelectorAll(".developer-policy-chips");
       const isExpanded = Array.from(allChipContainers).some(function (el) {
         return el.classList.contains("developer-policy-chips--expanded");
@@ -451,6 +451,16 @@ document.addEventListener("DOMContentLoaded", function () {
           el.classList.add("developer-policy-chips--expanded");
         }
       });
+      document.querySelectorAll(".janus-chip--toggle").forEach(function (t) {
+        t.setAttribute("aria-expanded", String(!isExpanded));
+      });
+    }
+    toggle.addEventListener("click", handleToggle);
+    toggle.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleToggle();
+      }
     });
   });
 
