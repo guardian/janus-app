@@ -440,7 +440,9 @@ document.addEventListener("DOMContentLoaded", function () {
   // developer policy chips: toggle secondary details (stack & repo)
   document.querySelectorAll(".janus-chip--toggle").forEach(function (toggle) {
     function handleToggle() {
-      const allChipContainers = document.querySelectorAll(".developer-policy-chips");
+      const allChipContainers = document.querySelectorAll(
+        ".developer-policy-chips",
+      );
       const isExpanded = Array.from(allChipContainers).some(function (el) {
         return el.classList.contains("developer-policy-chips--expanded");
       });
@@ -465,18 +467,20 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // developer policy chips: copy policy name to clipboard
-  document.querySelectorAll(".developer-policy-chips--policy-name-copy").forEach(function (button) {
-    button.addEventListener("click", function () {
-      const text = button.getAttribute("data-copy-text");
-      const icon = button.querySelector(".material-icons");
-      navigator.clipboard.writeText(text).then(function () {
-        icon.textContent = "check";
-        setTimeout(function () {
-          icon.textContent = "content_copy";
-        }, 2000);
+  document
+    .querySelectorAll(".developer-policy-chips--policy-name-copy")
+    .forEach(function (button) {
+      button.addEventListener("click", function () {
+        const text = button.getAttribute("data-copy-text");
+        const icon = button.querySelector(".material-icons");
+        navigator.clipboard.writeText(text).then(function () {
+          icon.textContent = "check";
+          setTimeout(function () {
+            icon.textContent = "content_copy";
+          }, 2000);
+        });
       });
     });
-  });
 
   const flashMessage = document.getElementById("flash-message");
   if (flashMessage) {
