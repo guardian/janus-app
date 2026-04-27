@@ -31,6 +31,12 @@
                                 <span class="developer-policy-chips--extra">
                                     @developerPolicyInfoChip(MaterialIcon("apps"), policy.stack, "Stack")
                                     @developerPolicyInfoChip(AssetImage("images/GitHub_Invertocat_Black.png", "GitHub"), policy.sourceRepo, "GitHub repository")
+                                    <div class="janus-chip developer-policy-chips--policy-name">
+                                        <span class="developer-policy-chips--policy-name-text" title="@policy.policyName">@policy.policyName</span>
+                                        <button type="button" class="developer-policy-chips--policy-name-copy" data-copy-text="@policy.policyName" title="Copy policy name">
+                                            <i class="material-icons">content_copy</i>
+                                        </button>
+                                    </div>
                                 </span>
                             </div>
                             <div class="card-content--permission-heading__text">

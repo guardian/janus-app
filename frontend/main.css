@@ -567,8 +567,10 @@ a.copy-text--button__small {
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-
 .developer-policy-item-key {
+    display: flex;
+    align-items: center;
+    gap: 4px;
     font-family: monospace;
     padding: 5px 10px;
     background-color: #eef7ff;
@@ -621,9 +623,6 @@ a.copy-text--button__small {
 .developer-policy-stage {
     padding: 4px 10px;
     font-size: small;
-    display: flex;
-    align-items: center;
-    gap: 4px;
     border-right: solid 1px #bbb;
     border-left: solid 1px #bbb;
 }
@@ -733,4 +732,38 @@ a.copy-text--button__small {
 }
 .janus-chip--toggle .material-icons {
     font-size: 14px;
+}
+.developer-policy-chips .developer-policy-chips--policy-name {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    font-family: monospace;
+    font-size: 9px;
+    color: #757575cc;
+    padding: 2px 2px 2px 6px;
+    backdrop-filter: brightness(96%);
+}
+.developer-policy-chips--policy-name-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+}
+.developer-policy-chips--policy-name-copy {
+    flex-shrink: 0;
+    background: none;
+    border: 1px dashed #cccccc80;
+    border-radius: 2px;
+    cursor: pointer;
+    padding: 1px 3px;
+    line-height: 1;
+    opacity: 0.5;
+    transition: opacity 0.15s ease;
+}
+.developer-policy-chips--policy-name-copy:hover {
+    opacity: 1;
+}
+.developer-policy-chips--policy-name-copy .material-icons {
+    font-size: 12px;
+    vertical-align: -1px;
 }
