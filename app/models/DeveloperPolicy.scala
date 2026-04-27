@@ -7,7 +7,9 @@ import java.time.Instant
 import scala.util.Try
 
 /** Holds the data required to manage an IAM policy that's part of a
-  * [[com.gu.janus.model.DeveloperPolicyGrant]].
+  * [[com.gu.janus.model.DeveloperPolicyGrant]]. There is a 1..* relationship
+  * between a DeveloperPolicyGrant and a set of DeveloperPolicies. The source of
+  * the DeveloperPolicy is a managed IAM policy fetched from AWS at runtime.
   *
   * @param policyArn
   *   ARN
