@@ -1,10 +1,12 @@
 @import logic.DeveloperPolicies.developerPolicyLink
+@import logic.ViewHelpers.UIImage.*
 
-@(policy: DeveloperPolicy, unlinkableExample: Boolean = false)
+@(policy: DeveloperPolicy, unlinkableExample: Boolean = false)(implicit assetsFinder: AssetsFinder)
 
 <li class="developer-policy-item">
     <div class="developer-policy-item-janus">
         <div class="developer-policy-item-key">
+            <i class="material-icons tiny" aria-hidden="true">handyman</i>
             @policy.policyGrantId
         </div>
     </div>
@@ -12,13 +14,12 @@
         <div class="developer-policy-description expand" aria-label="Description of role">
             @policy.friendlyName
         </div>
-        <div class="developer-policy-stage grey-text" aria-label="Deployment stage: @policy.stage">
-            <i class="material-icons tiny" aria-hidden="true">layers</i>
-            @policy.stage
-        </div>
-        <div class="developer-policy-stage grey-text" aria-label="Source repository: @policy.sourceRepo">
-            <i class="material-icons tiny" aria-hidden="true">folder</i>
-            <a href="https://github.com/@policy.sourceRepo" target="_blank" rel="noopener noreferrer">@policy.sourceRepo</a>
+        <div class="developer-policy-stage grey-text" aria-label="Deployed AWS account: @policy.account.name">
+            <div class="developer-policy-chips">
+                @developerPolicyInfoChip(MaterialIcon("layers"), policy.stage, "Stage")
+                @developerPolicyInfoChip(MaterialIcon("apps"), policy.stack, "Stack")
+                @developerPolicyInfoChip(AssetImage("images/GitHub_Invertocat_Black.png", "GitHub"), policy.sourceRepo, "GitHub repository")
+            </div>
         </div>
         <div class="developer-policy-item-policy">
             <div class="developer-policy-name grey-text" aria-label="IAM name of the role in AWS">

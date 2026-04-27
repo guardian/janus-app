@@ -1,53 +1,49 @@
 @import models.AwsAccountAccess
 @import logic.Customisation.displayColour
+@import logic.ViewHelpers.UIImage.*
 @import models.DisplayMode
 @import models.DisplayMode.*
 
 @import logic.DeveloperPolicies
-@(accountAccess: AwsAccountAccess, allowFavs: Boolean, displayMode: DisplayMode = Normal)
+@(accountAccess: AwsAccountAccess, allowFavs: Boolean, displayMode: DisplayMode = Normal)(implicit assetsFinder: AssetsFinder)
 
                 @for((grant, policies) <- accountAccess.developerPolicies
                 ) {
-                    <div class="card-content card-content--aws-account-header @displayColour(displayMode) darken-4 white-text">
-                        <p>@grant.name</p>
+                    <div class="card-content card-content--permission-group-header grey-text text-darken-2">
+                        <div class="developer-policy-grant-header">
+                            <span class="developer-policy-grant-name">
+                                @grant.name
+                            </span>
+                            <span class="developer-policy-grant-id">
+                                <i class="material-icons tiny" aria-hidden="true">handyman</i>
+                                @grant.id
+                            </span>
+                        </div>
                     </div>
                     @for((policy, policyPerm) <- policies.map(p => p -> DeveloperPolicies.toPermission(p, grant))) {
+
                         <div class="card-content card-content--permission-heading">
-                            <div class="card-content--permission-heading__text">
-                                <span class="developer-policy-stage-inline" title="Stage: @policy.stage">
-                                    <i class="material-icons tiny" aria-hidden="true">layers</i>
-                                    <span class="sr-only">Stage:</span>
-                                    @policy.stage
+                            <div class="developer-policy-chips">
+                                @developerPolicyInfoChip(MaterialIcon("layers"), policy.stage, "Stage")
+                                <span class="janus-chip janus-chip--toggle grey-text text-darken-1" title="Show additional policy details" role="button" tabindex="0" aria-expanded="false" aria-label="Show stack and repo details">
+                                    <i class="material-icons" aria-hidden="true">more_horiz</i>
                                 </span>
+                                <span class="developer-policy-chips--extra">
+                                    @developerPolicyInfoChip(MaterialIcon("apps"), policy.stack, "Stack")
+                                    @developerPolicyInfoChip(AssetImage("images/GitHub_Invertocat_Black.png", "GitHub"), policy.sourceRepo, "GitHub repository")
+                                    <div class="janus-chip developer-policy-chips--policy-name">
+                                        <span class="developer-policy-chips--policy-name-text" title="@policy.policyName">@policy.policyName</span>
+                                        <button type="button" class="developer-policy-chips--policy-name-copy" data-copy-text="@policy.policyName" title="Copy policy name">
+                                            <i class="material-icons">content_copy</i>
+                                        </button>
+                                    </div>
+                                </span>
+                            </div>
+                            <div class="card-content--permission-heading__text">
                                 @policyPerm.description
                                 @if(policyPerm.shortTerm) {
                                     <i class="material-icons tooltipped" data-position="bottom" data-delay="50" data-tooltip="This permission only grants short-term access">error</i>
                                 }
-                                <span class="developer-policy-info">
-                                    <button type="button"
-                                            class="developer-policy-info-btn"
-                                            aria-describedby="policy-info-sr-@policyPerm.id">
-                                        <i class="material-icons tiny" aria-hidden="true">info_outline</i>
-                                        <span class="sr-only">Policy details</span>
-                                    </button>
-                                    <span id="policy-info-sr-@policyPerm.id" class="sr-only">
-                                        AWS policy: @policy.policyName.
-                                        Defined in: @policy.sourceRepo.
-                                        Deployed in stack: @policy.stack.
-                                        Deployed to stage: @policy.stage.
-                                    </span>
-                                    <div class="developer-policy-info-tooltip" aria-hidden="true">
-                                        <div class="developer-policy-info-tooltip__key">@policy.policyName</div>
-                                        <div class="developer-policy-info-tooltip__body">
-                                            <span class="developer-policy-info-tooltip__label">Defined in</span>
-                                            <span class="developer-policy-info-tooltip__value">@policy.sourceRepo</span>
-                                            <span class="developer-policy-info-tooltip__label">Deployed in stack</span>
-                                            <span class="developer-policy-info-tooltip__value">@policy.stack</span>
-                                            <span class="developer-policy-info-tooltip__label">Deployed to stage</span>
-                                            <span class="developer-policy-info-tooltip__value">@policy.stage</span>
-                                        </div>
-                                    </div>
-                                </span>
                             </div>
                         </div>
                         <div class="card-action card-action--permission">
@@ -86,5 +82,9 @@
 
                 @* Show a lower divider if there is content to divide *@
                 @if(accountAccess.developerPolicies.nonEmpty && accountAccess.permissions.nonEmpty) {
-                    <hr class="aws-account-body__section-divider">
+                    <div class="card-content card-content--permission-group-header grey-text text-darken-2">
+                        <span class="developer-policy-grant-name">
+                            Account permissions
+                        </span>
+                    </div>
                 }
