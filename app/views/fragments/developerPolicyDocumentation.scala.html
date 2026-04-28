@@ -1,7 +1,7 @@
 @import com.gu.janus.model.AwsAccount
 @import models.DeveloperPolicy
 
-@()
+@()(implicit assetsFinder: AssetsFinder)
 
 <div class="developer-policy-documentation-container">
     <div class="developer-policy-documentation-text">
@@ -23,9 +23,9 @@
                     policyArnString = "arn:aws:iam::aws:policy/ReadOnlyAccess",
                     policyName = "aws-policy-name",
                     policyGrantId = "grant-id-can-link-to-janus-access",
-                    sourceRepo = "guardian/janus-app",
-                    stack = "aws-stack",
-                    stage = "CODE",
+                    sourceRepo = "guardian/repository",
+                    stack = "stack",
+                    stage = "STAGE",
                     friendlyName = "Example developer policy: This is the AWS IAM Policy's description",
                     account = AwsAccount("ExampleAccount", "123456789012"),
                 ),

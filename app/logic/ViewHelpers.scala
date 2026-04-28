@@ -51,4 +51,9 @@ object ViewHelpers {
       .lift(column)
       .getOrElse(Nil)
   }
+
+  enum UIImage {
+    case MaterialIcon(name: String)
+    case AssetImage(path: String, alt: String)
+  }
 }

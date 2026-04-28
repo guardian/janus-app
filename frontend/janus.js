@@ -437,6 +437,51 @@ document.addEventListener("DOMContentLoaded", function () {
     console.error("Error setting up passkey functionality:", error);
   }
 
+  // developer policy chips: toggle secondary details (stack & repo)
+  document.querySelectorAll(".janus-chip--toggle").forEach(function (toggle) {
+    function handleToggle() {
+      const allChipContainers = document.querySelectorAll(
+        ".developer-policy-chips",
+      );
+      const isExpanded = Array.from(allChipContainers).some(function (el) {
+        return el.classList.contains("developer-policy-chips--expanded");
+      });
+      allChipContainers.forEach(function (el) {
+        if (isExpanded) {
+          el.classList.remove("developer-policy-chips--expanded");
+        } else {
+          el.classList.add("developer-policy-chips--expanded");
+        }
+      });
+      document.querySelectorAll(".janus-chip--toggle").forEach(function (t) {
+        t.setAttribute("aria-expanded", String(!isExpanded));
+      });
+    }
+    toggle.addEventListener("click", handleToggle);
+    toggle.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        handleToggle();
+      }
+    });
+  });
+
+  // developer policy chips: copy policy name to clipboard
+  document
+    .querySelectorAll(".developer-policy-chips--policy-name-copy")
+    .forEach(function (button) {
+      button.addEventListener("click", function () {
+        const text = button.getAttribute("data-copy-text");
+        const icon = button.querySelector(".material-icons");
+        navigator.clipboard.writeText(text).then(function () {
+          icon.textContent = "check";
+          setTimeout(function () {
+            icon.textContent = "content_copy";
+          }, 2000);
+        });
+      });
+    });
+
   const flashMessage = document.getElementById("flash-message");
   if (flashMessage) {
     const flashMessages = {
