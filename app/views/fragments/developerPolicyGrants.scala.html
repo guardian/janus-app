@@ -31,10 +31,10 @@
                                 <span class="developer-policy-chips--extra">
                                     @developerPolicyInfoChip(MaterialIcon("apps"), policy.stack, "Stack")
                                     @developerPolicyInfoChip(AssetImage("images/GitHub_Invertocat_Black.png", "GitHub"), policy.sourceRepo, "GitHub repository")
-                                    <div class="janus-chip developer-policy-chips--policy-name">
-                                        <span class="developer-policy-chips--policy-name-text" title="@policy.policyName">@policy.policyName</span>
-                                        <button type="button" class="developer-policy-chips--policy-name-copy" data-copy-text="@policy.policyName" title="Copy policy name">
-                                            <i class="material-icons">content_copy</i>
+                                    <div class="janus-chip developer-policy-chips--policy-name tooltipped" data-position="bottom" data-delay="50" data-tooltip="AWS policy name">
+                                        <span class="developer-policy-chips--policy-name-text">@policy.policyName</span>
+                                        <button type="button" class="developer-policy-chips--policy-name-copy" data-copy-text="@policy.policyName" aria-label="Copy policy name">
+                                            <i class="material-icons" aria-hidden="true">content_copy</i>
                                         </button>
                                     </div>
                                 </span>
