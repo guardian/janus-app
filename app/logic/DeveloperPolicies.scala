@@ -82,6 +82,16 @@ object DeveloperPolicies {
   def developerPolicyLink(policy: DeveloperPolicy): String =
     s"https://console.aws.amazon.com/iam/home#/policies/${policy.policyArn}"
 
+  /** Builds a map from each policy's access-level slug to its AWS console URL.
+    * Used by the audit view to render links for developer policy rows.
+    */
+  def developerPolicyLinksBySlug(
+      policies: Set[DeveloperPolicy]
+  ): Map[String, String] =
+    policies
+      .map(p => developerPolicySlug(p.policyName) -> developerPolicyLink(p))
+      .toMap
+
   def lookupDeveloperPolicyCacheStatus(
       accountAndStatuses: Map[AwsAccount, AwsAccountDeveloperPolicyStatus],
       serviceEnabled: Boolean

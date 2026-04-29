@@ -3,7 +3,7 @@
 @import play.api.Mode
 @import java.time.{Instant, ZonedDateTime, ZoneOffset}
 
-@(auditLogs: Seq[scala.Either[String, AuditLog]], key: Either[String, String], startDate: Instant, prevNextWeeks: (Option[Instant], Option[Instant]), user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(auditLogs: Seq[scala.Either[String, AuditLog]], key: Either[String, String], startDate: Instant, prevNextWeeks: (Option[Instant], Option[Instant]), user: UserIdentity, janusData: JanusData, developerPolicyLinks: scala.collection.immutable.Map[String, String])(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @import logic.Date.{formatDateTime, formatDate, formatDuration, rawDate}
 @import helper._
@@ -59,7 +59,11 @@
                             </td>
                             <td>
                                 @if(auditLog.permissionType == PermissionType.DeveloperPolicyPermission){
-                                    @auditLog.accessLevel.stripPrefix("iam-")
+                                    @developerPolicyLinks.get(auditLog.accessLevel).map { url =>
+                                        <a href="@url">@auditLog.accessLevel.stripPrefix("iam-")</a>
+                                    }.getOrElse {
+                                        @auditLog.accessLevel.stripPrefix("iam-")
+                                    }
                                 } else {
                                     @auditLog.accessLevel
                                 }
