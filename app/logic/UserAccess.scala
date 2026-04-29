@@ -2,6 +2,10 @@ package logic
 
 import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.*
+import com.gu.janus.model.PermissionType.{
+  AccountPermission,
+  DeveloperPolicyPermission
+}
 import logic.DeveloperPolicies.toPermission
 import models.*
 import models.AccessSource.{Admin, Internal, Support}
@@ -105,7 +109,7 @@ object UserAccess {
       date: Instant,
       janusData: JanusData,
       developerPolicies: Set[DeveloperPolicy]
-  ): Option[(Permission, AccessSource)] = {
+  ): Option[(Permission, AccessSource, PermissionType)] = {
     def bySource(
         access: SourcedAccountAccess
     ): List[(AccountAccess, AccessSource)] = List(
@@ -128,13 +132,19 @@ object UserAccess {
           case Admin    => policyGrantsForUser(username, acl = janusData.admin)
           case Support  => Set.empty
         }
-        (aa.permissions ++ aa.developerPolicies.flatMap { policy =>
-          policyGrants
-            .find(_.id == policy.policyGrantId)
-            .map(toPermission(policy, _))
-        })
+        aa.permissions
           .find(_.id == permissionId)
-          .map((_, src))
+          .map((_, src, AccountPermission))
+          .orElse(
+            aa.developerPolicies
+              .flatMap { policy =>
+                policyGrants
+                  .find(_.id == policy.policyGrantId)
+                  .map(toPermission(policy, _))
+              }
+              .find(_.id == permissionId)
+              .map((_, src, DeveloperPolicyPermission))
+          )
       )
     }.nextOption
   }

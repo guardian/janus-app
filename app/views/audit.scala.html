@@ -1,4 +1,4 @@
-@import com.gu.janus.model.{AuditLog, JConsole, JanusData}
+@import com.gu.janus.model.{AuditLog, JConsole, JanusData, PermissionType}
 @import com.gu.googleauth.UserIdentity
 @import play.api.Mode
 @import java.time.{Instant, ZonedDateTime, ZoneOffset}
@@ -35,9 +35,10 @@
                             }
                         </th>
                         <th>Access</th>
-                        <th>Type</th>
+                        <th>Access Type</th>
                         <th>Time (UTC)</th>
                         <th>Duration</th>
+                        <th>Permission Type</th>
                         <th>External
                             <i class="material-icons tooltipped" data-position="bottom" data-delay="10"
                                data-tooltip="External is access obtained without explicit access granted, i.e. via support or admin">error</i>
@@ -56,7 +57,13 @@
                                     <a href="/audit/user/@auditLog.username">@auditLog.username</a>
                                 }
                             </td>
-                            <td>@auditLog.accessLevel</td>
+                            <td>
+                                @if(auditLog.permissionType == PermissionType.DeveloperPolicyPermission){
+                                    @auditLog.accessLevel.stripPrefix("iam-")
+                                } else {
+                                    @auditLog.accessLevel
+                                }
+                            </td>
                             <td>
                                 @if(auditLog.accessType == JConsole){
                                     Console <i class="material-icons">cloud</i>
@@ -67,6 +74,13 @@
                             <td>@formatDateTime(auditLog.instant)</td>
                             <td>@formatDuration(auditLog.duration)</td>
                             <td>
+                                @if(auditLog.permissionType == PermissionType.AccountPermission){
+                                    Account Permission
+                                } else {
+                                    Developer Policy
+                                }
+                            </td>
+                            <td>
                                 @if(auditLog.external){
                                     <i class="material-icons">done</i>
                                 } else {
@@ -75,14 +89,14 @@
                             </td>
                         }
                         case Left(errorMessage) => {
-                            <td colspan="6" class="red lighten-5"><i class="material-icons">report_problem</i> There was an error retrieving this log entry, check the application logs (@errorMessage)</td>
+                            <td colspan="7" class="red lighten-5"><i class="material-icons">report_problem</i> There was an error retrieving this log entry, check the application logs (@errorMessage)</td>
                         }
                     }
                     </tr>
                 }
                 @if(auditLogs.isEmpty) {
                     <tr>
-                        <td colspan="6" class="">No records found for the week commencing @formatDate(startDate)</td>
+                        <td colspan="7" class="">No records found for the week commencing @formatDate(startDate)</td>
                     </tr>
                 }
                 </tbody>

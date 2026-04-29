@@ -1,7 +1,14 @@
 package logic
 
 import com.gu.googleauth.UserIdentity
-import com.gu.janus.model.{ACL, AuditLog, JanusAccessType, Permission}
+import com.gu.janus.model.{
+  ACL,
+  AuditLog,
+  JanusAccessType,
+  Permission,
+  PermissionType
+}
+import com.gu.janus.model.PermissionType.AccountPermission
 import logic.UserAccess.username
 import play.api.Logging
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue
@@ -30,6 +37,7 @@ object AuditTrail extends Logging {
   // Whether access request was for AWS console or credentials for local use
   val accessTypeAttrName = "j_accessType"
   val isExternalAttrName = "j_external"
+  val permissionTypeAttrName = "j_permissionType"
 
   /** Database item attributes for a single audit log entry. */
   case class AuditLogDbEntryAttrs(
@@ -39,7 +47,8 @@ object AuditTrail extends Logging {
       sessionDuration: (String, AttributeValue),
       accessLevel: (String, AttributeValue),
       accessType: (String, AttributeValue),
-      isExternal: (String, AttributeValue)
+      isExternal: (String, AttributeValue),
+      permissionType: (String, AttributeValue)
   ) {
     val toMap: Map[String, AttributeValue] = Seq(
       partitionKey,
@@ -48,7 +57,8 @@ object AuditTrail extends Logging {
       sessionDuration,
       accessLevel,
       accessType,
-      isExternal
+      isExternal,
+      permissionType
     ).toMap
   }
   object AuditLogDbEntryAttrs {
@@ -73,6 +83,9 @@ object AuditTrail extends Logging {
         ),
         isExternal = isExternalAttrName -> AttributeValue.fromN(
           (if (auditLog.external) 1 else 0).toString
+        ),
+        permissionType = permissionTypeAttrName -> AttributeValue.fromS(
+          auditLog.permissionType.serialised
         )
       )
   }
@@ -84,7 +97,8 @@ object AuditTrail extends Logging {
       janusAccessType: JanusAccessType,
       duration: Duration,
       acl: ACL,
-      hasExplicitAccess: Boolean
+      hasExplicitAccess: Boolean,
+      permissionType: PermissionType
   ): AuditLog =
     AuditLog(
       permission.account.authConfigKey,
@@ -93,7 +107,8 @@ object AuditTrail extends Logging {
       duration,
       permission.label,
       janusAccessType,
-      !hasExplicitAccess
+      !hasExplicitAccess,
+      permissionType
     )
 
   /** Extract nice error message from db conversion.
@@ -149,15 +164,21 @@ object AuditTrail extends Logging {
           case _ => None
         }
         .toRight("Could not extract external" -> attrs)
-    } yield AuditLog(
-      account,
-      username,
-      dateTime,
-      duration,
-      accessLevel,
-      accessType,
-      external
-    )
+    } yield {
+      val permissionType = stringValue(attrs, permissionTypeAttrName)
+        .flatMap(PermissionType.fromString)
+        .getOrElse(AccountPermission)
+      AuditLog(
+        account,
+        username,
+        dateTime,
+        duration,
+        accessLevel,
+        accessType,
+        external,
+        permissionType
+      )
+    }
   }
 
   private def stringValue(
