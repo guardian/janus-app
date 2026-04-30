@@ -24,9 +24,10 @@ class Audit(
     with Logging {
 
   private def developerPolicyLinks: Map[String, String] =
-    DeveloperPolicies.developerPolicyLinksBySlug(
-      developerPolicyFinder.getDeveloperPolicies
-    )
+    developerPolicyFinder.getDeveloperPolicies.map { p =>
+      DeveloperPolicies.developerPolicySlug(p.policyName) -> DeveloperPolicies
+        .developerPolicyLink(p)
+    }.toMap
 
   def byAccount(account: String): Action[AnyContent] = authAction {
     implicit request =>

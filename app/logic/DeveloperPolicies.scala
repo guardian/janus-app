@@ -70,7 +70,7 @@ object DeveloperPolicies {
     * uniqueness (avoiding collisions from AWS policy names that differ only in
     * special characters like `.`, `,`, `+`, `@`, etc.).
     */
-  private[logic] def developerPolicySlug(policyName: String): String = {
+  def developerPolicySlug(policyName: String): String = {
     val encodedPolicyName = URLEncoder.encode(policyName, "UTF-8")
     s"$DEVELOPER_POLICY_NAMESPACE_PREFIX$encodedPolicyName"
   }
