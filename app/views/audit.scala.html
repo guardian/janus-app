@@ -6,6 +6,7 @@
 @(auditLogs: Seq[scala.Either[String, AuditLog]], key: Either[String, String], startDate: Instant, prevNextWeeks: (Option[Instant], Option[Instant]), user: UserIdentity, janusData: JanusData, developerPolicyLinks: scala.collection.immutable.Map[String, String])(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @import logic.Date.{formatDateTime, formatDate, formatDuration, rawDate}
+@import logic.DeveloperPolicies.developerPolicyDisplayName
 @import helper._
 
 @main("Audit trail", Some(user), janusData) {
@@ -60,9 +61,9 @@
                             <td>
                                 @if(auditLog.permissionType == PermissionType.DeveloperPolicyPermission){
                                     @developerPolicyLinks.get(auditLog.accessLevel).map { url =>
-                                        <a href="@url">@auditLog.accessLevel.stripPrefix("iam-")</a>
+                                        <a href="@url">@developerPolicyDisplayName(auditLog.accessLevel)</a>
                                     }.getOrElse {
-                                        @auditLog.accessLevel.stripPrefix("iam-")
+                                        @developerPolicyDisplayName(auditLog.accessLevel)
                                     }
                                 } else {
                                     @auditLog.accessLevel

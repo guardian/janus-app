@@ -8,7 +8,7 @@ import models.{
 }
 import software.amazon.awssdk.services.iam.model.Policy
 
-import java.net.URLEncoder
+import java.net.{URLDecoder, URLEncoder}
 import scala.util.matching.Regex
 
 object DeveloperPolicies {
@@ -76,21 +76,22 @@ object DeveloperPolicies {
   }
   private[logic] val DEVELOPER_POLICY_NAMESPACE_PREFIX = "iam-"
 
+  /** Derives a human-readable display name from a developer policy slug or
+    * access-level string by stripping the namespace prefix and URL-decoding the
+    * remainder.
+    */
+  def developerPolicyDisplayName(accessLevel: String): String = {
+    val withoutPrefix =
+      accessLevel.stripPrefix(DEVELOPER_POLICY_NAMESPACE_PREFIX)
+    // The input is expected to be in well-formed URL encoding so we aren't handling exceptions here
+    URLDecoder.decode(withoutPrefix, "UTF-8")
+  }
+
   /** Builds a working AWS console link from a [[DeveloperPolicy]]. These links
     * require a valid console session.
     */
   def developerPolicyLink(policy: DeveloperPolicy): String =
     s"https://console.aws.amazon.com/iam/home#/policies/${policy.policyArn}"
-
-  /** Builds a map from each policy's access-level slug to its AWS console URL.
-    * Used by the audit view to render links for developer policy rows.
-    */
-  def developerPolicyLinksBySlug(
-      policies: Set[DeveloperPolicy]
-  ): Map[String, String] =
-    policies
-      .map(p => developerPolicySlug(p.policyName) -> developerPolicyLink(p))
-      .toMap
 
   def lookupDeveloperPolicyCacheStatus(
       accountAndStatuses: Map[AwsAccount, AwsAccountDeveloperPolicyStatus],
