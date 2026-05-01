@@ -16,7 +16,7 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
 import play.filters.csp.CSPComponents
 import router.Routes
-import services.DeveloperPolicyCachingService
+import services.{DeveloperPolicyCachingService, MetricsService}
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -129,6 +129,8 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeyRegistrationAuthAction =
     authAction.andThen(passkeyRegistrationAuthFilter)
 
+  private val metricsService = new MetricsService(stage)
+
   override def router: Router = new Routes(
     httpErrorHandler,
     new Janus(
@@ -141,7 +143,8 @@ class AppComponents(context: ApplicationLoader.Context)
       configuration,
       passkeysEnablingCookieName,
       passkeyAuthenticatorMetadata,
-      developerPolicyCachingService
+      developerPolicyCachingService,
+      metricsService
     ),
     new PasskeyController(
       controllerComponents,
