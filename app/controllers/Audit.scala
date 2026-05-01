@@ -23,6 +23,7 @@ class Audit(
     extends AbstractController(controllerComponents)
     with Logging {
 
+  /** Map of slug -> link for all known dev policies */
   private def developerPolicyLinks: Map[String, String] =
     developerPolicyFinder.getDeveloperPolicies.map { p =>
       DeveloperPolicies.developerPolicySlug(p.policyName) -> DeveloperPolicies
