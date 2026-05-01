@@ -1,6 +1,7 @@
 package controllers
 
-import aws.{AuditTrailDB, Federation, PasskeyDB}
+import aws.CloudWatchMetrics.*
+import aws.{AuditTrailDB, CloudWatch, Federation, PasskeyDB}
 import cats.syntax.all.*
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
@@ -11,7 +12,12 @@ import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.*
 import logic.PlayHelpers.splitQuerystringParam
 import models.AccessSource.Internal
-import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
+import models.{
+  AccessSource,
+  AccountAccess,
+  DeveloperPolicy,
+  PasskeyAuthenticator
+}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.{DeveloperPolicyFinder, DeveloperPolicyStatusManager}
@@ -21,6 +27,7 @@ import software.amazon.awssdk.services.sts.model.Credentials
 
 import java.time.*
 import java.time.format.DateTimeFormatter
+import scala.util.control.NonFatal
 
 class Janus(
     janusData: JanusData,
@@ -33,7 +40,8 @@ class Janus(
     passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
     developerPolicyService: DeveloperPolicyFinder
-      with DeveloperPolicyStatusManager
+      with DeveloperPolicyStatusManager,
+    stage: String
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
@@ -317,44 +325,101 @@ class Janus(
       durationParams: (Option[Duration], Option[ZoneId]),
       developerPolicies: Set[DeveloperPolicy]
   ): Option[(Credentials, Permission)] = {
-    val (requestedDuration, tzOffset) = durationParams
-    for {
-      (permission, accessSource) <- checkUserPermissionWithSource(
+
+    // Metric dimensions
+    val policyMetricDimensions: Map[String, String] = convertToDimensions(
+      developerPolicies
+    ) + ("permissionId" -> permissionId)
+      + ("accessType" -> accessType.toString)
+      + ("stage" -> stage)
+
+    try {
+      checkUserPermissionWithSource(
         username(user),
         permissionId,
-        Instant.now(),
         janusData,
         developerPolicies
-      )
-      duration = Federation.duration(
-        permission,
-        requestedDuration,
-        tzOffset.map(Clock.system)
-      )
-      roleArn = Config.roleArn(permission.account.authConfigKey, configuration)
-      credentials = Federation.assumeRole(
-        username(user),
-        roleArn,
-        permission,
-        stsClient,
-        duration
-      )
-      auditLog = AuditTrail.createLog(
-        user,
-        permission,
-        accessType,
-        duration,
-        janusData.access,
-        accessSource == Internal
-      )
-      _ = AuditTrailDB.insert(auditLog)
-    } yield {
-      logger.info(
-        s"$accessType access to $permissionId granted for ${username(user)}"
-      )
-      (credentials, permission)
+      ) match {
+        case Some(permission, accessSource) =>
+          val assumeRoleResponse = invokeAssumeRole(
+            user,
+            permissionId,
+            accessType,
+            durationParams,
+            permission,
+            accessSource
+          )
+          CloudWatch.put(
+            SuccessfulRequestPolicySizeMetric,
+            policyMetricDimensions + ("label" -> permission.label) + ("accessSource" -> accessSource.toString),
+            assumeRoleResponse.packedPolicySize()
+          )
+          Some(assumeRoleResponse.credentials(), permission)
+        case None =>
+          CloudWatch.put(
+            DeniedRequest,
+            policyMetricDimensions
+          )
+          None
+      }
+    } catch {
+      case NonFatal(e) =>
+        CloudWatch.put(
+          FailedRequest,
+          policyMetricDimensions
+        )
+        throw e
     }
+
   }
+
+  private def invokeAssumeRole(
+      user: UserIdentity,
+      permissionId: String,
+      accessType: JanusAccessType,
+      durationParams: (Option[Duration], Option[ZoneId]),
+      permission: Permission,
+      accessSource: AccessSource
+  ) = {
+    val (requestedDuration, tzOffset) = durationParams
+
+    val duration = Federation.duration(
+      permission,
+      requestedDuration,
+      tzOffset.map(Clock.system)
+    )
+
+    val roleArn =
+      Config.roleArn(permission.account.authConfigKey, configuration)
+
+    val response = Federation.assumeRole(
+      username(user),
+      roleArn,
+      permission,
+      stsClient,
+      duration
+    )
+    val auditLog = AuditTrail.createLog(
+      user,
+      permission,
+      accessType,
+      duration,
+      janusData.access,
+      accessSource == Internal
+    )
+    AuditTrailDB.insert(auditLog)
+    logger.info(
+      s"$accessType access to $permissionId granted for ${username(user)}"
+    )
+    response
+  }
+
+  private def convertToDimensions(
+      developerPolicies: Set[DeveloperPolicy]
+  ): Map[String, String] =
+    developerPolicies.zipWithIndex.flatMap { case (dp, i) =>
+      Map(s"account-$i" -> dp.account.name, s"grant-id-$i" -> dp.policyGrantId)
+    }.toMap
 
   private def multiAccountAssumption(
       user: UserIdentity,
@@ -369,4 +434,5 @@ class Janus(
       })
       .sequence
   }
+
 }

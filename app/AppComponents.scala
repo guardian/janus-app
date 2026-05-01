@@ -141,7 +141,8 @@ class AppComponents(context: ApplicationLoader.Context)
       configuration,
       passkeysEnablingCookieName,
       passkeyAuthenticatorMetadata,
-      developerPolicyCachingService
+      developerPolicyCachingService,
+      stage
     ),
     new PasskeyController(
       controllerComponents,

@@ -5,6 +5,7 @@ import conf.Config
 import play.api.Configuration
 import software.amazon.awssdk.auth.credentials.*
 import software.amazon.awssdk.regions.Region.EU_WEST_1
+import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.iam.IamClient
 import software.amazon.awssdk.services.ssm.SsmClient
@@ -57,6 +58,13 @@ object Clients {
     .credentialsProvider(securityCredentialsProviderChain)
     .region(EU_WEST_1)
     .build()
+
+  lazy val cloudwatchAsyncClient: CloudWatchAsyncClient =
+    CloudWatchAsyncClient
+      .builder()
+      .credentialsProvider(securityCredentialsProviderChain)
+      .region(EU_WEST_1)
+      .build()
 
   /** Gives an IAM client scoped to the given account so that it can look for
     * [[com.gu.janus.model.ProvisionedRole]] data.

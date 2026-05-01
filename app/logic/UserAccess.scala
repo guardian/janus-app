@@ -102,7 +102,6 @@ object UserAccess {
   def checkUserPermissionWithSource(
       username: String,
       permissionId: String,
-      date: Instant,
       janusData: JanusData,
       developerPolicies: Set[DeveloperPolicy]
   ): Option[(Permission, AccessSource)] = {
@@ -118,7 +117,7 @@ object UserAccess {
       username,
       Some(janusData.access),
       Some(janusData.admin),
-      Some((janusData.support, date)),
+      Some(janusData.support),
       developerPolicies
     ).valuesIterator.flatMap { access =>
       bySource(access).flatMap((aa, src) =>
@@ -172,7 +171,7 @@ object UserAccess {
       username: String,
       internalAcl: Option[ACL],
       adminAcl: Option[ACL],
-      supportData: Option[(SupportACL, Instant)],
+      supportData: Option[SupportACL],
       developerPolicies: Set[DeveloperPolicy]
   ): Map[AwsAccount, SourcedAccountAccess] = {
     def userAccess(
@@ -216,9 +215,9 @@ object UserAccess {
 
     val support =
       supportData
-        .map((acl, when) =>
+        .map(acl =>
           val perms =
-            userSupportAccess(username, when, acl).getOrElse(Set.empty)
+            userSupportAccess(username, Instant.now(), acl).getOrElse(Set.empty)
           perms
             .groupBy(_.account)
             .view
