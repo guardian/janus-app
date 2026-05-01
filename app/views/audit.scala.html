@@ -3,7 +3,7 @@
 @import play.api.Mode
 @import java.time.{Instant, ZonedDateTime, ZoneOffset}
 
-@(auditLogs: Seq[scala.Either[String, AuditLog]], key: Either[String, String], startDate: Instant, prevNextWeeks: (Option[Instant], Option[Instant]), user: UserIdentity, janusData: JanusData, developerPolicyLinks: scala.collection.immutable.Map[String, String])(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@(auditLogs: Seq[Either[String, AuditLog]], key: Either[String, String], startDate: Instant, prevNextWeeks: (Option[Instant], Option[Instant]), user: UserIdentity, janusData: JanusData, developerPolicyLinks: Map[String, String])(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @import logic.Date.{formatDateTime, formatDate, formatDuration, rawDate}
 @import logic.DeveloperPolicies.developerPolicyDisplayName
