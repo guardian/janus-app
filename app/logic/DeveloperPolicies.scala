@@ -76,13 +76,11 @@ object DeveloperPolicies {
   }
   private[logic] val DEVELOPER_POLICY_NAMESPACE_PREFIX = "iam-"
 
-  /** Derives a human-readable display name from a developer policy slug or
-    * access-level string by stripping the namespace prefix and URL-decoding the
-    * remainder.
+  /** Derives a human-readable display name from a developer policy slug for use
+    * in audit trail.
     */
-  def developerPolicyDisplayName(accessLevel: String): String = {
-    val withoutPrefix =
-      accessLevel.stripPrefix(DEVELOPER_POLICY_NAMESPACE_PREFIX)
+  def developerPolicyDisplayName(slug: String): String = {
+    val withoutPrefix = slug.stripPrefix(DEVELOPER_POLICY_NAMESPACE_PREFIX)
     // The input is expected to be in well-formed URL encoding so we aren't handling exceptions here
     URLDecoder.decode(withoutPrefix, "UTF-8")
   }
