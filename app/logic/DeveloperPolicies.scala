@@ -8,7 +8,7 @@ import models.{
 }
 import software.amazon.awssdk.services.iam.model.Policy
 
-import java.net.URLEncoder
+import java.net.{URLDecoder, URLEncoder}
 import scala.util.matching.Regex
 
 object DeveloperPolicies {
@@ -70,11 +70,20 @@ object DeveloperPolicies {
     * uniqueness (avoiding collisions from AWS policy names that differ only in
     * special characters like `.`, `,`, `+`, `@`, etc.).
     */
-  private[logic] def developerPolicySlug(policyName: String): String = {
+  def developerPolicySlug(policyName: String): String = {
     val encodedPolicyName = URLEncoder.encode(policyName, "UTF-8")
     s"$DEVELOPER_POLICY_NAMESPACE_PREFIX$encodedPolicyName"
   }
   private[logic] val DEVELOPER_POLICY_NAMESPACE_PREFIX = "iam-"
+
+  /** Derives a human-readable display name from a developer policy slug for use
+    * in audit trail.
+    */
+  def developerPolicyDisplayName(slug: String): String = {
+    val withoutPrefix = slug.stripPrefix(DEVELOPER_POLICY_NAMESPACE_PREFIX)
+    // The input is expected to be in well-formed URL encoding so we aren't handling exceptions here
+    URLDecoder.decode(withoutPrefix, "UTF-8")
+  }
 
   /** Builds a working AWS console link from a [[DeveloperPolicy]]. These links
     * require a valid console session.

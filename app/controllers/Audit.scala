@@ -3,7 +3,7 @@ package controllers
 import aws.AuditTrailDB
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
-import logic.Date
+import logic.{Date, DeveloperPolicies}
 import play.api.mvc.{
   AbstractController,
   Action,
@@ -11,15 +11,24 @@ import play.api.mvc.{
   ControllerComponents
 }
 import play.api.{Logging, Mode}
+import services.DeveloperPolicyFinder
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 class Audit(
     janusData: JanusData,
     controllerComponents: ControllerComponents,
-    authAction: AuthAction[AnyContent]
+    authAction: AuthAction[AnyContent],
+    developerPolicyFinder: DeveloperPolicyFinder
 )(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with Logging {
+
+  /** Map of slug -> link for all known dev policies */
+  private def developerPolicyLinks: Map[String, String] =
+    developerPolicyFinder.getDeveloperPolicies.map { p =>
+      DeveloperPolicies.developerPolicySlug(p.policyName) -> DeveloperPolicies
+        .developerPolicyLink(p)
+    }.toMap
 
   def byAccount(account: String): Action[AnyContent] = authAction {
     implicit request =>
@@ -37,7 +46,8 @@ class Audit(
           startDate,
           prevNextWeeks,
           request.user,
-          janusData
+          janusData,
+          developerPolicyLinks
         )
       )
   }
@@ -58,7 +68,8 @@ class Audit(
           startDate,
           prevNextWeeks,
           request.user,
-          janusData
+          janusData,
+          developerPolicyLinks
         )
       )
   }

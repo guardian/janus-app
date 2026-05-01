@@ -4,6 +4,10 @@ import com.gu.googleauth.UserIdentity
 import com.gu.janus.model.*
 import fixtures.Fixtures.*
 import models.{AccessSource, DeveloperPolicy}
+import com.gu.janus.model.PermissionType.{
+  AccountPermission,
+  DeveloperPolicyPermission
+}
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -588,7 +592,7 @@ class UserAccessTest
     )
 
     "returns the permission if a user has been granted access" in {
-      val (permission, _) = checkUserPermissionWithSource(
+      val (permission, _, _) = checkUserPermissionWithSource(
         "user",
         fooDev.id,
         Instant.now(),
@@ -600,7 +604,7 @@ class UserAccessTest
 
     "returns the permission if it has been granted via admin access" in {
       Inspectors.forAll(allTestPerms) { adminPermission =>
-        val (permission, _) = checkUserPermissionWithSource(
+        val (permission, _, _) = checkUserPermissionWithSource(
           "admin",
           adminPermission.id,
           Instant.now(),
@@ -613,7 +617,7 @@ class UserAccessTest
 
     "returns the permission if it has been granted via support access" in {
       Inspectors.forAll(supportAcl.supportAccess) { supportPermission =>
-        val (permission, _) = checkUserPermissionWithSource(
+        val (permission, _, _) = checkUserPermissionWithSource(
           "support.user",
           supportPermission.id,
           Instant.now(),
@@ -657,7 +661,7 @@ class UserAccessTest
       )
 
       "derived permission is short term" in {
-        val (permission, source) = checkUserPermissionWithSource(
+        val (permission, _, _) = checkUserPermissionWithSource(
           "internal.user",
           derivedPermission.id,
           Instant.now(),
@@ -668,7 +672,7 @@ class UserAccessTest
       }
 
       "source is Internal ACL" in {
-        val (permission, source) = checkUserPermissionWithSource(
+        val (_, source, _) = checkUserPermissionWithSource(
           "internal.user",
           derivedPermission.id,
           Instant.now(),
@@ -676,6 +680,17 @@ class UserAccessTest
           Set(policy)
         ).value
         source shouldEqual AccessSource.Internal
+      }
+
+      "permission type is DeveloperPolicyPermission" in {
+        val (_, _, permissionType) = checkUserPermissionWithSource(
+          "internal.user",
+          derivedPermission.id,
+          Instant.now(),
+          janusData,
+          Set(policy)
+        ).value
+        permissionType shouldEqual DeveloperPolicyPermission
       }
     }
 
@@ -702,7 +717,7 @@ class UserAccessTest
       )
 
       "derived permission is short term" in {
-        val (permission, source) = checkUserPermissionWithSource(
+        val (permission, _, _) = checkUserPermissionWithSource(
           "admin.user",
           derivedPermission.id,
           Instant.now(),
@@ -713,7 +728,7 @@ class UserAccessTest
       }
 
       "source is Admin ACL" in {
-        val (permission, source) = checkUserPermissionWithSource(
+        val (_, source, _) = checkUserPermissionWithSource(
           "admin.user",
           derivedPermission.id,
           Instant.now(),
@@ -721,6 +736,17 @@ class UserAccessTest
           Set(policy)
         ).value
         source shouldEqual AccessSource.Admin
+      }
+
+      "permission type is DeveloperPolicyPermission" in {
+        val (_, _, permissionType) = checkUserPermissionWithSource(
+          "admin.user",
+          derivedPermission.id,
+          Instant.now(),
+          janusData,
+          Set(policy)
+        ).value
+        permissionType shouldEqual DeveloperPolicyPermission
       }
     }
 
@@ -748,7 +774,7 @@ class UserAccessTest
       )
 
       "is Internal when the permission was granted via the internal ACL" in {
-        val (_, source) = checkUserPermissionWithSource(
+        val (_, source, _) = checkUserPermissionWithSource(
           "user",
           fooDev.id,
           Instant.now(),
@@ -759,7 +785,7 @@ class UserAccessTest
       }
 
       "is Admin when the permission was granted via admin access only" in {
-        val (_, source) = checkUserPermissionWithSource(
+        val (_, source, _) = checkUserPermissionWithSource(
           "admin",
           fooDev.id,
           Instant.now(),
@@ -770,7 +796,7 @@ class UserAccessTest
       }
 
       "is Support when the permission was granted via support access only" in {
-        val (_, source) = checkUserPermissionWithSource(
+        val (_, source, _) = checkUserPermissionWithSource(
           "support.user",
           fooDev.id,
           Instant.now(),
@@ -778,6 +804,31 @@ class UserAccessTest
           Set.empty
         ).value
         source shouldEqual AccessSource.Support
+      }
+    }
+
+    "permission type" - {
+      val internalAcl = ACL(
+        Map("user" -> ACLEntry(Set(fooDev), Set.empty)),
+        Set.empty
+      )
+      val janusData = JanusData(
+        accounts = Set.empty,
+        access = internalAcl,
+        admin = ACL(Map.empty),
+        support = SupportACL.create(Map.empty, Set.empty),
+        permissionsRepo = None
+      )
+
+      "is AccountPermission for a static Janus permission" in {
+        val (_, _, permissionType) = checkUserPermissionWithSource(
+          "user",
+          fooDev.id,
+          Instant.now(),
+          janusData,
+          Set.empty
+        ).value
+        permissionType shouldEqual AccountPermission
       }
     }
   }
