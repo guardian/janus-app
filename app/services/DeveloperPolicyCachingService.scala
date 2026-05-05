@@ -98,10 +98,26 @@ class DeveloperPolicyCachingService(
         .emit(())
         // then periodically
         .append(Stream.awakeEvery[IO](fetchRate))
-        .flatMap(_ => Stream.emits(accountIams.toList))
-        .evalMap((account, iam) =>
-          fetchFromAccount(account, iam)
-            .map(status => cache.update(account, status))
+        .flatMap(_ =>
+          Stream
+            .eval(
+              logger.info("Fetching developer policies from all accounts...")
+            )
+            .append(
+              Stream
+                .emits(accountIams.toList)
+                .evalMap((account, iam) =>
+                  fetchFromAccount(account, iam)
+                    .map(status => cache.update(account, status))
+                )
+            )
+            .append(
+              Stream.eval(
+                logger.info(
+                  "Fetch of developer policies complete for all accounts."
+                )
+              )
+            )
         )
         .handleErrorWith { err =>
           Stream.eval(
