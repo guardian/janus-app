@@ -38,7 +38,7 @@
     <logger name="com.amazonaws" level="WARN" />
 
     <!-- Useful for debugging role-fetching problems -->
-    <!-- logger name="services.ProvisionedRoleCachingService" level="DEBUG" /-->
+    <!-- logger name="services.DeveloperPolicyCachingService" level="DEBUG" /-->
 
     <root level="INFO">
         <appender-ref ref="LOGFILE"/>
