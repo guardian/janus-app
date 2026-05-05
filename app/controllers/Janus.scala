@@ -1,6 +1,6 @@
 package controllers
 
-import aws.{AuditTrailDB, Federation, PasskeyDB}
+import aws.{AuditTrailDB, CloudWatch, Federation, PasskeyDB}
 import cats.syntax.all.*
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
@@ -11,7 +11,12 @@ import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.*
 import logic.PlayHelpers.splitQuerystringParam
 import models.AccessSource.Internal
-import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
+import models.{
+  AccessSource,
+  AccountAccess,
+  DeveloperPolicy,
+  PasskeyAuthenticator
+}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.{DeveloperPolicyFinder, DeveloperPolicyStatusManager}
@@ -21,6 +26,7 @@ import software.amazon.awssdk.services.sts.model.Credentials
 
 import java.time.*
 import java.time.format.DateTimeFormatter
+import scala.util.control.NonFatal
 
 class Janus(
     janusData: JanusData,
@@ -33,8 +39,9 @@ class Janus(
     passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
     developerPolicyService: DeveloperPolicyFinder
-      with DeveloperPolicyStatusManager
-)(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
+      with DeveloperPolicyStatusManager,
+    cloudWatch: CloudWatch
+)(using dynamoDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
     with Logging {
@@ -232,7 +239,7 @@ class Janus(
           .withHeaders(CACHE_CONTROL -> "no-cache")
       }) getOrElse {
         logger.warn(
-          s"console login to $permissionId denied for ${username(request.user)}"
+          s"console url login to $permissionId denied for ${username(request.user)}"
         )
         Forbidden(views.html.permissionDenied(request.user, janusData))
       }
@@ -287,7 +294,7 @@ class Janus(
           .withHeaders(CACHE_CONTROL -> "no-cache")
       }) getOrElse {
         logger.warn(
-          s"denied credentials to $rawPermissionIds for ${username(request.user)}"
+          s"denied multi credentials to $rawPermissionIds for ${username(request.user)}"
         )
         Forbidden(views.html.permissionDenied(request.user, janusData))
       }
@@ -316,44 +323,86 @@ class Janus(
       accessType: JanusAccessType,
       durationParams: (Option[Duration], Option[ZoneId]),
       developerPolicies: Set[DeveloperPolicy]
-  ): Option[(Credentials, Permission)] = {
-    val (requestedDuration, tzOffset) = durationParams
-    for {
-      (permission, accessSource) <- checkUserPermissionWithSource(
-        username(user),
-        permissionId,
-        Instant.now(),
-        janusData,
-        developerPolicies
-      )
-      duration = Federation.duration(
-        permission,
-        requestedDuration,
-        tzOffset.map(Clock.system)
-      )
-      roleArn = Config.roleArn(permission.account.authConfigKey, configuration)
-      credentials = Federation.assumeRole(
-        username(user),
-        roleArn,
-        permission,
-        stsClient,
-        duration
-      )
-      auditLog = AuditTrail.createLog(
-        user,
-        permission,
-        accessType,
-        duration,
-        janusData.access,
-        accessSource == Internal
-      )
-      _ = AuditTrailDB.insert(auditLog)
-    } yield {
-      logger.info(
-        s"$accessType access to $permissionId granted for ${username(user)}"
-      )
-      (credentials, permission)
+  ): Option[(Credentials, Permission)] =
+    checkUserPermissionWithSource(
+      username(user),
+      permissionId,
+      Instant.now(),
+      janusData,
+      developerPolicies
+    ) match {
+      case Some(permission, accessSource) =>
+        invokeAssumeRole(
+          user,
+          permissionId,
+          accessType,
+          durationParams,
+          permission,
+          accessSource,
+          developerPolicies
+        )
+      case None =>
+        cloudWatch.putDeniedRequest(
+          developerPolicies,
+          permissionId,
+          accessType
+        )
+        None
     }
+
+  private def invokeAssumeRole(
+      user: UserIdentity,
+      permissionId: String,
+      accessType: JanusAccessType,
+      durationParams: (Option[Duration], Option[ZoneId]),
+      permission: Permission,
+      accessSource: AccessSource,
+      developerPolicies: Set[DeveloperPolicy]
+  ): Some[(Credentials, Permission)] = try {
+    val (requestedDuration, tzOffset) = durationParams
+
+    val duration = Federation.duration(
+      permission,
+      requestedDuration,
+      tzOffset.map(Clock.system)
+    )
+
+    val roleArn =
+      Config.roleArn(permission.account.authConfigKey, configuration)
+
+    val response = Federation.assumeRole(
+      username(user),
+      roleArn,
+      permission,
+      stsClient,
+      duration
+    )
+    val auditLog = AuditTrail.createLog(
+      user,
+      permission,
+      accessType,
+      duration,
+      janusData.access,
+      accessSource == Internal
+    )
+    AuditTrailDB.insert(auditLog)
+    logger.info(
+      s"$accessType access to $permissionId granted for ${username(user)}"
+    )
+    cloudWatch.putSuccessfulRequestPolicySizeMetric(
+      developerPolicies,
+      permission,
+      accessSource,
+      permissionId,
+      accessType,
+      response.packedPolicySize()
+    )
+    Some((response.credentials(), permission))
+  } catch {
+    case NonFatal(e) =>
+      logger.error("Exception creating credentials", e)
+      cloudWatch.putFailedRequest(developerPolicies, permissionId, accessType)
+      throw e
   }
 
   private def multiAccountAssumption(

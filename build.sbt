@@ -105,6 +105,7 @@ lazy val root: Project = (project in file("."))
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
       "software.amazon.awssdk" % "dynamodb" % awsSdkVersion,
+      "software.amazon.awssdk" % "cloudwatch" % awsSdkVersion,
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
       "com.webauthn4j" % "webauthn4j-core" % "0.31.3.RELEASE",
       "co.fs2" %% "fs2-core" % "3.13.0",

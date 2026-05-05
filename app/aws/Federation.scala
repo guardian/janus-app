@@ -94,7 +94,7 @@ object Federation {
       permission: Permission,
       sts: StsClient,
       duration: Duration
-  ): Credentials = {
+  ): AssumeRoleResponse = {
     val requestBuilder = AssumeRoleRequest
       .builder()
       .roleArn(roleArn)
@@ -111,8 +111,7 @@ object Federation {
       )
     }
     val request = requestBuilder.build()
-    val response = sts.assumeRole(request)
-    response.credentials()
+    sts.assumeRole(request)
   }
 
   def generateLoginUrl(
@@ -159,13 +158,16 @@ object Federation {
     }
 
     // assume role in the target account to authenticate the revocation
-    val creds = Federation.assumeRole(
-      username,
-      roleArn,
-      Policies.revokeAccessPermission(account),
-      stsClient,
-      Federation.awsMinimumSessionLength
-    )
+    val creds = Federation
+      .assumeRole(
+        username,
+        roleArn,
+        Policies.revokeAccessPermission(account),
+        stsClient,
+        Federation.awsMinimumSessionLength
+      )
+      .credentials()
+
     val sessionCredentials = AwsSessionCredentials.create(
       creds.accessKeyId,
       creds.secretAccessKey,
