@@ -5,7 +5,7 @@ import conf.Config
 import play.api.Configuration
 import software.amazon.awssdk.auth.credentials.*
 import software.amazon.awssdk.regions.Region.EU_WEST_1
-import software.amazon.awssdk.services.cloudwatch.CloudWatchAsyncClient
+import software.amazon.awssdk.services.cloudwatch.CloudWatchClient
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.iam.IamClient
 import software.amazon.awssdk.services.ssm.SsmClient
@@ -59,8 +59,8 @@ object Clients {
     .region(EU_WEST_1)
     .build()
 
-  lazy val cloudwatchAsyncClient: CloudWatchAsyncClient =
-    CloudWatchAsyncClient
+  lazy val cloudwatchClient: CloudWatchClient =
+    CloudWatchClient
       .builder()
       .credentialsProvider(securityCredentialsProviderChain)
       .region(EU_WEST_1)

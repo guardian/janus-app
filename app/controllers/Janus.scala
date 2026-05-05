@@ -1,6 +1,5 @@
 package controllers
 
-import aws.CloudWatchMetrics.*
 import aws.{AuditTrailDB, CloudWatch, Federation, PasskeyDB}
 import cats.syntax.all.*
 import com.gu.googleauth.AuthAction.UserIdentityRequest
@@ -41,8 +40,8 @@ class Janus(
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
     developerPolicyService: DeveloperPolicyFinder
       with DeveloperPolicyStatusManager,
-    stage: String
-)(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
+    cloudWatch: CloudWatch
+)(using dynamoDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
     with Logging {
@@ -240,7 +239,7 @@ class Janus(
           .withHeaders(CACHE_CONTROL -> "no-cache")
       }) getOrElse {
         logger.warn(
-          s"console login to $permissionId denied for ${username(request.user)}"
+          s"console url login to $permissionId denied for ${username(request.user)}"
         )
         Forbidden(views.html.permissionDenied(request.user, janusData))
       }
@@ -295,7 +294,7 @@ class Janus(
           .withHeaders(CACHE_CONTROL -> "no-cache")
       }) getOrElse {
         logger.warn(
-          s"denied credentials to $rawPermissionIds for ${username(request.user)}"
+          s"denied multi credentials to $rawPermissionIds for ${username(request.user)}"
         )
         Forbidden(views.html.permissionDenied(request.user, janusData))
       }
@@ -324,54 +323,32 @@ class Janus(
       accessType: JanusAccessType,
       durationParams: (Option[Duration], Option[ZoneId]),
       developerPolicies: Set[DeveloperPolicy]
-  ): Option[(Credentials, Permission)] = {
-
-    // Metric dimensions
-    val policyMetricDimensions: Map[String, String] = convertToDimensions(
+  ): Option[(Credentials, Permission)] =
+    checkUserPermissionWithSource(
+      username(user),
+      permissionId,
+      Instant.now(),
+      janusData,
       developerPolicies
-    ) + ("permissionId" -> permissionId)
-      + ("accessType" -> accessType.toString)
-      + ("stage" -> stage)
-
-    try {
-      checkUserPermissionWithSource(
-        username(user),
-        permissionId,
-        janusData,
-        developerPolicies
-      ) match {
-        case Some(permission, accessSource) =>
-          val assumeRoleResponse = invokeAssumeRole(
-            user,
-            permissionId,
-            accessType,
-            durationParams,
-            permission,
-            accessSource
-          )
-          CloudWatch.put(
-            SuccessfulRequestPolicySizeMetric,
-            policyMetricDimensions + ("label" -> permission.label) + ("accessSource" -> accessSource.toString),
-            assumeRoleResponse.packedPolicySize()
-          )
-          Some(assumeRoleResponse.credentials(), permission)
-        case None =>
-          CloudWatch.put(
-            DeniedRequest,
-            policyMetricDimensions
-          )
-          None
-      }
-    } catch {
-      case NonFatal(e) =>
-        CloudWatch.put(
-          FailedRequest,
-          policyMetricDimensions
+    ) match {
+      case Some(permission, accessSource) =>
+        invokeAssumeRole(
+          user,
+          permissionId,
+          accessType,
+          durationParams,
+          permission,
+          accessSource,
+          developerPolicies
         )
-        throw e
+      case None =>
+        cloudWatch.putDeniedRequest(
+          developerPolicies,
+          permissionId,
+          accessType
+        )
+        None
     }
-
-  }
 
   private def invokeAssumeRole(
       user: UserIdentity,
@@ -379,8 +356,9 @@ class Janus(
       accessType: JanusAccessType,
       durationParams: (Option[Duration], Option[ZoneId]),
       permission: Permission,
-      accessSource: AccessSource
-  ) = {
+      accessSource: AccessSource,
+      developerPolicies: Set[DeveloperPolicy]
+  ): Some[(Credentials, Permission)] = try {
     val (requestedDuration, tzOffset) = durationParams
 
     val duration = Federation.duration(
@@ -411,15 +389,21 @@ class Janus(
     logger.info(
       s"$accessType access to $permissionId granted for ${username(user)}"
     )
-    response
+    cloudWatch.putSuccessfulRequestPolicySizeMetric(
+      developerPolicies,
+      permission,
+      accessSource,
+      permissionId,
+      accessType,
+      response.packedPolicySize()
+    )
+    Some((response.credentials(), permission))
+  } catch {
+    case NonFatal(e) =>
+      logger.error("Exception creating credentials", e)
+      cloudWatch.putFailedRequest(developerPolicies, permissionId, accessType)
+      throw e
   }
-
-  private def convertToDimensions(
-      developerPolicies: Set[DeveloperPolicy]
-  ): Map[String, String] =
-    developerPolicies.zipWithIndex.flatMap { case (dp, i) =>
-      Map(s"account-$i" -> dp.account.name, s"grant-id-$i" -> dp.policyGrantId)
-    }.toMap
 
   private def multiAccountAssumption(
       user: UserIdentity,
@@ -434,5 +418,4 @@ class Janus(
       })
       .sequence
   }
-
 }

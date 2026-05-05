@@ -1,11 +1,17 @@
 package aws
 
-import aws.Clients.cloudwatchAsyncClient
+import aws.Clients.cloudwatchClient
+import aws.CloudWatchMetrics.{
+  DeniedRequest,
+  FailedRequest,
+  SuccessfulRequestPolicySizeMetric
+}
+import com.gu.janus.model.{JanusAccessType, Permission}
+import models.{AccessSource, DeveloperPolicy}
 import play.api.Logging
 import software.amazon.awssdk.services.cloudwatch.model.*
 
 import scala.jdk.CollectionConverters.*
-import scala.jdk.FutureConverters.*
 
 sealed class CloudWatchMetric(val name: String, val unit: StandardUnit)
 
@@ -27,30 +33,94 @@ object CloudWatchMetrics {
     )
 }
 
-object CloudWatch extends Logging {
+class CloudWatch(val stage: String, val stack: String, val app: String)
+    extends Logging {
 
-  private val namespace = "janus"
+  private val namespace = s"/$stage/$stack/$app"
 
-  def put(
+  def putDeniedRequest(
+      developerPolicies: Set[DeveloperPolicy],
+      permissionId: String,
+      accessType: JanusAccessType
+  ): Unit = put(DeniedRequest, developerPolicies, permissionId, accessType, 1)
+
+  def putFailedRequest(
+      developerPolicies: Set[DeveloperPolicy],
+      permissionId: String,
+      accessType: JanusAccessType
+  ): Unit = put(FailedRequest, developerPolicies, permissionId, accessType, 1)
+
+  def putSuccessfulRequestPolicySizeMetric(
+      developerPolicies: Set[DeveloperPolicy],
+      permission: Permission,
+      accessSource: AccessSource,
+      permissionId: String,
+      accessType: JanusAccessType,
+      value: Int
+  ): Unit = put(
+    SuccessfulRequestPolicySizeMetric,
+    developerPolicies,
+    permissionId,
+    accessType,
+    value,
+    Some(permission),
+    Some(accessSource)
+  )
+
+  private def convertToDimensions(
+      developerPolicies: Set[DeveloperPolicy],
+      permissionId: String,
+      accessType: JanusAccessType,
+      permissionMaybe: Option[Permission] = None,
+      accessSourceMaybe: Option[AccessSource] = None
+  ): Set[Dimension] =
+    (developerPolicies.zipWithIndex.flatMap { case (dp, i) =>
+      Iterable(
+        s"account-$i" -> dp.account.name,
+        s"grant-id-$i" -> dp.policyGrantId
+      )
+    }
+      + ("permissionId" -> permissionId)
+      + ("accessType" -> accessType.toString)
+      ++ permissionMaybe.map(p => "permissionLabel" -> p.label)
+      ++ accessSourceMaybe.map(a => "accessSource" -> a.toString))
+      .map { case (n, v) =>
+        Dimension.builder().name(n).value(v).build()
+      }
+
+  private def put(
       metric: CloudWatchMetric,
-      dimensionStrings: Map[String, String],
-      value: Int = 1
-  ): Unit = {
-    val dimensions = dimensionStrings.map { case (n, v) =>
-      Dimension.builder().name(n).value(v).build()
-    }.toList
-    val putMetricDataRequest =
-      buildPutMetricRequest(metric, value, dimensions)
-    cloudwatchAsyncClient
-      .putMetricData(putMetricDataRequest)
-      .asScala // Future, but we fire and forget
-  }
+      developerPolicies: Set[DeveloperPolicy],
+      permissionId: String,
+      accessType: JanusAccessType,
+      value: Int,
+      permissionMaybe: Option[Permission] = None,
+      accessSourceMaybe: Option[AccessSource] = None
+  ): Unit = try {
+    val dimensions = convertToDimensions(
+      developerPolicies,
+      permissionId,
+      accessType,
+      permissionMaybe,
+      accessSourceMaybe
+    )
 
-  private[aws] def buildPutMetricRequest(
+    val putMetricDataRequest =
+      CloudWatch.buildPutMetricRequest(namespace, metric, value, dimensions)
+    cloudwatchClient.putMetricData(putMetricDataRequest)
+  } catch {
+    case e: Throwable =>
+      logger.error("Unable to send metrics", e);
+  }
+}
+
+object CloudWatch {
+  def buildPutMetricRequest(
+      namespace: String,
       metric: CloudWatchMetric,
       value: Int = 1,
-      dimensions: List[Dimension] = List.empty
-  ) = {
+      dimensions: Iterable[Dimension] = Nil
+  ): PutMetricDataRequest = {
     PutMetricDataRequest
       .builder()
       .namespace(namespace)
@@ -60,7 +130,7 @@ object CloudWatch extends Logging {
           .metricName(metric.name)
           .value(value.toDouble)
           .unit(metric.unit)
-          .dimensions(dimensions.asJava)
+          .dimensions(dimensions.toList.asJava)
           .build()
       )
       .build()

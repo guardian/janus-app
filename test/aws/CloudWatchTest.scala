@@ -1,6 +1,5 @@
 package aws
 
-import aws.CloudWatch.buildPutMetricRequest
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
@@ -20,8 +19,9 @@ class CloudWatchTest
   "buildPutMetricRequest" - {
     "builds a put metric request with all correct values" in {
 
-      forAll(putMetricGen) { case ((m, v, d), r) =>
+      forAll(putMetricGen) { case ((n, m, v, d), r) =>
         r.metricData().size() shouldBe 1
+        r.namespace() shouldBe n
         val metricData = r.metricData().get(0)
         val dimensions = metricData.dimensions().asScala.toList
         metricData.metricName() shouldBe m.name
@@ -39,14 +39,16 @@ class CloudWatchTest
     Dimension.builder().name(dimensionName).value(dimensionValue).build()
   )
 
-  def putMetricGen
-      : Gen[((CloudWatchMetric, Int, List[Dimension]), PutMetricDataRequest)] =
+  def putMetricGen: Gen[
+    ((String, CloudWatchMetric, Int, List[Dimension]), PutMetricDataRequest)
+  ] =
     for {
+      namespace <- Gen.alphaNumStr.suchThat(_.nonEmpty)
       metric <- Gen.oneOf(CloudWatchMetrics.allValues)
       value <- Gen.choose(1, 10)
       dimensions <- dimensionsGen
     } yield (
-      (metric, value, dimensions),
-      buildPutMetricRequest(metric, value, dimensions)
+      (namespace, metric, value, dimensions),
+      CloudWatch.buildPutMetricRequest(namespace, metric, value, dimensions)
     )
 }

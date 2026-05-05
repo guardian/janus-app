@@ -591,6 +591,7 @@ class UserAccessTest
       val (permission, _) = checkUserPermissionWithSource(
         "user",
         fooDev.id,
+        Instant.now(),
         janusData,
         Set.empty
       ).value
@@ -602,6 +603,7 @@ class UserAccessTest
         val (permission, _) = checkUserPermissionWithSource(
           "admin",
           adminPermission.id,
+          Instant.now(),
           janusData,
           Set.empty
         ).value
@@ -614,6 +616,7 @@ class UserAccessTest
         val (permission, _) = checkUserPermissionWithSource(
           "support.user",
           supportPermission.id,
+          Instant.now(),
           janusData,
           Set.empty
         ).value
@@ -625,6 +628,7 @@ class UserAccessTest
       checkUserPermissionWithSource(
         "no.permissions",
         fooDev.id,
+        Instant.now(),
         janusData,
         Set.empty
       ) shouldBe None
@@ -656,6 +660,7 @@ class UserAccessTest
         val (permission, source) = checkUserPermissionWithSource(
           "internal.user",
           derivedPermission.id,
+          Instant.now(),
           janusData,
           Set(policy)
         ).value
@@ -666,6 +671,7 @@ class UserAccessTest
         val (permission, source) = checkUserPermissionWithSource(
           "internal.user",
           derivedPermission.id,
+          Instant.now(),
           janusData,
           Set(policy)
         ).value
@@ -699,6 +705,7 @@ class UserAccessTest
         val (permission, source) = checkUserPermissionWithSource(
           "admin.user",
           derivedPermission.id,
+          Instant.now(),
           janusData,
           Set(policy)
         ).value
@@ -709,6 +716,7 @@ class UserAccessTest
         val (permission, source) = checkUserPermissionWithSource(
           "admin.user",
           derivedPermission.id,
+          Instant.now(),
           janusData,
           Set(policy)
         ).value
@@ -743,6 +751,7 @@ class UserAccessTest
         val (_, source) = checkUserPermissionWithSource(
           "user",
           fooDev.id,
+          Instant.now(),
           janusData,
           Set.empty
         ).value
@@ -753,6 +762,7 @@ class UserAccessTest
         val (_, source) = checkUserPermissionWithSource(
           "admin",
           fooDev.id,
+          Instant.now(),
           janusData,
           Set.empty
         ).value
@@ -763,6 +773,7 @@ class UserAccessTest
         val (_, source) = checkUserPermissionWithSource(
           "support.user",
           fooDev.id,
+          Instant.now(),
           janusData,
           Set.empty
         ).value

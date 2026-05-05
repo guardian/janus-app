@@ -1,7 +1,7 @@
-import aws.Clients
+import aws.{CloudWatch, Clients}
 import com.gu.googleauth.AuthAction
 import com.gu.play.secretrotation.*
-import com.gu.play.secretrotation.aws.parameterstore
+import aws.parameterstore
 import com.typesafe.config.ConfigException
 import conf.Config
 import controllers.*
@@ -129,6 +129,9 @@ class AppComponents(context: ApplicationLoader.Context)
   private val passkeyRegistrationAuthAction =
     authAction.andThen(passkeyRegistrationAuthFilter)
 
+  private val cloudWatch =
+    new CloudWatch(stage, stack = "security", app = "janus")
+
   override def router: Router = new Routes(
     httpErrorHandler,
     new Janus(
@@ -142,7 +145,7 @@ class AppComponents(context: ApplicationLoader.Context)
       passkeysEnablingCookieName,
       passkeyAuthenticatorMetadata,
       developerPolicyCachingService,
-      stage
+      cloudWatch
     ),
     new PasskeyController(
       controllerComponents,
