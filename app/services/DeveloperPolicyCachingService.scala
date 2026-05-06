@@ -21,6 +21,7 @@ import software.amazon.awssdk.services.iam.IamClient
 import software.amazon.awssdk.services.iam.model.{ListPoliciesRequest, Policy}
 import software.amazon.awssdk.services.sts.StsClient
 
+import java.util.UUID
 import scala.collection.concurrent.TrieMap
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
@@ -93,37 +94,30 @@ class DeveloperPolicyCachingService(
         logger.info(
           s"Developer policy caching enabled with fetch rate: $fetchRate"
         )
-      ) ++ Stream
+      ) ++ (
         // do first fetch immediately
-        .emit(())
-        // then periodically
-        .append(Stream.awakeEvery[IO](fetchRate))
-        .flatMap(_ =>
-          Stream
-            .eval(
-              logger.info("Fetching developer policies from all accounts...")
-            )
-            .append(
-              Stream
-                .emits(accountIams.toList)
-                .evalMap((account, iam) =>
-                  fetchFromAccount(account, iam)
-                    .map(status => cache.update(account, status))
-                )
-            )
-            .append(
-              Stream.eval(
-                logger.info(
-                  "Fetch of developer policies complete for all accounts."
-                )
-              )
-            )
-        )
-        .handleErrorWith { err =>
-          Stream.eval(
-            logger.error(err)("Failed to refresh developer policy cache")
+        Stream.emit(())
+          // then periodically
+          ++ Stream.awakeEvery[IO](fetchRate)
+      ).flatMap(_ =>
+        val logMarker = UUID.randomUUID()
+        Stream.eval(
+          logger.info(
+            s"[$logMarker] Fetching developer policies from all accounts..."
           )
-        }
+        )
+          ++
+            Stream
+              .emits(accountIams.toList)
+              .evalMap((account, iam) =>
+                fetchFromAccount(account, iam, logMarker)
+                  .map(status => cache.update(account, status))
+              )
+      ).handleErrorWith { err =>
+        Stream.eval(
+          logger.error(err)("Failed to refresh developer policy cache")
+        )
+      }
     } else
       Stream.eval(logger.warn("Developer policy caching has been disabled!"))
 
@@ -145,19 +139,20 @@ class DeveloperPolicyCachingService(
 
   private def fetchFromAccount(
       account: AwsAccount,
-      iam: IamClient
+      iam: IamClient,
+      logMarker: UUID
   ): IO[AwsAccountDeveloperPolicyStatus] =
     (for {
       _ <- logger.debug(
-        s"Fetching developer policies from account '${account.name}'..."
+        s"[$logMarker] Fetching developer policies from account '${account.name}'..."
       )
       policySummaries <- Iam.listPolicies(iam, policyListRequest)
       policies <- policySummaries.traverse(summary =>
         fetchDeveloperPolicy(account, iam, summary)
       )
       now <- IO.realTimeInstant
-      _ <- logger.debug(
-        s"Fetched ${policies.size} developer policies from account '${account.name}'."
+      _ <- logger.info(
+        s"[$logMarker] Fetched ${policies.size} developer policies from account '${account.name}'."
       )
     } yield AwsAccountDeveloperPolicyStatus.success(
       DeveloperPolicySnapshot(policies, now)
@@ -165,7 +160,7 @@ class DeveloperPolicyCachingService(
       for {
         now <- IO.realTimeInstant
         _ <- logger.error(err)(
-          s"Failed to fetch developer policies from account '${account.name}'"
+          s"[$logMarker] Failed to fetch developer policies from account '${account.name}'"
         )
       } yield AwsAccountDeveloperPolicyStatus.failure(
         cachedPolicySnapshot = cache.get(account).flatMap(_.policySnapshot),
