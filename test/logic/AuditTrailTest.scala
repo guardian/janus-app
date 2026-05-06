@@ -1,6 +1,10 @@
 package logic
 
 import com.gu.janus.model.{AuditLog, JConsole, JCredentials}
+import com.gu.janus.model.PermissionType.{
+  AccountPermission,
+  DeveloperPolicyPermission
+}
 import com.gu.janus.testutils.{HaveMatchers, RightValues}
 import logic.AuditTrail._
 import org.scalatest.OptionValues
@@ -68,7 +72,8 @@ class AuditTrailTest
         durationAttrName -> AttributeValue.fromN(3600.toString),
         accessLevelAttrName -> AttributeValue.fromS("accessLevel"),
         accessTypeAttrName -> AttributeValue.fromS("credentials"),
-        isExternalAttrName -> AttributeValue.fromN(1.toString)
+        isExternalAttrName -> AttributeValue.fromN(1.toString),
+        permissionTypeAttrName -> AttributeValue.fromS("account-permission")
       )
     }
 
@@ -89,7 +94,8 @@ class AuditTrailTest
         durationAttrName -> AttributeValue.fromN("3600"),
         accessLevelAttrName -> AttributeValue.fromS("dev"),
         accessTypeAttrName -> AttributeValue.fromS("console"),
-        isExternalAttrName -> AttributeValue.fromN("1")
+        isExternalAttrName -> AttributeValue.fromN("1"),
+        permissionTypeAttrName -> AttributeValue.fromS("account-permission")
       )
 
       "extracts an audit log from valid attributes" in {
@@ -102,15 +108,46 @@ class AuditTrailTest
           "duration" as Duration.ofHours(1),
           "accessLevel" as "dev",
           "accessType" as JConsole,
-          "external" as true
+          "external" as true,
+          "permissionType" as AccountPermission
         )
       }
 
-      "extracts a correct (ms) duration from the DB\'s seconds field" in {
+      "extracts a correct (ms) duration from the DB's seconds field" in {
         AuditTrail
           .auditLogFromAttrs(attrs)
           .value
           .duration shouldEqual Duration.ofHours(1)
+      }
+
+      "extracts DeveloperPolicyPermission when the attribute is set accordingly" in {
+        val devPolicyAttrs =
+          attrs + (permissionTypeAttrName -> AttributeValue.fromS(
+            "developer-policy"
+          ))
+        AuditTrail
+          .auditLogFromAttrs(devPolicyAttrs)
+          .value
+          .permissionType shouldEqual DeveloperPolicyPermission
+      }
+    }
+
+    "when the j_permissionType attribute is absent" - {
+      val attrsWithoutPermissionType = Map(
+        accountPartitionKeyName -> AttributeValue.fromS("account"),
+        userNameAttrName -> AttributeValue.fromS("username"),
+        timestampSortKeyName -> AttributeValue.fromN("1446650520000"),
+        durationAttrName -> AttributeValue.fromN("3600"),
+        accessLevelAttrName -> AttributeValue.fromS("dev"),
+        accessTypeAttrName -> AttributeValue.fromS("console"),
+        isExternalAttrName -> AttributeValue.fromN("1")
+      )
+
+      "defaults to AccountPermission for backwards compatibility" in {
+        AuditTrail
+          .auditLogFromAttrs(attrsWithoutPermissionType)
+          .value
+          .permissionType shouldEqual AccountPermission
       }
     }
 

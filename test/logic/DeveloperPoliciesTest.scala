@@ -3,6 +3,7 @@ package logic
 import com.gu.janus.model.{AwsAccount, DeveloperPolicyGrant}
 import logic.DeveloperPolicies.{
   DEVELOPER_POLICY_NAMESPACE_PREFIX,
+  developerPolicyDisplayName,
   developerPolicySlug,
   toDeveloperPolicy,
   toPermission
@@ -154,6 +155,34 @@ class DeveloperPoliciesTest
       val slugs = policyNames.map(developerPolicySlug)
 
       slugs.distinct.size shouldBe policyNames.size
+    }
+  }
+
+  "developerPolicyDisplayName" - {
+    "strips the namespace prefix" in {
+      developerPolicyDisplayName("iam-mypolicy") shouldBe "mypolicy"
+    }
+
+    "URL-decodes encoded characters" in {
+      val testCases = List(
+        ("iam-policy.name", "policy.name"),
+        ("iam-policy%2Cname", "policy,name"),
+        ("iam-policy%2Bname", "policy+name"),
+        ("iam-policy%40name", "policy@name"),
+        ("iam-policy%3Dname", "policy=name"),
+        ("iam-policy+name", "policy name")
+      )
+
+      for ((slug, expected) <- testCases) {
+        developerPolicyDisplayName(slug) shouldBe expected
+      }
+    }
+
+    "round-trips a slug produced by developerPolicySlug" in {
+      forAll(Gen.asciiPrintableStr) { rawPolicyName =>
+        val slug = developerPolicySlug(rawPolicyName)
+        developerPolicyDisplayName(slug) shouldBe rawPolicyName
+      }
     }
   }
 
