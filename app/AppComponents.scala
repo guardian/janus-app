@@ -153,12 +153,7 @@ class AppComponents(context: ApplicationLoader.Context)
       passkeysEnabled,
       passkeysEnablingCookieName
     ),
-    new Audit(
-      janusData,
-      controllerComponents,
-      authAction,
-      developerPolicyCachingService
-    ),
+    new Audit(janusData, controllerComponents, authAction),
     new RevokePermissions(
       janusData,
       controllerComponents,
