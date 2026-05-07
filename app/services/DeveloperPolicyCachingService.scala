@@ -94,30 +94,30 @@ class DeveloperPolicyCachingService(
         logger.info(
           s"Developer policy caching enabled with fetch rate: $fetchRate"
         )
-      ) ++ (
-        // do first fetch immediately
-        Stream.emit(())
-          // then periodically
-          ++ Stream.awakeEvery[IO](fetchRate)
-      ).flatMap(_ =>
-        val logMarker = UUID.randomUUID()
-        Stream.eval(
-          logger.info(
-            s"[$logMarker] Fetching developer policies from all accounts..."
+      ) ++
+        (
+          // generate a UUID log marker and do first fetch immediately
+          Stream.eval(IO.randomUUID)
+            // then periodically
+            ++ Stream.awakeEvery[IO](fetchRate).evalMap(_ => IO.randomUUID)
+        ).flatMap(logMarker =>
+          Stream.eval(
+            logger.info(
+              s"[$logMarker] Fetching developer policies from all accounts..."
+            )
           )
-        )
-          ++
-            Stream
-              .emits(accountIams.toList)
-              .evalMap((account, iam) =>
-                fetchFromAccount(account, iam, logMarker)
-                  .map(status => cache.update(account, status))
-              )
-      ).handleErrorWith { err =>
-        Stream.eval(
-          logger.error(err)("Failed to refresh developer policy cache")
-        )
-      }
+            ++
+              Stream
+                .emits(accountIams.toList)
+                .evalMap((account, iam) =>
+                  fetchFromAccount(account, iam, logMarker)
+                    .map(status => cache.update(account, status))
+                )
+        ).handleErrorWith { err =>
+          Stream.eval(
+            logger.error(err)("Failed to refresh developer policy cache")
+          )
+        }
     } else
       Stream.eval(logger.warn("Developer policy caching has been disabled!"))
 
