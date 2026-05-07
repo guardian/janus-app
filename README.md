@@ -114,7 +114,7 @@ Janus.
 
 #### Install Node
 
-The version is specified in `.nvmrc`. Dependencies will be installed as part of the sbt run command. 
+The version is specified in `.tool-versions`. Dependencies will be installed as part of the sbt run command. 
 
 When developing locally, you can also run `npm --prefix frontend i` from the project root to install dependencies.
 

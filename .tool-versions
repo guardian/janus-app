@@ -1,1 +1,5 @@
 java corretto-21
+sbt 1
+aqua:aws/aws-cli 2
+# Ensure the node version matches the version in Janus: https://github.com/guardian/janus/blob/main/.nvmrc
+node 22
