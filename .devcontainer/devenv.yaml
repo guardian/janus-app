@@ -1,0 +1,15 @@
+# Devenv project configuration
+name: "janus-app"
+
+modules:
+  - mise
+  - docker-in-docker  # (disabled by default)
+  - scala  # (disabled by default)
+  - node  # (disabled by default)
+
+forwardPorts:
+   - 1234
+   - 9100 
+
+mounts:
+  - "source=${localEnv:HOME}/.gu/janus-app,target=/home/vscode/.gu/janus-app,readonly,type=bind,consistency=cached"
