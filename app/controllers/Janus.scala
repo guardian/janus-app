@@ -319,13 +319,14 @@ class Janus(
   ): Option[(Credentials, Permission)] = {
     val (requestedDuration, tzOffset) = durationParams
     for {
-      (permission, accessSource) <- checkUserPermissionWithSource(
-        username(user),
-        permissionId,
-        Instant.now(),
-        janusData,
-        developerPolicies
-      )
+      (permission, accessSource, permissionType) <-
+        checkUserPermissionWithSource(
+          username(user),
+          permissionId,
+          Instant.now(),
+          janusData,
+          developerPolicies
+        )
       duration = Federation.duration(
         permission,
         requestedDuration,
@@ -345,7 +346,8 @@ class Janus(
         accessType,
         duration,
         janusData.access,
-        accessSource == Internal
+        accessSource == Internal,
+        permissionType
       )
       _ = AuditTrailDB.insert(auditLog)
     } yield {
