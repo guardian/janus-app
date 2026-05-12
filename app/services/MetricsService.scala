@@ -11,9 +11,7 @@ import software.amazon.awssdk.services.sts.model.PackedPolicyTooLargeException
 import scala.jdk.CollectionConverters.*
 
 class MetricsService(
-    val stage: String,
-    val stack: String = "security",
-    val app: String = "janus"
+    val stage: String
 ) extends Logging {
 
   private val namespace = s"/$stage/$stack/$app"
@@ -214,6 +212,8 @@ class MetricsService(
 }
 
 object MetricsService {
+  private[services] val stack: String = "security"
+  private[services] val app: String = "janus"
   private[services] val permissionIdDimensionName = "permission-id"
   private[services] val accessTypeDimensionName = "access-type"
   private[services] val accessSourceDimensionName = "access-source"

@@ -55,7 +55,8 @@ class MetricsServiceTest
     "should generate correct namespace" in {
       forAll(getFailedMetricRequestGen) {
         case (TestWorld(stage, _, _, _), request) =>
-          request.namespace() shouldBe s"/$stage/security/janus"
+          request
+            .namespace() shouldBe s"/$stage/${MetricsService.stack}/${MetricsService.app}"
       }
     }
 
@@ -155,7 +156,8 @@ class MetricsServiceTest
     "should generate correct namespace" in {
       forAll(getDeniedMetricRequestGen) {
         case (TestWorld(stage, _, _), request) =>
-          request.namespace() shouldBe s"/$stage/security/janus"
+          request
+            .namespace() shouldBe s"/$stage/${MetricsService.stack}/${MetricsService.app}"
       }
     }
     "should generate correct metric" - {
@@ -243,7 +245,8 @@ class MetricsServiceTest
     "should generate correct namespace" in {
       forAll(getSuccessfulMetricRequestGen) {
         case (TestWorld(stage, _, _, _, _), request) =>
-          request.namespace() shouldBe s"/$stage/security/janus"
+          request
+            .namespace() shouldBe s"/$stage/${MetricsService.stack}/${MetricsService.app}"
       }
     }
     "should generate correct metric" - {
@@ -350,7 +353,8 @@ class MetricsServiceTest
     "should generate correct namespace" in {
       forAll(getTooLargeMetricRequestGen) {
         case (TestWorld(stage, _, _, _, _), request) =>
-          request.namespace() shouldBe s"/$stage/security/janus"
+          request
+            .namespace() shouldBe s"/$stage/${MetricsService.stack}/${MetricsService.app}"
       }
     }
     "should generate correct metric" - {
