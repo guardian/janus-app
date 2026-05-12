@@ -196,6 +196,20 @@ object JanusAccessType {
   }
 }
 
+enum PermissionType(val serialised: String) {
+
+  /** A permission defined in Janus */
+  case AccountPermission extends PermissionType("account-permission")
+
+  /** A permission defined as a managed policy in AWS */
+  case DeveloperPolicyPermission extends PermissionType("developer-policy")
+}
+
+object PermissionType {
+  def fromString(string: String): Option[PermissionType] =
+    PermissionType.values.find(_.serialised == string)
+}
+
 case class AuditLog(
     account: String,
     username: String,
@@ -203,5 +217,7 @@ case class AuditLog(
     duration: Duration,
     accessLevel: String,
     accessType: JanusAccessType,
-    external: Boolean
+    external: Boolean,
+    // Default is AccountPermission because historically all permissions were AccountPermission
+    permissionType: PermissionType = PermissionType.AccountPermission
 )
