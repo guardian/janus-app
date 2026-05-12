@@ -374,13 +374,21 @@ class Janus(
           )
           Some((credentials, permission))
         } catch {
-          case NonFatal(e) =>
+          case e: PackedPolicyTooLargeException =>
             logger.error("Exception creating credentials", e)
-            metricsService.putExceptionOnRequest(
+            metricsService.putTooLargeRequest(
               permissionId,
               accessType,
               accessSource,
               e
+            )
+            throw e
+          case NonFatal(e) =>
+            logger.error("Exception creating credentials", e)
+            metricsService.putFailedRequest(
+              permissionId,
+              accessType,
+              accessSource
             )
             throw e
         }

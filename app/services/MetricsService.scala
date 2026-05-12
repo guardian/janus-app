@@ -54,7 +54,7 @@ class MetricsService(
     )
     .build()
 
-  private def putFailedRequest(
+  def putFailedRequest(
       permissionId: String,
       accessType: JanusAccessType,
       accessSource: AccessSource
@@ -151,30 +151,7 @@ class MetricsService(
     .value(accessSource.toString)
     .build()
 
-  def putExceptionOnRequest(
-      permissionId: String,
-      accessType: JanusAccessType,
-      accessSource: AccessSource,
-      e: Throwable
-  ): Nothing = e match {
-    case e: PackedPolicyTooLargeException =>
-      this.putTooLargeRequest(
-        permissionId,
-        accessType,
-        accessSource,
-        e
-      )
-      throw e
-    case _ =>
-      this.putFailedRequest(
-        permissionId,
-        accessType,
-        accessSource
-      )
-      throw e
-  }
-
-  private def putTooLargeRequest(
+  def putTooLargeRequest(
       permissionId: String,
       accessType: JanusAccessType,
       accessSource: AccessSource,
@@ -195,7 +172,7 @@ class MetricsService(
     }
   }
 
-  private[services] def getTooLargeMetricRequest(
+  def getTooLargeMetricRequest(
       permissionId: String,
       accessType: JanusAccessType,
       accessSource: AccessSource,
