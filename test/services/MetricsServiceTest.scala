@@ -1,6 +1,11 @@
 package services
 
-import com.gu.janus.model.{JConsole, JCredentials, JanusAccessType}
+import com.gu.janus.model.{
+  JConsole,
+  JCredentials,
+  JanusAccessType,
+  PermissionType
+}
 import models.AccessSource
 import org.scalacheck.Gen
 import org.scalatest.freespec.AnyFreeSpec
@@ -25,6 +30,11 @@ class MetricsServiceTest
 
   private def accessTypeGen = Gen.oneOf(JCredentials, JConsole)
 
+  private def permissionTypeGen = Gen.oneOf(
+    PermissionType.AccountPermission,
+    PermissionType.DeveloperPolicyPermission
+  )
+
   private def permissionIdGen = Gen.listOf(Gen.alphaNumChar).map(_.mkString)
 
   private def stageGen = Gen.oneOf("DEV", "CODE", "PROD")
@@ -33,6 +43,7 @@ class MetricsServiceTest
     case class TestWorld(
         stage: String,
         permissionId: String,
+        permissionType: PermissionType,
         accessType: JanusAccessType,
         accessSource: AccessSource
     )
@@ -41,12 +52,20 @@ class MetricsServiceTest
       for {
         stage <- stageGen
         permissionId <- permissionIdGen
+        permissionType <- permissionTypeGen
         accessType <- accessTypeGen
         accessSource <- accessSourceGen
       } yield (
-        TestWorld(stage, permissionId, accessType, accessSource),
+        TestWorld(
+          stage,
+          permissionId,
+          permissionType,
+          accessType,
+          accessSource
+        ),
         MetricsService(stage).getFailedMetricRequest(
           permissionId,
+          permissionType,
           accessType,
           accessSource
         )
@@ -54,7 +73,7 @@ class MetricsServiceTest
 
     "should generate correct namespace" in {
       forAll(getFailedMetricRequestGen) {
-        case (TestWorld(stage, _, _, _), request) =>
+        case (TestWorld(stage, _, _, _, _), request) =>
           request
             .namespace() shouldBe s"/$stage/${MetricsService.stack}/${MetricsService.app}"
       }
@@ -89,7 +108,7 @@ class MetricsServiceTest
         s"should generate correct $permissionIdDimensionName dimension" in {
 
           forAll(getFailedMetricRequestGen) {
-            case (TestWorld(_, permissionId, _, _), request) =>
+            case (TestWorld(_, permissionId, _, _, _), request) =>
               val dimensions = request.metricData().get(0).dimensions().asScala
               val dimensionNames = dimensions.map(_.name)
               dimensionNames should contain(permissionIdDimensionName)
@@ -100,9 +119,25 @@ class MetricsServiceTest
               )
           }
         }
+        s"should generate correct $permissionTypeDimensionName dimension" in {
+
+          forAll(getFailedMetricRequestGen) {
+            case (TestWorld(_, _, permissionType, _, _), request) =>
+              val dimensions = request.metricData().get(0).dimensions().asScala
+              val dimensionNames = dimensions.map(_.name)
+              dimensionNames should contain(permissionTypeDimensionName)
+              dimensions
+                .filter(_.name == permissionTypeDimensionName)
+                .flatMap(d =>
+                  PermissionType.fromString(d.value())
+                ) should contain(
+                permissionType
+              )
+          }
+        }
         s"should generate correct $accessTypeDimensionName dimension" in {
           forAll(getFailedMetricRequestGen) {
-            case (TestWorld(_, _, accessType, _), request) =>
+            case (TestWorld(_, _, _, accessType, _), request) =>
               val dimensions = request.metricData().get(0).dimensions().asScala
               val dimensionNames = dimensions.map(_.name)
               dimensionNames should contain(accessTypeDimensionName)
@@ -117,7 +152,7 @@ class MetricsServiceTest
         }
         s"should generate correct $accessSourceDimensionName dimension" in {
           forAll(getFailedMetricRequestGen) {
-            case (TestWorld(_, _, _, accessSource), request) =>
+            case (TestWorld(_, _, _, _, accessSource), request) =>
               val dimensions = request.metricData().get(0).dimensions().asScala
               val dimensionNames = dimensions.map(_.name)
               dimensionNames should contain(accessSourceDimensionName)
@@ -221,6 +256,7 @@ class MetricsServiceTest
     case class TestWorld(
         stage: String,
         permissionId: String,
+        permissionType: PermissionType,
         accessType: JanusAccessType,
         accessSource: AccessSource,
         size: Int
@@ -229,22 +265,31 @@ class MetricsServiceTest
       for {
         stage <- stageGen
         permissionId <- permissionIdGen
+        permissionType <- permissionTypeGen
         accessType <- accessTypeGen
         accessSource <- accessSourceGen
         size <- Gen.choose(90, 110)
       } yield (
-        TestWorld(stage, permissionId, accessType, accessSource, size),
+        TestWorld(
+          stage,
+          permissionId,
+          permissionType,
+          accessType,
+          accessSource,
+          size
+        ),
         MetricsService(stage).getSuccessfulMetricRequest(
           permissionId,
           accessType,
           accessSource,
+          permissionType,
           size
         )
       )
 
     "should generate correct namespace" in {
       forAll(getSuccessfulMetricRequestGen) {
-        case (TestWorld(stage, _, _, _, _), request) =>
+        case (TestWorld(stage, _, _, _, _, _), request) =>
           request
             .namespace() shouldBe s"/$stage/${MetricsService.stack}/${MetricsService.app}"
       }
@@ -265,7 +310,7 @@ class MetricsServiceTest
       }
       "should generate correct metric value" in {
         forAll(getSuccessfulMetricRequestGen) {
-          case (TestWorld(_, _, _, _, size), request) =>
+          case (TestWorld(_, _, _, _, _, size), request) =>
             request.metricData().get(0).value() shouldBe size
         }
       }
@@ -277,7 +322,7 @@ class MetricsServiceTest
       "should generate correct metric dimensions" - {
         s"should generate correct $permissionIdDimensionName dimension" in {
           forAll(getSuccessfulMetricRequestGen) {
-            case (TestWorld(_, permissionId, _, _, _), request) =>
+            case (TestWorld(_, permissionId, _, _, _, _), request) =>
               val dimensions = request.metricData().get(0).dimensions().asScala
               val dimensionNames = dimensions.map(_.name)
               dimensionNames should contain(permissionIdDimensionName)
@@ -288,9 +333,24 @@ class MetricsServiceTest
               )
           }
         }
+        s"should generate correct $permissionTypeDimensionName dimension" in {
+          forAll(getSuccessfulMetricRequestGen) {
+            case (TestWorld(_, _, permissionType, _, _, _), request) =>
+              val dimensions = request.metricData().get(0).dimensions().asScala
+              val dimensionNames = dimensions.map(_.name)
+              dimensionNames should contain(permissionTypeDimensionName)
+              dimensions
+                .filter(_.name == permissionTypeDimensionName)
+                .flatMap(d =>
+                  PermissionType.fromString(d.value())
+                ) should contain(
+                permissionType
+              )
+          }
+        }
         s"should generate correct $accessTypeDimensionName dimension" in {
           forAll(getSuccessfulMetricRequestGen) {
-            case (TestWorld(_, _, accessType, _, _), request) =>
+            case (TestWorld(_, _, _, accessType, _, _), request) =>
               val dimensions = request.metricData().get(0).dimensions().asScala
               val dimensionNames = dimensions.map(_.name)
               dimensionNames should contain(accessTypeDimensionName)
@@ -305,7 +365,7 @@ class MetricsServiceTest
         }
         s"should generate correct $accessSourceDimensionName dimension" in {
           forAll(getSuccessfulMetricRequestGen) {
-            case (TestWorld(_, _, _, accessSource, _), request) =>
+            case (TestWorld(_, _, _, _, accessSource, _), request) =>
               val dimensions = request.metricData().get(0).dimensions().asScala
               val dimensionNames = dimensions.map(_.name)
               dimensionNames should contain(accessSourceDimensionName)
@@ -326,6 +386,7 @@ class MetricsServiceTest
     case class TestWorld(
         stage: String,
         permissionId: String,
+        permissionType: PermissionType,
         accessType: JanusAccessType,
         accessSource: AccessSource,
         size: Int
@@ -334,15 +395,24 @@ class MetricsServiceTest
       for {
         stage <- stageGen
         permissionId <- permissionIdGen
+        permissionType <- permissionTypeGen
         accessType <- accessTypeGen
         accessSource <- accessSourceGen
         size <- Gen.choose(90, 110)
       } yield (
-        TestWorld(stage, permissionId, accessType, accessSource, size),
+        TestWorld(
+          stage,
+          permissionId,
+          permissionType,
+          accessType,
+          accessSource,
+          size
+        ),
         MetricsService(stage).getTooLargeMetricRequest(
           permissionId,
           accessType,
           accessSource,
+          permissionType,
           PackedPolicyTooLargeException
             .builder()
             .message(s"Packed policy consumes $size% of allotted space")
@@ -352,7 +422,7 @@ class MetricsServiceTest
 
     "should generate correct namespace" in {
       forAll(getTooLargeMetricRequestGen) {
-        case (TestWorld(stage, _, _, _, _), request) =>
+        case (TestWorld(stage, _, _, _, _, _), request) =>
           request
             .namespace() shouldBe s"/$stage/${MetricsService.stack}/${MetricsService.app}"
       }
@@ -373,7 +443,7 @@ class MetricsServiceTest
       }
       "should generate correct metric value" in {
         forAll(getTooLargeMetricRequestGen) {
-          case (TestWorld(_, _, _, _, size), request) =>
+          case (TestWorld(_, _, _, _, _, size), request) =>
             request.metricData().get(0).value() shouldBe size
         }
       }
@@ -383,9 +453,24 @@ class MetricsServiceTest
         }
       }
       "should generate correct metric dimensions" - {
+        s"should generate correct $permissionTypeDimensionName dimension" in {
+          forAll(getTooLargeMetricRequestGen) {
+            case (TestWorld(_, _, permissionType, _, _, _), request) =>
+              val dimensions = request.metricData().get(0).dimensions().asScala
+              val dimensionNames = dimensions.map(_.name)
+              dimensionNames should contain(permissionTypeDimensionName)
+              dimensions
+                .filter(_.name == permissionTypeDimensionName)
+                .flatMap(d =>
+                  PermissionType.fromString(d.value())
+                ) should contain(
+                permissionType
+              )
+          }
+        }
         s"should generate correct $permissionIdDimensionName dimension" in {
           forAll(getTooLargeMetricRequestGen) {
-            case (TestWorld(_, permissionId, _, _, _), request) =>
+            case (TestWorld(_, permissionId, _, _, _, _), request) =>
               val dimensions = request.metricData().get(0).dimensions().asScala
               val dimensionNames = dimensions.map(_.name)
               dimensionNames should contain(permissionIdDimensionName)
@@ -398,7 +483,7 @@ class MetricsServiceTest
         }
         s"should generate correct $accessTypeDimensionName dimension" in {
           forAll(getTooLargeMetricRequestGen) {
-            case (TestWorld(_, _, accessType, _, _), request) =>
+            case (TestWorld(_, _, _, accessType, _, _), request) =>
               val dimensions =
                 request.metricData().get(0).dimensions().asScala
               val dimensionNames = dimensions.map(_.name)
@@ -414,7 +499,7 @@ class MetricsServiceTest
         }
         s"should generate correct $accessSourceDimensionName dimension" in {
           forAll(getTooLargeMetricRequestGen) {
-            case (TestWorld(_, _, _, accessSource, _), request) =>
+            case (TestWorld(_, _, _, _, accessSource, _), request) =>
               val dimensions =
                 request.metricData().get(0).dimensions().asScala
               val dimensionNames = dimensions.map(_.name)
