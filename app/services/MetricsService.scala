@@ -1,7 +1,7 @@
 package services
 
 import aws.Clients.cloudwatchClient
-import com.gu.janus.model.JanusAccessType
+import com.gu.janus.model.{JanusAccessType, PermissionType}
 import models.AccessSource
 import play.api.Logging
 import services.MetricsService.*
@@ -55,11 +55,17 @@ class MetricsService(
   def putFailedRequest(
       permissionId: String,
       accessType: JanusAccessType,
-      accessSource: AccessSource
+      accessSource: AccessSource,
+      permissionType: PermissionType
   ): Unit = {
     try {
       val failedMetricRequest =
-        getFailedMetricRequest(permissionId, accessType, accessSource)
+        getFailedMetricRequest(
+          permissionId,
+          permissionType,
+          accessType,
+          accessSource
+        )
       cloudwatchClient.putMetricData(failedMetricRequest)
     } catch {
       case e: Throwable =>
@@ -69,6 +75,7 @@ class MetricsService(
 
   private[services] def getFailedMetricRequest(
       permissionId: String,
+      permissionType: PermissionType,
       accessType: JanusAccessType,
       accessSource: AccessSource
   ): PutMetricDataRequest = PutMetricDataRequest
@@ -83,6 +90,7 @@ class MetricsService(
         .dimensions(
           Set(
             getPermissionIdDimension(permissionId),
+            getPermissionTypeDimension(permissionType),
             getAccessTypeDimension(accessType),
             getAccessSourceDimension(accessSource)
           ).toList.asJava
@@ -97,10 +105,18 @@ class MetricsService(
     .value(permissionId)
     .build()
 
+  private def getPermissionTypeDimension(permissionType: PermissionType) =
+    Dimension
+      .builder()
+      .name(permissionTypeDimensionName)
+      .value(permissionType.serialised)
+      .build()
+
   def putSuccessfulRequest(
       permissionId: String,
       accessType: JanusAccessType,
       accessSource: AccessSource,
+      permissionType: PermissionType,
       size: Int
   ): Unit = {
     try {
@@ -109,6 +125,7 @@ class MetricsService(
           permissionId,
           accessType,
           accessSource,
+          permissionType,
           size
         )
       cloudwatchClient.putMetricData(successfulMetricRequest)
@@ -122,6 +139,7 @@ class MetricsService(
       permissionId: String,
       accessType: JanusAccessType,
       accessSource: AccessSource,
+      permissionType: PermissionType,
       size: Double
   ): PutMetricDataRequest = PutMetricDataRequest
     .builder()
@@ -135,6 +153,7 @@ class MetricsService(
         .dimensions(
           Set(
             getPermissionIdDimension(permissionId),
+            getPermissionTypeDimension(permissionType),
             getAccessTypeDimension(accessType),
             getAccessSourceDimension(accessSource)
           ).toList.asJava
@@ -153,6 +172,7 @@ class MetricsService(
       permissionId: String,
       accessType: JanusAccessType,
       accessSource: AccessSource,
+      permissionType: PermissionType,
       e: PackedPolicyTooLargeException
   ): Unit = {
     try {
@@ -161,6 +181,7 @@ class MetricsService(
           permissionId,
           accessType,
           accessSource,
+          permissionType,
           e
         )
       cloudwatchClient.putMetricData(tooLargeMetricRequest)
@@ -174,6 +195,7 @@ class MetricsService(
       permissionId: String,
       accessType: JanusAccessType,
       accessSource: AccessSource,
+      permissionType: PermissionType,
       e: PackedPolicyTooLargeException
   ): PutMetricDataRequest = {
     /*
@@ -195,6 +217,7 @@ class MetricsService(
           .dimensions(
             Set(
               getPermissionIdDimension(permissionId),
+              getPermissionTypeDimension(permissionType),
               getAccessTypeDimension(accessType),
               getAccessSourceDimension(accessSource)
             ).toList.asJava
@@ -215,6 +238,7 @@ object MetricsService {
   private[services] val stack: String = "security"
   private[services] val app: String = "janus"
   private[services] val permissionIdDimensionName = "permission-id"
+  private[services] val permissionTypeDimensionName = "permission-type"
   private[services] val accessTypeDimensionName = "access-type"
   private[services] val accessSourceDimensionName = "access-source"
   private[services] val successfulRequestMetricName = "successful-request"

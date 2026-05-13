@@ -370,6 +370,7 @@ class Janus(
             permissionId,
             accessType,
             accessSource,
+            permissionType,
             size
           )
           Some((credentials, permission))
@@ -380,6 +381,7 @@ class Janus(
               permissionId,
               accessType,
               accessSource,
+              permissionType,
               e
             )
             throw e
@@ -388,7 +390,8 @@ class Janus(
             metricsService.putFailedRequest(
               permissionId,
               accessType,
-              accessSource
+              accessSource,
+              permissionType
             )
             throw e
         }
