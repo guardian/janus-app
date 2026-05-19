@@ -1,3 +1,14 @@
+# Devcontainer Changes
+
+Docker needs to be started (see below for first run changes)
+
+The data location in docker-compose needs to change:
+
+ * /workspaces/janus-app/data:/home/dynamodblocal/data for vscode
+ * /IdeaProjects/janus-app/data:/home/dynamodblocal/data for IntelliJ
+
+The create tables "test" will then need to be run.
+
 # Devcontainer Temporary Issues
 
 Currently the devcontainer has a 2.3 version of containerd installed by the plugin, but this is not compatible
