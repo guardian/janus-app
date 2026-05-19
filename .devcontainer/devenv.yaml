@@ -1,6 +1,4 @@
 # Devenv project configuration
-# Edit this file to configure your project's devcontainer
-# and then run `devenv generate` to create the devcontainer.json files
 
 name: "janus-app"
 
@@ -12,7 +10,7 @@ name: "janus-app"
 # To disable, comment out or remove items from this list
 modules:
   - mise
-  # - docker-in-docker  # (disabled by default)
+  - docker-in-docker  # (disabled by default)
   - scala
   - node
 
