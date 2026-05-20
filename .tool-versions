@@ -1,4 +1,4 @@
 java corretto-21
 sbt 1
 aqua:aws/aws-cli latest
-github:guardian/devenv 20260518-083717
+github:guardian/devenv 20260520-131620

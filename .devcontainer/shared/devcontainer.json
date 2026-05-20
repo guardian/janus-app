@@ -20,12 +20,12 @@
     9100,
     1234
   ],
-  "image" : "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "image" : "mcr.microsoft.com/devcontainers/base:ubuntu26.04",
   "remoteUser" : "vscode",
   "features" : {
-    "ghcr.io/devcontainers/features/docker-in-docker:2" : {
+    "ghcr.io/devcontainers/features/docker-in-docker:3" : {
       "version" : "latest",
-      "moby" : true,
+      "moby" : false,
       "dockerDashComposeVersion" : "v2"
     }
   },
