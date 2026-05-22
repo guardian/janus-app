@@ -368,6 +368,7 @@ class Janus(
           )
           metricsService.putSuccessfulRequest(
             permissionId,
+            permission.label,
             accessType,
             accessSource,
             permissionType,
@@ -379,6 +380,7 @@ class Janus(
             logger.error("Exception creating credentials", e)
             metricsService.putTooLargeRequest(
               permissionId,
+              permission.label,
               accessType,
               accessSource,
               permissionType,
@@ -389,6 +391,7 @@ class Janus(
             logger.error("Exception creating credentials", e)
             metricsService.putFailedRequest(
               permissionId,
+              permission.label,
               accessType,
               accessSource,
               permissionType
