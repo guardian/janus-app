@@ -54,6 +54,7 @@ class MetricsService(
 
   def putFailedRequest(
       permissionId: String,
+      permissionLabel: String,
       accessType: JanusAccessType,
       accessSource: AccessSource,
       permissionType: PermissionType
@@ -62,6 +63,7 @@ class MetricsService(
       val failedMetricRequest =
         getFailedMetricRequest(
           permissionId,
+          permissionLabel,
           permissionType,
           accessType,
           accessSource
@@ -75,6 +77,7 @@ class MetricsService(
 
   private[services] def getFailedMetricRequest(
       permissionId: String,
+      permissionLabel: String,
       permissionType: PermissionType,
       accessType: JanusAccessType,
       accessSource: AccessSource
@@ -90,6 +93,7 @@ class MetricsService(
         .dimensions(
           Set(
             getPermissionIdDimension(permissionId),
+            getPermissionLabelDimension(permissionLabel),
             getPermissionTypeDimension(permissionType),
             getAccessTypeDimension(accessType),
             getAccessSourceDimension(accessSource)
@@ -105,6 +109,12 @@ class MetricsService(
     .value(permissionId)
     .build()
 
+  private def getPermissionLabelDimension(permissionLabel: String) = Dimension
+    .builder()
+    .name(permissionLabelDimensionName)
+    .value(permissionLabel)
+    .build()
+
   private def getPermissionTypeDimension(permissionType: PermissionType) =
     Dimension
       .builder()
@@ -114,6 +124,7 @@ class MetricsService(
 
   def putSuccessfulRequest(
       permissionId: String,
+      permissionLabel: String,
       accessType: JanusAccessType,
       accessSource: AccessSource,
       permissionType: PermissionType,
@@ -123,6 +134,7 @@ class MetricsService(
       val successfulMetricRequest =
         getSuccessfulMetricRequest(
           permissionId,
+          permissionLabel,
           accessType,
           accessSource,
           permissionType,
@@ -137,6 +149,7 @@ class MetricsService(
 
   private[services] def getSuccessfulMetricRequest(
       permissionId: String,
+      permissionLabel: String,
       accessType: JanusAccessType,
       accessSource: AccessSource,
       permissionType: PermissionType,
@@ -153,6 +166,7 @@ class MetricsService(
         .dimensions(
           Set(
             getPermissionIdDimension(permissionId),
+            getPermissionLabelDimension(permissionLabel),
             getPermissionTypeDimension(permissionType),
             getAccessTypeDimension(accessType),
             getAccessSourceDimension(accessSource)
@@ -170,6 +184,7 @@ class MetricsService(
 
   def putTooLargeRequest(
       permissionId: String,
+      permissionLabel: String,
       accessType: JanusAccessType,
       accessSource: AccessSource,
       permissionType: PermissionType,
@@ -179,6 +194,7 @@ class MetricsService(
       val tooLargeMetricRequest =
         getTooLargeMetricRequest(
           permissionId,
+          permissionLabel,
           accessType,
           accessSource,
           permissionType,
@@ -193,6 +209,7 @@ class MetricsService(
 
   def getTooLargeMetricRequest(
       permissionId: String,
+      permissionLabel: String,
       accessType: JanusAccessType,
       accessSource: AccessSource,
       permissionType: PermissionType,
@@ -217,6 +234,7 @@ class MetricsService(
           .dimensions(
             Set(
               getPermissionIdDimension(permissionId),
+              getPermissionLabelDimension(permissionLabel),
               getPermissionTypeDimension(permissionType),
               getAccessTypeDimension(accessType),
               getAccessSourceDimension(accessSource)
@@ -238,6 +256,7 @@ object MetricsService {
   private[services] val stack: String = "security"
   private[services] val app: String = "janus"
   private[services] val permissionIdDimensionName = "permission-id"
+  private[services] val permissionLabelDimensionName = "permission-label"
   private[services] val permissionTypeDimensionName = "permission-type"
   private[services] val accessTypeDimensionName = "access-type"
   private[services] val accessSourceDimensionName = "access-source"
