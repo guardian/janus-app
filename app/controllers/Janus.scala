@@ -38,7 +38,6 @@ class Janus(
     host: String,
     stsClient: StsClient,
     configuration: Configuration,
-    passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
     developerPolicyService: DeveloperPolicyFinder
       with DeveloperPolicyStatusManager,
@@ -188,7 +187,6 @@ class Janus(
         passkeys,
         dateFormat,
         timeFormat,
-        passkeysEnablingCookieName,
         passkeysManagerLink(configuration),
         passkeysManagerLinkText(configuration)
       )

@@ -32,16 +32,13 @@ import scala.util.{Failure, Success, Try}
   */
 class PasskeyAuthFilter(
     host: String,
-    passkeysEnabled: Boolean,
-    enablingCookieName: String
+    passkeysEnabled: Boolean
 )(using dynamoDb: DynamoDbClient, val executionContext: ExecutionContext)
     extends ActionFilter[UserIdentityRequest]
     with Logging {
 
   def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] = {
-    val enablingCookieIsPresent =
-      request.cookies.get(enablingCookieName).isDefined
-    if (passkeysEnabled && enablingCookieIsPresent) {
+    if (passkeysEnabled) {
       logger.info(s"Verifying passkey for user ${request.user.username} ...")
       Future(apiResponse(authenticatePasskey(request)))
     } else {

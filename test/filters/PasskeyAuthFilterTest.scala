@@ -4,7 +4,7 @@ import com.gu.googleauth.{AuthAction, UserIdentity}
 import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
-import play.api.mvc.{AnyContentAsFormUrlEncoded, Cookie, Results}
+import play.api.mvc.{AnyContentAsFormUrlEncoded, Results}
 import play.api.test.{FakeHeaders, FakeRequest}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -26,7 +26,6 @@ class PasskeyAuthFilterTest
   }
 
   private val testHost = "test.example.com"
-  private val testCookieName = "test-cookie"
   private val testUser = UserIdentity(
     sub = "test-sub-id",
     email = "test@example.com",
@@ -36,18 +35,7 @@ class PasskeyAuthFilterTest
     avatarUrl = None
   )
 
-  private def createRequestWithCookie[A](body: A) = {
-    val cookie = Cookie(testCookieName, "present")
-    new AuthAction.UserIdentityRequest(
-      testUser,
-      FakeRequest("POST", "/test")
-        .withHeaders(FakeHeaders())
-        .withBody(body)
-        .withCookies(cookie)
-    )
-  }
-
-  private def createRequestWithoutCookie[A](body: A) = {
+  private def createRequest[A](body: A) = {
     new AuthAction.UserIdentityRequest(
       testUser,
       FakeRequest("POST", "/test")
@@ -69,24 +57,10 @@ class PasskeyAuthFilterTest
     "bypass authentication when disabled" in {
       val filter = new PasskeyAuthFilter(
         host = testHost,
-        passkeysEnabled = false,
-        enablingCookieName = testCookieName
+        passkeysEnabled = false
       )
 
-      val request = createRequestWithCookie(validFormBody)
-      val result = filter.filter(request).futureValue
-
-      result shouldBe None
-    }
-
-    "bypass authentication when enabling cookie is not present" in {
-      val filter = new PasskeyAuthFilter(
-        host = testHost,
-        passkeysEnabled = true,
-        enablingCookieName = testCookieName
-      )
-
-      val request = createRequestWithoutCookie(validFormBody)
+      val request = createRequest(validFormBody)
       val result = filter.filter(request).futureValue
 
       result shouldBe None
