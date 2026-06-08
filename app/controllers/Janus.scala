@@ -14,13 +14,21 @@ import models.AccessSource.Internal
 import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
-import services.{DeveloperPolicyFinder, DeveloperPolicyStatusManager}
+import services.{
+  DeveloperPolicyFinder,
+  DeveloperPolicyStatusManager,
+  MetricsService
+}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sts.StsClient
-import software.amazon.awssdk.services.sts.model.Credentials
+import software.amazon.awssdk.services.sts.model.{
+  Credentials,
+  PackedPolicyTooLargeException
+}
 
 import java.time.*
 import java.time.format.DateTimeFormatter
+import scala.util.control.NonFatal
 
 class Janus(
     janusData: JanusData,
@@ -33,8 +41,9 @@ class Janus(
     passkeysEnablingCookieName: String,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
     developerPolicyService: DeveloperPolicyFinder
-      with DeveloperPolicyStatusManager
-)(using dynamodDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
+      with DeveloperPolicyStatusManager,
+    metricsService: MetricsService
+)(using dynamoDB: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
     extends AbstractController(controllerComponents)
     with ResultHandler
     with Logging {
@@ -232,7 +241,7 @@ class Janus(
           .withHeaders(CACHE_CONTROL -> "no-cache")
       }) getOrElse {
         logger.warn(
-          s"console login to $permissionId denied for ${username(request.user)}"
+          s"console url login to $permissionId denied for ${username(request.user)}"
         )
         Forbidden(views.html.permissionDenied(request.user, janusData))
       }
@@ -287,7 +296,7 @@ class Janus(
           .withHeaders(CACHE_CONTROL -> "no-cache")
       }) getOrElse {
         logger.warn(
-          s"denied credentials to $rawPermissionIds for ${username(request.user)}"
+          s"denied multi credentials to $rawPermissionIds for ${username(request.user)}"
         )
         Forbidden(views.html.permissionDenied(request.user, janusData))
       }
@@ -317,44 +326,84 @@ class Janus(
       durationParams: (Option[Duration], Option[ZoneId]),
       developerPolicies: Set[DeveloperPolicy]
   ): Option[(Credentials, Permission)] = {
-    val (requestedDuration, tzOffset) = durationParams
-    for {
-      (permission, accessSource, permissionType) <-
-        checkUserPermissionWithSource(
-          username(user),
+    checkUserPermissionWithSource(
+      username(user),
+      permissionId,
+      Instant.now(),
+      janusData,
+      developerPolicies
+    ) match {
+      case Some(permission, accessSource, permissionType) =>
+        try {
+          val (requestedDuration, tzOffset) = durationParams
+
+          val duration = Federation.duration(
+            permission,
+            requestedDuration,
+            tzOffset.map(Clock.system)
+          )
+
+          val roleArn =
+            Config.roleArn(permission.account.authConfigKey, configuration)
+
+          val (credentials, size) = Federation.assumeRole(
+            username(user),
+            roleArn,
+            permission,
+            stsClient,
+            duration
+          )
+          val auditLog = AuditTrail.createLog(
+            user,
+            permission,
+            accessType,
+            duration,
+            janusData.access,
+            accessSource == Internal,
+            permissionType
+          )
+          AuditTrailDB.insert(auditLog)
+          logger.info(
+            s"$accessType access to $permissionId granted for ${username(user)}"
+          )
+          metricsService.putSuccessfulRequest(
+            permissionId,
+            permission.label,
+            accessType,
+            accessSource,
+            permissionType,
+            size
+          )
+          Some((credentials, permission))
+        } catch {
+          case e: PackedPolicyTooLargeException =>
+            logger.error("Exception creating credentials", e)
+            metricsService.putTooLargeRequest(
+              permissionId,
+              permission.label,
+              accessType,
+              accessSource,
+              permissionType,
+              e
+            )
+            throw e
+          case NonFatal(e) =>
+            logger.error("Exception creating credentials", e)
+            metricsService.putFailedRequest(
+              permissionId,
+              permission.label,
+              accessType,
+              accessSource,
+              permissionType
+            )
+            throw e
+        }
+      case None =>
+        metricsService.putDeniedRequest(
           permissionId,
-          Instant.now(),
-          janusData,
-          developerPolicies
+          accessType
         )
-      duration = Federation.duration(
-        permission,
-        requestedDuration,
-        tzOffset.map(Clock.system)
-      )
-      roleArn = Config.roleArn(permission.account.authConfigKey, configuration)
-      credentials = Federation.assumeRole(
-        username(user),
-        roleArn,
-        permission,
-        stsClient,
-        duration
-      )
-      auditLog = AuditTrail.createLog(
-        user,
-        permission,
-        accessType,
-        duration,
-        janusData.access,
-        accessSource == Internal,
-        permissionType
-      )
-      _ = AuditTrailDB.insert(auditLog)
-    } yield {
-      logger.info(
-        s"$accessType access to $permissionId granted for ${username(user)}"
-      )
-      (credentials, permission)
+        None
     }
   }
 
