@@ -487,6 +487,32 @@ a.copy-text--button__small {
     background-color: #1b5e20;
 }
 
+.passkey-prompt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 0;
+    text-align: center;
+}
+
+.passkey-prompt__icon.material-icons {
+    font-size: clamp(3rem, 5vw + 2rem, 5rem);
+    color: #f57c00;
+    margin-bottom: 1.5rem;
+}
+
+.passkey-prompt__text {
+    font-size: 1.2rem;
+    color: #424242;
+    margin-bottom: 2rem;
+}
+
+.passkey-prompt__spinner.material-icons {
+    font-size: 1.5rem;
+    color: #bdbdbd;
+}
+
 .passkey-authenticator-icon {
     position: relative;
     top: 5px;
