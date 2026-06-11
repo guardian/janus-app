@@ -54,6 +54,19 @@ graph TB
     PCDB --> DynamoChallenges
 ```
 
+## Passkey authentication mode
+
+Whether passkey authentication is enforced is controlled by the `passkeys.mode` config value,
+modelled as a `PasskeyMode` enum with three cases:
+
+| Value | Behaviour |
+|---|---|
+| `Disabled` | Passkey authentication is never required. Use only in an emergency. |
+| `IfUserHasPasskey` | Passkey authentication is required for any user who has at least one passkey registered. |
+| `Required` | Passkey authentication is required for all users. |
+
+The default value is currently `IfUserHasPasskey`.
+
 ## Terminology
 
 ### Authenticator
@@ -75,6 +88,9 @@ the authenticator.
 ### [models/Passkey](/app/models/Passkey.scala)
 All the passkey-specific models passed between views and the database are defined here.
 Also model <-> Json marshalling rules.
+
+### [models/PasskeyMode](/app/models/models.scala)
+Scala 3 enum controlling when passkey authentication is enforced. Read from config at startup.
 
 ### [controllers/PasskeyController](/app/controllers/PasskeyController.scala)
 This holds actions for registration of passkeys and for providing registration and authentication options to browsers

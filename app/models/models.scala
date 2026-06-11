@@ -10,6 +10,21 @@ import play.api.http.Status.{
 }
 import play.api.libs.json.{Json, Writes}
 
+/** Controls when passkey authentication is enforced. */
+enum PasskeyMode {
+
+  /** Passkey authentication is never required. */
+  case Disabled
+
+  /** Passkey authentication is required only if the user has at least one
+    * passkey registered.
+    */
+  case IfUserHasPasskey
+
+  /** Passkey authentication is always required. */
+  case Required
+}
+
 enum AccountConfigStatus:
   case FederationConfigError(causedBy: Throwable)
   case ConfigSuccess
