@@ -34,6 +34,9 @@
     "materialize-css": "^1.0.0",
     "parcel": "2.16.4"
   },
+  "optionalDependencies": {
+    "@parcel/rust-linux-arm64-gnu": "2.16.4"
+  },
   "devDependencies": {
     "@guardian/eslint-config": "^11.0.0",
     "@guardian/prettier": "^8.0.1",
