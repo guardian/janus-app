@@ -8,7 +8,8 @@ import com.webauthn4j.data.attestation.authenticator.AAGUID
 import com.webauthn4j.data.client.challenge.DefaultChallenge
 import com.webauthn4j.util.Base64UrlUtil
 import play.api.Logging
-import play.api.libs.json.{JsError, JsSuccess, Json, Reads}
+import play.api.libs.functional.syntax.*
+import play.api.libs.json.{JsError, JsPath, JsSuccess, Json, Reads}
 
 import java.time.Instant
 import scala.io.Source
@@ -123,9 +124,15 @@ case class PasskeyAuthenticator(description: String, icon: Option[String])
   * model) of an authenticator, allowing relying parties to identify and
   * potentially restrict specific authenticator models.
   *
+  * This parses the raw community authenticator database published at
+  * [[https://github.com/passkeydeveloper/passkey-authenticator-aaguids]], whose
+  * entries use `name` for the description and `icon_light`/`icon_dark` for the
+  * icons. It is used as a fallback for authenticators (such as platform
+  * authenticators) that are not published to the FIDO Metadata Service.
+  *
   * Example usage:
   * {{{
-  * val authenticators = PasskeyAuthenticator.fromResource("passkeys_aaguid_descriptions.json")
+  * val authenticators = PasskeyAuthenticator.fromResource("passkeys_aaguid_community.json")
   * val authenticator = authenticators.get(someAAGUID)
   * }}}
   */
@@ -146,13 +153,19 @@ object PasskeyAuthenticator extends Logging {
     }
   )
 
-  given Reads[PasskeyAuthenticator] = Json.reads[PasskeyAuthenticator]
+  /* Maps the community database entry format (`name`, `icon_light`) onto the
+   * PasskeyAuthenticator model. `icon_dark` is intentionally ignored. */
+  given Reads[PasskeyAuthenticator] =
+    ((JsPath \ "name").read[String] and
+      (JsPath \ "icon_light").readNullable[String])(
+      PasskeyAuthenticator.apply
+    )
 
   /** Loads authenticator metadata from a JSON resource file.
     *
     * Reads a JSON file from the classpath that contains a mapping of AAGUID
-    * strings to PasskeyAuthenticator objects. This is used to load
-    * vendor-provided metadata about known authenticator devices.
+    * strings to community authenticator entries. This is used to load
+    * community-provided metadata about known authenticator devices.
     *
     * @param resourcePath
     *   The classpath path to the JSON resource file
@@ -162,7 +175,7 @@ object PasskeyAuthenticator extends Logging {
     *
     * @example
     *   {{{
-    * val authenticators = PasskeyAuthenticator.fromResource("passkeys_aaguid_descriptions.json")
+    * val authenticators = PasskeyAuthenticator.fromResource("passkeys_aaguid_community.json")
     * // Returns Map[AAGUID, PasskeyAuthenticator] with loaded authenticator metadata
     *   }}}
     */
@@ -199,7 +212,7 @@ object PasskeyAuthenticator extends Logging {
     *
     * Takes a JSON string representation and attempts to parse it into the
     * expected data structure. The JSON should contain an object where keys are
-    * AAGUID strings and values are PasskeyAuthenticator objects.
+    * AAGUID strings and values are community authenticator entries.
     *
     * @param jsonString
     *   The JSON string to parse

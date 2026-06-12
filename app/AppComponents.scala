@@ -16,7 +16,11 @@ import play.api.{ApplicationLoader, BuiltInComponentsFromContext, Logging, Mode}
 import play.filters.HttpFiltersComponents
 import play.filters.csp.CSPComponents
 import router.Routes
-import services.{DeveloperPolicyCachingService, MetricsService}
+import services.{
+  DeveloperPolicyCachingService,
+  MetricsService,
+  PasskeyMetadataService
+}
 import software.amazon.awssdk.regions.Region.EU_WEST_1
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
@@ -101,10 +105,11 @@ class AppComponents(context: ApplicationLoader.Context)
     controllerComponents.parsers.default
   )(executionContext)
 
-  private val passkeyAuthenticatorMetadata =
-    PasskeyAuthenticator.fromResource(
-      "passkeys_aaguid_descriptions.json"
-    )
+  private val passkeyMetadataService =
+    new PasskeyMetadataService(
+      communityResourcePath = "passkeys_aaguid_community.json",
+      trustAnchorResourcePath = "fido-mds-root-r3.pem"
+    )(using executionContext)
 
   private val passkeysEnabled: Boolean =
     configuration
@@ -142,7 +147,7 @@ class AppComponents(context: ApplicationLoader.Context)
       Clients.stsClient,
       configuration,
       passkeysEnablingCookieName,
-      passkeyAuthenticatorMetadata,
+      passkeyMetadataService,
       developerPolicyCachingService,
       metricsService
     ),

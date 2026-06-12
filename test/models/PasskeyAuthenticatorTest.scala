@@ -14,9 +14,9 @@ class PasskeyAuthenticatorTest
 
   "PasskeyAuthenticator" - {
 
-    "should be deserializable from JSON with both description and icon" - {
+    "should be deserializable from JSON with both name and icon_light" - {
       val jsonString =
-        """{"description":"Test Passkey Authenticator","icon":"test-icon.png"}"""
+        """{"name":"Test Passkey Authenticator","icon_light":"test-icon.png"}"""
 
       val parsed = Json.parse(jsonString)
       val result = Json.fromJson[PasskeyAuthenticator](parsed)
@@ -36,8 +36,8 @@ class PasskeyAuthenticatorTest
       }
     }
 
-    "should be deserializable from JSON with only description field" - {
-      val jsonString = """{"description":"Test Passkey Authenticator"}"""
+    "should be deserializable from JSON with only name field" - {
+      val jsonString = """{"name":"Test Passkey Authenticator"}"""
 
       val parsed = Json.parse(jsonString)
       val result = Json.fromJson[PasskeyAuthenticator](parsed)
@@ -58,7 +58,7 @@ class PasskeyAuthenticatorTest
     }
 
     "should fail deserialization when description is not a string" in {
-      val invalidJson = """{"description":123,"icon":"test-icon.png"}"""
+      val invalidJson = """{"name":123,"icon_light":"test-icon.png"}"""
 
       val parsed = Json.parse(invalidJson)
       val result = Json.fromJson[PasskeyAuthenticator](parsed)
@@ -67,7 +67,7 @@ class PasskeyAuthenticatorTest
     }
 
     "should fail deserialization when icon is not a string" in {
-      val invalidJson = """{"description":"Test Authenticator","icon":123}"""
+      val invalidJson = """{"name":"Test Authenticator","icon_light":123}"""
 
       val parsed = Json.parse(invalidJson)
       val result = Json.fromJson[PasskeyAuthenticator](parsed)
@@ -75,8 +75,8 @@ class PasskeyAuthenticatorTest
       result.isError shouldBe true
     }
 
-    "should fail deserialization when description field is missing" - {
-      val incompleteJson = """{"icon":"test-icon.png"}"""
+    "should fail deserialization when name field is missing" - {
+      val incompleteJson = """{"icon_light":"test-icon.png"}"""
 
       val parsed = Json.parse(incompleteJson)
       val result = Json.fromJson[PasskeyAuthenticator](parsed)
@@ -94,7 +94,7 @@ class PasskeyAuthenticatorTest
     }
 
     "should handle null icon field as None" - {
-      val jsonString = """{"description":"Test Authenticator","icon":null}"""
+      val jsonString = """{"name":"Test Authenticator","icon_light":null}"""
 
       val parsed = Json.parse(jsonString)
       val result = Json.fromJson[PasskeyAuthenticator](parsed)
@@ -119,7 +119,7 @@ class PasskeyAuthenticatorTest
 
     "should successfully load authenticators from valid JSON resource" - {
       val result =
-        PasskeyAuthenticator.fromResource("passkeys_aaguid_descriptions.json")
+        PasskeyAuthenticator.fromResource("passkeys_aaguid_community.json")
 
       "result should not be empty" in {
         result should not be empty
@@ -139,7 +139,7 @@ class PasskeyAuthenticatorTest
 
     "should properly parse AAGUID keys as AAGUID objects" - {
       val result =
-        PasskeyAuthenticator.fromResource("passkeys_aaguid_descriptions.json")
+        PasskeyAuthenticator.fromResource("passkeys_aaguid_community.json")
 
       "first key should be an AAGUID" in {
         if (result.nonEmpty) {
@@ -158,7 +158,7 @@ class PasskeyAuthenticatorTest
 
     "should return PasskeyAuthenticator objects with correct fields" - {
       val result =
-        PasskeyAuthenticator.fromResource("passkeys_aaguid_descriptions.json")
+        PasskeyAuthenticator.fromResource("passkeys_aaguid_community.json")
 
       "first auth should be a PasskeyAuthenticator" in {
         if (result.nonEmpty) {
@@ -185,7 +185,7 @@ class PasskeyAuthenticatorTest
 
     "should handle authenticators without icon field" - {
       val result =
-        PasskeyAuthenticator.fromResource("passkeys_aaguid_descriptions.json")
+        PasskeyAuthenticator.fromResource("passkeys_aaguid_community.json")
 
       "authenticator without icon should have non-empty description" in {
         if (result.nonEmpty) {
@@ -212,7 +212,7 @@ class PasskeyAuthenticatorTest
 
     "should handle authenticators with icon field" - {
       val result =
-        PasskeyAuthenticator.fromResource("passkeys_aaguid_descriptions.json")
+        PasskeyAuthenticator.fromResource("passkeys_aaguid_community.json")
 
       "authenticator with icon should have non-empty description" in {
         if (result.nonEmpty) {

@@ -5,19 +5,19 @@ import cats.syntax.all.*
 import com.gu.googleauth.AuthAction.UserIdentityRequest
 import com.gu.googleauth.{AuthAction, UserIdentity}
 import com.gu.janus.model.*
-import com.webauthn4j.data.attestation.authenticator.AAGUID
 import conf.Config
 import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.*
 import logic.PlayHelpers.splitQuerystringParam
 import models.AccessSource.Internal
-import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
+import models.{AccountAccess, DeveloperPolicy}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.{
   DeveloperPolicyFinder,
   DeveloperPolicyStatusManager,
-  MetricsService
+  MetricsService,
+  PasskeyMetadataService
 }
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.sts.StsClient
@@ -39,7 +39,7 @@ class Janus(
     stsClient: StsClient,
     configuration: Configuration,
     passkeysEnablingCookieName: String,
-    passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
+    passkeyMetadataService: PasskeyMetadataService,
     developerPolicyService: DeveloperPolicyFinder
       with DeveloperPolicyStatusManager,
     metricsService: MetricsService
@@ -180,7 +180,7 @@ class Janus(
         passkeys = PasskeyDB
           .extractMetadata(queryResponse)
           .map(p =>
-            p.copy(authenticator = passkeyAuthenticatorMetadata.get(p.aaguid))
+            p.copy(authenticator = passkeyMetadataService.find(p.aaguid))
           )
       } yield views.html.userAccount(
         request.user,
