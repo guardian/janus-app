@@ -89,7 +89,8 @@ class Janus(
               cacheStatus,
               request.user,
               janusData,
-              displayMode
+              displayMode,
+              Config.mfaRequiredDataMaybe(configuration)
             )
         )
       }) getOrElse Ok(views.html.noPermissions(request.user, janusData))

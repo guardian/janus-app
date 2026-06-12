@@ -1,10 +1,13 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.{AwsAccount, JanusData}
 @import helper.*
-@import models.{AwsAccountAccess, AwsAccountDeveloperPolicyStatus, DeveloperPolicy, DeveloperPolicySnapshot, DisplayMode, FailureSnapshot}
+@import models.*
 @import play.api.Mode
 
-@(accountAccesses: List[AwsAccountAccess], cacheStatus: DeveloperPolicyCacheStatus, user: UserIdentity, janusData: JanusData, displayMode: DisplayMode)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@import java.time.LocalDate
+@import java.time.temporal.ChronoUnit
+
+@(accountAccesses: List[AwsAccountAccess], cacheStatus: DeveloperPolicyCacheStatus, user: UserIdentity, janusData: JanusData, displayMode: DisplayMode, mfaRequiredDateMaybe: Option[LocalDate])(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("Your permissions", Some(user), janusData, displayMode) {
     <div class="container">
@@ -27,6 +30,22 @@
                     </div>
                 }
                 case DeveloperPolicyCacheStatus.Success => {}
+            }
+            @mfaRequiredDateMaybe match {
+                case Some(d) if LocalDate.now().isBefore(d)=> {
+                    @defining(ChronoUnit.DAYS.between(LocalDate.now(), d)) { dd =>
+                        <div class="cache-status card-panel red lighten-4" role="status" aria-atomic="true">
+                            <p>
+                                The countdown to MultiFactorAuth has started!
+                                There are @dd days remaining.
+                            </p>
+                            <p>
+                                Make sure you have your key by @d.
+                            </p>
+                        </div>
+                    }
+                }
+                case _ => {}
             }
         </div>
         <div class="index-main__container">
