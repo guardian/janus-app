@@ -23,8 +23,8 @@ forwardPorts:
   - 1234 # Frontend app (assets for web)
 
 # Optional: Mount directories from host to container
-mounts:
-  - "source=${localEnv:HOME}/.gu/janus-app,target=/home/vscode/.gu/janus-app,readonly,type=bind,consistency=cached"
+# mounts:
+#   - "source=${localEnv:HOME}/.gu/janus-app,target=/home/vscode/.gu/janus-app,readonly,type=bind,consistency=cached"
 
 # Optional: IDE plugins - shared project plugins like language support
 # plugins:
