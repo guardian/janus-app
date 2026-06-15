@@ -81,6 +81,9 @@ class Janus(
           developerPolicyService.getCacheStatus,
           developerPolicyService.fetchEnabled
         )
+
+        mfaInUse = PasskeyDB.hasPasskey(request.user).toOption.getOrElse(false)
+        mfaDateMaybe = Config.mfaRequiredDataMaybe(configuration)
       } yield {
         Ok(
           views.html
@@ -90,7 +93,8 @@ class Janus(
               request.user,
               janusData,
               displayMode,
-              Config.mfaRequiredDataMaybe(configuration)
+              mfaInUse,
+              mfaDateMaybe
             )
         )
       }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
