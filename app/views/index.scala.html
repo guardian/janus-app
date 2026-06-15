@@ -45,6 +45,13 @@
                         </div>
                     }
                 }
+                case Some(d) if LocalDate.now().isAfter(d) && ChronoUnit.DAYS.between(LocalDate.now(), d) < 30 => {
+                    <div class="cache-status card-panel red lighten-4" role="status" aria-atomic="true">
+                        <p>
+                            MultiFactorAuth is now required.
+                        </p>
+                    </div>
+                }
                 case _ => {}
             }
         </div>
