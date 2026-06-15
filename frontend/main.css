@@ -304,7 +304,7 @@ textarea.textarea--aws-profile-id.aws-profile-id {
 }
 
 
-.cache-status.card-panel {
+.cache-status.card-panel .mfa-status.card-panel {
     margin: 20px 0 -10px;
 }
 .admin-notice-panel {
