@@ -61,6 +61,7 @@ The configuration section (below) shows what is required.
 
 **Note:** If you're a Guardian engineer looking to test changes on the internal
 instance of this service, see these [specific instructions](https://github.com/guardian/janus/blob/main/docs/running-janus.md) 
+and these [dev container](https://github.com/guardian/janus-app/blob/main/docs/devcontainer.md) steps. 
 
 ### In AWS
 

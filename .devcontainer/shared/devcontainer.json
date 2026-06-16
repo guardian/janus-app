@@ -39,8 +39,7 @@
       "source" : "devenv-ivy-cache-volume",
       "target" : "/mnt/ivy-cache",
       "type" : "volume"
-    },
-    "source=${localEnv:HOME}/.gu/janus-app,target=/home/vscode/.gu/janus-app,readonly,type=bind,consistency=cached"
+    }
   ],
   "containerEnv" : {
     "DEVENV_IVY_CACHE_MOUNT_DIR" : "/mnt/ivy-cache",
