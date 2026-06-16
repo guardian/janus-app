@@ -22,9 +22,13 @@ forwardPorts:
   - 9100 # Play app (actual actions)
   - 1234 # Frontend app (assets for web)
 
+# The following mount is no longer used, in favour of the setup script, which will fetch appropriate config for you.
+# It is also problematic because the .gu location needs to be writable for the docker DynamoDB.
+# It is retained as a comment for now, to give context to this comment.
+
 # Optional: Mount directories from host to container
-mounts:
-  - "source=${localEnv:HOME}/.gu/janus-app,target=/home/vscode/.gu/janus-app,readonly,type=bind,consistency=cached"
+# mounts:
+#   - "source=${localEnv:HOME}/.gu/janus-app,target=/home/vscode/.gu/janus-app,readonly,type=bind,consistency=cached"
 
 # Optional: IDE plugins - shared project plugins like language support
 # plugins:

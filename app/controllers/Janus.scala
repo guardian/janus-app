@@ -11,7 +11,12 @@ import conf.Config.{passkeysManagerLink, passkeysManagerLinkText}
 import logic.*
 import logic.PlayHelpers.splitQuerystringParam
 import models.AccessSource.Internal
-import models.{AccountAccess, DeveloperPolicy, PasskeyAuthenticator}
+import models.{
+  AccountAccess,
+  DeveloperPolicy,
+  PasskeyAuthenticator,
+  PasskeyMode
+}
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.{
@@ -38,7 +43,7 @@ class Janus(
     host: String,
     stsClient: StsClient,
     configuration: Configuration,
-    passkeysEnablingCookieName: String,
+    passkeyMode: PasskeyMode,
     passkeyAuthenticatorMetadata: Map[AAGUID, PasskeyAuthenticator],
     developerPolicyService: DeveloperPolicyFinder
       with DeveloperPolicyStatusManager,
@@ -188,7 +193,7 @@ class Janus(
         passkeys,
         dateFormat,
         timeFormat,
-        passkeysEnablingCookieName,
+        passkeyMode,
         passkeysManagerLink(configuration),
         passkeysManagerLinkText(configuration)
       )
