@@ -43,9 +43,6 @@ DELETE        /passkey/:passkeyId                       controllers.PasskeyContr
 GET           /policies-status/account/:account         controllers.AccountsController.policiesStatusForAccount(account: String)
 GET           /users/account/:account                   controllers.AccountsController.usersForAccount(account: String)
 
-# Tmp routes for passkey trial
-GET           /opt/in/passkeys                          controllers.Utility.optInToPasskeys
-GET           /opt/out/passkeys                         controllers.Utility.optOutOfPasskeys
 
 GET           /healthcheck                              controllers.Utility.healthcheck
 

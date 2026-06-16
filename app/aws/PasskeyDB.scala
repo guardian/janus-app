@@ -166,6 +166,23 @@ object PasskeyDB {
       dynamoDB.query(request)
     }.adaptError(err => JanusException.failedToLoadDbItem(user, tableName, err))
 
+  /** Returns true iff the user has at least one passkey registered. */
+  def hasPasskey(
+      user: UserIdentity
+  )(using dynamoDB: DynamoDbClient): Try[Boolean] =
+    Try {
+      val expressionValues = Map(
+        ":username" -> AttributeValue.fromS(user.username)
+      )
+      val request = QueryRequest
+        .builder()
+        .tableName(tableName)
+        .keyConditionExpression("username = :username")
+        .expressionAttributeValues(expressionValues.asJava)
+        .build()
+      dynamoDB.query(request).count() > 0
+    }.adaptError(err => JanusException.failedToLoadDbItem(user, tableName, err))
+
   def extractMetadata(response: QueryResponse): Seq[PasskeyMetadata] =
     if (response.hasItems && !response.items().isEmpty) {
       response

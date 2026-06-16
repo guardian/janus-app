@@ -106,22 +106,15 @@ class AppComponents(context: ApplicationLoader.Context)
       "passkeys_aaguid_descriptions.json"
     )
 
-  private val passkeysEnabled: Boolean =
-    configuration
-      .get[Boolean]("passkeys.enabled")
-      .tap(enabled =>
-        if !enabled then
-          logger.warn("Passkey authentication is globally disabled!")
-      )
-  private val passkeysEnablingCookieName: String =
-    configuration.get[String]("passkeys.enablingCookieName")
+  private val passkeyMode = Config
+    .passkeyMode(configuration)
+    .tap {
+      case PasskeyMode.Disabled =>
+        logger.warn("Passkey authentication is globally disabled!")
+      case _ =>
+    }
 
-  private val passkeyAuthFilter =
-    new PasskeyAuthFilter(
-      host,
-      passkeysEnabled,
-      passkeysEnablingCookieName
-    )
+  private val passkeyAuthFilter = new PasskeyAuthFilter(host, passkeyMode)
   private val passkeyRegistrationAuthFilter =
     new PasskeyRegistrationAuthFilter(passkeyAuthFilter)
 
@@ -141,7 +134,7 @@ class AppComponents(context: ApplicationLoader.Context)
       host,
       Clients.stsClient,
       configuration,
-      passkeysEnablingCookieName,
+      passkeyMode,
       passkeyAuthenticatorMetadata,
       developerPolicyCachingService,
       metricsService
@@ -153,8 +146,7 @@ class AppComponents(context: ApplicationLoader.Context)
       passkeyRegistrationAuthAction,
       host,
       janusData,
-      passkeysEnabled,
-      passkeysEnablingCookieName
+      passkeyMode
     ),
     new Audit(janusData, controllerComponents, authAction),
     new RevokePermissions(
@@ -182,8 +174,7 @@ class AppComponents(context: ApplicationLoader.Context)
       janusData,
       controllerComponents,
       authAction,
-      configuration,
-      passkeysEnablingCookieName
+      configuration
     ),
     assets
   )

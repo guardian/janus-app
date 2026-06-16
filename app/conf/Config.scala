@@ -11,6 +11,7 @@ import com.gu.janus.model._
 import com.gu.play.secretrotation.SnapshotProvider
 import models._
 import models.AccountConfigStatus.*
+import models.PasskeyMode
 import play.api.Configuration
 
 import java.io.{File, FileInputStream}
@@ -117,6 +118,23 @@ object Config {
 
   def twoFAGroup(config: Configuration): String = {
     requiredString(config, "auth.google.2faGroupId")
+  }
+
+  /** Reads the passkey mode from config key `passkeys.mode`. Fails at startup
+    * if the value is unrecognised.
+    */
+  def passkeyMode(config: Configuration): PasskeyMode = {
+    val raw = requiredString(config, "passkeys.mode")
+    raw match {
+      case "Disabled"         => PasskeyMode.Disabled
+      case "IfUserHasPasskey" => PasskeyMode.IfUserHasPasskey
+      case "Required"         => PasskeyMode.Required
+      case other              =>
+        throw new JanusConfigurationException(
+          s"Unrecognised passkeys.mode value '$other'. Expected one of: Disabled, IfUserHasPasskey, Required",
+          "passkeys.mode"
+        )
+    }
   }
 
   /** Link suitable for an HTML anchor href attribute. E.g. a URL or an email
