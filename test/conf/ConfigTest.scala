@@ -1,15 +1,15 @@
 package conf
 
-import com.gu.janus.model._
+import com.gu.janus.model.*
 import com.typesafe.config.ConfigFactory
-import fixtures.Fixtures._
-import models.AccountConfigStatus
+import conf.Config.JanusConfigurationException
+import fixtures.Fixtures.*
 import models.AccountConfigStatus.*
+import models.PasskeyMode
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.Configuration
 
-import java.time.Duration
 import scala.util.Success
 
 class ConfigTest extends AnyFreeSpec with Matchers {
@@ -232,6 +232,42 @@ class ConfigTest extends AnyFreeSpec with Matchers {
         ) shouldEqual ConfigWarn(Set("bar", "baz"))
       }
 
+    }
+  }
+
+  "passkeyMode" - {
+    def configWith(value: String): Configuration =
+      Configuration(ConfigFactory.parseString(s"""passkeys.mode = "$value""""))
+
+    "returns Disabled when configured as 'Disabled'" in {
+      Config.passkeyMode(
+        configWith("Disabled")
+      ) shouldEqual PasskeyMode.Disabled
+    }
+
+    "returns IfUserHasPasskey when configured as 'IfUserHasPasskey'" in {
+      Config.passkeyMode(
+        configWith("IfUserHasPasskey")
+      ) shouldEqual PasskeyMode.IfUserHasPasskey
+    }
+
+    "returns Required when configured as 'Required'" in {
+      Config.passkeyMode(
+        configWith("Required")
+      ) shouldEqual PasskeyMode.Required
+    }
+
+    "throws JanusConfigurationException for an unrecognised value" in {
+      a[JanusConfigurationException] should be thrownBy {
+        Config.passkeyMode(configWith("unknown"))
+      }
+    }
+
+    "throws JanusConfigurationException when the key is absent" in {
+      val emptyConfig = Configuration(ConfigFactory.parseString("{}"))
+      a[JanusConfigurationException] should be thrownBy {
+        Config.passkeyMode(emptyConfig)
+      }
     }
   }
 

@@ -11,6 +11,7 @@ import logic.Passkey
 import logic.UserAccess.hasAccess
 import models.JanusException
 import models.PasskeyFlow.{Authentication, Registration}
+import models.PasskeyMode
 import play.api.data.Form
 import play.api.data.Forms.{mapping, text}
 import play.api.data.validation.Constraints.*
@@ -19,6 +20,7 @@ import play.api.mvc.*
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
+import scala.concurrent.{ExecutionContext, Future, blocking}
 import scala.util.{Failure, Success, Try}
 
 /** Controller for handling passkey registration and authentication. */
@@ -32,10 +34,13 @@ class PasskeyController(
     ],
     host: String,
     janusData: JanusData,
-    passkeysEnabled: Boolean,
-    enablingCookieName: String
-)(using dynamoDb: DynamoDbClient, mode: Mode, assetsFinder: AssetsFinder)
-    extends AbstractController(controllerComponents)
+    passkeyMode: PasskeyMode
+)(using
+    dynamoDb: DynamoDbClient,
+    mode: Mode,
+    assetsFinder: AssetsFinder,
+    ec: ExecutionContext
+) extends AbstractController(controllerComponents)
     with ResultHandler
     with Logging {
 
@@ -98,16 +103,48 @@ class PasskeyController(
         )
   }
 
-  def showAuthPage: Action[AnyContent] = authAction { implicit request =>
-    val enablingCookieIsPresent =
-      request.cookies.get(enablingCookieName).isDefined
-    Ok(
-      views.html.passkeyAuth(
-        request.user,
-        janusData,
-        passkeysEnabled && enablingCookieIsPresent
-      )
-    )
+  def showAuthPage: Action[AnyContent] = authAction.async { implicit request =>
+    passkeyMode match {
+      case PasskeyMode.Disabled =>
+        Future.successful(
+          Ok(
+            views.html
+              .passkeyAuth(request.user, janusData, passkeyAuthRequired = false)
+          )
+        )
+      case PasskeyMode.Required =>
+        Future.successful(
+          Ok(
+            views.html
+              .passkeyAuth(request.user, janusData, passkeyAuthRequired = true)
+          )
+        )
+      case PasskeyMode.IfUserHasPasskey =>
+        Future(blocking(PasskeyDB.hasPasskey(request.user)))
+          .flatMap(Future.fromTry)
+          .map(hasPasskey =>
+            Ok(
+              views.html.passkeyAuth(
+                request.user,
+                janusData,
+                passkeyAuthRequired = hasPasskey
+              )
+            )
+          )
+          .recover { case err =>
+            logger.error(
+              s"Failed to determine passkey status for ${request.user.username}",
+              err
+            )
+            InternalServerError(
+              views.html.error(
+                "An error occurred whilst checking your passkey status. Please try again.",
+                Some(request.user),
+                janusData
+              )
+            )
+          }
+    }
   }
 
   /** See

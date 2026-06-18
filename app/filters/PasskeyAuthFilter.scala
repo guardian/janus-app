@@ -6,9 +6,11 @@ import com.gu.googleauth.UserIdentity
 import com.webauthn4j.data.AuthenticationData
 import logic.Passkey
 import models.JanusException
-import models.JanusException.throwableWrites
+import models.JanusException.janusExceptionWrites
 import models.PasskeyFlow.Authentication
+import models.PasskeyMode
 import play.api.Logging
+import play.api.libs.json.Json
 import play.api.libs.json.Json.toJson
 import play.api.mvc.Results.{InternalServerError, Status}
 import play.api.mvc.{
@@ -20,36 +22,68 @@ import play.api.mvc.{
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.GetItemResponse
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ExecutionContext, Future, blocking}
 import scala.util.{Failure, Success, Try}
+import java.util.UUID
 
 /** Verifies passkeys and only allows an action to continue if verification is
-  * successful. If passkeys are disabled globally or for the current request,
-  * the action is allowed to continue.
+  * successful. If passkeys are globally disabled, or the mode is
+  * [[PasskeyMode.IfUserHasPasskey]] and the user has no registered passkeys,
+  * the action is allowed to continue without passkey verification.
   *
   * See
   * [[https://webauthn4j.github.io/webauthn4j/en/#webauthn-assertion-verification-and-post-processing]].
   */
 class PasskeyAuthFilter(
     host: String,
-    passkeysEnabled: Boolean,
-    enablingCookieName: String
+    passkeyMode: PasskeyMode
 )(using dynamoDb: DynamoDbClient, val executionContext: ExecutionContext)
     extends ActionFilter[UserIdentityRequest]
     with Logging {
 
-  def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] = {
-    val enablingCookieIsPresent =
-      request.cookies.get(enablingCookieName).isDefined
-    if (passkeysEnabled && enablingCookieIsPresent) {
-      logger.info(s"Verifying passkey for user ${request.user.username} ...")
-      Future(apiResponse(authenticatePasskey(request)))
-    } else {
-      logger.info(
-        s"Passing through request for '${request.method} ${request.path}' by ${request.user.username}"
-      )
-      Future.successful(None)
+  def filter[A](request: UserIdentityRequest[A]): Future[Option[Result]] =
+    passkeyMode match {
+      case PasskeyMode.Disabled =>
+        passThrough(request)
+      case PasskeyMode.Required =>
+        verifyPasskey(request)
+      case PasskeyMode.IfUserHasPasskey =>
+        Future(blocking(PasskeyDB.hasPasskey(request.user)))
+          .flatMap(Future.fromTry)
+          .transformWith {
+            case Success(true)  => verifyPasskey(request)
+            case Success(false) => passThrough(request)
+            case Failure(err)   =>
+              Future.successful(
+                Some(
+                  internalError(
+                    s"Failed to determine passkey status for ${request.user.username}",
+                    err
+                  )
+                )
+              )
+          }
     }
+
+  /** Skips the passkey-status check and proceeds directly to verification.
+    *
+    * Used by [[PasskeyRegistrationAuthFilter]] because it has already confirmed
+    * the user has registered passkeys.
+    */
+  private[filters] def verifyPasskey[A](
+      request: UserIdentityRequest[A]
+  ): Future[Option[Result]] = {
+    logger.info(s"Verifying passkey for user ${request.user.username} ...")
+    Future(blocking(apiResponse(authenticatePasskey(request))))
+  }
+
+  private def passThrough[A](
+      request: UserIdentityRequest[A]
+  ): Future[Option[Result]] = {
+    logger.info(
+      s"Passing through request for '${request.method} ${request.path}' by ${request.user.username}"
+    )
+    Future.successful(None)
   }
 
   private def authenticatePasskey[A](
@@ -89,10 +123,25 @@ class PasskeyAuthFilter(
         logger.error(err.engineerMessage, err.causedBy.orNull)
         Some(Status(err.httpCode)(toJson(err)))
       case Failure(err) =>
-        logger.error(err.getMessage, err)
-        Some(InternalServerError(toJson(err)))
+        Some(internalError(err.getMessage, err))
       case Success(_) => None
     }
+
+  /** Generates a unique error ID, logs it with full details and returns a 500
+    * response containing only the ID and a generic user-safe message. We can
+    * use the ID to correlate the response with server logs in principle.
+    */
+  private def internalError(context: String, err: Throwable): Result = {
+    val errorId = UUID.randomUUID().toString
+    logger.error(s"$context [errorId=$errorId]", err)
+    InternalServerError(
+      Json.obj(
+        "status" -> "error",
+        "message" -> "An unexpected error occurred",
+        "errorId" -> errorId
+      )
+    )
+  }
 
   private def extractAuthDataFromRequest[A](
       request: UserIdentityRequest[A]

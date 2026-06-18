@@ -29,10 +29,13 @@
   "homepage": "https://github.com/guardian/janus-app#readme",
   "dependencies": {
     "@fontsource/roboto": "^5.1.1",
-    "dompurify": "3.4.0",
+    "dompurify": "3.4.9",
     "material-icons": "^1.13.13",
     "materialize-css": "^1.0.0",
     "parcel": "2.16.4"
+  },
+  "optionalDependencies": {
+    "@parcel/rust-linux-arm64-gnu": "2.16.4"
   },
   "devDependencies": {
     "@guardian/eslint-config": "^11.0.0",

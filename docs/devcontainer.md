@@ -1,23 +1,15 @@
-# Devcontainer Changes
+# Devcontainer Approach
 
-Docker needs to be started (see below for first run changes)
+NB Docker needs to be started
 
-The data location in docker-compose needs to change:
+The objective is to provide a simple repeatable development environment following the following steps:
 
- * /workspaces/janus-app/data:/home/dynamodblocal/data for vscode
- * /IdeaProjects/janus-app/data:/home/dynamodblocal/data for IntelliJ
+* configure dev container (done for you)
+* start dev container
+* get `Run Locally` dev profile credentials
+* get setup artefacts (requires credentials)
+* start project (requires credentials)
+* *develop*
 
-The create tables "test" will then need to be run.
-
-# Devcontainer Temporary Issues
-
-Currently the devcontainer has a 2.3 version of containerd installed by the plugin, but this is not compatible
-with the docker version.  As a result the docker daemon is not started.
-
-Use
-```
-sudo apt-get update && sudo apt-get install -y --allow-downgrades moby-containerd=1.7.30-ubuntu24.04u2
-```
-and then start docker manually with `sudo dockerd`.
-
-`sbt run` with a config file specification should now work.
+As, for example, the create tables "test" needs to be run, we should endeavour to provide breadcrumbs in the setup
+and start scripts to check for all the known gotchas.
