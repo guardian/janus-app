@@ -139,3 +139,17 @@ class PasskeyChallengeDBTest extends AnyFreeSpec with Matchers {
         .build()
     )
 }
+
+object PasskeyChallengeDBTestApp {
+
+  def main(args: Array[String]): Unit = {
+    args.toList match {
+      case "create" :: Nil =>
+        new PasskeyChallengeDBTest().createTable()(Clients.localDb)
+      case "destroy" :: Nil =>
+        new PasskeyChallengeDBTest().destroyTable()(Clients.localDb)
+      case _ =>
+    }
+  }
+
+}

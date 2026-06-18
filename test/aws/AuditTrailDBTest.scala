@@ -45,7 +45,7 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
       println(userResults.toList)
     }
 
-    "create database table" ignore {
+    "create table" ignore {
       createTable()
     }
 
@@ -140,4 +140,18 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
       DeleteTableRequest.builder().tableName(AuditTrail.tableName).build()
     dynamoDB.deleteTable(request)
   }
+}
+
+object AuditTrailDBTestApp {
+
+  def main(args: Array[String]): Unit = {
+    args.toList match {
+      case "create" :: Nil =>
+        new AuditTrailDBTest().createTable()(Clients.localDb)
+      case "destroy" :: Nil =>
+        new AuditTrailDBTest().destroyTable()(Clients.localDb)
+      case _ =>
+    }
+  }
+
 }

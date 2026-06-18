@@ -75,3 +75,16 @@ class PasskeyDBTest extends AnyFreeSpec with Matchers {
       DeleteTableRequest.builder().tableName(PasskeyDB.tableName).build()
     )
 }
+
+object PasskeyDBTestApp {
+
+  def main(args: Array[String]): Unit = {
+    args.toList match {
+      case "create" :: Nil => new PasskeyDBTest().createTable()(Clients.localDb)
+      case "destroy" :: Nil =>
+        new PasskeyDBTest().destroyTable()(Clients.localDb)
+      case _ =>
+    }
+  }
+
+}

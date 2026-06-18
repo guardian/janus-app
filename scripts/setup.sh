@@ -31,8 +31,27 @@ else
   echo "janus-service-account-cert.json is present"
 fi
 
+docker compose -f local-dev/docker-compose.yml up -d
+sleep 2
+
+# Creating tables (if needed - aim for idempotency)
+aws dynamodb list-tables --profile security --region eu-west-1 --endpoint http://localhost:8000 \
+  | jq -r '.TableNames[]' \
+  | grep -w PasskeyChallenges  \
+  || sbt "Test / runMain aws.PasskeyChallengeDBTestApp create"
+
+aws dynamodb list-tables --profile security --region eu-west-1 --endpoint http://localhost:8000 \
+  | jq -r '.TableNames[]' \
+  | grep -w Passkeys \
+  || sbt "Test / runMain aws.PasskeyDBTestApp create"
+
+aws dynamodb list-tables --profile security --region eu-west-1 --endpoint http://localhost:8000 \
+  | jq -r '.TableNames[]' \
+  | grep -w AuditTrail \
+  || sbt "Test / runMain aws.AuditTrailDBTestApp create"
+
 if [[ ! -f ~/.gu/janus-app/janusData.conf ]]; then
-   echo "You need to copy in the janusData file: ~/.gu/janus-app/janusData.conf"
+   echo "!!! You need to copy in a janusData.conf file at ~/.gu/janus-app/janusData.conf"
    exit 1
 else
   echo "janusData.conf is present"
@@ -62,3 +81,5 @@ if [[ $TABLE_COUNT -eq 0 ]]; then
 else
   echo "$TABLE_COUNT tables found; not running table create tests"
 fi
+
+echo "Setup is complete"
