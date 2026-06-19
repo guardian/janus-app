@@ -35,7 +35,7 @@ docker compose -f local-dev/docker-compose.yml up -d
 sleep 2
 
 # Create tables - will fail if they exist, but can be run manually with "destroy" or "recreate"
-sbt "Setup / runMain aws.DBSetupApp create"
+sbt "setup / runMain aws.DBSetupApp create"
 
 if [[ ! -f ~/.gu/janus-app/janusData.conf ]]; then
    echo "!!! You need to copy in a janusData.conf file at ~/.gu/janus-app/janusData.conf"

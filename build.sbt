@@ -170,7 +170,7 @@ lazy val configTools = (project in file("configTools"))
     description := "Library for reading and writing Janus configuration files"
   )
 
-lazy val Setup = (project in file("setup"))
+lazy val setup = (project in file("setup"))
   .dependsOn(root)
   .settings(
     commonSettings,
