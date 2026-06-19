@@ -1,24 +1,16 @@
 package aws
 
-import com.gu.googleauth.UserIdentity
-import com.webauthn4j.data.client.challenge.DefaultChallenge
-import models.PasskeyFlow.{Authentication, Registration}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model._
 import software.amazon.awssdk.services.dynamodb.model.KeyType.{HASH, RANGE}
 import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType.S
-import software.amazon.awssdk.services.dynamodb.model.*
-
-import java.nio.charset.StandardCharsets.UTF_8
-import java.time.ZoneOffset.UTC
-import java.time.{Clock, Instant}
-import scala.util.{Failure, Success}
 
 /** Integration tests of PasskeyChallengeDB.
   *
   * These tests require a local Dynamo DB service to be available. See
   * [[./local-dev/README.md#setting-up-passkeys-tables Setting up Passkeys tables]]
   */
-class PasskeyChallengeDBSetup {
+object PasskeyChallengeDBSetup {
 
   /** NB: Only use these for local testing use the provided CloudFormation
     * template to create table in AWS environments.

@@ -1,11 +1,11 @@
 package aws
 
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model._
 import software.amazon.awssdk.services.dynamodb.model.KeyType.{HASH, RANGE}
 import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType.S
-import software.amazon.awssdk.services.dynamodb.model._
 
-class PasskeyDBSetup {
+object PasskeyDBSetup {
 
   /** NB: Only use these for local testing use the provided CloudFormation
     * template to create table in AWS environments.

@@ -174,6 +174,8 @@ lazy val Setup = (project in file("setup"))
   .dependsOn(root)
   .settings(
     commonSettings,
+    ThisBuild / fork := true,
+    publish / skip := true,
     name := "janus-devcontainer-setup",
     description := "Library for setting up dynamodb tables"
   )

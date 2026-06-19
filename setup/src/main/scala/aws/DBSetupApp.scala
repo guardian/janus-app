@@ -1,34 +1,107 @@
 package aws
 
-import play.api.Logging
-import software.amazon.awssdk.services.dynamodb.model.*
+import software.amazon.awssdk.services.dynamodb.model.ResourceNotFoundException
 
-object DBSetupApp extends Logging {
+/** Use with create, destroy, or recreate
+  */
+object DBSetupApp {
 
   def main(args: Array[String]): Unit = {
-    try {
-      new AuditTrailDBSetup().destroyTable()(Clients.localDb)
-    } catch {
-      case e: Throwable =>
-        logger.info(s"Audit trail table delete skipped with ${e.getMessage}")
+    val (create, destroy) = parseArgs(args.toList)
+    if (destroy) {
+      val audit = try {
+        AuditTrailDBSetup.destroyTable()(Clients.localDb)
+        true
+      } catch {
+        case e: ResourceNotFoundException =>
+          println(
+            s"Audit trail table delete skipped with ResourceNotFoundException"
+          )
+          true
+        case e: Throwable =>
+          System.err.println(s"Audit table delete failed: ${e.getMessage}")
+          false
+      }
+      val passkeyChallenge = try {
+        PasskeyChallengeDBSetup.destroyTable()(Clients.localDb)
+        true
+      } catch {
+        case e: ResourceNotFoundException =>
+          println(
+            s"Passkey challenge table delete skipped with ResourceNotFoundException"
+          )
+          true
+        case e: Throwable =>
+          System.err.println(
+            s"Passkey challenge table delete failed: ${e.getMessage}"
+          )
+          false
+      }
+      val passkey = try {
+        PasskeyDBSetup.destroyTable()(Clients.localDb)
+        true
+      } catch {
+        case e: ResourceNotFoundException =>
+          println(
+            s"Passkey table delete skipped with ResourceNotFoundException"
+          )
+          true
+        case e: Throwable =>
+          System.err.println(s"Passkey table delete failed: ${e.getMessage}")
+          false
+      }
+      if (!passkey || !passkeyChallenge || !audit) {
+        System.exit(1)
+      }
     }
-    try {
-      new PasskeyChallengeDBSetup().destroyTable()(Clients.localDb)
-    } catch {
-      case e: Throwable =>
-        logger.info(
-          s"Passkey challenge table delete skipped with ${e.getMessage}"
-        )
+
+    if (create) {
+      val audit = try {
+        AuditTrailDBSetup.createTable()(Clients.localDb)
+        true
+      } catch {
+        case e: Throwable =>
+          System.err.println(
+            s"Audit trail table create failed: ${e.getMessage}"
+          )
+          false
+      }
+      val passkeyChallenge = try {
+        PasskeyChallengeDBSetup.createTable()(Clients.localDb)
+        true
+      } catch {
+        case e: Throwable =>
+          System.err.println(
+            s"Passkey challenge table create failed: ${e.getMessage}"
+          )
+          false
+      }
+      val passkey = try {
+        PasskeyDBSetup.createTable()(Clients.localDb)
+        true
+      } catch {
+        case e: Throwable =>
+          System.err.println(s"Passkey table create failed: ${e.getMessage}")
+          false
+      }
+      if (!passkey || !passkeyChallenge || !audit) {
+        System.exit(1)
+      }
     }
-    try {
-      new PasskeyDBSetup().destroyTable()(Clients.localDb)
-    } catch {
-      case e: Throwable =>
-        logger.info(s"Passkey table delete skipped with ${e.getMessage}")
+  }
+
+  private def parseArgs(args: List[String]): (Boolean, Boolean) = {
+    val createString = "create"
+    val destroyString = "destroy"
+    val recreateString = "recreate"
+    val knownArgs = List(createString, destroyString, recreateString)
+    val create = args.contains(createString) || args.contains(recreateString)
+    val destroy = args.contains(destroyString) || args.contains(recreateString)
+    val unknownArgs = args.filterNot(a => knownArgs.contains(a))
+    if (unknownArgs.nonEmpty) {
+      throw new Exception(s"Unknown args: ${unknownArgs.mkString(", ")}")
     }
-    new AuditTrailDBSetup().createTable()(Clients.localDb)
-    new PasskeyChallengeDBSetup().createTable()(Clients.localDb)
-    new PasskeyDBSetup().createTable()(Clients.localDb)
+    (create, destroy)
   }
 
 }

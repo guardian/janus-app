@@ -1,16 +1,12 @@
 package aws
 
-import com.gu.janus.model.{AuditLog, JConsole}
 import logic.AuditTrail
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+import software.amazon.awssdk.services.dynamodb.model._
 import software.amazon.awssdk.services.dynamodb.model.KeyType.{HASH, RANGE}
 import software.amazon.awssdk.services.dynamodb.model.ScalarAttributeType.{N, S}
-import software.amazon.awssdk.services.dynamodb.model._
 
-import java.time.ZoneOffset.UTC
-import java.time.{Duration, ZonedDateTime}
-
-class AuditTrailDBSetup {
+object AuditTrailDBSetup {
 
   /** NB: Only use these for local testing use the provided CloudFormation
     * template to create table in AWS environments.
