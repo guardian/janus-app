@@ -4,7 +4,7 @@ set -e
 
 # Create a placeholder directory for janus-app config in ~/.gu
 mkdir -p ~/.gu/janus-app/data
-chown -R $(whoami):$(whoami) ~/.gu/janus-app/data
+chown -R $(whoami):staff ~/.gu/janus-app/data
 
 aws --profile security --region eu-west-1 sts get-caller-identity >/dev/null
 if [[ $? -ne 0 ]]; then
@@ -37,6 +37,15 @@ if [[ ! -f ~/.gu/janus-app/janusData.conf ]]; then
 else
   echo "janusData.conf is present"
 fi
+
+# Need AWS profile 'janus' to test access to dev-playground account.
+# See Readme.md 'Janus AWS Profile' section.
+aws --profile security --region eu-west-1 ssm get-parameter \
+  --name "/DEV/security/janus/janus.aws.profile" \
+  --with-decryption \
+  --query "Parameter.Value" \
+  --output text \
+  | aws configure import --csv file:///dev/stdin
 
 docker compose -f local-dev/docker-compose.yml up -d
 aws dynamodb list-tables --profile security --region eu-west-1 --endpoint http://localhost:8000
