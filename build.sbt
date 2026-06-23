@@ -8,7 +8,7 @@ import sbtversionpolicy.withsbtrelease.ReleaseVersion
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.46.4"
+val awsSdkVersion = "2.46.10"
 val circeVersion = "0.14.15"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
@@ -18,7 +18,7 @@ val commonDependencies = Seq(
   "ch.qos.logback" % "logback-classic" % "1.5.34"
 )
 lazy val commonSettings = Seq(
-  scalaVersion := "3.3.7",
+  scalaVersion := "3.3.8",
   scalacOptions ++= Seq(
     "-feature",
     "-release:11"
@@ -38,7 +38,7 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.21.4"
+val jacksonVersion = "2.22.0"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
@@ -160,7 +160,7 @@ lazy val configTools = (project in file("configTools"))
   .settings(
     commonSettings,
     libraryDependencies ++= commonDependencies ++ Seq(
-      "com.typesafe" % "config" % "1.4.8",
+      "com.typesafe" % "config" % "1.4.9",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,

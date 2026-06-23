@@ -146,7 +146,7 @@ object UserAccess {
               .map((_, src, DeveloperPolicyPermission))
           )
       )
-    }.nextOption
+    }.nextOption()
   }
 
   /** This is the central logic for the public-facing methods that need to
