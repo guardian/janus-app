@@ -169,3 +169,15 @@ lazy val configTools = (project in file("configTools"))
     name := "janus-config-tools",
     description := "Library for reading and writing Janus configuration files"
   )
+
+lazy val setup = (project in file("setup"))
+  .dependsOn(root)
+  .settings(
+    commonSettings,
+    libraryDependencies ++= commonDependencies ++ Seq(
+      "org.scalatest" %% "scalatest" % "3.2.20" % Test
+    ),
+    publish / skip := true,
+    name := "janus-devcontainer-setup",
+    description := "Library for setting up dynamodb tables"
+  )
