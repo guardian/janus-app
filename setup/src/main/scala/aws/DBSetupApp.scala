@@ -107,7 +107,7 @@ object DBSetupApp extends Logging {
     }
   }
 
-  private def parseArgs(args: List[String]): (Boolean, Boolean) = {
+  private[aws] def parseArgs(args: List[String]): (Boolean, Boolean) = {
     val createString = "create"
     val destroyString = "destroy"
     val recreateString = "recreate"

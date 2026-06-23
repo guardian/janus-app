@@ -174,7 +174,9 @@ lazy val setup = (project in file("setup"))
   .dependsOn(root)
   .settings(
     commonSettings,
-    ThisBuild / fork := true,
+    libraryDependencies ++= commonDependencies ++ Seq(
+      "org.scalatest" %% "scalatest" % "3.2.20" % Test
+    ),
     publish / skip := true,
     name := "janus-devcontainer-setup",
     description := "Library for setting up dynamodb tables"
