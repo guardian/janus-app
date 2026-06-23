@@ -91,15 +91,9 @@ line that invalidates the template
 
 Janus requires an AWS profile called `janus` to exist in your local AWS
 credentials file. Local dev is in a separate profile name so it is not
-overwritten when you obtain credentials using Janus. The credentials do
-not need to be real, you can get the application to run by adding the
-following to your AWS credentials file:
+overwritten when you obtain credentials using Janus.
 
-```
-[janus]
-aws_access_key_id = FAKE000KEYID
-aws_secret_access_key = FAKE000SECRETKEY
-```
+The `setup.sh` script will automatically configure this profile for you.
 
 #### Install Java
 
