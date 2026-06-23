@@ -4,7 +4,7 @@ set -e
 
 # Create a placeholder directory for janus-app config in ~/.gu
 mkdir -p ~/.gu/janus-app/data
-chown -R $(whoami):staff ~/.gu/janus-app/data
+sudo chown -R $(whoami):staff ~/.gu/janus-app/data
 
 aws --profile security --region eu-west-1 sts get-caller-identity >/dev/null
 if [[ $? -ne 0 ]]; then
