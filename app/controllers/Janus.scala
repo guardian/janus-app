@@ -31,8 +31,10 @@ import software.amazon.awssdk.services.sts.model.{
   PackedPolicyTooLargeException
 }
 
-import java.time.*
+import java.time._
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.util.Locale
 import scala.util.control.NonFatal
 
 class Janus(
@@ -81,17 +83,39 @@ class Janus(
           developerPolicyService.getCacheStatus,
           developerPolicyService.fetchEnabled
         )
+
+        mfaInUse = PasskeyDB.hasPasskey(request.user).toOption.getOrElse(false)
+        mfaRequiredDateMaybe = Config.mfaRequiredDataMaybe(configuration)
+        mfaComing = !mfaInUse && mfaRequiredDateMaybe
+          .exists(d => LocalDate.now().isBefore(d))
+        mfaDaysRemaining = mfaRequiredDateMaybe
+          .map(d => ChronoUnit.DAYS.between(LocalDate.now(), d))
+          .getOrElse(0L)
+        mfaDisplayDate = mfaRequiredDateMaybe
+          .map(d =>
+            d.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH))
+          )
+          .getOrElse("today")
+        passkeyNotRequired = Config.passkeyMode(
+          configuration
+        ) != PasskeyMode.Required
       } yield {
-        Ok(
-          views.html
-            .index(
-              uiAccountAccess,
-              cacheStatus,
-              request.user,
-              janusData,
-              displayMode
-            )
-        )
+        if (mfaInUse || passkeyNotRequired)
+          Ok(
+            views.html
+              .index(
+                uiAccountAccess,
+                cacheStatus,
+                request.user,
+                janusData,
+                displayMode,
+                mfaComing,
+                mfaDaysRemaining,
+                mfaDisplayDate
+              )
+          )
+        else
+          SeeOther(controllers.routes.Janus.userAccount.url)
       }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
     }
 

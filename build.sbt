@@ -18,7 +18,7 @@ val commonDependencies = Seq(
   "ch.qos.logback" % "logback-classic" % "1.5.34"
 )
 lazy val commonSettings = Seq(
-  scalaVersion := "3.3.7",
+  scalaVersion := "3.3.8",
   scalacOptions ++= Seq(
     "-feature",
     "-release:11"
@@ -160,7 +160,7 @@ lazy val configTools = (project in file("configTools"))
   .settings(
     commonSettings,
     libraryDependencies ++= commonDependencies ++ Seq(
-      "com.typesafe" % "config" % "1.4.8",
+      "com.typesafe" % "config" % "1.4.9",
       "io.circe" %% "circe-core" % circeVersion,
       "io.circe" %% "circe-generic" % circeVersion,
       "io.circe" %% "circe-parser" % circeVersion,
@@ -168,4 +168,16 @@ lazy val configTools = (project in file("configTools"))
     ) ++ jacksonDatabindOverrides,
     name := "janus-config-tools",
     description := "Library for reading and writing Janus configuration files"
+  )
+
+lazy val setup = (project in file("setup"))
+  .dependsOn(root)
+  .settings(
+    commonSettings,
+    libraryDependencies ++= commonDependencies ++ Seq(
+      "org.scalatest" %% "scalatest" % "3.2.20" % Test
+    ),
+    publish / skip := true,
+    name := "janus-devcontainer-setup",
+    description := "Library for setting up dynamodb tables"
   )

@@ -304,7 +304,7 @@ textarea.textarea--aws-profile-id.aws-profile-id {
 }
 
 
-.cache-status.card-panel {
+.cache-status.card-panel .mfa-status.card-panel {
     margin: 20px 0 -10px;
 }
 .admin-notice-panel {
@@ -577,6 +577,9 @@ a.copy-text--button__small {
     border-top: solid 4px #006064;
 }
 .developer-policy-account-header span[role=heading] {
+    font-size: x-large;
+}
+.warning {
     font-size: x-large;
 }
 
