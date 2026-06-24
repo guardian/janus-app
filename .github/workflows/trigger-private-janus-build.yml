@@ -50,11 +50,12 @@ jobs:
         working-directory: frontend
 
       - run: >
-          sbt 
-          compile 
-          Test/compile 
-          scalafmtCheckAll 
-          scalafmtSbtCheck 
+          sbt
+          compile
+          Test/compile
+          setup/compile
+          scalafmtCheckAll
+          scalafmtSbtCheck
           test
 
       - name: Test Report for Janus-App
