@@ -549,7 +549,7 @@ class UserAccessTest
       hasAccess(user, adminACL) shouldEqual true
     }
 
-    "returns true when given a user that has an entry but Google Auth has given us a capitalised email" in {
+    "returns true when given a user that has an entry but Google Auth has given us a capitalised username" in {
       val user = getUserIdentityForEmail("Test.User")
       hasAccess(user, adminACL) shouldEqual true
     }
