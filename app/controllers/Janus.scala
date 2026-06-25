@@ -117,8 +117,7 @@ class Janus(
                 mfaDisplayDate
               )
           )
-        else
-          SeeOther(controllers.routes.Janus.userAccount.url)
+        else SeeOther(controllers.routes.Janus.userAccount.url)
       }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
     }
 

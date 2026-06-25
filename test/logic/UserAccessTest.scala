@@ -25,7 +25,7 @@ class UserAccessTest
   import UserAccess.*
 
   def toUser(username: String) =
-    UserIdentity("", s"$email@guardian.co.uk", "", "", 0L, None)
+    UserIdentity("", s"$username@guardian.co.uk", "", "", 0L, None)
 
   "internalUserAccess" - {
     val testAccess =
@@ -36,7 +36,7 @@ class UserAccessTest
 
     "returns None if the user doesn't have any permissions" in {
       internalUserAccess(
-        getUserIdentityForEmail("username.does.not.exist"),
+        toUser("username.does.not.exist"),
         JanusData(
           Set.empty,
           testAccess,
@@ -52,7 +52,7 @@ class UserAccessTest
 
     "returns the user's permissions if they exist" in {
       val result = internalUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           testAccess,
@@ -69,7 +69,7 @@ class UserAccessTest
 
     "includes default permissions in all users' available permissions" in {
       val result = internalUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           testAccess,
@@ -89,7 +89,7 @@ class UserAccessTest
       val acl =
         ACL(Map("test.user" -> ACLEntry(permissions, Set.empty)), Set.empty)
       val result = internalUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           acl,
@@ -122,7 +122,7 @@ class UserAccessTest
         Set.empty
       )
       val result = internalUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           acl,
@@ -155,7 +155,7 @@ class UserAccessTest
 
       "access includes permission granted by ACL" in {
         val resultWithPolicy = internalUserAccess(
-          getUserIdentityForEmail("test.user"),
+          toUser("test.user"),
           JanusData(
             Set.empty,
             acl,
@@ -170,7 +170,7 @@ class UserAccessTest
 
       "access includes permission granted by ACL when there are no developer policies available" in {
         val resultWithoutPolicy = internalUserAccess(
-          getUserIdentityForEmail("test.user"),
+          toUser("test.user"),
           JanusData(
             Set.empty,
             acl,
@@ -185,7 +185,7 @@ class UserAccessTest
 
       "access includes developer policy matching developer policy grant" in {
         val resultWithPolicy = internalUserAccess(
-          getUserIdentityForEmail("test.user"),
+          toUser("test.user"),
           JanusData(
             Set.empty,
             acl,
@@ -200,7 +200,7 @@ class UserAccessTest
 
       "access has no developer policies when there are none available" in {
         val resultWithoutPolicy = internalUserAccess(
-          getUserIdentityForEmail("test.user"),
+          toUser("test.user"),
           JanusData(
             Set.empty,
             acl,
@@ -232,7 +232,7 @@ class UserAccessTest
         Set.empty
       )
       val result = internalUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           acl,
@@ -261,7 +261,7 @@ class UserAccessTest
         Set.empty
       )
       val result = internalUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           acl,
@@ -287,7 +287,7 @@ class UserAccessTest
         Set.empty
       )
       val result = internalUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           acl,
@@ -319,7 +319,7 @@ class UserAccessTest
         Set.empty
       )
       val result = internalUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           acl,
@@ -343,7 +343,7 @@ class UserAccessTest
         permissionsRepo = None
       )
       internalUserAccess(
-        getUserIdentityForEmail(adminOnlyUser),
+        toUser(adminOnlyUser),
         janusData,
         Set.empty
       ) shouldEqual None
@@ -388,7 +388,7 @@ class UserAccessTest
 
         val resultPolicies =
           internalUserAccess(
-            getUserIdentityForEmail("test.user"),
+            toUser("test.user"),
             JanusData(
               Set.empty,
               acl,
@@ -421,7 +421,7 @@ class UserAccessTest
 
     "returns None if the user doesn't have any permissions" in {
       adminUserAccess(
-        getUserIdentityForEmail("username.does.not.exist"),
+        toUser("username.does.not.exist"),
         JanusData(
           Set.empty,
           ACL(Map.empty),
@@ -437,7 +437,7 @@ class UserAccessTest
 
     "returns the user's permissions if they exist" in {
       val result = adminUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           ACL(Map.empty),
@@ -454,7 +454,7 @@ class UserAccessTest
 
     "includes default permissions in all users' available permissions" in {
       val result = adminUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           ACL(Map.empty),
@@ -475,7 +475,7 @@ class UserAccessTest
         Set.empty
       )
       val result = adminUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           ACL(Map.empty),
@@ -507,7 +507,7 @@ class UserAccessTest
         Set.empty
       )
       val result = adminUserAccess(
-        getUserIdentityForEmail("test.user"),
+        toUser("test.user"),
         JanusData(
           Set.empty,
           ACL(Map.empty),
@@ -531,7 +531,7 @@ class UserAccessTest
         permissionsRepo = None
       )
       adminUserAccess(
-        getUserIdentityForEmail(internalOnlyUser),
+        toUser(internalOnlyUser),
         janusData,
         Set.empty
       ) shouldEqual None
@@ -545,17 +545,17 @@ class UserAccessTest
     )
 
     "returns true when given a user that has an entry" in {
-      val user = getUserIdentityForEmail("test.user")
+      val user = toUser("test.user")
       hasAccess(user, adminACL) shouldEqual true
     }
 
     "returns true when given a user that has an entry but Google Auth has given us a capitalised username" in {
-      val user = getUserIdentityForEmail("Test.User")
+      val user = toUser("Test.User")
       hasAccess(user, adminACL) shouldEqual true
     }
 
     "returns false if the user is not explicitly mentioned" in {
-      val user = getUserIdentityForEmail("not.in.the.list")
+      val user = toUser("not.in.the.list")
       hasAccess(user, adminACL) shouldEqual false
     }
   }
@@ -574,7 +574,7 @@ class UserAccessTest
 
     "returns the set of grants for a user that has them" in {
       policyGrantsForUser(
-        getUserIdentityForEmail("user.with.grants"),
+        toUser("user.with.grants"),
         acl
       ) shouldEqual Set(
         grant1,
@@ -584,7 +584,7 @@ class UserAccessTest
 
     "returns an empty set for a user that has no grants" in {
       policyGrantsForUser(
-        getUserIdentityForEmail("user.with.no.grants"),
+        toUser("user.with.no.grants"),
         acl
       ) shouldEqual Set.empty
     }
@@ -617,7 +617,7 @@ class UserAccessTest
 
     "returns the permission if a user has been granted access" in {
       val (permission, _, _) = checkUserPermissionWithSource(
-        getUserIdentityForEmail("user"),
+        toUser("user"),
         fooDev.id,
         Instant.now(),
         janusData,
@@ -629,7 +629,7 @@ class UserAccessTest
     "returns the permission if it has been granted via admin access" in {
       Inspectors.forAll(allTestPerms) { adminPermission =>
         val (permission, _, _) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("admin"),
+          toUser("admin"),
           adminPermission.id,
           Instant.now(),
           janusData,
@@ -642,7 +642,7 @@ class UserAccessTest
     "returns the permission if it has been granted via support access" in {
       Inspectors.forAll(supportAcl.supportAccess) { supportPermission =>
         val (permission, _, _) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("support.user"),
+          toUser("support.user"),
           supportPermission.id,
           Instant.now(),
           janusData,
@@ -654,7 +654,7 @@ class UserAccessTest
 
     "returns None if the permission has not been granted to the user" in {
       checkUserPermissionWithSource(
-        getUserIdentityForEmail("no.permissions"),
+        toUser("no.permissions"),
         fooDev.id,
         Instant.now(),
         janusData,
@@ -686,7 +686,7 @@ class UserAccessTest
 
       "derived permission is short term" in {
         val (permission, _, _) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("internal.user"),
+          toUser("internal.user"),
           derivedPermission.id,
           Instant.now(),
           janusData,
@@ -697,7 +697,7 @@ class UserAccessTest
 
       "source is Internal ACL" in {
         val (_, source, _) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("internal.user"),
+          toUser("internal.user"),
           derivedPermission.id,
           Instant.now(),
           janusData,
@@ -708,7 +708,7 @@ class UserAccessTest
 
       "permission type is DeveloperPolicyPermission" in {
         val (_, _, permissionType) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("internal.user"),
+          toUser("internal.user"),
           derivedPermission.id,
           Instant.now(),
           janusData,
@@ -742,7 +742,7 @@ class UserAccessTest
 
       "derived permission is short term" in {
         val (permission, _, _) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("admin.user"),
+          toUser("admin.user"),
           derivedPermission.id,
           Instant.now(),
           janusData,
@@ -753,7 +753,7 @@ class UserAccessTest
 
       "source is Admin ACL" in {
         val (_, source, _) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("admin.user"),
+          toUser("admin.user"),
           derivedPermission.id,
           Instant.now(),
           janusData,
@@ -764,7 +764,7 @@ class UserAccessTest
 
       "permission type is DeveloperPolicyPermission" in {
         val (_, _, permissionType) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("admin.user"),
+          toUser("admin.user"),
           derivedPermission.id,
           Instant.now(),
           janusData,
@@ -799,7 +799,7 @@ class UserAccessTest
 
       "is Internal when the permission was granted via the internal ACL" in {
         val (_, source, _) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("user"),
+          toUser("user"),
           fooDev.id,
           Instant.now(),
           janusData,
@@ -810,7 +810,7 @@ class UserAccessTest
 
       "is Admin when the permission was granted via admin access only" in {
         val (_, source, _) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("admin"),
+          toUser("admin"),
           fooDev.id,
           Instant.now(),
           janusData,
@@ -821,7 +821,7 @@ class UserAccessTest
 
       "is Support when the permission was granted via support access only" in {
         val (_, source, _) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("support.user"),
+          toUser("support.user"),
           fooDev.id,
           Instant.now(),
           janusData,
@@ -846,7 +846,7 @@ class UserAccessTest
 
       "is AccountPermission for a static Janus permission" in {
         val (_, _, permissionType) = checkUserPermissionWithSource(
-          getUserIdentityForEmail("user"),
+          toUser("user"),
           fooDev.id,
           Instant.now(),
           janusData,
@@ -910,7 +910,7 @@ class UserAccessTest
     "userSupportAccess" - {
       "returns support access when given a user currently on the support rota" in {
         userSupportAccess(
-          getUserIdentityForEmail("support.user"),
+          toUser("support.user"),
           rotaTime,
           supportAcl
         ).value shouldEqual supportAcl.supportAccess
@@ -918,7 +918,7 @@ class UserAccessTest
 
       "returns None if the user is not on the support rota" in {
         userSupportAccess(
-          getUserIdentityForEmail("not.a.support.user"),
+          toUser("not.a.support.user"),
           rotaTime,
           supportAcl
         ) shouldBe None
@@ -926,7 +926,7 @@ class UserAccessTest
 
       "returns None if the user is on the support rota, but not for this now" in {
         userSupportAccess(
-          getUserIdentityForEmail("old.support.user"),
+          toUser("old.support.user"),
           rotaTime,
           supportAcl
         ) shouldBe None
@@ -934,7 +934,7 @@ class UserAccessTest
 
       "returns None for an empty username, even if it's mentioned in the rota" in {
         userSupportAccess(
-          getUserIdentityForEmail(""),
+          toUser(""),
           rotaTime,
           supportAcl
         ) shouldBe None
@@ -946,7 +946,7 @@ class UserAccessTest
             .of(2016, 7, 26, 10, 59, 0, 0, ZoneId.of("Europe/London"))
             .toInstant
           userSupportAccess(
-            getUserIdentityForEmail("support.user"),
+            toUser("support.user"),
             justBeforeCutoff,
             supportAcl
           ).value shouldEqual supportAcl.supportAccess
@@ -965,7 +965,7 @@ class UserAccessTest
             )
             .toInstant
           userSupportAccess(
-            getUserIdentityForEmail("support.user"),
+            toUser("support.user"),
             justAfterCutoff,
             supportAcl
           ) shouldEqual None
@@ -976,7 +976,7 @@ class UserAccessTest
     "isSupportUser" - {
       "returns true access when given a user currently on the support rota" in {
         isSupportUser(
-          getUserIdentityForEmail("support.user"),
+          toUser("support.user"),
           rotaTime,
           supportAcl
         ) shouldEqual true
@@ -984,7 +984,7 @@ class UserAccessTest
 
       "returns false if the user is not on the support rota" in {
         isSupportUser(
-          getUserIdentityForEmail("not.a.support.user"),
+          toUser("not.a.support.user"),
           rotaTime,
           supportAcl
         ) shouldEqual false
@@ -992,7 +992,7 @@ class UserAccessTest
 
       "returns false if the user is on the support rota, but not for this now" in {
         isSupportUser(
-          getUserIdentityForEmail("old.support.user"),
+          toUser("old.support.user"),
           rotaTime,
           supportAcl
         ) shouldEqual false
@@ -1000,7 +1000,7 @@ class UserAccessTest
 
       "returns false for an empty username, even if it's mentioned in the rota" in {
         isSupportUser(
-          getUserIdentityForEmail(""),
+          toUser(""),
           rotaTime,
           supportAcl
         ) shouldEqual false
@@ -1021,7 +1021,7 @@ class UserAccessTest
             )
             .toInstant
           isSupportUser(
-            getUserIdentityForEmail("support.user"),
+            toUser("support.user"),
             justBeforeCutoff,
             supportAcl
           ) shouldEqual true
@@ -1041,7 +1041,7 @@ class UserAccessTest
             )
             .toInstant
           isSupportUser(
-            getUserIdentityForEmail("support.user"),
+            toUser("support.user"),
             justAfterCutoff,
             supportAcl
           ) shouldEqual false
@@ -1233,7 +1233,7 @@ class UserAccessTest
           val slots = futureRotaSlotsForUser(
             currentTime,
             supportAcl,
-            getUserIdentityForEmail("user1")
+            toUser("user1")
           )
           slots shouldEqual List(
             (rotaStartTime.plus(Period.ofWeeks(2)), "user2"),
@@ -1245,7 +1245,7 @@ class UserAccessTest
           val slots = futureRotaSlotsForUser(
             currentTime.plus(Period.ofWeeks(2)),
             supportAcl,
-            getUserIdentityForEmail("user1")
+            toUser("user1")
           )
           slots shouldEqual List(
             (rotaStartTime.plus(Period.ofWeeks(4)), "user5")
@@ -1256,7 +1256,7 @@ class UserAccessTest
           val slots = futureRotaSlotsForUser(
             currentTime.plus(Period.ofWeeks(2)),
             supportAcl,
-            getUserIdentityForEmail("user2")
+            toUser("user2")
           )
           slots shouldEqual List(
             (rotaStartTime.plus(Period.ofWeeks(5)), "user4")
@@ -1267,7 +1267,7 @@ class UserAccessTest
           val slots = futureRotaSlotsForUser(
             currentTime,
             supportAcl,
-            getUserIdentityForEmail("userA")
+            toUser("userA")
           )
           slots.isEmpty shouldBe true
         }
@@ -1279,7 +1279,7 @@ class UserAccessTest
                 val slots = futureRotaSlotsForUser(
                   time,
                   acl,
-                  getUserIdentityForEmail(eng)
+                  toUser(eng)
                 )
                 slots.forall((startTime, _) => startTime.isAfter(time))
               } shouldBe true
@@ -1295,7 +1295,7 @@ class UserAccessTest
                     val futureSlots = futureRotaSlotsForUser(
                       time,
                       acl,
-                      getUserIdentityForEmail(eng)
+                      toUser(eng)
                     )
                     futureSlots.forall((startTime, _) =>
                       startTime.isAfter(nextSlotStartTime)
@@ -1313,7 +1313,7 @@ class UserAccessTest
                 futureRotaSlotsForUser(
                   time,
                   acl,
-                  getUserIdentityForEmail(eng)
+                  toUser(eng)
                 ).isEmpty
               } shouldBe true
           }
