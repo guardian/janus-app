@@ -85,22 +85,25 @@ class Janus(
         )
 
         mfaInUse = PasskeyDB.hasPasskey(request.user).toOption.getOrElse(false)
-        mfaRequiredDateMaybe = Config.mfaRequiredDataMaybe(configuration)
-        mfaComing = !mfaInUse && mfaRequiredDateMaybe
-          .exists(d => LocalDate.now().isBefore(d))
-        mfaDaysRemaining = mfaRequiredDateMaybe
-          .map(d => ChronoUnit.DAYS.between(LocalDate.now(), d))
-          .getOrElse(0L)
-        mfaDisplayDate = mfaRequiredDateMaybe
-          .map(d =>
-            d.format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH))
-          )
-          .getOrElse("today")
+
         passkeyNotRequired = Config.passkeyMode(
           configuration
         ) != PasskeyMode.Required
       } yield {
         if (mfaInUse || passkeyNotRequired)
+          val mfaRequiredDateMaybe = Config.mfaRequiredDataMaybe(configuration)
+          val mfaComing = !mfaInUse && mfaRequiredDateMaybe
+            .exists(d => LocalDate.now().isBefore(d))
+          val mfaDaysRemaining = mfaRequiredDateMaybe
+            .map(d => ChronoUnit.DAYS.between(LocalDate.now(), d))
+            .getOrElse(0L)
+          val mfaDisplayDate = mfaRequiredDateMaybe
+            .map(d =>
+              d.format(
+                DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH)
+              )
+            )
+            .getOrElse("today")
           Ok(
             views.html
               .index(
