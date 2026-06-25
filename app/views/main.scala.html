@@ -38,7 +38,7 @@
                         <ul class="right hide-on-med-and-down">
                             <li><a href="/accounts">Accounts</a></li>
                             <li><a href="/support">Support</a></li>
-                            @if(hasAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
+                            @if(hasAccess(user, janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
                             <li><a href="/user-account">@user.firstName @user.lastName</a></li>
                         </ul>
@@ -46,8 +46,8 @@
                         <ul id="nav-mobile" class="sidenav">
                             <li><a href="/">Home</a></li>
                             <li><a href="/accounts">Accounts</a></li>
-                            @if(isSupportUser(username(user), Instant.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
-                            @if(hasAccess(username(user), janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
+                            @if(isSupportUser(user, Instant.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
+                            @if(hasAccess(user, janusData.admin)) { <li><a href="/superuser">Admin</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
                             <li><a href="/user-account">@user.firstName @user.lastName <i class="material-icons right">perm_identity</i></a></li>
                         </ul>

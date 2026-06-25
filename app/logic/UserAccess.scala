@@ -7,6 +7,7 @@ import com.gu.janus.model.PermissionType.{
   DeveloperPolicyPermission
 }
 import logic.DeveloperPolicies.toPermission
+import logic.UserAccess.username
 import models.*
 import models.AccessSource.{Admin, Internal, Support}
 
@@ -28,12 +29,12 @@ object UserAccess {
     * for any AWS account to which the user has access.
     */
   def internalUserAccess(
-      username: String,
+      user: UserIdentity,
       janusData: JanusData,
       developerPolicies: Set[DeveloperPolicy]
   ): Option[Map[AwsAccount, AccountAccess]] = {
     val access = totalUserAccess(
-      username,
+      user,
       internalAcl = Some(janusData.access),
       adminAcl = None,
       supportData = None,
@@ -57,12 +58,12 @@ object UserAccess {
     * [[AccountAccess]] for all AWS accounts to which the user has access.
     */
   def adminUserAccess(
-      username: String,
+      user: UserIdentity,
       janusData: JanusData,
       developerPolicies: Set[DeveloperPolicy]
   ): Option[Map[AwsAccount, AccountAccess]] = {
     val access = totalUserAccess(
-      username,
+      user,
       internalAcl = None,
       adminAcl = Some(janusData.admin),
       supportData = None,
@@ -82,19 +83,19 @@ object UserAccess {
 
   /** Checks if the username is explicitly mentioned in the provided ACL.
     */
-  def hasAccess(username: String, acl: ACL): Boolean = {
-    acl.userAccess.contains(username)
+  def hasAccess(user: UserIdentity, acl: ACL): Boolean = {
+    acl.userAccess.contains(username(user))
   }
 
   /** Returns the set of developer policy grants explicitly assigned to the user
     * in the ACL, if any.
     */
   def policyGrantsForUser(
-      username: String,
+      user: UserIdentity,
       acl: ACL
   ): Set[DeveloperPolicyGrant] =
     acl.userAccess
-      .get(username)
+      .get(username(user))
       .map(_.policyGrants)
       .getOrElse(Set.empty)
 
@@ -104,7 +105,7 @@ object UserAccess {
     * The source is useful because it allows us to include it in the audit log.
     */
   def checkUserPermissionWithSource(
-      username: String,
+      user: UserIdentity,
       permissionId: String,
       date: Instant,
       janusData: JanusData,
@@ -119,34 +120,38 @@ object UserAccess {
     )
 
     totalUserAccess(
-      username,
+      user,
       Some(janusData.access),
       Some(janusData.admin),
       Some((janusData.support, date)),
       developerPolicies
-    ).valuesIterator.flatMap { access =>
-      bySource(access).flatMap((aa, src) =>
-        // We're only interested in the grants that have been given in the current source ACL
-        val policyGrants = src match {
-          case Internal => policyGrantsForUser(username, acl = janusData.access)
-          case Admin    => policyGrantsForUser(username, acl = janusData.admin)
-          case Support  => Set.empty
-        }
-        aa.permissions
-          .find(_.id == permissionId)
-          .map((_, src, AccountPermission))
-          .orElse(
-            aa.developerPolicies
-              .flatMap { policy =>
-                policyGrants
-                  .find(_.id == policy.policyGrantId)
-                  .map(toPermission(policy, _))
-              }
-              .find(_.id == permissionId)
-              .map((_, src, DeveloperPolicyPermission))
-          )
-      )
-    }.nextOption()
+    ).valuesIterator
+      .flatMap { access =>
+        bySource(access).flatMap((aa, src) =>
+          // We're only interested in the grants that have been given in the current source ACL
+          val policyGrants = src match {
+            case Internal =>
+              policyGrantsForUser(user, acl = janusData.access)
+            case Admin =>
+              policyGrantsForUser(user, acl = janusData.admin)
+            case Support => Set.empty
+          }
+          aa.permissions
+            .find(_.id == permissionId)
+            .map((_, src, AccountPermission))
+            .orElse(
+              aa.developerPolicies
+                .flatMap { policy =>
+                  policyGrants
+                    .find(_.id == policy.policyGrantId)
+                    .map(toPermission(policy, _))
+                }
+                .find(_.id == permissionId)
+                .map((_, src, DeveloperPolicyPermission))
+            )
+        )
+      }
+      .nextOption()
   }
 
   /** This is the central logic for the public-facing methods that need to
@@ -162,7 +167,7 @@ object UserAccess {
     * about support access and in others we don't need to know about admin
     * access.
     *
-    * @param username
+    * @param user
     *   User whose access we're determining
     * @param internalAcl
     *   If included, results will include access from this ACL
@@ -179,19 +184,19 @@ object UserAccess {
     *   method result.
     */
   private def totalUserAccess(
-      username: String,
+      user: UserIdentity,
       internalAcl: Option[ACL],
       adminAcl: Option[ACL],
       supportData: Option[(SupportACL, Instant)],
       developerPolicies: Set[DeveloperPolicy]
   ): Map[AwsAccount, SourcedAccountAccess] = {
     def userAccess(
-        username: String,
+        user: UserIdentity,
         acl: ACL,
         developerPolicies: Set[DeveloperPolicy]
     ): Option[Map[AwsAccount, AccountAccess]] =
       acl.userAccess
-        .get(username)
+        .get(username(user))
         .map { aclEntry =>
           val permissions = aclEntry.permissions ++ acl.defaultPermissions
           val grantedPolicyIds = aclEntry.policyGrants.map(_.id)
@@ -216,19 +221,19 @@ object UserAccess {
 
     val internal =
       internalAcl
-        .flatMap(acl => userAccess(username, acl, developerPolicies))
+        .flatMap(acl => userAccess(user, acl, developerPolicies))
         .getOrElse(Map.empty)
 
     val admin =
       adminAcl
-        .flatMap(acl => userAccess(username, acl, developerPolicies))
+        .flatMap(acl => userAccess(user, acl, developerPolicies))
         .getOrElse(Map.empty)
 
     val support =
       supportData
         .map((acl, when) =>
           val perms =
-            userSupportAccess(username, when, acl).getOrElse(Set.empty)
+            userSupportAccess(user, when, acl).getOrElse(Set.empty)
           perms
             .groupBy(_.account)
             .view
@@ -251,23 +256,26 @@ object UserAccess {
   }
 
   def userSupportAccess(
-      username: String,
+      user: UserIdentity,
       date: Instant,
       supportACL: SupportACL
   ): Option[Set[Permission]] = {
-    if (isSupportUser(username, date, supportACL))
+    if (isSupportUser(user, date, supportACL))
       Some(supportACL.supportAccess)
     else None
   }
 
   def isSupportUser(
-      username: String,
+      user: UserIdentity,
       date: Instant,
       supportACL: SupportACL
   ): Boolean = {
+    val usernameLowerCase = username(user)
     activeSupportUsers(date, supportACL).exists {
       case (_, (maybeUser1, maybeUser2)) =>
-        maybeUser1.contains(username) || maybeUser2.contains(username)
+        maybeUser1.contains(usernameLowerCase) || maybeUser2.contains(
+          usernameLowerCase
+        )
     }
   }
 
@@ -314,10 +322,11 @@ object UserAccess {
   def futureRotaSlotsForUser(
       date: Instant,
       supportACL: SupportACL,
-      user: String
+      user: UserIdentity
   ): List[(Instant, String)] = {
     val nextSlotStartTime =
       nextSupportUsers(date, supportACL).map((startTime, _) => startTime)
+    val usernameLowerCase = username(user)
     nextSlotStartTime
       .map { nextSlot =>
         supportACL.rota.toList
@@ -327,8 +336,8 @@ object UserAccess {
             case (startTime, (user1, user2))
                 if startTime.isAfter(
                   nextSlot
-                ) && (user1 == user || user2 == user) =>
-              (startTime, if (user1 == user) user2 else user1)
+                ) && (user1 == usernameLowerCase || user2 == usernameLowerCase) =>
+              (startTime, if (user1 == usernameLowerCase) user2 else user1)
           }
       }
       .getOrElse(Nil)
