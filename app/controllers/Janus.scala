@@ -64,12 +64,12 @@ class Janus(
         Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
       (for {
         accountsAccess <- internalUserAccess(
-          username(request.user),
+          request.user,
           janusData,
           developerPolicyService.getDeveloperPolicies
         )
         userPolicyGrants = policyGrantsForUser(
-          username(request.user),
+          request.user,
           janusData.access
         )
         favourites = Favourites.fromCookie(request.cookies.get("favourites"))
@@ -123,12 +123,12 @@ class Janus(
     authAction { implicit request =>
       (for {
         accountsAccess <- adminUserAccess(
-          username(request.user),
+          request.user,
           janusData,
           developerPolicyService.getDeveloperPolicies
         )
         userPolicyGrants = policyGrantsForUser(
-          username(request.user),
+          request.user,
           janusData.admin
         )
         uiAccountAccess = orderedAccountAccess(accountsAccess, userPolicyGrants)
@@ -157,10 +157,10 @@ class Janus(
       val currentSupportUsers = activeSupportUsers(now, janusData.support)
       val supportUsersInNextPeriod = nextSupportUsers(now, janusData.support)
       val currentUserFutureSupportPeriods =
-        futureRotaSlotsForUser(now, janusData.support, username(request.user))
+        futureRotaSlotsForUser(now, janusData.support, request.user)
       (for {
         supportPermissions <- userSupportAccess(
-          username(request.user),
+          request.user,
           now,
           janusData.support
         )
@@ -356,7 +356,7 @@ class Janus(
       developerPolicies: Set[DeveloperPolicy]
   ): Option[(Credentials, Permission)] = {
     checkUserPermissionWithSource(
-      username(user),
+      user,
       permissionId,
       Instant.now(),
       janusData,
