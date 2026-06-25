@@ -271,11 +271,12 @@ class PasskeyController(
 
   private def verifyHasAccess(
       user: UserIdentity
-  ): Try[Unit] =
-    if hasAccess(user.username, janusData.access) ||
-      hasAccess(user.username, janusData.admin)
+  ): Try[Unit] = {
+    if hasAccess(user, janusData.access) ||
+      hasAccess(user, janusData.admin)
     then Success(())
     else Failure(JanusException.noAccessFailure(user))
+  }
 
   private def loadRegistrationChallenge(
       user: UserIdentity

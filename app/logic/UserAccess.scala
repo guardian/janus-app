@@ -82,8 +82,9 @@ object UserAccess {
 
   /** Checks if the username is explicitly mentioned in the provided ACL.
     */
-  def hasAccess(username: String, acl: ACL): Boolean = {
-    acl.userAccess.contains(username)
+  def hasAccess(user: UserIdentity, acl: ACL): Boolean = {
+    import logic.UserAccess.username
+    acl.userAccess.contains(username(user))
   }
 
   /** Returns the set of developer policy grants explicitly assigned to the user

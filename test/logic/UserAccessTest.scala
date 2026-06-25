@@ -533,12 +533,22 @@ class UserAccessTest
       allTestPerms
     )
 
+    def getUserIdentityForEmail(email: String) =
+      UserIdentity("", email, "", "", 0L, None)
+
     "returns true when given a user that has an entry" in {
-      hasAccess("test.user", adminACL) shouldEqual true
+      val user = getUserIdentityForEmail("test.user@guardian.co.uk")
+      hasAccess(user, adminACL) shouldEqual true
+    }
+
+    "returns true when given a user that has an entry but Google Auth has given us a capitalised email" in {
+      val user = getUserIdentityForEmail("Test.User@guardian.co.uk")
+      hasAccess(user, adminACL) shouldEqual true
     }
 
     "returns false if the user is not explicitly mentioned" in {
-      hasAccess("not.in.the.list", adminACL) shouldEqual false
+      val user = getUserIdentityForEmail("not.in.the.list@guardian.co.uk")
+      hasAccess(user, adminACL) shouldEqual false
     }
   }
 
