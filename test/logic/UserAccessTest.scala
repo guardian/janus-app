@@ -24,7 +24,7 @@ class UserAccessTest
 
   import UserAccess.*
 
-  def getUserIdentityForEmail(email: String) =
+  def toUser(username: String) =
     UserIdentity("", s"$email@guardian.co.uk", "", "", 0L, None)
 
   "internalUserAccess" - {
