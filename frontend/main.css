@@ -714,11 +714,17 @@ a.copy-text--button__small {
     grid-template-columns: 1fr;
 }
 
-.rotate{
-    animation: spinner 5s linear infinite;
+.rotate-clockwise {
+    animation: spinner-clockwise 5s linear infinite;
 }
-@keyframes spinner {
+@keyframes spinner-clockwise {
     to { transform: rotate(360deg); }
+}
+.rotate-counterclockwise {
+    animation: spinner-counterclockwise 5s linear infinite;
+}
+@keyframes spinner-counterclockwise {
+    to { transform: rotate(-360deg); }
 }
 
 .developer-policy-chips {
