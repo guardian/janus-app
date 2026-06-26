@@ -90,6 +90,8 @@ lazy val root: Project = (project in file("."))
       "-J-Xms1g",
       "-J-Xmx1g"
     ),
+    // use local config when running the app in dev mode from sbt
+    Runtime / javaOptions += s"-Dconfig.file=${sys.props("user.home")}/.gu/janus-app/janus.local.conf",
     // allows us to kick off the frontend dev-server when the API is run
     playRunHooks ++= Seq(
       RunClientHook(root.base),
