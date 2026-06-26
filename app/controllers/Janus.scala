@@ -31,8 +31,10 @@ import software.amazon.awssdk.services.sts.model.{
   PackedPolicyTooLargeException
 }
 
-import java.time.*
+import java.time._
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.util.Locale
 import scala.util.control.NonFatal
 
 class Janus(
@@ -62,12 +64,12 @@ class Janus(
         Date.displayMode(ZonedDateTime.now(ZoneId.of("Europe/London")))
       (for {
         accountsAccess <- internalUserAccess(
-          username(request.user),
+          request.user,
           janusData,
           developerPolicyService.getDeveloperPolicies
         )
         userPolicyGrants = policyGrantsForUser(
-          username(request.user),
+          request.user,
           janusData.access
         )
         favourites = Favourites.fromCookie(request.cookies.get("favourites"))
@@ -81,17 +83,41 @@ class Janus(
           developerPolicyService.getCacheStatus,
           developerPolicyService.fetchEnabled
         )
+
+        mfaInUse = PasskeyDB.hasPasskey(request.user).toOption.getOrElse(false)
+
+        passkeyNotRequired = Config.passkeyMode(
+          configuration
+        ) != PasskeyMode.Required
       } yield {
-        Ok(
-          views.html
-            .index(
-              uiAccountAccess,
-              cacheStatus,
-              request.user,
-              janusData,
-              displayMode
+        if (mfaInUse || passkeyNotRequired)
+          val mfaRequiredDateMaybe = Config.mfaRequiredDataMaybe(configuration)
+          val mfaComing = !mfaInUse && mfaRequiredDateMaybe
+            .exists(d => LocalDate.now().isBefore(d))
+          val mfaDaysRemaining = mfaRequiredDateMaybe
+            .map(d => ChronoUnit.DAYS.between(LocalDate.now(), d))
+            .getOrElse(0L)
+          val mfaDisplayDate = mfaRequiredDateMaybe
+            .map(d =>
+              d.format(
+                DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.ENGLISH)
+              )
             )
-        )
+            .getOrElse("today")
+          Ok(
+            views.html
+              .index(
+                uiAccountAccess,
+                cacheStatus,
+                request.user,
+                janusData,
+                displayMode,
+                mfaComing,
+                mfaDaysRemaining,
+                mfaDisplayDate
+              )
+          )
+        else SeeOther(controllers.routes.Janus.userAccount.url)
       }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
     }
 
@@ -99,12 +125,12 @@ class Janus(
     authAction { implicit request =>
       (for {
         accountsAccess <- adminUserAccess(
-          username(request.user),
+          request.user,
           janusData,
           developerPolicyService.getDeveloperPolicies
         )
         userPolicyGrants = policyGrantsForUser(
-          username(request.user),
+          request.user,
           janusData.admin
         )
         uiAccountAccess = orderedAccountAccess(accountsAccess, userPolicyGrants)
@@ -133,10 +159,10 @@ class Janus(
       val currentSupportUsers = activeSupportUsers(now, janusData.support)
       val supportUsersInNextPeriod = nextSupportUsers(now, janusData.support)
       val currentUserFutureSupportPeriods =
-        futureRotaSlotsForUser(now, janusData.support, username(request.user))
+        futureRotaSlotsForUser(now, janusData.support, request.user)
       (for {
         supportPermissions <- userSupportAccess(
-          username(request.user),
+          request.user,
           now,
           janusData.support
         )
@@ -332,7 +358,7 @@ class Janus(
       developerPolicies: Set[DeveloperPolicy]
   ): Option[(Credentials, Permission)] = {
     checkUserPermissionWithSource(
-      username(user),
+      user,
       permissionId,
       Instant.now(),
       janusData,

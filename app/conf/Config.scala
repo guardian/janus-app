@@ -12,12 +12,14 @@ import com.gu.play.secretrotation.SnapshotProvider
 import models._
 import models.AccountConfigStatus.*
 import models.PasskeyMode
-import play.api.Configuration
+import play.api.{Configuration, Logging}
 
 import java.io.{File, FileInputStream}
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import scala.util.{Failure, Success, Try}
 
-object Config {
+object Config extends Logging {
   def roleArn(awsAccountAuthConfigKey: String, config: Configuration): String =
     requiredString(config, s"federation.$awsAccountAuthConfigKey.aws.roleArn")
 
@@ -155,6 +157,27 @@ object Config {
         s"Missing required config property",
         key
       )
+    }
+  }
+
+  private val mfaDateFormat = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+  def mfaRequiredDataMaybe(
+      config: Configuration
+  ): Option[LocalDate] = {
+
+    config
+      .getOptional[String]("mfaRequiredDate") match {
+      case None =>
+        logger.info("No mfa required date found")
+        None
+      case Some(dateStr) =>
+        try {
+          Some(LocalDate.parse(dateStr, mfaDateFormat))
+        } catch {
+          case e: Throwable =>
+            logger.error("Unable to parse mfa required date", e)
+            None
+        }
     }
   }
 

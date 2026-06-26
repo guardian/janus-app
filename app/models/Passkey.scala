@@ -189,7 +189,9 @@ object PasskeyAuthenticator extends Logging {
   private def loadResourceContent(
       resourcePath: String
   ): Either[AuthenticatorError, String] = {
-    Using(Source.fromResource(resourcePath))(_.getLines.mkString).toEither.left
+    Using(Source.fromResource(resourcePath))(
+      _.getLines().mkString
+    ).toEither.left
       .map(e =>
         AuthenticatorError(s"Failed to read resource: $resourcePath", Some(e))
       )
