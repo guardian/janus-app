@@ -1,10 +1,10 @@
-@import logic.ViewHelpers.CtaLevel
+@import logic.ViewHelpers.BannerLevel
 
-@(ariaRegion: String, level: CtaLevel)(message: Html)(cta: Html)
+@(ariaRegion: String, level: BannerLevel)(message: Html)(cta: Html)
 
 
 <div role="region" aria-label="@ariaRegion">
-    <div class="main-banner @CtaLevel.cssClass(level)" role="status" aria-atomic="true">
+    <div class="main-banner @BannerLevel.cssClass(level)" role="status" aria-atomic="true">
         <div class="container main-banner__container">
             <div class="main-banner__message">
                 @message

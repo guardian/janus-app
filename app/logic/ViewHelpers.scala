@@ -57,16 +57,16 @@ object ViewHelpers {
     case AssetImage(path: String, alt: String)
   }
 
-  enum CtaLevel {
+  enum BannerLevel {
     case Warn
     case Error
     case Info
   }
-  object CtaLevel {
-    def cssClass(level: CtaLevel): String = level match {
-      case CtaLevel.Error => "banner-error red lighten-4"
-      case CtaLevel.Warn  => "banner-warn amber lighten-3"
-      case CtaLevel.Info  => "banner-info teal lighten-5"
+  object BannerLevel {
+    def cssClass(level: BannerLevel): String = level match {
+      case BannerLevel.Error => "banner-error red lighten-4"
+      case BannerLevel.Warn  => "banner-warn amber lighten-3"
+      case BannerLevel.Info  => "banner-info teal lighten-5"
     }
   }
 }

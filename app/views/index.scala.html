@@ -2,7 +2,7 @@
 @import com.gu.janus.model.{AwsAccount, JanusData}
 @import helper._
 @import models._
-@import logic.ViewHelpers.CtaLevel
+@import logic.ViewHelpers.BannerLevel
 @import play.api.Mode
 
 @(accountAccesses: List[AwsAccountAccess], cacheStatus: DeveloperPolicyCacheStatus, user: UserIdentity, janusData: JanusData, displayMode: DisplayMode, mfaComing: Boolean, mfaDaysRemaining: Long, mfaDisplayDate: String)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
@@ -10,26 +10,26 @@
 @main("Your permissions", Some(user), janusData, displayMode) {
     @cacheStatus match {
         case DeveloperPolicyCacheStatus.Failure => {
-            @fragments.bannerCta("Developer policy status", CtaLevel.Error) {
+            @fragments.bannerCta("Developer policy status", BannerLevel.Error) {
                 Developer policy failures detected - this may mean you have permissions that are not showing.
             } {
                 <a href="@routes.AccountsController.accountDeveloperPolicies">status page</a>
             }
         }
         case DeveloperPolicyCacheStatus.Empty => {
-            @fragments.banner("Developer policy status", CtaLevel.Warn) {
+            @fragments.banner("Developer policy status", BannerLevel.Warn) {
                 Developer policy cache is empty - this may mean you have permissions that are not showing. Try refreshing in a few moments.
             }
         }
         case DeveloperPolicyCacheStatus.Disabled => {
-            @fragments.banner("Developer policy status", CtaLevel.Error) {
+            @fragments.banner("Developer policy status", BannerLevel.Error) {
                 The developer policy service is disabled - this may mean you have permissions that are not showing. Please contact DevX Security for further information.
             }
         }
         case DeveloperPolicyCacheStatus.Success => {}
     }
     @if(mfaComing) {
-        @fragments.bannerCta("MFA status", CtaLevel.Warn) {
+        @fragments.bannerCta("MFA status", BannerLevel.Warn) {
             Janus will require Multi-Factor Authentication (MFA) in <strong>@mfaDaysRemaining</strong> days (@mfaDisplayDate).
         } {
             <a href="/user-account">Set up MFA</a>
