@@ -10,9 +10,10 @@
 @main("Your permissions", Some(user), janusData, displayMode) {
     @cacheStatus match {
         case DeveloperPolicyCacheStatus.Failure => {
-            @fragments.banner("Developer policy status", CtaLevel.Error) {
-                Developer policy failures detected - this may mean you have permissions that are not showing. Visit the <a href="@routes.AccountsController.accountDeveloperPolicies">
-                policies status page</a> for more information.
+            @fragments.bannerCta("Developer policy status", CtaLevel.Error) {
+                Developer policy failures detected - this may mean you have permissions that are not showing.
+            } {
+                <a href="@routes.AccountsController.accountDeveloperPolicies">status page</a>
             }
         }
         case DeveloperPolicyCacheStatus.Empty => {
