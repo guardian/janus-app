@@ -1,0 +1,17 @@
+@import logic.ViewHelpers.CtaLevel
+
+@(ariaRegion: String, level: CtaLevel)(message: Html)(cta: Html)
+
+
+<div role="region" aria-label="@ariaRegion">
+    <div class="main-banner @CtaLevel.cssClass(level)" role="status" aria-atomic="true">
+        <div class="container main-banner__container">
+            <div class="main-banner__message">
+                @message
+            </div>
+            <div class="main-banner__cta">
+                @cta
+            </div>
+        </div>
+    </div>
+</div>
