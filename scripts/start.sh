@@ -1,6 +1,9 @@
 #!/bin/bash
 
-CONFIGPATH=$HOME/.gu/janus-app/
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+CONFIGPATH=$HOME/.gu/janus-app
 CONFIG=$CONFIGPATH/janus.local.conf
 CONFIGDATA=$CONFIGPATH/janusData.conf
 
@@ -19,4 +22,4 @@ if [[ ! -f $CONFIGDATA ]]; then
   exit 1
 fi
 
-sbt -Dconfig.file=$CONFIG run
+cd "$PROJECT_ROOT" && sbt -Dconfig.file="$CONFIG" run
