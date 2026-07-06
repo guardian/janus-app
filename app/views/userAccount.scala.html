@@ -28,15 +28,53 @@
         <p>Passkeys are a secure way to authenticate sensitive actions.
             Janus uses them as an extra layer of security to authenticate you before allowing you to access
             AWS credentials or the AWS console.</p>
-        <p>We recommend that all users have a portable passkey so that your access isn't tied to a single device.
-           Titan hardware security keys are available for this purpose from the IT service desk in any office.</p>
-        <p>If you want to use a phone to generate an off-device passkey, the Microsoft Authenticator app will
-            <strong>not</strong> work, as it can only create passkeys for Microsoft accounts.
-            Instead, if you have no other option, use your phone's built-in passkey storage, such as
-            Apple Passwords (iPhone) or Google Password Manager (Android).</p>
-        <p>For convenience, if you work on a MacBook you can also generate a passkey in the Chrome browser on your device.</p>
         <p>Please contact <a href="@passkeyManagerLink">@passkeyManagerLinkText</a> if you have any problems
             registering or using passkeys.</p>
+
+        <p>You need <strong>at least one passkey</strong> to access AWS. We recommend registering
+            <strong>two</strong> &mdash; one on your laptop for everyday speed and convenience, and one
+            portable passkey so that your access isn't tied to a single device.</p>
+
+        <div class="passkey-advice-container">
+            <div class="passkey-advice-item">
+                <div class="passkey-advice-item__header">
+                    <i class="material-icons" aria-hidden="true">laptop_mac</i>
+                    <span role="heading" aria-level="4">On your laptop</span>
+                </div>
+                <div class="passkey-advice-item__body">
+                    <p>On a Mac, register a passkey in the <strong>Chrome</strong> browser to unlock it with
+                        <strong>Touch&nbsp;ID</strong>.</p>
+                    <p class="passkey-advice-item__notice grey-text">
+                        On Windows, a fingerprint passkey may not be available, as
+                        <strong>Windows&nbsp;Hello</strong> is disabled by default. Use a portable passkey instead.
+                    </p>
+                </div>
+                <div class="passkey-advice-item__summary grey-text">
+                    An on-device passkey is the <strong>fastest and most convenient</strong> option for
+                    everyday use.
+                </div>
+            </div>
+
+            <div class="passkey-advice-item">
+                <div class="passkey-advice-item__header">
+                    <i class="material-icons" aria-hidden="true">key</i>
+                    <span role="heading" aria-level="4">A portable passkey</span>
+                </div>
+                <div class="passkey-advice-item__body">
+                    <p><strong>Titan security keys</strong> are available from the IT service desk in any office.
+                        This is the preferred and best-supported option.</p>
+                    <p class="passkey-advice-item__notice grey-text">
+                        If you use a phone, the Microsoft Authenticator app will <strong>not</strong> work, as it
+                        can only create passkeys for Microsoft accounts. Instead, use your phone's built-in passkey
+                        storage, such as Apple&nbsp;Passwords (iPhone) or Google&nbsp;Password&nbsp;Manager (Android).
+                    </p>
+                </div>
+                <div class="passkey-advice-item__summary grey-text">
+                    A portable passkey gives you <strong>resilience</strong> and lets you sign in from other
+                    devices.
+                </div>
+            </div>
+        </div>
 
         <div class="row">
             <h4 class="header orange-text">Registered passkeys</h4>
