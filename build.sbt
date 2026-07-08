@@ -8,7 +8,7 @@ import sbtversionpolicy.withsbtrelease.ReleaseVersion
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.46.10"
+val awsSdkVersion = "2.46.17"
 val circeVersion = "0.14.15"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
@@ -90,6 +90,8 @@ lazy val root: Project = (project in file("."))
       "-J-Xms1g",
       "-J-Xmx1g"
     ),
+    // use local config when running the app in dev mode from sbt
+    Runtime / javaOptions += s"-Dconfig.file=${sys.props("user.home")}/.gu/janus-app/janus.local.conf",
     // allows us to kick off the frontend dev-server when the API is run
     playRunHooks ++= Seq(
       RunClientHook(root.base),

@@ -56,4 +56,17 @@ object ViewHelpers {
     case MaterialIcon(name: String)
     case AssetImage(path: String, alt: String)
   }
+
+  enum BannerLevel {
+    case Warn
+    case Error
+    case Info
+  }
+  object BannerLevel {
+    def cssClass(level: BannerLevel): String = level match {
+      case BannerLevel.Error => "banner-error red lighten-4"
+      case BannerLevel.Warn  => "banner-warn amber lighten-3"
+      case BannerLevel.Info  => "banner-info teal lighten-5"
+    }
+  }
 }
