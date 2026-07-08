@@ -25,20 +25,57 @@
 
         <h3 class="header orange-text">Passkeys</h3>
 
-        <p>Passkeys are a secure way to authenticate sensitive actions.
-            Janus uses them as an extra layer of security to authenticate you before allowing you to access
-            AWS credentials or the AWS console.</p>
-        <p>We recommend that you <strong>register at least two passkeys</strong> to ensure you have access to
-            your AWS accounts.<br />
-            One should be on-device if possible (e.g. Chrome browser)
-            and the other off-device (e.g. security key or phone).<br />
-            On a Windows device you will need two off-device passkeys as Windows Hello is disabled by default.</p>
-        <p>Guardian users can collect a Titan security key from the IT service desk in any office.</p>
+        <p>Passkeys are a secure way to authenticate sensitive actions. Janus uses them as an extra layer
+            of security before allowing you to access AWS&nbsp;credentials or the AWS&nbsp;console. You need
+            at least one passkey to access AWS, but we recommend registering two.</p>
+
+        <div class="passkey-advice-container">
+            <div class="passkey-advice-item">
+                <div class="passkey-advice-item__summary">
+                    A portable passkey gives you resilience and lets you sign in from other devices.
+                </div>
+                <div class="passkey-advice-item__body">
+                    <div class="passkey-advice-item__visual">
+                        <img class="passkey-advice-item__visual-image" src="@assetsFinder.path("images/titan-key.png")" alt="Titan security key" />
+                    </div>
+                    <p>Titan security keys are available from the IT service desk in any office.
+                        This is the preferred and best-supported option.</p>
+                    <p class="passkey-advice-item__notice grey-text">
+                        If you use a phone, the Microsoft Authenticator app will not work as it can only create
+                        passkeys for Microsoft accounts. Instead, use your phone's built-in passkey storage, such
+                        as Apple&nbsp;Passwords (iPhone) or Google&nbsp;Password&nbsp;Manager (Android).
+                    </p>
+                </div>
+            </div>
+
+            <div class="passkey-advice-item">
+                <div class="passkey-advice-item__summary">
+                    An on-device passkey is the fastest and simplest option for everyday use.
+                </div>
+                <div class="passkey-advice-item__body">
+                    <div class="passkey-advice-item__visual">
+                        <i class="material-icons passkey-advice-item__visual-icon" aria-hidden="true">fingerprint</i>
+                    </div>
+                    <p>On a Mac, register a passkey in the Chrome browser to use Touch&nbsp;ID.</p>
+                    <p class="passkey-advice-item__notice grey-text">
+                        On Windows, a fingerprint passkey may not be available, as
+                        Windows&nbsp;Hello is disabled by default. Use a portable passkey instead.
+                    </p>
+                    <p class="passkey-advice-item__notice grey-text">
+                        Firefox doesn't yet have its own passkey-management system, so you'll either need to use
+                        Google&nbsp;Chrome for Janus or stick to using a portable passkey.
+                    </p>
+                </div>
+            </div>
+        </div>
+
         <p>Please contact <a href="@passkeyManagerLink">@passkeyManagerLinkText</a> if you have any problems
             registering or using passkeys.</p>
 
         <div class="row">
-            <h4 class="header orange-text">Registered passkeys</h4>
+            <div class="col s12">
+                <h4 class="header orange-text">Registered passkeys</h4>
+            </div>
             <div class="col s12">
                 <div class="card-panel">
                     @if(passkeys.nonEmpty) {
