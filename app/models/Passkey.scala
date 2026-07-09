@@ -72,6 +72,28 @@ object PasskeyEncodings {
       }
     )
     /*
+     * Serialize so that alg is emitted as the raw COSE algorithm identifier
+     * (a plain integer), as required by PublicKeyCredential.parseCreationOptionsFromJSON
+     * in the browser. Newer webauthn4j versions serialize COSEAlgorithmIdentifier
+     * as a nested object by default so we pin the wire format
+     * explicitly here to avoid breaking the frontend passkey registration flow.
+     */
+    module.addSerializer(
+      classOf[PublicKeyCredentialParameters],
+      new JsonSerializer[PublicKeyCredentialParameters] {
+        override def serialize(
+            params: PublicKeyCredentialParameters,
+            gen: JsonGenerator,
+            serializers: SerializerProvider
+        ): Unit = {
+          gen.writeStartObject()
+          gen.writeStringField("type", params.getType.getValue)
+          gen.writeNumberField("alg", params.getAlg.getValue)
+          gen.writeEndObject()
+        }
+      }
+    )
+    /*
      * Again, serialize so that id is base64url encoded, as the webauthn spec demands.
      */
     module.addSerializer(
