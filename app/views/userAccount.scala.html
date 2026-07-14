@@ -1,6 +1,7 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
 @import logic.UserAccess.username
+@import logic.ViewHelpers.BannerLevel
 @import models.PasskeyMode
 @import play.api.Mode
 @import java.time.Instant
@@ -17,6 +18,14 @@
 )(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("User account", Some(user), janusData) {
+
+    @if(passkeys.isEmpty) {
+        @fragments.bannerCta("No passkey registered", BannerLevel.Error) {
+            Janus now requires a passkey to access AWS resources.
+        } {
+            <a href="#registered-passkeys">Register passkey</a>
+        }
+    }
 
     <div class="container" id="user-account-container">
         <h1 class="header orange-text">Account</h1>
@@ -74,7 +83,7 @@
 
         <div class="row">
             <div class="col s12">
-                <h4 class="header orange-text">Registered passkeys</h4>
+                <h4 id="registered-passkeys" class="header orange-text">Registered passkeys</h4>
             </div>
             <div class="col s12">
                 <div class="card-panel">
