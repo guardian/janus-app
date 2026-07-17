@@ -1,6 +1,7 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
 @import logic.UserAccess.username
+@import logic.ViewHelpers.BannerLevel
 @import models.PasskeyMode
 @import play.api.Mode
 @import java.time.Instant
@@ -17,6 +18,14 @@
 )(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
 @main("User account", Some(user), janusData) {
+
+    @if(passkeys.isEmpty) {
+        @fragments.bannerCta("No passkey registered", BannerLevel.Error) {
+            Janus now requires a passkey to access AWS resources.
+        } {
+            <a href="#registered-passkeys">Register passkey</a>
+        }
+    }
 
     <div class="container" id="user-account-container">
         <h1 class="header orange-text">Account</h1>
@@ -40,7 +49,7 @@
                     </div>
                     <p>Titan security keys are available from the IT service desk in any office.
                         This is the preferred and best-supported option.</p>
-                    <p class="passkey-advice-item__notice grey-text">
+                    <p class="passkey-advice-item__notice grey-text text-darken-1">
                         If you use a phone, the Microsoft Authenticator app will not work as it can only create
                         passkeys for Microsoft accounts. Instead, use your phone's built-in passkey storage, such
                         as Apple&nbsp;Passwords (iPhone) or Google&nbsp;Password&nbsp;Manager (Android).
@@ -57,11 +66,11 @@
                         <i class="material-icons passkey-advice-item__visual-icon" aria-hidden="true">fingerprint</i>
                     </div>
                     <p>On a Mac, register a passkey in the Chrome browser to use Touch&nbsp;ID.</p>
-                    <p class="passkey-advice-item__notice grey-text">
+                    <p class="passkey-advice-item__notice grey-text text-darken-1">
                         On Windows, a fingerprint passkey may not be available, as
                         Windows&nbsp;Hello is disabled by default. Use a portable passkey instead.
                     </p>
-                    <p class="passkey-advice-item__notice grey-text">
+                    <p class="passkey-advice-item__notice grey-text text-darken-1">
                         Firefox doesn't yet have its own passkey-management system, so you'll either need to use
                         Google&nbsp;Chrome for Janus or stick to using a portable passkey.
                     </p>
@@ -74,7 +83,7 @@
 
         <div class="row">
             <div class="col s12">
-                <h4 class="header orange-text">Registered passkeys</h4>
+                <h4 id="registered-passkeys" class="header orange-text">Registered passkeys</h4>
             </div>
             <div class="col s12">
                 <div class="card-panel">
