@@ -12,6 +12,9 @@
                     <div class="card-content card-content--permission-group-header grey-text text-darken-2">
                         <div class="developer-policy-grant-header">
                             <span class="developer-policy-grant-name">
+                                @if(grant.shortTerm) {
+                                    <i class="material-icons tiny tooltipped" data-position="bottom" data-delay="50" data-tooltip="This grant provides admin permissions (short-term access only)">admin_panel_settings</i>
+                                }
                                 @grant.name
                             </span>
                             <span class="developer-policy-grant-id tooltipped" data-position="bottom" data-delay="50" data-tooltip="Developer policy grant ID">
@@ -42,46 +45,16 @@
                             <div class="card-content--permission-heading__text">
                                 @policyPerm.description
                                 @if(policyPerm.shortTerm) {
-                                    <i class="material-icons tooltipped" data-position="bottom" data-delay="50" data-tooltip="This permission only grants short-term access">error</i>
+                                    <i class="material-icons tooltipped" data-position="bottom" data-delay="50" data-tooltip="Admin permission - grants short-term access only">admin_panel_settings</i>
                                 }
                             </div>
                         </div>
-                        <div class="card-action card-action--permission">
-                            <div class="card-action-group__row row">
-                                <div class="card-action-group col m6 s12">
-                                    <a href="/console?permissionId=@policyPerm.id"
-                                       class="waves-effect waves-light btn federation__link federation__link--cta federation__link--@if(policyPerm.shortTerm) {short} else {standard} card-action-link--spaced"
-                                    >
-                                        <i class="material-icons">cloud</i>
-                                    </a>
-                                    <a href="/consoleUrl?permissionId=@policyPerm.id"
-                                       class="right waves-effect waves-light btn-flat federation__link janus-btn--flat card-action-link--tight federation__link--@if(policyPerm.shortTerm) {short} else {standard}"
-                                    >
-                                        <i class="material-icons black-text">link</i>
-                                    </a>
-                                </div>
-                                <div class="card-action-group card-action-group--divider col m6 s12">
-                                    <a href="/credentials?permissionId=@policyPerm.id"
-                                       class="waves-effect waves-light btn federation__link federation__link--cta federation__link--credentials federation__link--@if(policyPerm.shortTerm) {short} else {standard}"
-                                    >
-                                        <i class="material-icons">vpn_key</i>
-                                    </a>
-                                    @if(!policyPerm.shortTerm) {
-                                        <div class="multi-select__container right">
-                                            <label class="multi-select__label">
-                                                <input class="multi-select__checkbox" type="checkbox" name="@policyPerm.id" id="@policyPerm.id" data-permission-id="@policyPerm.id">
-                                                <span></span>
-                                            </label>
-                                        </div>
-                                    }
-                                </div>
-                            </div>
-                        </div>
+                        @fragments.permissionActions(policyPerm)
                     }
                 }
 
                 @* Show a lower divider if there is content to divide *@
-                @if(accountAccess.developerPolicies.nonEmpty && accountAccess.permissions.nonEmpty) {
+                @if(accountAccess.developerPolicies.nonEmpty && accountAccess.standardPermissions.nonEmpty) {
                     <div class="card-content card-content--permission-group-header grey-text text-darken-2">
                         <span class="developer-policy-grant-name">
                             Account permissions
