@@ -24,7 +24,7 @@ object Federation {
   /** Credential/Console lease times. Defaults are used when user doesn't
     * request specific time periods, max will limit how long can be requested.
     */
-  val maxShortTime: Duration = 3.hours
+  val maxShortTime: Duration = 8.hours
   val minShortTime: Duration = 15.minutes
   val defaultShortTime: Duration = 1.hour
   val maxLongTime: Duration = 10.hours
