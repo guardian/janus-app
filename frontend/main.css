@@ -303,6 +303,16 @@ textarea.textarea--aws-profile-id.aws-profile-id {
     font-size: 0.8rem;
 }
 
+.card .card-content.card-content--admin-permissions-note {
+    padding: 4px 17px;
+    background-color: rgb(255 248 225 / 65%);
+    font-size: 12px;
+}
+
+.card .card-content.card-content--admin-permissions-note p {
+    margin: 0;
+}
+
 .admin-notice-panel {
     margin-bottom: 0;
 }

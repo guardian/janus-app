@@ -66,7 +66,8 @@ case class SourcedAccountAccess(
 
 case class AwsAccountAccess(
     awsAccount: AwsAccount,
-    permissions: List[Permission],
+    standardPermissions: List[Permission],
+    adminPermissions: List[Permission],
     developerPolicies: List[(DeveloperPolicyGrant, List[DeveloperPolicy])],
     isFavourite: Boolean
 )
