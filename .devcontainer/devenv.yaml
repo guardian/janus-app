@@ -10,9 +10,10 @@ name: "janus-app"
 # To disable, comment out or remove items from this list
 modules:
   - mise
-  - docker-in-docker  # (disabled by default)
+  - docker-in-docker
   - scala
   - node
+  - github-copilot
 
 # Optional: Container image to use (defaults to latest ubuntu LTS)
 # image: "mcr.microsoft.com/devcontainers/base:ubuntu"
