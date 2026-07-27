@@ -97,14 +97,15 @@ class AccountOrderingTest
     }
 
     "sorts the account permissions" in {
-      val fooPerms =
+      val fooAccess =
         orderedAccountAccess(awsAccountsAccess, devPolicyGrants, Nil)
           .find(_.awsAccount == fooAct)
           .value
-          .permissions
-      fooPerms shouldEqual List(
+      fooAccess.standardPermissions shouldEqual List(
         developerPermission(fooAct),
-        s3ManagerPermission(fooAct),
+        s3ManagerPermission(fooAct)
+      )
+      fooAccess.adminPermissions shouldEqual List(
         accountAdminPermission(fooAct)
       )
     }
@@ -188,6 +189,39 @@ class AccountOrderingTest
             .developerPolicies
         fooPolicies shouldEqual Nil
       }
+    }
+  }
+
+  "partitionAdminPermissions" - {
+    "returns short-term permissions as admin permissions" in {
+      val (adminPerms, _) = partitionAdminPermissions(
+        List(fooDev, fooCf, fooS3)
+      )
+      adminPerms shouldEqual List(fooCf)
+    }
+
+    "returns permissions that are not short-term as standard permissions" in {
+      val (_, standardPerms) = partitionAdminPermissions(
+        List(fooDev, fooCf, fooS3)
+      )
+      standardPerms shouldEqual List(fooDev, fooS3)
+    }
+
+    "preserves the provided order within each group" in {
+      val permissions = List(
+        developerPermission(fooAct),
+        accountAdminPermission(fooAct),
+        kinesisReadPermission(fooAct),
+        accountAdminPermission(barAct),
+        s3ReaderPermission(fooAct)
+      )
+      val (adminPerms, standardPerms) = partitionAdminPermissions(permissions)
+      standardPerms shouldEqual permissions.filterNot(_.shortTerm)
+      adminPerms shouldEqual permissions.filter(_.shortTerm)
+    }
+
+    "returns empty groups for no permissions" in {
+      partitionAdminPermissions(Nil) shouldEqual (Nil, Nil)
     }
   }
 

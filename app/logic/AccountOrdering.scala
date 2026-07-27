@@ -28,9 +28,12 @@ object AccountOrdering {
         else favIndex
       }
       .map { case (account, accountAccess) =>
+        val (adminPermissions, standardPermissions) =
+          partitionAdminPermissions(accountAccess.permissions.sorted)
         AwsAccountAccess(
           awsAccount = account,
-          permissions = accountAccess.permissions.sorted,
+          standardPermissions = standardPermissions,
+          adminPermissions = adminPermissions,
           developerPolicies = accountAccess.developerPolicies
             .flatMap { policy =>
               userPolicyGrants
@@ -46,6 +49,14 @@ object AccountOrdering {
           isFavourite = favourites.contains(account.authConfigKey)
         )
       }
+
+  /** Short-term account permissions are treated as admin permissions, and are
+    * displayed in their own UI section to discourage day-to-day use.
+    */
+  def partitionAdminPermissions(
+      permissions: List[Permission]
+  ): (List[Permission], List[Permission]) =
+    permissions.partition(_.shortTerm)
 
   /** 'dev' then then alphabetical 'others', finally 'cloudformation' (admin)
     * hard-coded dev/admin conventions for now, TODO: find a better
