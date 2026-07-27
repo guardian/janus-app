@@ -9,7 +9,7 @@ ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
 val awsSdkVersion = "2.46.21"
-val circeVersion = "0.14.15"
+val circeVersion = "0.14.16"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
   "org.scalatest" %% "scalatest" % "3.2.20" % Test,
@@ -38,7 +38,7 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.22.0"
+val jacksonVersion = "2.22.1"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
