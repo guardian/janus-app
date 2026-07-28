@@ -121,10 +121,10 @@ class Janus(
       }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
     }
 
-  def admin: Action[AnyContent] =
+  def superuser: Action[AnyContent] =
     authAction { implicit request =>
       (for {
-        accountsAccess <- adminUserAccess(
+        accountsAccess <- superuserAccess(
           request.user,
           janusData,
           developerPolicyService.getDeveloperPolicies
@@ -140,7 +140,7 @@ class Janus(
         )
       } yield {
         Ok(
-          views.html.admin(
+          views.html.superuser(
             uiAccountAccess,
             cacheStatus,
             request.user,
@@ -149,7 +149,11 @@ class Janus(
         )
       }) getOrElse Ok(
         views.html
-          .error("You do not have admin access", Some(request.user), janusData)
+          .error(
+            "You do not have superuser access",
+            Some(request.user),
+            janusData
+          )
       )
     }
 

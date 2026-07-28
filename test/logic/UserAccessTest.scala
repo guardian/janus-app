@@ -333,17 +333,17 @@ class UserAccessTest
       result(fooAct).developerPolicies should contain(policy)
     }
 
-    "does not return results from the admin ACL" in {
-      val adminOnlyUser = "admin.only"
+    "does not return results from the superuser ACL" in {
+      val superuserOnlyUser = "superuser.only"
       val janusData = JanusData(
         accounts = Set.empty,
         access = ACL(Map.empty),
-        admin = ACL(Map(adminOnlyUser -> ACLEntry(Set(fooDev), Set.empty))),
+        admin = ACL(Map(superuserOnlyUser -> ACLEntry(Set(fooDev), Set.empty))),
         support = SupportACL.create(Map.empty, Set.empty),
         permissionsRepo = None
       )
       internalUserAccess(
-        toUser(adminOnlyUser),
+        toUser(superuserOnlyUser),
         janusData,
         Set.empty
       ) shouldEqual None
@@ -412,7 +412,7 @@ class UserAccessTest
     }
   }
 
-  "adminUserAccess" - {
+  "superuserAccess" - {
     val testAccess =
       ACL(
         Map("test.user" -> ACLEntry(Set(fooDev, barDev), Set.empty)),
@@ -420,7 +420,7 @@ class UserAccessTest
       )
 
     "returns None if the user doesn't have any permissions" in {
-      adminUserAccess(
+      superuserAccess(
         toUser("username.does.not.exist"),
         JanusData(
           Set.empty,
@@ -436,7 +436,7 @@ class UserAccessTest
     }
 
     "returns the user's permissions if they exist" in {
-      val result = adminUserAccess(
+      val result = superuserAccess(
         toUser("test.user"),
         JanusData(
           Set.empty,
@@ -453,7 +453,7 @@ class UserAccessTest
     }
 
     "includes default permissions in all users' available permissions" in {
-      val result = adminUserAccess(
+      val result = superuserAccess(
         toUser("test.user"),
         JanusData(
           Set.empty,
@@ -474,7 +474,7 @@ class UserAccessTest
         Map("test.user" -> ACLEntry(Set(fooDev, barDev), Set.empty)),
         Set.empty
       )
-      val result = adminUserAccess(
+      val result = superuserAccess(
         toUser("test.user"),
         JanusData(
           Set.empty,
@@ -506,7 +506,7 @@ class UserAccessTest
         Map("test.user" -> ACLEntry(Set(fooDev), Set(grant))),
         Set.empty
       )
-      val result = adminUserAccess(
+      val result = superuserAccess(
         toUser("test.user"),
         JanusData(
           Set.empty,
@@ -526,11 +526,11 @@ class UserAccessTest
       val janusData = JanusData(
         accounts = Set.empty,
         access = ACL(Map(internalOnlyUser -> ACLEntry(Set(fooDev), Set.empty))),
-        admin = ACL(Map("admin.user" -> ACLEntry(Set(barDev), Set.empty))),
+        admin = ACL(Map("superuser.user" -> ACLEntry(Set(barDev), Set.empty))),
         support = SupportACL.create(Map.empty, Set.empty),
         permissionsRepo = None
       )
-      adminUserAccess(
+      superuserAccess(
         toUser(internalOnlyUser),
         janusData,
         Set.empty
@@ -539,24 +539,24 @@ class UserAccessTest
   }
 
   "hasAccess" - {
-    val adminACL = ACL(
+    val superuserACL = ACL(
       Map("test.user" -> ACLEntry(Set(fooDev, barDev), Set.empty)),
       allTestPerms
     )
 
     "returns true when given a user that has an entry" in {
       val user = toUser("test.user")
-      hasAccess(user, adminACL) shouldEqual true
+      hasAccess(user, superuserACL) shouldEqual true
     }
 
     "returns true when given a user that has an entry but Google Auth has given us a capitalised username" in {
       val user = toUser("Test.User")
-      hasAccess(user, adminACL) shouldEqual true
+      hasAccess(user, superuserACL) shouldEqual true
     }
 
     "returns false if the user is not explicitly mentioned" in {
       val user = toUser("not.in.the.list")
-      hasAccess(user, adminACL) shouldEqual false
+      hasAccess(user, superuserACL) shouldEqual false
     }
   }
 
@@ -597,7 +597,8 @@ class UserAccessTest
       ),
       Set.empty
     )
-    val adminAcl = ACL(Map("admin" -> ACLEntry(allTestPerms, Set.empty)))
+    val superuserAcl =
+      ACL(Map("superuser" -> ACLEntry(allTestPerms, Set.empty)))
     val supportAcl = SupportACL.create(
       Map(
         Instant.now().minus(Duration.ofDays(1)) -> (
@@ -610,7 +611,7 @@ class UserAccessTest
     val janusData = JanusData(
       accounts = Set.empty,
       access = acl,
-      admin = adminAcl,
+      admin = superuserAcl,
       support = supportAcl,
       permissionsRepo = None
     )
@@ -626,16 +627,16 @@ class UserAccessTest
       permission shouldEqual fooDev
     }
 
-    "returns the permission if it has been granted via admin access" in {
-      Inspectors.forAll(allTestPerms) { adminPermission =>
+    "returns the permission if it has been granted via superuser access" in {
+      Inspectors.forAll(allTestPerms) { superuserPermission =>
         val (permission, _, _) = checkUserPermissionWithSource(
-          toUser("admin"),
-          adminPermission.id,
+          toUser("superuser"),
+          superuserPermission.id,
           Instant.now(),
           janusData,
           Set.empty
         ).value
-        permission shouldEqual adminPermission
+        permission shouldEqual superuserPermission
       }
     }
 
@@ -718,7 +719,7 @@ class UserAccessTest
       }
     }
 
-    "returns a short-term DeveloperPolicy permission from Admin ACL" - {
+    "returns a short-term DeveloperPolicy permission from Superuser ACL" - {
       val grant =
         DeveloperPolicyGrant("Short term grant", "grant-id", shortTerm = true)
       val policy = DeveloperPolicy(
@@ -735,14 +736,14 @@ class UserAccessTest
       val janusData = JanusData(
         accounts = Set.empty,
         access = ACL(Map.empty),
-        admin = ACL(Map("admin.user" -> ACLEntry(Set.empty, Set(grant)))),
+        admin = ACL(Map("superuser.user" -> ACLEntry(Set.empty, Set(grant)))),
         support = SupportACL.create(Map.empty, Set.empty),
         permissionsRepo = None
       )
 
       "derived permission is short term" in {
         val (permission, _, _) = checkUserPermissionWithSource(
-          toUser("admin.user"),
+          toUser("superuser.user"),
           derivedPermission.id,
           Instant.now(),
           janusData,
@@ -753,7 +754,7 @@ class UserAccessTest
 
       "source is Admin ACL" in {
         val (_, source, _) = checkUserPermissionWithSource(
-          toUser("admin.user"),
+          toUser("superuser.user"),
           derivedPermission.id,
           Instant.now(),
           janusData,
@@ -764,7 +765,7 @@ class UserAccessTest
 
       "permission type is DeveloperPolicyPermission" in {
         val (_, _, permissionType) = checkUserPermissionWithSource(
-          toUser("admin.user"),
+          toUser("superuser.user"),
           derivedPermission.id,
           Instant.now(),
           janusData,
@@ -779,7 +780,8 @@ class UserAccessTest
         Map("user" -> ACLEntry(Set(fooDev), Set.empty)),
         Set.empty
       )
-      val adminAcl = ACL(Map("admin" -> ACLEntry(Set(fooDev), Set.empty)))
+      val superuserAcl =
+        ACL(Map("superuser" -> ACLEntry(Set(fooDev), Set.empty)))
       val supportAcl = SupportACL.create(
         Map(
           Instant.now().minus(Duration.ofDays(1)) -> (
@@ -792,7 +794,7 @@ class UserAccessTest
       val janusData = JanusData(
         accounts = Set.empty,
         access = internalAcl,
-        admin = adminAcl,
+        admin = superuserAcl,
         support = supportAcl,
         permissionsRepo = None
       )
@@ -808,9 +810,9 @@ class UserAccessTest
         source shouldEqual AccessSource.Internal
       }
 
-      "is Admin when the permission was granted via admin access only" in {
+      "is Admin when the permission was granted via superuser access only" in {
         val (_, source, _) = checkUserPermissionWithSource(
-          toUser("admin"),
+          toUser("superuser"),
           fooDev.id,
           Instant.now(),
           janusData,

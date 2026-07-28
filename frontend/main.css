@@ -80,7 +80,7 @@ button .btn, .btn-large {
 }
 
 .index-main__container,
-.admin-accounts-container {
+.superuser-accounts-container {
     padding-top: 30px;
 }
 
@@ -313,7 +313,7 @@ textarea.textarea--aws-profile-id.aws-profile-id {
     margin: 0;
 }
 
-.admin-notice-panel {
+.superuser-notice-panel {
     margin-bottom: 0;
 }
 .aws-account-body .card-action.card-action--permission {

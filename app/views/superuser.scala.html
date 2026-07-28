@@ -5,14 +5,14 @@
 
 @(accountAccesses: List[AwsAccountAccess], cacheStatus: DeveloperPolicyCacheStatus, user: UserIdentity, janusData: JanusData)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
 
-@main("Admin", Some(user), janusData) {
+@main("Superuser", Some(user), janusData) {
     <div class="container">
         <div class="row">
             <div class="col s12">
-                <h1 class="header orange-text">Admin</h1>
-                <div class="card-panel admin-notice-panel">
+                <h1 class="header orange-text">Superuser</h1>
+                <div class="card-panel superuser-notice-panel">
                     <span>
-                        As an administrator you have full access to all AWS accounts.
+                        As a superuser you have full access to all AWS accounts.
                         Please use this with care and try to let the team know what
                         you are doing to their account.
                         <br />
@@ -43,7 +43,7 @@
             }
         </div>
 
-        <div class="admin-accounts-container">
+        <div class="superuser-accounts-container">
             @fragments.awsAccounts(accountAccesses, allowFavs = false)
         </div>
     </div>

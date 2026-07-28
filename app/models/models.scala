@@ -37,7 +37,7 @@ enum AccessSource {
   case
     /** Access given in the standard ACL, including default permissions */
     Internal,
-    /** Access given in the admin ACL */
+    /** Access given in the superuser ACL */
     Admin,
     /** Access given in the support ACL */
     Support
@@ -60,7 +60,7 @@ object AccountAccess {
   */
 case class SourcedAccountAccess(
     internal: AccountAccess,
-    admin: AccountAccess,
+    superuser: AccountAccess,
     support: AccountAccess
 )
 
