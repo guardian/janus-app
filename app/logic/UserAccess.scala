@@ -9,7 +9,7 @@ import com.gu.janus.model.PermissionType.{
 import logic.DeveloperPolicies.toPermission
 import logic.UserAccess.username
 import models.*
-import models.AccessSource.{Admin, Internal, Support}
+import models.AccessSource.{Internal, Superuser, Support}
 
 import java.time.Instant
 
@@ -115,7 +115,7 @@ object UserAccess {
         access: SourcedAccountAccess
     ): List[(AccountAccess, AccessSource)] = List(
       access.internal -> Internal,
-      access.superuser -> Admin,
+      access.superuser -> Superuser,
       access.support -> Support
     )
 
@@ -132,7 +132,7 @@ object UserAccess {
           val policyGrants = src match {
             case Internal =>
               policyGrantsForUser(user, acl = janusData.access)
-            case Admin =>
+            case Superuser =>
               policyGrantsForUser(user, acl = janusData.admin)
             case Support => Set.empty
           }

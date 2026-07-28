@@ -26,7 +26,11 @@ class MetricsServiceTest
     with ScalaCheckPropertyChecks {
 
   private def accessSourceGen =
-    Gen.oneOf(AccessSource.Internal, AccessSource.Admin, AccessSource.Support)
+    Gen.oneOf(
+      AccessSource.Internal,
+      AccessSource.Superuser,
+      AccessSource.Support
+    )
 
   private def accessTypeGen = Gen.oneOf(JCredentials, JConsole)
 

@@ -38,7 +38,7 @@ enum AccessSource {
     /** Access given in the standard ACL, including default permissions */
     Internal,
     /** Access given in the superuser ACL */
-    Admin,
+    Superuser,
     /** Access given in the support ACL */
     Support
 }

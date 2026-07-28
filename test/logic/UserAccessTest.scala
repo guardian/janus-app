@@ -752,7 +752,7 @@ class UserAccessTest
         permission.shortTerm shouldEqual true
       }
 
-      "source is Admin ACL" in {
+      "source is Superuser ACL" in {
         val (_, source, _) = checkUserPermissionWithSource(
           toUser("superuser.user"),
           derivedPermission.id,
@@ -760,7 +760,7 @@ class UserAccessTest
           janusData,
           Set(policy)
         ).value
-        source shouldEqual AccessSource.Admin
+        source shouldEqual AccessSource.Superuser
       }
 
       "permission type is DeveloperPolicyPermission" in {
@@ -810,7 +810,7 @@ class UserAccessTest
         source shouldEqual AccessSource.Internal
       }
 
-      "is Admin when the permission was granted via superuser access only" in {
+      "is Superuser when the permission was granted via superuser access only" in {
         val (_, source, _) = checkUserPermissionWithSource(
           toUser("superuser"),
           fooDev.id,
@@ -818,7 +818,7 @@ class UserAccessTest
           janusData,
           Set.empty
         ).value
-        source shouldEqual AccessSource.Admin
+        source shouldEqual AccessSource.Superuser
       }
 
       "is Support when the permission was granted via support access only" in {
