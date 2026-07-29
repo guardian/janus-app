@@ -27,19 +27,13 @@
         }
         case DeveloperPolicyCacheStatus.Success => {}
     }
+    @fragments.banner("Admin access notice", BannerLevel.Info) {
+        As an administrator you have full access to all AWS accounts. Please use this with care and try to let the team know what you are doing to their account. Janus access is logged and visible to all users.
+    }
     <div class="container">
         <div class="row">
             <div class="col s12">
                 <h1 class="header orange-text">Admin</h1>
-                <div class="card-panel admin-notice-panel">
-                    <span>
-                        As an administrator you have full access to all AWS accounts.
-                        Please use this with care and try to let the team know what
-                        you are doing to their account.
-                        <br />
-                        Janus access is logged and visible to all users.
-                    </span>
-                </div>
             </div>
         </div>
 
