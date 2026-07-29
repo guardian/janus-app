@@ -32,7 +32,7 @@ class ConfigIntegrationTests
 
       janusData.accounts shouldEqual reloadedJanusData.accounts
       janusData.access shouldEqual reloadedJanusData.access
-      janusData.admin shouldEqual reloadedJanusData.admin
+      janusData.superuser shouldEqual reloadedJanusData.superuser
       janusData.support shouldEqual reloadedJanusData.support
       janusData.permissionsRepo shouldEqual reloadedJanusData.permissionsRepo
 
@@ -61,7 +61,7 @@ class ConfigIntegrationTests
 
       janusData.accounts shouldEqual reloadedJanusData.accounts
       janusData.access shouldEqual reloadedJanusData.access
-      janusData.admin shouldEqual reloadedJanusData.admin
+      janusData.superuser shouldEqual reloadedJanusData.superuser
       janusData.support shouldEqual reloadedJanusData.support
       janusData.permissionsRepo shouldEqual reloadedJanusData.permissionsRepo
 

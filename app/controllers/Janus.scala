@@ -131,7 +131,7 @@ class Janus(
         )
         userPolicyGrants = policyGrantsForUser(
           request.user,
-          janusData.admin
+          janusData.superuser
         )
         uiAccountAccess = orderedAccountAccess(accountsAccess, userPolicyGrants)
         cacheStatus = DeveloperPolicies.lookupDeveloperPolicyCacheStatus(

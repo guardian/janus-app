@@ -19,7 +19,7 @@ class PermissionTest extends AnyFreeSpec with Matchers {
       val janusData = JanusData(
         Set.empty,
         access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        superuser = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None
       )
@@ -32,7 +32,7 @@ class PermissionTest extends AnyFreeSpec with Matchers {
       val janusData = JanusData(
         Set.empty,
         access = ACL(Map.empty, Set(permission)),
-        admin = ACL(Map.empty, Set.empty),
+        superuser = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None
       )
@@ -46,7 +46,7 @@ class PermissionTest extends AnyFreeSpec with Matchers {
         Set.empty,
         access =
           ACL(Map("user1" -> ACLEntry(Set(permission), Set.empty)), Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        superuser = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None
       )
@@ -67,7 +67,7 @@ class PermissionTest extends AnyFreeSpec with Matchers {
           ),
           Set.empty
         ),
-        admin = ACL(Map.empty, Set.empty),
+        superuser = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None
       )
@@ -85,7 +85,7 @@ class PermissionTest extends AnyFreeSpec with Matchers {
       val janusData = JanusData(
         Set.empty,
         access = ACL(Map.empty, Set.empty),
-        admin = ACL(
+        superuser = ACL(
           Map(
             "admin1" -> ACLEntry(Set(permission1), Set.empty),
             "admin2" -> ACLEntry(Set(permission2), Set.empty)
@@ -107,7 +107,7 @@ class PermissionTest extends AnyFreeSpec with Matchers {
       val janusData = JanusData(
         Set.empty,
         access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        superuser = ACL(Map.empty, Set.empty),
         support = SupportACL
           .create(Map.empty, Set(permission)),
         None
@@ -135,7 +135,7 @@ class PermissionTest extends AnyFreeSpec with Matchers {
           ),
           Set.empty
         ),
-        admin = ACL(
+        superuser = ACL(
           Map(
             "admin1" -> ACLEntry(Set(permission3), Set.empty),
             "admin2" -> ACLEntry(Set(permission4), Set.empty)

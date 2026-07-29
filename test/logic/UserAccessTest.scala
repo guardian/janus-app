@@ -338,7 +338,8 @@ class UserAccessTest
       val janusData = JanusData(
         accounts = Set.empty,
         access = ACL(Map.empty),
-        admin = ACL(Map(superuserOnlyUser -> ACLEntry(Set(fooDev), Set.empty))),
+        superuser =
+          ACL(Map(superuserOnlyUser -> ACLEntry(Set(fooDev), Set.empty))),
         support = SupportACL.create(Map.empty, Set.empty),
         permissionsRepo = None
       )
@@ -526,7 +527,8 @@ class UserAccessTest
       val janusData = JanusData(
         accounts = Set.empty,
         access = ACL(Map(internalOnlyUser -> ACLEntry(Set(fooDev), Set.empty))),
-        admin = ACL(Map("superuser.user" -> ACLEntry(Set(barDev), Set.empty))),
+        superuser =
+          ACL(Map("superuser.user" -> ACLEntry(Set(barDev), Set.empty))),
         support = SupportACL.create(Map.empty, Set.empty),
         permissionsRepo = None
       )
@@ -611,7 +613,7 @@ class UserAccessTest
     val janusData = JanusData(
       accounts = Set.empty,
       access = acl,
-      admin = superuserAcl,
+      superuser = superuserAcl,
       support = supportAcl,
       permissionsRepo = None
     )
@@ -680,7 +682,7 @@ class UserAccessTest
       val janusData = JanusData(
         accounts = Set.empty,
         access = ACL(Map("internal.user" -> ACLEntry(Set.empty, Set(grant)))),
-        admin = ACL(Map.empty),
+        superuser = ACL(Map.empty),
         support = SupportACL.create(Map.empty, Set.empty),
         permissionsRepo = None
       )
@@ -736,7 +738,8 @@ class UserAccessTest
       val janusData = JanusData(
         accounts = Set.empty,
         access = ACL(Map.empty),
-        admin = ACL(Map("superuser.user" -> ACLEntry(Set.empty, Set(grant)))),
+        superuser =
+          ACL(Map("superuser.user" -> ACLEntry(Set.empty, Set(grant)))),
         support = SupportACL.create(Map.empty, Set.empty),
         permissionsRepo = None
       )
@@ -794,7 +797,7 @@ class UserAccessTest
       val janusData = JanusData(
         accounts = Set.empty,
         access = internalAcl,
-        admin = superuserAcl,
+        superuser = superuserAcl,
         support = supportAcl,
         permissionsRepo = None
       )
@@ -841,7 +844,7 @@ class UserAccessTest
       val janusData = JanusData(
         accounts = Set.empty,
         access = internalAcl,
-        admin = ACL(Map.empty),
+        superuser = ACL(Map.empty),
         support = SupportACL.create(Map.empty, Set.empty),
         permissionsRepo = None
       )

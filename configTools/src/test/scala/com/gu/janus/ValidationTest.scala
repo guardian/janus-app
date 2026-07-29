@@ -94,12 +94,12 @@ class ValidationTest extends AnyFreeSpec with Matchers {
         }
       }
 
-      "in the admin ACL" - {
+      "in the superuser ACL" - {
         "for a large inline policy" in {
           val janusData = JanusData(
             Set(account1),
             emptyAcl,
-            admin =
+            superuser =
               ACL(Map("user1" -> ACLEntry(Set(largePermission), Set.empty))),
             emptySupportAcl,
             None
@@ -111,7 +111,7 @@ class ValidationTest extends AnyFreeSpec with Matchers {
           val janusData = JanusData(
             Set(account1),
             emptyAcl,
-            admin = ACL(
+            superuser = ACL(
               Map(
                 "user1" -> ACLEntry(
                   Set(smallPermissionWithLargeManagedPolicyArns),

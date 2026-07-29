@@ -8,7 +8,7 @@ import java.time.{Duration, Instant}
 case class JanusData(
     accounts: Set[AwsAccount],
     access: ACL,
-    admin: ACL,
+    superuser: ACL,
     support: SupportACL,
     permissionsRepo: Option[String]
 )
@@ -160,7 +160,7 @@ object Permission {
 
     janusData.access.defaultPermissions ++
       perms(janusData.access.userAccess) ++
-      perms(janusData.admin.userAccess) ++
+      perms(janusData.superuser.userAccess) ++
       janusData.support.supportAccess
   }
 }

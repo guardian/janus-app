@@ -21,7 +21,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
       val janusData = JanusData(
         Set.empty,
         access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        superuser = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         Some("https://example.com/")
       )
@@ -34,7 +34,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
       val janusData = JanusData(
         Set.empty,
         access = ACL(Map.empty, Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        superuser = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None
       )
@@ -53,7 +53,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Set(account1),
         access =
           ACL(Map("user1" -> ACLEntry(Set(permission), Set.empty)), Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        superuser = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None
       )
@@ -74,7 +74,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Set(account1),
         access =
           ACL(Map("user1" -> ACLEntry(Set(permission), Set.empty)), Set.empty),
-        admin = ACL(Map.empty, Set.empty),
+        superuser = ACL(Map.empty, Set.empty),
         SupportACL.create(Map.empty, Set.empty),
         None
       )
@@ -105,7 +105,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
             Map("testuser" -> ACLEntry(Set(permission), Set.empty)),
             Set.empty
           ),
-          admin = ACL(Map.empty, Set.empty),
+          superuser = ACL(Map.empty, Set.empty),
           SupportACL.create(Map.empty, Set.empty),
           None
         )
@@ -119,7 +119,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
             Map("testuser" -> ACLEntry(Set.empty, Set(grant))),
             Set.empty
           ),
-          admin = ACL(Map.empty, Set.empty),
+          superuser = ACL(Map.empty, Set.empty),
           SupportACL.create(Map.empty, Set.empty),
           None
         )
@@ -135,7 +135,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
             Map("testuser" -> ACLEntry(Set.empty, Set(grant))),
             Set.empty
           ),
-          admin = ACL(Map.empty, Set.empty),
+          superuser = ACL(Map.empty, Set.empty),
           SupportACL.create(Map.empty, Set.empty),
           None
         )
@@ -155,7 +155,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
             Map("testuser" -> ACLEntry(Set.empty, Set(grant1, grant2))),
             Set.empty
           ),
-          admin = ACL(Map.empty, Set.empty),
+          superuser = ACL(Map.empty, Set.empty),
           SupportACL.create(Map.empty, Set.empty),
           None
         )
@@ -190,7 +190,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
             Map("testuser" -> ACLEntry(Set(perm1, perm2), Set(grant1, grant2))),
             Set.empty
           ),
-          admin = ACL(Map.empty, Set.empty),
+          superuser = ACL(Map.empty, Set.empty),
           SupportACL.create(Map.empty, Set.empty),
           None
         )
@@ -221,7 +221,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
       }
     }
 
-    "admin section" - {
+    "superuser section" - {
       val permission = Permission(
         account1,
         "adminPerm",
@@ -232,11 +232,11 @@ class WriterTest extends AnyFreeSpec with Matchers {
       val grant =
         DeveloperPolicyGrant("AdminGrant", "admin-grant-id", shortTerm = false)
 
-      "includes user in admin ACL" in {
+      "includes user in superuser ACL" in {
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
-          admin = ACL(
+          superuser = ACL(
             Map("adminuser" -> ACLEntry(Set(permission), Set.empty)),
             Set.empty
           ),
@@ -246,11 +246,25 @@ class WriterTest extends AnyFreeSpec with Matchers {
         Writer.toConfig(janusData) should include(""""adminuser"""")
       }
 
-      "includes DeveloperPolicyGrant in admin ACL entry" in {
+      "writes the ACL under the superuser key" in {
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
-          admin = ACL(
+          superuser = ACL(
+            Map("adminuser" -> ACLEntry(Set(permission), Set.empty)),
+            Set.empty
+          ),
+          SupportACL.create(Map.empty, Set.empty),
+          None
+        )
+        Writer.toConfig(janusData) should include("superuser {")
+      }
+
+      "includes DeveloperPolicyGrant in superuser ACL entry" in {
+        val janusData = JanusData(
+          Set(account1),
+          access = ACL(Map.empty, Set.empty),
+          superuser = ACL(
             Map("adminuser" -> ACLEntry(Set.empty, Set(grant))),
             Set.empty
           ),
@@ -262,11 +276,11 @@ class WriterTest extends AnyFreeSpec with Matchers {
         )
       }
 
-      "includes DeveloperPolicyGrant id in admin ACL entry" in {
+      "includes DeveloperPolicyGrant id in superuser ACL entry" in {
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
-          admin = ACL(
+          superuser = ACL(
             Map("adminuser" -> ACLEntry(Set.empty, Set(grant))),
             Set.empty
           ),
@@ -294,7 +308,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
-          admin = ACL(
+          superuser = ACL(
             Map("adminuser" -> ACLEntry(Set.empty, Set(grant1, grant2))),
             Set.empty
           ),
@@ -347,7 +361,7 @@ class WriterTest extends AnyFreeSpec with Matchers {
         val janusData = JanusData(
           Set(account1),
           access = ACL(Map.empty, Set.empty),
-          admin = ACL(
+          superuser = ACL(
             Map(
               "adminuser" -> ACLEntry(Set(perm1, perm2), Set(grant1, grant2))
             ),
