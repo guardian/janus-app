@@ -14,7 +14,6 @@ import scala.util.Try
   */
 object Loader {
   private val superuserPath = "janus.superuser"
-  private val legacySuperuserPath = "janus.admin"
 
   def fromConfig(config: Config): Either[String, JanusData] = {
     for {
@@ -117,26 +116,20 @@ object Loader {
     } yield ACL(acl.toMap, defaultAccess.toSet)
   }
 
-  /** Loads the estate-wide superuser ACL.
+  /** Loads the estate-wide superuser ACL from the `janus.superuser` key.
     *
-    * This access was previously called "admin", and config files using the
-    * legacy `janus.admin` key are still supported. `janus.superuser` is used
-    * when both keys are present.
+    * This access was previously called "admin".
     */
   private[config] def loadSuperuser(
       config: Config,
       permissions: Set[Permission]
   ): Either[String, ACL] = {
-    val path =
-      if (config.hasPath(superuserPath)) superuserPath
-      else if (config.hasPath(legacySuperuserPath)) legacySuperuserPath
-      else superuserPath
     for {
       configuredAccess <- config
-        .as[ConfiguredSuperuser](path)
+        .as[ConfiguredSuperuser](superuserPath)
         .left
         .map(err =>
-          s"Failed to load superuser config from path `$path`: ${err.getMessage}"
+          s"Failed to load superuser config from path `$superuserPath`: ${err.getMessage}"
         )
       acl <- parseAclEntries(configuredAccess.acl, permissions)
     } yield ACL(

@@ -32,20 +32,6 @@ class LoaderTest
       // TODO: check the data here as well
       janusData.permissionsRepo shouldEqual None
     }
-
-    "parses an example that uses the legacy admin key" in {
-      val config = ConfigFactory
-        .parseString(
-          """janus.admin.acl {
-            |  employee2 = [
-            |    { account = "website", label = "s3-manager" }
-            |  ]
-            |}""".stripMargin
-        )
-        .withFallback(testConfig.withoutPath("janus.superuser"))
-      val janusData = Loader.fromConfig(config).value
-      janusData.superuser.userAccess.keySet shouldEqual Set("employee2")
-    }
   }
 
   "loadPermissionsRepo" - {
@@ -187,13 +173,6 @@ class LoaderTest
   }
 
   "loadSuperuser" - {
-    val legacyBlock = ConfigFactory.parseString(
-      """janus.admin.acl {
-        |  employee2 = [
-        |    { account = "website", label = "s3-manager" }
-        |  ]
-        |}""".stripMargin
-    )
     val withoutSuperuserKey = testConfig.withoutPath("janus.superuser")
 
     def superuserAclFor(config: Config) = {
@@ -212,23 +191,7 @@ class LoaderTest
       )
     }
 
-    "loads a legacy admin definition" in {
-      val config = legacyBlock.withFallback(withoutSuperuserKey)
-      superuserAclFor(config).userAccess
-        .get("employee2")
-        .value
-        .permissions
-        .map(_.id) shouldEqual Set(
-        "website-s3-manager"
-      )
-    }
-
-    "prefers the superuser key when both keys are present" in {
-      val config = legacyBlock.withFallback(testConfig)
-      superuserAclFor(config).userAccess.keySet shouldEqual Set("employee1")
-    }
-
-    "fails when neither key is present" in {
+    "fails when the superuser key is absent" in {
       val accounts = Loader.loadAccounts(withoutSuperuserKey).value
       val permissions =
         Loader.loadPermissions(withoutSuperuserKey, accounts).value
