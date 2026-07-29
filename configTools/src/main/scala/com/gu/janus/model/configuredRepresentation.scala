@@ -60,7 +60,7 @@ case class ConfiguredAccess(
 )
 
 // helps circe-config auto-extract data
-case class ConfiguredAdmin(
+case class ConfiguredSuperuser(
     acl: Map[String, List[
       ConfiguredAclEntry | ConfiguredDeveloperPolicyGrantAclEntry
     ]]

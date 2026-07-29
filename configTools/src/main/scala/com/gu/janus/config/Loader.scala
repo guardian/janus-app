@@ -13,15 +13,18 @@ import scala.util.Try
   * fails, a description of the failure is made available.
   */
 object Loader {
+  private val superuserPath = "janus.superuser"
+  private val legacySuperuserPath = "janus.admin"
+
   def fromConfig(config: Config): Either[String, JanusData] = {
     for {
       permissionsRepo <- loadPermissionsRepo(config)
       accounts <- loadAccounts(config)
       permissions <- loadPermissions(config, accounts)
       access <- loadAccess(config, permissions)
-      admin <- loadAdmin(config, permissions)
+      superuser <- loadSuperuser(config, permissions)
       support <- loadSupport(config, permissions)
-    } yield JanusData(accounts, access, admin, support, permissionsRepo)
+    } yield JanusData(accounts, access, superuser, support, permissionsRepo)
   }
 
   private[config] def loadPermissionsRepo(
@@ -114,22 +117,32 @@ object Loader {
     } yield ACL(acl.toMap, defaultAccess.toSet)
   }
 
-  private[config] def loadAdmin(
+  /** Loads the estate-wide superuser ACL.
+    *
+    * This access was previously called "admin", and config files using the
+    * legacy `janus.admin` key are still supported. `janus.superuser` is used
+    * when both keys are present.
+    */
+  private[config] def loadSuperuser(
       config: Config,
       permissions: Set[Permission]
   ): Either[String, ACL] = {
+    val path =
+      if (config.hasPath(superuserPath)) superuserPath
+      else if (config.hasPath(legacySuperuserPath)) legacySuperuserPath
+      else superuserPath
     for {
       configuredAccess <- config
-        .as[ConfiguredAdmin]("janus.admin")
+        .as[ConfiguredSuperuser](path)
         .left
         .map(err =>
-          s"Failed to load admin config from path `janus.admin`: ${err.getMessage}"
+          s"Failed to load superuser config from path `$path`: ${err.getMessage}"
         )
       acl <- parseAclEntries(configuredAccess.acl, permissions)
     } yield ACL(
       acl.toMap,
       Set.empty
-    ) // TODO: these shouldn't share a representation since Admin doesn't need the default permissions
+    ) // TODO: these shouldn't share a representation since the superuser ACL doesn't need the default permissions
   }
 
   private[config] def parseAclEntries(
