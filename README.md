@@ -29,7 +29,7 @@ access to AWS resources.
 
 * Designed for teams working across multiple AWS accounts
 * Full IAM support gives complete control over the level of AWS access Janus can bestow
-* Separate configuration for administrative access
+* Separate configuration for estate-wide superuser access
 * Support rota to grant extra access to staff working on support
 * Rich type-safe configuration provided via `janus-config-tools` library
 

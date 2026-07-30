@@ -9,7 +9,7 @@ import com.gu.janus.model.PermissionType.{
 import logic.DeveloperPolicies.toPermission
 import logic.UserAccess.username
 import models.*
-import models.AccessSource.{Admin, Internal, Support}
+import models.AccessSource.{Internal, Superuser, Support}
 
 import java.time.Instant
 
@@ -36,7 +36,7 @@ object UserAccess {
     val access = totalUserAccess(
       user,
       internalAcl = Some(janusData.access),
-      adminAcl = None,
+      superuserAcl = None,
       supportData = None,
       developerPolicies
     )
@@ -52,12 +52,12 @@ object UserAccess {
     )
   }
 
-  /** A user's access in the admin ACL.
+  /** A user's access in the superuser ACL.
     *
     * As above, if the user appears in the ACL, this will return an
     * [[AccountAccess]] for all AWS accounts to which the user has access.
     */
-  def adminUserAccess(
+  def superuserAccess(
       user: UserIdentity,
       janusData: JanusData,
       developerPolicies: Set[DeveloperPolicy]
@@ -65,7 +65,7 @@ object UserAccess {
     val access = totalUserAccess(
       user,
       internalAcl = None,
-      adminAcl = Some(janusData.admin),
+      superuserAcl = Some(janusData.admin),
       supportData = None,
       developerPolicies
     )
@@ -73,8 +73,8 @@ object UserAccess {
       access.view
         .mapValues(sourced =>
           AccountAccess(
-            permissions = sourced.admin.permissions,
-            developerPolicies = sourced.admin.developerPolicies
+            permissions = sourced.superuser.permissions,
+            developerPolicies = sourced.superuser.developerPolicies
           )
         )
         .toMap
@@ -115,7 +115,7 @@ object UserAccess {
         access: SourcedAccountAccess
     ): List[(AccountAccess, AccessSource)] = List(
       access.internal -> Internal,
-      access.admin -> Admin,
+      access.superuser -> Superuser,
       access.support -> Support
     )
 
@@ -132,7 +132,7 @@ object UserAccess {
           val policyGrants = src match {
             case Internal =>
               policyGrantsForUser(user, acl = janusData.access)
-            case Admin =>
+            case Superuser =>
               policyGrantsForUser(user, acl = janusData.admin)
             case Support => Set.empty
           }
@@ -164,15 +164,15 @@ object UserAccess {
     *
     * The individual ACLs are all optional so that the total access given
     * depends on the context of the call. In some cases we don't need to know
-    * about support access and in others we don't need to know about admin
+    * about support access and in others we don't need to know about superuser
     * access.
     *
     * @param user
     *   User whose access we're determining
     * @param internalAcl
     *   If included, results will include access from this ACL
-    * @param adminAcl
-    *   If included, results will include access from this admin ACL
+    * @param superuserAcl
+    *   If included, results will include access from this superuser ACL
     * @param supportData
     *   If included, results will include support access. The second value of
     *   this pair is the instant in the support rota where access is being
@@ -186,7 +186,7 @@ object UserAccess {
   private def totalUserAccess(
       user: UserIdentity,
       internalAcl: Option[ACL],
-      adminAcl: Option[ACL],
+      superuserAcl: Option[ACL],
       supportData: Option[(SupportACL, Instant)],
       developerPolicies: Set[DeveloperPolicy]
   ): Map[AwsAccount, SourcedAccountAccess] = {
@@ -224,8 +224,8 @@ object UserAccess {
         .flatMap(acl => userAccess(user, acl, developerPolicies))
         .getOrElse(Map.empty)
 
-    val admin =
-      adminAcl
+    val superuser =
+      superuserAcl
         .flatMap(acl => userAccess(user, acl, developerPolicies))
         .getOrElse(Map.empty)
 
@@ -244,12 +244,12 @@ object UserAccess {
         )
         .getOrElse(Map.empty)
 
-    val allAccounts = internal.keySet ++ admin.keySet ++ support.keySet
+    val allAccounts = internal.keySet ++ superuser.keySet ++ support.keySet
 
     allAccounts.map { account =>
       account -> SourcedAccountAccess(
         internal = internal.getOrElse(account, AccountAccess.empty),
-        admin = admin.getOrElse(account, AccountAccess.empty),
+        superuser = superuser.getOrElse(account, AccountAccess.empty),
         support = support.getOrElse(account, AccountAccess.empty)
       )
     }.toMap
