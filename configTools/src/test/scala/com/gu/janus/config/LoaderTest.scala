@@ -2,7 +2,7 @@ package com.gu.janus.config
 
 import com.gu.janus.model.*
 import com.gu.janus.testutils.HaveMatchers
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory}
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.{EitherValues, OptionValues}
@@ -31,6 +31,20 @@ class LoaderTest
       val janusData = Loader.fromConfig(testConfigWithoutPermissionsRepo).value
       // TODO: check the data here as well
       janusData.permissionsRepo shouldEqual None
+    }
+
+    "parses an example that uses the superuser key" in {
+      val config = ConfigFactory
+        .parseString(
+          """janus.superuser.acl {
+            |  employee2 = [
+            |    { account = "website", label = "s3-manager" }
+            |  ]
+            |}""".stripMargin
+        )
+        .withFallback(testConfig.withoutPath("janus.admin"))
+      val janusData = Loader.fromConfig(config).value
+      janusData.admin.userAccess.keySet shouldEqual Set("employee2")
     }
   }
 
@@ -172,18 +186,57 @@ class LoaderTest
     }
   }
 
-  "loadAdmin" - {
-    "loads the example file's admin definition" in {
-      val accounts = Loader.loadAccounts(testConfig).value
-      val permissions = Loader.loadPermissions(testConfig, accounts).value
-      val adminAcl = Loader.loadAdmin(testConfig, permissions).value
-      adminAcl.userAccess
+  "loadSuperuser" - {
+    val superuserBlock = ConfigFactory.parseString(
+      """janus.superuser.acl {
+        |  employee2 = [
+        |    { account = "website", label = "s3-manager" }
+        |  ]
+        |}""".stripMargin
+    )
+    val withoutLegacyKey = testConfig.withoutPath("janus.admin")
+
+    def superuserAclFor(config: Config) = {
+      val accounts = Loader.loadAccounts(config).value
+      val permissions = Loader.loadPermissions(config, accounts).value
+      Loader.loadSuperuser(config, permissions).value
+    }
+
+    "loads the example file's legacy admin definition" in {
+      superuserAclFor(testConfig).userAccess
         .get("employee1")
         .value
         .permissions
         .map(_.id) shouldEqual Set(
         "website-admin"
       )
+    }
+
+    "loads a superuser definition" in {
+      val config = superuserBlock.withFallback(withoutLegacyKey)
+      superuserAclFor(config).userAccess
+        .get("employee2")
+        .value
+        .permissions
+        .map(_.id) shouldEqual Set(
+        "website-s3-manager"
+      )
+    }
+
+    "prefers the superuser key when both keys are present" in {
+      val config = superuserBlock.withFallback(testConfig)
+      val userAccess = superuserAclFor(config).userAccess
+      userAccess.keySet shouldEqual Set("employee2")
+    }
+
+    "fails when neither key is present" in {
+      val accounts = Loader.loadAccounts(withoutLegacyKey).value
+      val permissions =
+        Loader.loadPermissions(withoutLegacyKey, accounts).value
+      Loader
+        .loadSuperuser(withoutLegacyKey, permissions)
+        .left
+        .value should include("janus.superuser")
     }
   }
 
