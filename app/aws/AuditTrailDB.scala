@@ -90,8 +90,8 @@ object AuditTrailDB {
       dynamoDB: DynamoDbClient,
       request: QueryRequest
   ): Seq[Either[String, AuditLog]] = {
-    val result = dynamoDB.query(request)
-    result
+    dynamoDB
+      .queryPaginator(request)
       .items()
       .asScala
       .map(attrs => auditLogFromAttrs(attrs.asScala.toMap))

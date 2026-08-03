@@ -23,6 +23,7 @@ GET           /audit/user/:username                     controllers.Audit.byUser
 POST          /audit/user/:username                     controllers.Audit.changeUserDate(username: String)
 GET           /audit/account/:account                   controllers.Audit.byAccount(account: String)
 POST          /audit/account/:account                   controllers.Audit.changeAccountDate(account: String)
+GET           /audit/account-export/:account            controllers.Audit.exportByAccount(account: String)
 
 GET           /revoke                                   controllers.RevokePermissions.revoke
 GET           /revoke-request                           controllers.RevokePermissions.revokeRequest(accountId: String)

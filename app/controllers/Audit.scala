@@ -3,7 +3,7 @@ package controllers
 import aws.AuditTrailDB
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
-import logic.Date
+import logic.{AuditTrail, Date}
 import play.api.mvc.{
   AbstractController,
   Action,
@@ -12,6 +12,8 @@ import play.api.mvc.{
 }
 import play.api.{Logging, Mode}
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
+
+import java.time.{Duration, Instant}
 
 class Audit(
     janusData: JanusData,
@@ -40,6 +42,32 @@ class Audit(
           janusData
         )
       )
+  }
+
+  /** Export the last 6 months as a CSV file
+    *
+    * This supports use cases like figuring out who still needs account access.
+    */
+  def exportByAccount(account: String): Action[AnyContent] = authAction {
+    implicit request =>
+      val endDate = Instant.now()
+      val startDate = endDate.minus(Duration.ofDays(180))
+      logger.info(s"Exporting logs for $account from $startDate to $endDate")
+      val (failures, auditLogs) = AuditTrailDB
+        .getAccountLogs(account, startDate, endDate)
+        .partitionMap(identity)
+      if (failures.nonEmpty) {
+        logger.warn(
+          s"Omitting ${failures.size} unreadable log entries from the CSV export for $account"
+        )
+      }
+      val csvContent = AuditTrail.auditLogsAsCsv(auditLogs)
+      Ok(csvContent)
+        .as("text/csv")
+        .withHeaders(
+          CONTENT_DISPOSITION -> s"""attachment; filename="janus-audit-$account-${Date
+              .rawDate(endDate)}.csv""""
+        )
   }
 
   def byUser(username: String): Action[AnyContent] = authAction {

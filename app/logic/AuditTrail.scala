@@ -111,6 +111,37 @@ object AuditTrail extends Logging {
       permissionType
     )
 
+  def auditLogsAsCsv(auditLogs: Seq[AuditLog]): String = {
+    auditLogs
+      .map(auditLogAsCsvRow)
+      .mkString(s"$auditLogCsvHeader\n", "\n", "\n")
+  }
+
+  private val auditLogCsvHeader: String =
+    "timestamp,username,account,access-level,access-type,duration-seconds,is-external,permission-type"
+
+  private def auditLogAsCsvRow(auditLog: AuditLog): String = {
+    Seq(
+      Date.isoDateString(auditLog.instant),
+      auditLog.username,
+      auditLog.account,
+      auditLog.accessLevel,
+      auditLog.accessType.toString,
+      auditLog.duration.toSeconds.toString,
+      auditLog.external.toString,
+      auditLog.permissionType.serialised
+    ).map(csvField).mkString(",")
+  }
+
+  /** Quotes a field if it contains a character that would otherwise break the
+    * row, doubling any quotes it already contains.
+    */
+  private def csvField(value: String): String = {
+    if (value.exists(c => c == ',' || c == '"' || c == '\n' || c == '\r'))
+      "\"" + value.replace("\"", "\"\"") + "\""
+    else value
+  }
+
   /** Extract nice error message from db conversion.
     */
   def errorStrings(

@@ -174,4 +174,62 @@ class AuditTrailTest
       }
     }
   }
+
+  "auditLogsAsCsv" - {
+    def auditLog(
+        account: String = "account",
+        username: String = "username",
+        accessLevel: String = "accessLevel"
+    ) = AuditLog(
+      account,
+      username,
+      ZonedDateTime.of(2015, 11, 4, 15, 22, 0, 0, UTC).toInstant,
+      Duration.ofHours(1),
+      accessLevel,
+      JCredentials,
+      external = true,
+      AccountPermission
+    )
+
+    "starts with a header row" in {
+      val lines = AuditTrail.auditLogsAsCsv(Nil).linesIterator.toList
+      lines.head shouldEqual "timestamp,username,account,access-level,access-type,duration-seconds,is-external,permission-type"
+    }
+
+    "writes a row per audit log" in {
+      val csv =
+        AuditTrail.auditLogsAsCsv(Seq(auditLog(), auditLog(username = "other")))
+      csv.linesIterator.size shouldEqual 3
+    }
+
+    "gives each row the same number of fields as the header" in {
+      val lines =
+        AuditTrail.auditLogsAsCsv(Seq(auditLog())).linesIterator.toList
+      lines(1).split(",").length shouldEqual lines.head.split(",").length
+    }
+
+    "writes the fields in header order" in {
+      val lines =
+        AuditTrail.auditLogsAsCsv(Seq(auditLog())).linesIterator.toList
+      lines(
+        1
+      ) shouldEqual "2015-11-04T15:22:00Z,username,account,accessLevel,credentials,3600,true,account-permission"
+    }
+
+    "quotes a field containing a comma" in {
+      val lines = AuditTrail
+        .auditLogsAsCsv(Seq(auditLog(accessLevel = "dev,ops")))
+        .linesIterator
+        .toList
+      lines(1) should include("\"dev,ops\"")
+    }
+
+    "doubles quotes within a quoted field" in {
+      val lines = AuditTrail
+        .auditLogsAsCsv(Seq(auditLog(accessLevel = "the \"best\", really")))
+        .linesIterator
+        .toList
+      lines(1) should include("\"the \"\"best\"\", really\"")
+    }
+  }
 }

@@ -15,6 +15,11 @@
             <h1 class="header orange-text">Audit trail</h1>
 
             <p>
+                @key.toOption.map { account =>
+                    <a href="@routes.Audit.exportByAccount(account)" class="right grey-text text-darken-1">
+                        <i class="material-icons tiny">file_download</i> Export last 6 months (CSV)
+                    </a>
+                }
                 For <b>@key.fold(s => s, s => s)</b>, week commencing Monday @formatDate(startDate).
             </p>
 
