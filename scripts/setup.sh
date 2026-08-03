@@ -31,6 +31,14 @@ else
   echo "janus-service-account-cert.json is present"
 fi
 
+if [[ ! -f ~/.gu/janus-app/janusData.conf ]]; then
+   aws --region eu-west-1 s3 cp s3://security-dist/security/DEV/janus/janusData.conf \
+       ~/.gu/janus-app \
+       --profile security
+else
+  echo "janusData.conf is present"
+fi
+
 # Need AWS profile 'janus' to test access to dev-playground account.
 # See Readme.md 'Janus AWS Profile' section.
 aws --profile security --region eu-west-1 ssm get-parameter \
@@ -46,11 +54,3 @@ sleep 2
 
 # Create tables - will fail if they exist, but can be run manually with "destroy" or "recreate"
 sbt "setup / run create"
-
-if [[ ! -f ~/.gu/janus-app/janusData.conf ]]; then
-   echo "!!! You need to copy in a janusData.conf file at ~/.gu/janus-app/janusData.conf"
-   exit 1
-else
-  echo "janusData.conf is present"
-fi
-
