@@ -65,7 +65,7 @@ object UserAccess {
     val access = totalUserAccess(
       user,
       internalAcl = None,
-      superuserAcl = Some(janusData.admin),
+      superuserAcl = Some(janusData.superuser),
       supportData = None,
       developerPolicies
     )
@@ -122,7 +122,7 @@ object UserAccess {
     totalUserAccess(
       user,
       Some(janusData.access),
-      Some(janusData.admin),
+      Some(janusData.superuser),
       Some((janusData.support, date)),
       developerPolicies
     ).valuesIterator
@@ -133,7 +133,7 @@ object UserAccess {
             case Internal =>
               policyGrantsForUser(user, acl = janusData.access)
             case Superuser =>
-              policyGrantsForUser(user, acl = janusData.admin)
+              policyGrantsForUser(user, acl = janusData.superuser)
             case Support => Set.empty
           }
           aa.permissions

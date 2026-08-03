@@ -273,7 +273,7 @@ class PasskeyController(
       user: UserIdentity
   ): Try[Unit] = {
     if hasAccess(user, janusData.access) ||
-      hasAccess(user, janusData.admin)
+      hasAccess(user, janusData.superuser)
     then Success(())
     else Failure(JanusException.noAccessFailure(user))
   }

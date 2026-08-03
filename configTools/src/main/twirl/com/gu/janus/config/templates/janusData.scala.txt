@@ -51,9 +51,9 @@ janus {
         }
     }
 
-    admin {
+    superuser {
         acl {
-            @for((user, aclEntry) <- janusData.admin.userAccess){
+            @for((user, aclEntry) <- janusData.superuser.userAccess){
                 "@user" = [
                     @for(permission <- aclEntry.permissions) {
                         @permissionReference(permission)
