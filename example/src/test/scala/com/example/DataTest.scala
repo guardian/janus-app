@@ -38,7 +38,7 @@ class DataTest extends AnyFreeSpec with Matchers {
     janusData.support.supportAccess shouldEqual reloadedJanusData.support.supportAccess
     janusData.support.rota shouldEqual reloadedJanusData.support.rota
 
-    janusData.admin shouldEqual reloadedJanusData.admin
+    janusData.superuser shouldEqual reloadedJanusData.superuser
 
     file.delete()
   }

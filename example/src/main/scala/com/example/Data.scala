@@ -6,7 +6,7 @@ object Data {
   val janusData = JanusData(
     accounts = Accounts.allAccounts,
     access = Access.acl,
-    admin = Superuser.acl,
+    superuser = Superuser.acl,
     support = Support.acl,
     permissionsRepo = None
   )
