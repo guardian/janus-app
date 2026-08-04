@@ -1,0 +1,108 @@
+@import models.UserAccountUsage
+@import logic.AccountUsage.visibleGrants
+@import logic.Date.formatDate
+
+@(usage: UserAccountUsage, showUnused: Boolean)
+
+<p><a href="/audit/user/@usage.userName">See the full audit trail for @usage.userName</a></p>
+
+@if(usage.usedPermissions.nonEmpty) {
+    <h6>Used permissions</h6>
+    <table class="bordered">
+        <thead>
+            <tr>
+                <th>Permission</th>
+                <th>Last used</th>
+                <th>Times used</th>
+            </tr>
+        </thead>
+        <tbody>
+        @for(used <- usage.usedPermissions) {
+            <tr>
+                <td>
+                    @used.permission match {
+                        case Some(permission) => {
+                            @permission.label <span class="grey-text">@permission.description</span>
+                        }
+                        case None => {
+                            @used.label
+                            <i class="material-icons tiny tooltipped" data-position="right"
+                               data-tooltip="Not currently granted to this user, so it has been revoked since it was used.">info_outline</i>
+                        }
+                    }
+                </td>
+                <td>@formatDate(used.lastUsed)</td>
+                <td>@used.count</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@if(showUnused && usage.unusedPermissions.nonEmpty) {
+    <h6>Unused permissions</h6>
+    <ul class="collection">
+    @for(permission <- usage.unusedPermissions) {
+        <li class="collection-item">
+            @permission.label <span class="grey-text">@permission.description</span>
+        </li>
+    }
+    </ul>
+}
+
+@for(grantUsage <- visibleGrants(usage, showUnused)) {
+    <h6>Developer policy grant: @grantUsage.grant.name</h6>
+    @if(grantUsage.used.nonEmpty) {
+        <table class="bordered">
+            <thead>
+                <tr>
+                    <th>Policy</th>
+                    <th>Last used</th>
+                    <th>Times used</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for(used <- grantUsage.used) {
+                <tr>
+                    <td>@used.policy.friendlyName <span class="grey-text">@used.policy.policyName</span></td>
+                    <td>@formatDate(used.lastUsed)</td>
+                    <td>@used.count</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+    @if(showUnused && grantUsage.unused.nonEmpty) {
+        <p>Unused policies from this grant:</p>
+        <ul class="collection">
+        @for(policy <- grantUsage.unused) {
+            <li class="collection-item">
+                @policy.friendlyName <span class="grey-text">@policy.policyName</span>
+            </li>
+        }
+        </ul>
+    }
+}
+
+@if(usage.unrecognisedUsage.nonEmpty) {
+    <h6>Used but not currently granted</h6>
+    <p>These developer policies were used but are covered by no grant the user holds now, either because the policy has been removed from the account or because the grant has been revoked since.</p>
+    <table class="bordered">
+        <thead>
+            <tr>
+                <th>Policy</th>
+                <th>Last used</th>
+                <th>Times used</th>
+            </tr>
+        </thead>
+        <tbody>
+        @for(unrecognised <- usage.unrecognisedUsage) {
+            <tr>
+                <td>@unrecognised.name</td>
+                <td>@formatDate(unrecognised.lastUsed)</td>
+                <td>@unrecognised.count</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}

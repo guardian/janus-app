@@ -1,15 +1,19 @@
 package aws
 
-import com.gu.janus.model.AuditLog
-import logic.AuditTrail
+import com.gu.janus.model.{ACL, AuditLog, AwsAccount}
+import logic.{AccountUsage, AuditTrail}
+import models.{AccountUsageReport, DeveloperPolicy}
+import play.api.Logging
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 import software.amazon.awssdk.services.dynamodb.model.ComparisonOperator._
 import software.amazon.awssdk.services.dynamodb.model._
 
-import java.time.Instant
+import java.time.ZoneOffset.UTC
+import java.time.{Instant, ZonedDateTime}
 import scala.jdk.CollectionConverters._
+import scala.util.Try
 
-object AuditTrailDB {
+object AuditTrailDB extends Logging {
   import AuditTrail._
 
   def insert(auditLog: AuditLog)(using dynamoDB: DynamoDbClient): Unit = {
@@ -24,8 +28,75 @@ object AuditTrailDB {
       account: String,
       startDate: Instant,
       endDate: Instant
-  )(using dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] = {
-    val request = QueryRequest
+  )(using dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] =
+    queryResult(dynamoDB, accountLogsRequest(account, startDate, endDate))
+
+  /** Reads every access request for an account over the given range.
+    *
+    * Ranges long enough to be useful for usage reporting exceed the 1MB limit
+    * on a single query response, so this pages through the results.
+    */
+  def getAllAccountLogs(
+      account: String,
+      startDate: Instant,
+      endDate: Instant
+  )(using dynamoDB: DynamoDbClient): Seq[Either[String, AuditLog]] =
+    dynamoDB
+      .queryPaginator(accountLogsRequest(account, startDate, endDate))
+      .items()
+      .asScala
+      .map(attrs => auditLogFromAttrs(attrs.asScala.toMap))
+      .map(logDbResultErrs)
+      .map(errorStrings)
+      .toSeq
+
+  /** How far back the access and usage report looks. */
+  private val usagePeriodMonths = 3
+
+  /** Builds the access and usage report for an account, or explains why it
+    * could not be built so callers can fall back to listing users.
+    */
+  def accountUsageReport(
+      account: AwsAccount,
+      acl: ACL,
+      accountDeveloperPolicies: Set[DeveloperPolicy],
+      policyCacheError: Option[String]
+  )(using dynamoDB: DynamoDbClient): Either[String, AccountUsageReport] = {
+    val to = Instant.now()
+    val from =
+      ZonedDateTime.ofInstant(to, UTC).minusMonths(usagePeriodMonths).toInstant
+    logger.info(
+      s"Getting access and usage for ${account.authConfigKey} from $from to $to"
+    )
+    Try(getAllAccountLogs(account.authConfigKey, from, to)).fold(
+      { error =>
+        logger.error(
+          s"Failed to read audit logs for ${account.authConfigKey}",
+          error
+        )
+        Left("Could not read the audit trail for this account.")
+      },
+      auditLogs =>
+        Right(
+          AccountUsage.report(
+            account = account,
+            acl = acl,
+            accountDeveloperPolicies = accountDeveloperPolicies,
+            auditLogs = auditLogs,
+            policyCacheError = policyCacheError,
+            from = from,
+            to = to
+          )
+        )
+    )
+  }
+
+  private def accountLogsRequest(
+      account: String,
+      startDate: Instant,
+      endDate: Instant
+  ): QueryRequest =
+    QueryRequest
       .builder()
       .tableName(tableName)
       .keyConditions(
@@ -39,8 +110,6 @@ object AuditTrailDB {
       )
       .scanIndexForward(false)
       .build()
-    queryResult(dynamoDB, request)
-  }
 
   def getUserLogs(
       username: String,

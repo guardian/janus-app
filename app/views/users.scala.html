@@ -1,74 +1,148 @@
-@import com.gu.janus.model.{AwsAccount, JanusData}
 @import com.gu.googleauth.UserIdentity
-@import play.api.Mode
-@import scala.util.Try
-
-@import com.gu.janus.model.Permission
-@import scala.util.Failure
-@import scala.util.Success
+@import com.gu.janus.model.{AwsAccount, JanusData}
+@import logic.Date.formatDate
+@import logic.AccountUsage.{grantedPermissionCount, lastActive, unusedPermissionCount, usedPermissionCount, userCount}
 @import logic.ViewHelpers
-@import models.AccountInfo
-@(accountName: String, accountUsers: List[String], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+@import models.{AccountUsageReport, UserAccountUsage}
+@import play.api.Mode
+
+@(awsAccount: AwsAccount, report: Either[String, AccountUsageReport], accountUsers: List[String], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@userSummary(usage: UserAccountUsage) = {
+    @usage.userName
+    @lastActive(usage).map { lastActive =>
+        <span class="grey-text">last active @formatDate(lastActive)</span>
+    }
+}
 
 @main("Accounts", Some(user), janusData) {
-    <div class="container" xmlns="http://www.w3.org/1999/html">
-        <h1 class="header orange-text">Users for @{accountName}</h1>
-        <div class="users">
+    <div class="container">
+        <h1 class="header orange-text">Users for @awsAccount.name</h1>
 
-            @if(accountUsers.isEmpty) {
-                <p>There are no Janus-managed users for this account.</p>
-            } else {
-                @* We generate 1, 2 and 3 col versions of this and show/hide responsively *@
-                <div class="hide-on-med-and-up">
-                    @* 1 column on small devices *@
+        @if(accountUsers.isEmpty) {
+            <p>There are no Janus-managed users for this account.</p>
+        } else {
+            @report match {
+                case Left(errorMessage) => {
+                    <p class="card-panel yellow lighten-4">
+                        <i class="material-icons">report_problem</i>
+                        @errorMessage Access and usage cannot be shown, so only the list of users with access is below.
+                    </p>
+                    <ul class="collection">
+                    @for(username <- accountUsers) {
+                        <li class="collection-item"><a href="/audit/user/@username">@username</a></li>
+                    }
+                    </ul>
+                }
+                case Right(usageReport) => {
+                    <p>
+                        Access and usage for the three months to @formatDate(usageReport.to).
+                    </p>
+
                     <div class="row">
-                        <div class="col s12">
-                            <ul class="collection">
-                            @for(user <- accountUsers) {
-                                <li class="collection-item">@user</li>
-                            }
-                            </ul>
+                        <div class="col s4 center-align">
+                            <h4>@userCount(usageReport)</h4>
+                            <p>users with access</p>
+                        </div>
+                        <div class="col s4 center-align">
+                            <h4>@usageReport.withoutUsage.size</h4>
+                            <p>with no usage in the period</p>
+                        </div>
+                        <div class="col s4 center-align">
+                            <h4>@unusedPermissionCount(usageReport)</h4>
+                            <p>permissions granted but unused</p>
                         </div>
                     </div>
-                </div>
-                <div class="show-on-medium hide-on-large-only hide-on-small-and-down">
-                    @* 2 columns on medium devices *@
-                    <div class="row">
-                        <ul class="collection col m6">
-                        @for(user <- ViewHelpers.getColumn(2, accountUsers, 0)) {
-                            <li class="collection-item">@user</li>
+
+                    @if(usageReport.unreadableLogCount > 0) {
+                        <p class="card-panel yellow lighten-4">
+                            <i class="material-icons">report_problem</i>
+                            @usageReport.unreadableLogCount audit log entries could not be read, so the figures below may understate usage. Check the application logs.
+                        </p>
+                    }
+
+                    @usageReport.policyCacheError.map { policyError =>
+                        <p class="card-panel yellow lighten-4">
+                            <i class="material-icons">report_problem</i>
+                            Developer policy data for this account is unavailable (@policyError), so developer policy usage may be listed as not currently granted.
+                        </p>
+                    }
+
+                    <h2 class="header">
+                        No usage in the last three months
+                        <span class="badge">@usageReport.withoutUsage.size</span>
+                    </h2>
+                    @if(usageReport.withoutUsage.isEmpty) {
+                        <p>None. Every user with access to this account has used it.</p>
+                    } else {
+                        <ul class="collapsible" data-collapsible="accordion">
+                        @for(usage <- usageReport.withoutUsage) {
+                            <li>
+                                <div class="collapsible-header">
+                                    <i class="material-icons">person_outline</i>
+                                    @userSummary(usage)
+                                    <span class="badge">
+                                        @if(grantedPermissionCount(usage) == 1) { 1 permission } else { @grantedPermissionCount(usage) permissions }
+                                    </span>
+                                </div>
+                                <div class="collapsible-body">
+                                    @fragments.userAccountUsage(usage, showUnused = true)
+                                </div>
+                            </li>
                         }
                         </ul>
-                        <ul class="collection col m6">
-                        @for(user <- ViewHelpers.getColumn(2, accountUsers, 1)) {
-                            <li class="collection-item">@user</li>
+                    }
+
+                    <h2 class="header">
+                        Some usage
+                        <span class="badge">@usageReport.withUsage.size</span>
+                    </h2>
+                    @if(usageReport.withUsage.isEmpty) {
+                        <p>No user with access to this account has used it in the last three months.</p>
+                    } else {
+                        <ul class="collapsible" data-collapsible="accordion">
+                        @for(usage <- usageReport.withUsage) {
+                            <li>
+                                <div class="collapsible-header">
+                                    <i class="material-icons">person</i>
+                                    @userSummary(usage)
+                                    <span class="badge">
+                                        @usedPermissionCount(usage) of @grantedPermissionCount(usage) used
+                                    </span>
+                                </div>
+                                <div class="collapsible-body">
+                                    @fragments.userAccountUsage(usage, showUnused = true)
+                                </div>
+                            </li>
                         }
                         </ul>
-                    </div>
-                </div>
-                <div class="hide-on-med-and-down">
-                    @* 3 columns on large devices *@
-                    <div class="row">
-                        <ul class="collection col l4">
-                        @for(user <- ViewHelpers.getColumn(3, accountUsers, 0)) {
-                            <li class="collection-item">@user</li>
+                    }
+
+                    @if(usageReport.withoutAccess.nonEmpty) {
+                        <h2 class="header">
+                            No longer has access
+                            <span class="badge">@usageReport.withoutAccess.size</span>
+                        </h2>
+                        <p>
+                            These users requested access to this account during the period but hold no Janus
+                            permissions for it now, so their access has been revoked since they used it.
+                        </p>
+                        <ul class="collapsible" data-collapsible="accordion">
+                        @for(usage <- usageReport.withoutAccess) {
+                            <li>
+                                <div class="collapsible-header">
+                                    <i class="material-icons">person_outline</i>
+                                    @userSummary(usage)
+                                </div>
+                                <div class="collapsible-body">
+                                    @fragments.userAccountUsage(usage, showUnused = false)
+                                </div>
+                            </li>
                         }
                         </ul>
-                        <ul class="collection col l4">
-                        @for(user <- ViewHelpers.getColumn(3, accountUsers, 1)) {
-                            <li class="collection-item">@user</li>
-                        }
-                        </ul>
-                        <ul class="collection col l4">
-                        @for(user <- ViewHelpers.getColumn(3, accountUsers, 2)) {
-                            <li class="collection-item">@user</li>
-                        }
-                        </ul>
-                    </div>
-                </div>
+                    }
+                }
             }
-
-        </div>
-
+        }
     </div>
 }

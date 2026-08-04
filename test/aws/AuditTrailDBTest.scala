@@ -45,6 +45,17 @@ class AuditTrailDBTest extends AnyFreeSpec with Matchers {
       println(userResults.toList)
     }
 
+    "paged account query" ignore {
+      val dateTime = ZonedDateTime.of(2015, 11, 5, 17, 35, 0, 0, UTC).toInstant
+      val allResults = AuditTrailDB.getAllAccountLogs(
+        "account",
+        dateTime.minus(Duration.ofDays(90)),
+        dateTime.plus(Duration.ofDays(1))
+      )
+      println(allResults.size)
+      println(allResults.take(5).toList)
+    }
+
   }
 
 }

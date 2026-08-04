@@ -1,5 +1,6 @@
 package controllers
 
+import aws.AuditTrailDB
 import com.gu.googleauth.AuthAction
 import com.gu.janus.model.JanusData
 import conf.Config
@@ -9,6 +10,7 @@ import models.AwsAccountDeveloperPolicyStatus
 import play.api.mvc.*
 import play.api.{Configuration, Logging, Mode}
 import services.DeveloperPolicyStatusManager
+import software.amazon.awssdk.services.dynamodb.DynamoDbClient
 
 class AccountsController(
     janusData: JanusData,
@@ -16,8 +18,11 @@ class AccountsController(
     authAction: AuthAction[AnyContent],
     configuration: Configuration,
     developerPolicyStatusManager: DeveloperPolicyStatusManager
-)(using mode: Mode, assetsFinder: AssetsFinder)
-    extends AbstractController(controllerComponents)
+)(using
+    dynamoDB: DynamoDbClient,
+    mode: Mode,
+    assetsFinder: AssetsFinder
+) extends AbstractController(controllerComponents)
     with Logging {
 
   def accounts: Action[AnyContent] = authAction { implicit request =>
@@ -66,9 +71,22 @@ class AccountsController(
         case Some(awsAccount) =>
           val users =
             accountPermissions(awsAccount, janusData.access).map(_.userName)
+          val policyStatuses = developerPolicyStatusManager.getCacheStatus
+          val report = AuditTrailDB.accountUsageReport(
+            account = awsAccount,
+            acl = janusData.access,
+            accountDeveloperPolicies = Accounts
+              .successfulPoliciesForThisAccount(policyStatuses, authConfigKey)
+              .toSet,
+            policyCacheError = Accounts.errorPoliciesForThisAccount(
+              policyStatuses,
+              authConfigKey
+            )
+          )
           Ok(
             views.html.users(
-              awsAccount.name,
+              awsAccount,
+              report,
               users,
               request.user,
               janusData
