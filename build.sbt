@@ -112,7 +112,7 @@ lazy val root: Project = (project in file("."))
       "com.webauthn4j" % "webauthn4j-core" % "0.31.8.RELEASE",
       "co.fs2" %% "fs2-core" % "3.13.0",
       "org.typelevel" %% "log4cats-slf4j" % "2.8.0",
-      "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
+      "org.scalatestplus" %% "scalacheck-1-19" % "3.2.20.0" % Test
     ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides ++ safeTransitiveDependencies,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
     excludeDependencies ++= Seq(
