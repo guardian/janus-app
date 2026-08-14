@@ -14,7 +14,7 @@ val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
   "org.scalatest" %% "scalatest" % "3.2.20" % Test,
   "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
-  "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
+  "org.scalatestplus" %% "scalacheck-1-17" % "3.2.18.0" % Test,
   "ch.qos.logback" % "logback-classic" % "1.5.37"
 )
 lazy val commonSettings = Seq(
