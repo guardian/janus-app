@@ -8,13 +8,13 @@ import sbtversionpolicy.withsbtrelease.ReleaseVersion
 ThisBuild / organization := "com.gu"
 ThisBuild / licenses := Seq(License.Apache2)
 
-val awsSdkVersion = "2.48.3"
+val awsSdkVersion = "2.54.3"
 val circeVersion = "0.14.16"
 val commonDependencies = Seq(
   "org.typelevel" %% "cats-core" % "2.13.0",
   "org.scalatest" %% "scalatest" % "3.2.20" % Test,
   "org.scalacheck" %% "scalacheck" % "1.19.0" % Test,
-  "org.scalatestplus" %% "scalacheck-1-16" % "3.2.14.0" % Test,
+  "org.scalatestplus" %% "scalacheck-1-19" % "3.2.20.0" % Test,
   "ch.qos.logback" % "logback-classic" % "1.5.38"
 )
 lazy val commonSettings = Seq(
@@ -38,7 +38,7 @@ lazy val commonSettings = Seq(
 Workaround for CVE-2020-36518 in Jackson
 @see https://github.com/orgs/playframework/discussions/11222
  */
-val jacksonVersion = "2.22.1"
+val jacksonVersion = "2.22.2"
 
 val jacksonOverrides = Seq(
   "com.fasterxml.jackson.core" % "jackson-core" % jacksonVersion,
@@ -100,9 +100,9 @@ lazy val root: Project = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "42.0.0",
-      "com.gu.play-secret-rotation" %% "play-v30" % "19.2.0",
-      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "19.2.0",
+      "com.gu.play-googleauth" %% "play-v30" % "42.2.0",
+      "com.gu.play-secret-rotation" %% "play-v30" % "19.3.0",
+      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "19.3.0",
       "software.amazon.awssdk" % "arns" % awsSdkVersion,
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
@@ -111,8 +111,7 @@ lazy val root: Project = (project in file("."))
       "net.logstash.logback" % "logstash-logback-encoder" % "7.3", // scala-steward:off
       "com.webauthn4j" % "webauthn4j-core" % "0.31.8.RELEASE",
       "co.fs2" %% "fs2-core" % "3.13.0",
-      "org.typelevel" %% "log4cats-slf4j" % "2.8.0",
-      "org.scalatestplus" %% "scalacheck-1-18" % "3.2.19.0" % Test
+      "org.typelevel" %% "log4cats-slf4j" % "2.8.0"
     ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides ++ safeTransitiveDependencies,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
     excludeDependencies ++= Seq(

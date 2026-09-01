@@ -388,8 +388,8 @@ export function showConfirmationModal(
     const cleanup = () => {
       confirmButton.removeEventListener("click", handleConfirm);
       cancelButton.removeEventListener("click", handleCancel);
+      modalInstance.close();
       modalInstance.destroy();
-      modalElement.remove();
     };
 
     // Initialize modal
