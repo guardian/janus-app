@@ -282,6 +282,50 @@ class Janus(
       }
     }
 
+  /** Signs the user in to the AWS console for the given permission, then
+    * redirects them straight to the given `destination` (e.g. a deep link to a
+    * specific S3 bucket). This lets docs/runbooks link directly to an AWS
+    * console page without requiring the reader to separately sign in to
+    * Janus/AWS first.
+    */
+  def consoleRedirect(
+      permissionId: String,
+      destination: String
+  ): Action[AnyContent] =
+    passkeyAuthAction { implicit request =>
+      if (!Federation.isValidConsoleDestination(destination)) {
+        logger.warn(
+          s"console redirect to $permissionId denied for ${username(request.user)}: invalid destination '$destination'"
+        )
+        BadRequest(
+          views.html.error(
+            "Invalid redirect destination",
+            Some(request.user),
+            janusData
+          )
+        )
+      } else {
+        (for {
+          (credentials, _) <- assumeRole(
+            request.user,
+            permissionId,
+            JConsole,
+            Customisation.durationParams(request),
+            developerPolicyService.getDeveloperPolicies
+          )
+          loginUrl = Federation.generateLoginUrl(credentials, host, destination)
+        } yield {
+          SeeOther(loginUrl)
+            .withHeaders(CACHE_CONTROL -> "no-cache")
+        }) getOrElse {
+          logger.warn(
+            s"console redirect to $permissionId denied for ${username(request.user)}"
+          )
+          Forbidden(views.html.permissionDenied(request.user, janusData))
+        }
+      }
+    }
+
   def credentials(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
       (for {
