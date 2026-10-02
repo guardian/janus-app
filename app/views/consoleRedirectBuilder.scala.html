@@ -1,0 +1,68 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+@import logic.DeveloperPolicies
+@import models.AwsAccountAccess
+@import play.api.Mode
+
+@(accountAccesses: List[AwsAccountAccess], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@main("Console redirect link builder", Some(user), janusData) {
+    <div class="container">
+        <h1 class="header orange-text">Build a console redirect link</h1>
+        <p>
+            Generate a link that signs you in to the AWS console for a chosen permission, then takes you straight
+            to an AWS console page. Share this instead of a plain AWS console link in docs or runbooks, so readers
+            don't need to separately remember to sign in to the right account first.
+        </p>
+
+        <div class="row">
+            <div class="input-field col s12 m6">
+                <select id="console-redirect-permission">
+                    <option value="" disabled selected>Choose a permission&hellip;</option>
+                    @for(accountAccess <- accountAccesses) {
+                        @defining(
+                            accountAccess.standardPermissions ++ accountAccess.adminPermissions ++
+                                accountAccess.developerPolicies.flatMap { case (grant, policies) =>
+                                    policies.map(policy => DeveloperPolicies.toPermission(policy, grant))
+                                }
+                        ) { permissions =>
+                            @if(permissions.nonEmpty) {
+                                <optgroup label="@accountAccess.awsAccount.name">
+                                    @for(permission <- permissions) {
+                                        <option value="@permission.id">@permission.description</option>
+                                    }
+                                </optgroup>
+                            }
+                        }
+                    }
+                </select>
+                <label>Permission</label>
+            </div>
+
+            <div class="input-field col s12 m6">
+                <input id="console-redirect-destination" type="text" placeholder="https://xxxxx.console.aws.amazon.com/...">
+                <label for="console-redirect-destination">AWS console URL</label>
+                <span id="console-redirect-destination-error" class="error-message red-text hidden">
+                    Please enter a valid AWS console URL, e.g. https://console.aws.amazon.com/... or
+                    https://eu-west-1.console.aws.amazon.com/...
+                </span>
+            </div>
+        </div>
+
+        <button id="console-redirect-generate" class="btn waves-effect waves-light" type="button" disabled>
+            Generate link
+        </button>
+
+        <div id="console-redirect-result" class="row hidden">
+            <div class="col s12">
+                <h5 class="header orange-text">Your redirect link</h5>
+                <p class="copy-textarea">
+                    <a class="copy-text--button copy-text--button__small grey lighten-1" href="#"><i class="material-icons copy-text--default">content_copy</i> copy</a>
+                    <i class="material-icons copy-text--confirm">done</i>
+                    <i class="material-icons copy-text--warn">report_problem</i>
+                    <textarea id="console-redirect-url" class="textarea--code" readonly></textarea>
+                </p>
+            </div>
+        </div>
+    </div>
+}

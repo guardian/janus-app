@@ -230,6 +230,31 @@ class Janus(
     }
   }
 
+  /** Shows a page that lets a user build a `/consoleRedirect` URL for one of
+    * their permissions, to be shared in docs/runbooks (see
+    * [[consoleRedirect]]).
+    */
+  def consoleRedirectBuilder: Action[AnyContent] =
+    authAction { implicit request =>
+      (for {
+        accountsAccess <- internalUserAccess(
+          request.user,
+          janusData,
+          developerPolicyService.getDeveloperPolicies
+        )
+        userPolicyGrants = policyGrantsForUser(request.user, janusData.access)
+        uiAccountAccess = orderedAccountAccess(accountsAccess, userPolicyGrants)
+      } yield {
+        Ok(
+          views.html.consoleRedirectBuilder(
+            uiAccountAccess,
+            request.user,
+            janusData
+          )
+        )
+      }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
+    }
+
   def consoleLogin(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
       (for {

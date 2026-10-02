@@ -40,6 +40,7 @@
                             <li><a href="/support">Support</a></li>
                             @if(hasAccess(user, janusData.superuser)) { <li><a href="/superuser">Superuser</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
+                            <li><a href="/console-redirect-builder">Redirect link builder</a></li>
                             <li><a href="/user-account">@user.firstName @user.lastName</a></li>
                         </ul>
 
@@ -49,6 +50,7 @@
                             @if(isSupportUser(user, Instant.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
                             @if(hasAccess(user, janusData.superuser)) { <li><a href="/superuser">Superuser</a></li> }
                             <li><a href="/revoke">Revoke</a></li>
+                            <li><a href="/console-redirect-builder">Redirect link builder</a></li>
                             <li><a href="/user-account">@user.firstName @user.lastName <i class="material-icons right">perm_identity</i></a></li>
                         </ul>
                     }
