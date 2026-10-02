@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 import java.time.{Clock, Duration, Instant, ZonedDateTime}
 import scala.io.Source
 import scala.jdk.CollectionConverters.SeqHasAsJava
+import scala.util.Try
 
 object Federation {
 
@@ -35,6 +36,24 @@ object Federation {
 
   private val signInUrl = "https://signin.aws.amazon.com/federation"
   private val consoleUrl = "https://console.aws.amazon.com/"
+
+  private val awsConsoleHost = "console.aws.amazon.com"
+  private val awsConsoleHostSuffix = "." + awsConsoleHost
+
+  /** Checks that a destination URL is safe to redirect a freshly-signed-in user
+    * to. Only `https` URLs on the `console.aws.amazon.com` domain (or its
+    * regional subdomains, e.g. `eu-west-1.console.aws.amazon.com`) are
+    * considered valid, to prevent this being used as an open redirect to an
+    * arbitrary (potentially malicious) destination.
+    */
+  def isValidConsoleDestination(destination: String): Boolean = {
+    Try(new URI(destination)).toOption.exists { uri =>
+      uri.getScheme == "https" &&
+      Option(uri.getHost).exists { host =>
+        host == awsConsoleHost || host.endsWith(awsConsoleHostSuffix)
+      }
+    }
+  }
 
   /** Calculates the duration of a login session.
     *
@@ -115,15 +134,23 @@ object Federation {
     (response.credentials(), response.packedPolicySize())
   }
 
+  /** @param destination
+    *   Where to send the user once they're signed in to the AWS console.
+    *   Defaults to the console homepage. Must satisfy
+    *   [[isValidConsoleDestination]], otherwise the default is used instead.
+    */
   def generateLoginUrl(
       temporaryCredentials: Credentials,
-      host: String
+      host: String,
+      destination: String = consoleUrl
   ): String = {
     // See https://github.com/seratch/AWScala/blob/5d9012dec25eafc4275765bfc5cbe46c3ed37ba2/sts/src/main/scala/awscala/sts/STS.scala
     val token = URLEncoder.encode(signinToken(temporaryCredentials), UTF_8)
     val issuer = URLEncoder.encode(host, UTF_8)
-    val destination = URLEncoder.encode(consoleUrl, UTF_8)
-    s"$signInUrl?Action=login&SigninToken=$token&Issuer=$issuer&Destination=$destination"
+    val safeDestination =
+      if (isValidConsoleDestination(destination)) destination else consoleUrl
+    val encodedDestination = URLEncoder.encode(safeDestination, UTF_8)
+    s"$signInUrl?Action=login&SigninToken=$token&Issuer=$issuer&Destination=$encodedDestination"
   }
 
   private def signinToken(credentials: Credentials): String = {

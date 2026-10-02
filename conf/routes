@@ -14,6 +14,8 @@ GET           /console                                  controllers.PasskeyContr
 POST          /console                                  controllers.Janus.consoleLogin(permissionId: String)
 GET           /consoleUrl                               controllers.PasskeyController.showAuthPage
 POST          /consoleUrl                               controllers.Janus.consoleUrl(permissionId: String)
+GET           /consoleRedirect                          controllers.PasskeyController.showAuthPage
+POST          /consoleRedirect                          controllers.Janus.consoleRedirect(permissionId: String, destination: String)
 GET           /credentials                              controllers.PasskeyController.showAuthPage
 POST          /credentials                              controllers.Janus.credentials(permissionId: String)
 GET           /multi-credentials                        controllers.PasskeyController.showAuthPage
