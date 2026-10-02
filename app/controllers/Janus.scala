@@ -307,6 +307,51 @@ class Janus(
       }
     }
 
+  /** Shows an interstitial confirmation page for a `/consoleRedirect` link
+    * (generated via [[consoleRedirectBuilder]]), before any sign-in happens.
+    *
+    * This lets the user see exactly where the link will send them and which
+    * permission it will use, so they can spot a suspicious/incorrect
+    * destination before following it, and check they actually have the
+    * permission being requested. From here they can either sign in to a new
+    * Janus session and be redirected, or - if they already have a console
+    * session open for the target account - skip straight to the destination
+    * without disturbing that session.
+    */
+  def consoleRedirectConfirm(
+      permissionId: String,
+      destination: String
+  ): Action[AnyContent] =
+    authAction { implicit request =>
+      val destinationValid = Federation.isValidConsoleDestination(destination)
+      val accessiblePermission = checkUserPermissionWithSource(
+        request.user,
+        permissionId,
+        Instant.now(),
+        janusData,
+        developerPolicyService.getDeveloperPolicies
+      ).map { case (permission, _, _) => permission }
+      // Permission may be known even if this user doesn't personally have
+      // access to it (so we can still show its description/account below).
+      // Developer-policy-derived permissions aren't included here, as they
+      // can only be looked up for a specific user.
+      val knownPermission =
+        accessiblePermission.orElse(
+          Permission.allPermissions(janusData).find(_.id == permissionId)
+        )
+      Ok(
+        views.html.consoleRedirectConfirm(
+          permissionId,
+          destination,
+          destinationValid,
+          knownPermission,
+          hasAccess = accessiblePermission.isDefined,
+          request.user,
+          janusData
+        )
+      )
+    }
+
   /** Signs the user in to the AWS console for the given permission, then
     * redirects them straight to the given `destination` (e.g. a deep link to a
     * specific S3 bucket). This lets docs/runbooks link directly to an AWS
