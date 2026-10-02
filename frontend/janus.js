@@ -13,6 +13,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const csrfToken = getCsrfTokenFromMetaTag();
 
+  const selectElems = document.querySelectorAll("select");
+  M.FormSelect.init(selectElems);
   //Initialise Materialize elements
   const sidenavElems = document.querySelectorAll(".sidenav");
   // eslint-disable-next-line no-unused-vars -- required by Materialize
@@ -97,7 +99,92 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  // index page controls are fixed until user scrolls to footer
+  // console redirect link builder
+  const consoleRedirectPermission = document.getElementById(
+    "console-redirect-permission",
+  );
+  const consoleRedirectDestination = document.getElementById(
+    "console-redirect-destination",
+  );
+  if (consoleRedirectPermission && consoleRedirectDestination) {
+    const generateButton = document.getElementById("console-redirect-generate"),
+      destinationError = document.getElementById(
+        "console-redirect-destination-error",
+      ),
+      resultContainer = document.getElementById("console-redirect-result"),
+      resultTextarea = document.getElementById("console-redirect-url"),
+      // Mirrors the server-side check in aws.Federation.isValidConsoleDestination -
+      // only https:// URLs on the console.aws.amazon.com domain (or its
+      // regional subdomains) are accepted.
+      isValidConsoleDestination = function (value) {
+        try {
+          const url = new URL(value);
+          return (
+            url.protocol === "https:" &&
+            (url.hostname === "console.aws.amazon.com" ||
+              url.hostname.endsWith(".console.aws.amazon.com"))
+          );
+        } catch {
+          return false;
+        }
+      },
+      // The AWS console's multi-session mode prefixes hostnames with a
+      // session-specific subdomain, e.g.
+      // "012345678901-123abc4z.eu-west-1.console.aws.amazon.com". That
+      // subdomain identifies the account/session of whoever copied the URL and
+      // is meaningless (and account-id-leaking) for anyone else who later
+      // visits the generated link, so strip it, keeping any region subdomain
+      // that follows it.
+      stripSessionSubdomain = function (hostname) {
+        return hostname.replace(/^\d{10,12}-[a-z0-9]+\./i, "");
+      },
+      // Removes the AWS multi-session subdomain (if present) from a console
+      // URL, leaving any region subdomain intact.
+      sanitizeConsoleDestination = function (value) {
+        const url = new URL(value);
+        url.hostname = stripSessionSubdomain(url.hostname);
+        return url.toString();
+      },
+      updateGenerateButtonState = function () {
+        const hasPermission = !!consoleRedirectPermission.value,
+          hasValidDestination = isValidConsoleDestination(
+            consoleRedirectDestination.value.trim(),
+          );
+        generateButton.disabled = !(hasPermission && hasValidDestination);
+      };
+
+    consoleRedirectPermission.addEventListener(
+      "change",
+      updateGenerateButtonState,
+    );
+    consoleRedirectDestination.addEventListener("input", function () {
+      destinationError.classList.add("hidden");
+      updateGenerateButtonState();
+    });
+
+    generateButton.addEventListener("click", function () {
+      const permissionId = consoleRedirectPermission.value,
+        rawDestination = consoleRedirectDestination.value.trim();
+
+      if (!permissionId || !isValidConsoleDestination(rawDestination)) {
+        destinationError.classList.remove("hidden");
+        resultContainer.classList.add("hidden");
+        return;
+      }
+
+      destinationError.classList.add("hidden");
+      const destination = sanitizeConsoleDestination(rawDestination);
+      // Reflect the sanitized destination back to the user so it's clear the
+      // session-specific subdomain has been removed.
+      consoleRedirectDestination.value = destination;
+      const url = new URL("/consoleRedirect", window.location.origin);
+      url.searchParams.set("permissionId", permissionId);
+      url.searchParams.set("destination", destination);
+      resultTextarea.value = url.toString();
+      resultContainer.classList.remove("hidden");
+    });
+  }
+
   document.querySelectorAll(".controls__hero").forEach(function () {
     const win = window,
       controlContainer = document.querySelector(".controls__hero"),
