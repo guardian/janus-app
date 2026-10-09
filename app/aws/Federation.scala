@@ -112,7 +112,7 @@ object Federation {
     }
     val request = requestBuilder.build()
     val response = sts.assumeRole(request)
-    (response.credentials(), response.packedPolicySize())
+    (response.credentials(), response.sessionTokenSize())
   }
 
   def generateLoginUrl(
