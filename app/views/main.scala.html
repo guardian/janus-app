@@ -18,10 +18,10 @@
         <meta name="csrf-token" content="@helper.CSRF.getToken.value">
         <title>@title - Janus</title>
 
-         @if(mode == Mode.Dev) {
+         @if(false) {
             <link href="https://janus-frontend.local.dev-gutools.co.uk/main.css" type="text/css" rel="stylesheet" media="screen,projection"/>
         } else {
-            <link href="@assetsFinder.path("frontend/main.css")" type="text/css" rel="stylesheet" media="screen,projection"/>
+            <link href="@assetsFinder.path("frontend/main.css")" @{CSPNonce.attr} type="text/css" rel="stylesheet" media="screen,projection"/>
         }
         <link rel="icon" href="@assetsFinder.path("images/favicon.ico")"/>
     </head>
@@ -86,14 +86,14 @@
             </div>
         </footer>
 
-        @if(mode == Mode.Dev) {
+        @if(false) {
             <script src="https://janus-frontend.local.dev-gutools.co.uk/janus.js" @{CSPNonce.attr}></script>
         } else {
             <script src="@assetsFinder.path("frontend/janus.js")" @{CSPNonce.attr}></script>
         }
 
         @if(displayMode == Festive) {
-            @if(mode == Mode.Dev) {
+            @if(false) {
                 <script src="https://janus-frontend.local.dev-gutools.co.uk/snow.js" @{CSPNonce.attr}></script>
             } else {
                 <script src="@assetsFinder.path("frontend/snow.js")" @{CSPNonce.attr}></script>
