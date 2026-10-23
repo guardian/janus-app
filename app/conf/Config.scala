@@ -181,6 +181,16 @@ object Config extends Logging {
     }
   }
 
+  val isDev: Boolean = sys.env.get("IS_DEV") match {
+    case Some("true")  => true
+    case Some("false") => false
+    case None          => false
+    case Some(value)   =>
+      throw new IllegalArgumentException(
+        s"IS_DEV must be 'true' or 'false', got '$value'"
+      )
+  }
+
   class JanusConfigurationException(message: String, location: String)
       extends Throwable(
         s"$message at $location"
