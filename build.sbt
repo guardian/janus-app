@@ -85,7 +85,7 @@ lazy val root: Project = (project in file("."))
     // that is used for the published config-tools library.
     Debian / version := "1.0-SNAPSHOT",
     Universal / javaOptions ++= Seq(
-      "-Dconfig.file=/etc/gu/janus.conf", // for PROD, overridden by local sbt file
+      "-Dconfig.file=/etc/gu/s3-sync/janus.conf", // for PROD, overridden by local sbt file
       "-Dpidfile.path=/dev/null",
       "-J-Xms1g",
       "-J-Xmx1g"
