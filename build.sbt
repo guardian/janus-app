@@ -73,7 +73,7 @@ val safeTransitiveDependencies = Seq(
 )
 
 lazy val root: Project = (project in file("."))
-  .enablePlugins(PlayScala, JDebPackaging, SystemdPlugin)
+  .enablePlugins(PlayScala, JDebPackaging, SystemdPlugin, AshScriptPlugin)
   .dependsOn(configTools % "compile->compile;test->test")
   .aggregate(configTools)
   .settings(
@@ -153,7 +153,13 @@ lazy val root: Project = (project in file("."))
     Debian / serverLoading := Some(Systemd),
     Debian / maintainer := "Developer Experience <dig.dev.tooling@theguardian.com>",
     Debian / packageSummary := "Janus webapp",
-    Debian / packageDescription := "Janus: Google-based federated AWS login"
+    Debian / packageDescription := "Janus: Google-based federated AWS login",
+
+    dockerBaseImage := "amazoncorretto:21-alpine",
+    dockerExposedPorts := Seq(9100),
+    version := sys.env.getOrElse("BUILD_NUMBER", "DEV"),
+
+
   )
 
 lazy val configTools = (project in file("configTools"))

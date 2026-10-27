@@ -1,0 +1,61 @@
+services:
+  app-config:
+    image: public.ecr.aws/aws-cli/aws-cli:latest
+    entrypoint: ["/bin/sh", "-c"]
+    environment:
+      AWS_DEFAULT_REGION: eu-west-1
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?Export AWS_ACCESS_KEY_ID before starting Compose}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?Export AWS_SECRET_ACCESS_KEY before starting Compose}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+    command:
+      - |
+        set -eu
+
+        aws s3 cp "s3://security-dist/security/DEV/janus/janus.conf" /config/janus.conf
+        aws s3 cp "s3://security-dist/security/DEV/janus/janus-service-account-cert.json" /config/janus-service-account-cert.json
+        aws s3 cp "s3://security-dist/security/DEV/janus/janusData.conf" /config/janusData.conf
+
+        if [ ! -s "/config/janus.conf" ]; then
+          echo "Missing or empty configuration file: janus.conf" >&2
+          exit 1
+        fi
+        if [ ! -s "/config/janus-service-account-cert.json" ]; then
+          echo "Missing or empty configuration file: janus-service-account-cert.json" >&2
+          exit 1
+        fi
+        if [ ! -s "/config/janusData.conf" ]; then
+          echo "Missing or empty configuration file: janusData.conf" >&2
+          exit 1
+        fi
+    volumes:
+      - config:/config
+
+  janus:
+    image: ${IMAGE:-janus:DEV}
+    pull_policy: never
+    depends_on:
+      app-config:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${PORT:-9100}:9000"
+    volumes:
+      - config:/etc/gu/s3-sync:ro
+      - type: volume
+        source: config
+        target: /home/demiourgos728/.gu/janus-app/janus-service-account-cert.json
+        volume: 
+          subpath: janus-service-account-cert.json
+      - type: volume
+        source: config
+        target: /home/demiourgos728/.gu/janus-app/janusData.conf
+        volume: 
+          subpath: janusData.conf
+    environment:
+      AWS_DEFAULT_REGION: eu-west-1
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?Export AWS_ACCESS_KEY_ID before starting Compose}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?Export AWS_SECRET_ACCESS_KEY before starting Compose}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      IS_DEV: true
+
+volumes:
+  config:
