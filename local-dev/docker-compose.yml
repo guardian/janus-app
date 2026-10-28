@@ -7,7 +7,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ${HOME}/.gu/janus-app/data:/home/dynamodblocal/data
+      - /etc/gu/data:/home/dynamodblocal/data
     working_dir: /home/dynamodblocal
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath data"
 

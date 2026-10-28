@@ -2,9 +2,9 @@
 
 set -e
 
-# Create a placeholder directory for janus-app config in ~/.gu
-mkdir -p ~/.gu/janus-app/data
-sudo chown -R $(whoami):staff ~/.gu/janus-app/data
+# Create a placeholder directory for janus-app config in /etc/gu/s3-sync
+sudo mkdir -p /etc/gu/s3-sync
+sudo chown -R $(whoami):staff /etc/gu
 
 aws --profile security --region eu-west-1 sts get-caller-identity >/dev/null
 if [[ $? -ne 0 ]]; then
@@ -15,29 +15,20 @@ else
 fi
 
 # Download configuration to run Janus locally from S3 into ~/.gu/janus-app
-if [[ ! -f ~/.gu/janus-app/janus.local.conf ]]; then
-  aws --region eu-west-1 s3 cp \
-    s3://security-dist/security/DEV/janus/janus.conf ~/.gu/janus-app/janus.local.conf \
-    --profile security
-else
-  echo "janus.local.conf is present"
-fi
+config_dir="/etc/gu/s3-sync"
+config_files=("janus.conf" "janus-service-account-cert.json" "janusData.conf")
 
-if [[ ! -f ~/.gu/janus-app/janus-service-account-cert.json ]]; then
-  aws --region eu-west-1 s3 cp s3://security-dist/security/DEV/janus/janus-service-account-cert.json \
-    ~/.gu/janus-app \
-    --profile security
-else
-  echo "janus-service-account-cert.json is present"
-fi
+for source_file in "${config_files[@]}"; do
+  destination="$config_dir/$source_file"
 
-if [[ ! -f ~/.gu/janus-app/janusData.conf ]]; then
-   aws --region eu-west-1 s3 cp s3://security-dist/security/DEV/janus/janusData.conf \
-       ~/.gu/janus-app \
-       --profile security
-else
-  echo "janusData.conf is present"
-fi
+  if [[ ! -f "$destination" ]]; then
+    aws --region eu-west-1 s3 cp \
+      "s3://security-dist/security/DEV/janus/$source_file" "$destination" \
+      --profile security
+  else
+    echo "${destination##*/} is present"
+  fi
+done
 
 # Need AWS profile 'janus' to test access to dev-playground account.
 # See Readme.md 'Janus AWS Profile' section.
@@ -48,9 +39,10 @@ aws --profile security --region eu-west-1 ssm get-parameter \
   --output text \
   | aws configure import --csv file:///dev/stdin
 
-echo "Setup is complete"
 docker compose -f local-dev/docker-compose.yml up -d
 sleep 2
 
-# Create tables - will fail if they exist, but can be run manually with "destroy" or "recreate"
-sbt "setup / run create"
+# Create tables - will fail if they exist.
+"$(dirname "${BASH_SOURCE[0]}")/setup_dynamodb.sh"
+
+echo "Setup is complete"

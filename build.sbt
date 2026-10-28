@@ -73,7 +73,7 @@ val safeTransitiveDependencies = Seq(
 )
 
 lazy val root: Project = (project in file("."))
-  .enablePlugins(PlayScala, JDebPackaging, SystemdPlugin)
+  .enablePlugins(PlayScala, JDebPackaging, SystemdPlugin, AshScriptPlugin)
   .dependsOn(configTools % "compile->compile;test->test")
   .aggregate(configTools)
   .settings(
@@ -90,8 +90,6 @@ lazy val root: Project = (project in file("."))
       "-J-Xms1g",
       "-J-Xmx1g"
     ),
-    // use local config when running the app in dev mode from sbt
-    Runtime / javaOptions += s"-Dconfig.file=${sys.props("user.home")}/.gu/janus-app/janus.local.conf",
     // allows us to kick off the frontend dev-server when the API is run
     playRunHooks ++= Seq(
       RunClientHook(root.base),
@@ -121,9 +119,6 @@ lazy val root: Project = (project in file("."))
         name = "htmlunit"
       )
     ),
-
-    // local development
-    playDefaultPort := 9100,
     Test / fork := false,
 
     // Settings for sbt release, which gets run from the root in the reusable workflow,
@@ -153,7 +148,11 @@ lazy val root: Project = (project in file("."))
     Debian / serverLoading := Some(Systemd),
     Debian / maintainer := "Developer Experience <dig.dev.tooling@theguardian.com>",
     Debian / packageSummary := "Janus webapp",
-    Debian / packageDescription := "Janus: Google-based federated AWS login"
+    Debian / packageDescription := "Janus: Google-based federated AWS login",
+
+    dockerBaseImage := "amazoncorretto:21-alpine",
+    dockerExposedPorts := Seq(9000),
+    version := sys.env.getOrElse("BUILD_NUMBER", "DEV")
   )
 
 lazy val configTools = (project in file("configTools"))

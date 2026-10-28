@@ -3,9 +3,9 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-CONFIGPATH=$HOME/.gu/janus-app
-CONFIG=$CONFIGPATH/janus.local.conf
-CONFIGDATA=$CONFIGPATH/janusData.conf
+CONFIGPATH=/etc/gu
+CONFIG=$CONFIGPATH/s3-sync/janus.conf
+CONFIGDATA=$CONFIGPATH/s3-sync/janusData.conf
 
 if [[ ! -w $CONFIGPATH ]]; then
   echo "Configpath $CONFIGPATH is not writable - docker db will not start"

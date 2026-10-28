@@ -40,7 +40,7 @@ class AppComponents(context: ApplicationLoader.Context)
 
   // used by the template to detect development environment
   // in that situation, it'll load assets directly from npm vs production, where they'll come from the bundled files
-  given mode: Mode = context.environment.mode
+  given mode: Mode = Mode.Dev
 
   // Janus has no Code stage
   private val stage = mode match {
@@ -67,7 +67,7 @@ class AppComponents(context: ApplicationLoader.Context)
   val googleGroupChecker = Config.googleGroupChecker(configuration)
   val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
   given dynamodDB: DynamoDbClient =
-    if (context.environment.mode == play.api.Mode.Prod)
+    if (mode == play.api.Mode.Prod)
       DynamoDbClient.builder().region(EU_WEST_1).build()
     else Clients.localDb
 
