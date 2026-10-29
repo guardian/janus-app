@@ -62,16 +62,15 @@ object AccountOrdering {
     * hard-coded dev/admin conventions for now, TODO: find a better
     * representation for ordering
     */
-  given Ordering[Permission] =
-    (p1: Permission, p2: Permission) => {
-      def sortKey(p: Permission) = p.label match {
-        case "dev"            => "aaaa"
-        case "cloudformation" => "zzzz"
-        case label            => label
-      }
-
-      sortKey(p1) compare sortKey(p2)
+  given Ordering[Permission] = { (p1: Permission, p2: Permission) =>
+    def sortKey(p: Permission) = p.label match {
+      case "dev"            => "aaaa"
+      case "cloudformation" => "zzzz"
+      case label            => label
     }
+
+    sortKey(p1) compare sortKey(p2)
+  }
 
   /** Orders developer policies by account name, then by policy name within each
     * account.

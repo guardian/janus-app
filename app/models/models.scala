@@ -25,14 +25,15 @@ enum PasskeyMode {
   case Required
 }
 
-enum AccountConfigStatus:
+enum AccountConfigStatus {
   case FederationConfigError(causedBy: Throwable)
   case ConfigSuccess
   case ConfigWarn(accounts: Set[String])
   case ConfigError(accounts: Set[String])
+}
 
-  /** Which ACL a user has been granted access in.
-    */
+/** Which ACL a user has been granted access in.
+  */
 enum AccessSource {
   case
     /** Access given in the standard ACL, including default permissions */
@@ -72,8 +73,9 @@ case class AwsAccountAccess(
     isFavourite: Boolean
 )
 
-enum DisplayMode:
+enum DisplayMode {
   case Normal, Spooky, Festive
+}
 
 case class JanusException(
     userMessage: String,

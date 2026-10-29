@@ -127,7 +127,7 @@ object UserAccess {
       developerPolicies
     ).valuesIterator
       .flatMap { access =>
-        bySource(access).flatMap((aa, src) =>
+        bySource(access).flatMap { (aa, src) =>
           // We're only interested in the grants that have been given in the current source ACL
           val policyGrants = src match {
             case Internal =>
@@ -149,7 +149,7 @@ object UserAccess {
                 .find(_.id == permissionId)
                 .map((_, src, DeveloperPolicyPermission))
             )
-        )
+        }
       }
       .nextOption()
   }
@@ -231,7 +231,7 @@ object UserAccess {
 
     val support =
       supportData
-        .map((acl, when) =>
+        .map { (acl, when) =>
           val perms =
             userSupportAccess(user, when, acl).getOrElse(Set.empty)
           perms
@@ -241,7 +241,7 @@ object UserAccess {
               AccountAccess(permissions = ps.toList, developerPolicies = Nil)
             )
             .toMap
-        )
+        }
         .getOrElse(Map.empty)
 
     val allAccounts = internal.keySet ++ superuser.keySet ++ support.keySet

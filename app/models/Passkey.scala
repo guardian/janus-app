@@ -24,8 +24,9 @@ case class PasskeyMetadata(
     authenticator: Option[PasskeyAuthenticator]
 )
 
-enum PasskeyFlow:
+enum PasskeyFlow {
   case Registration, Authentication
+}
 
 object PasskeyEncodings {
 
