@@ -156,8 +156,7 @@ To test passkey authentication, follow the instructions in this
 
 #### Browser smoke test
 
-With the local development configuration in place and Docker running, run the
-Playwright smoke test from the repository root:
+Run the Playwright smoke test from the repository root:
 
 ```shell
 mise exec -- npm --prefix frontend install
@@ -165,34 +164,29 @@ mise exec -- npm --prefix frontend exec -- playwright install --with-deps chromi
 mise exec -- npm --prefix frontend run test:e2e
 ```
 
-The Playwright config starts Janus in development mode on port 9100 with
-`-Dauth.google.disabled=true`, enabling the Google authentication bypass for this
-run only. It uses the existing local application configuration and the default
-development identity. The browser defaults to `http://localhost:9100`. When
-running on a host with the local HTTPS proxy, set
-`PLAYWRIGHT_BASE_URL=https://janus.local.dev-gutools.co.uk`.
-The server readiness check always uses `http://localhost:9100/healthcheck`
-directly. The test checks that the authenticated accounts page loads without
-signing in to Google, including its stylesheet and JavaScript. Development-mode
-runs also need the existing `janus-frontend.local.dev-gutools.co.uk` HTTPS proxy
-for frontend assets; use the CI-mode command below inside a container without it.
+The npm script builds the frontend assets and sets `CI=true` for Playwright,
+selecting the isolated `BrowserTestServer` on port 9100. No local application
+configuration, Docker or development HTTPS proxy is needed. The browser defaults
+to `http://localhost:9100`, and the server readiness check uses
+`http://localhost:9100/healthcheck`. The test checks that the authenticated accounts
+page loads without signing in to Google, including its stylesheet and JavaScript.
 
 Stop any existing Janus development server first. Playwright deliberately does
 not reuse an existing server, which might have the bypass disabled, and stops its
 server when the tests finish.
 
-The separate `browser-tests` CI job uses `BrowserTestServer`, available only on
+Local npm runs and the separate `browser-tests` CI job use `BrowserTestServer`, available only on
 the test classpath, and the fixtures in `test/resources/browser*.conf`. It runs
 the real application in Play's test mode with empty account data, an in-memory
 signing key and synthetic Google credentials. This smoke test needs neither
 local configuration nor live AWS/Google access. Test mode supports the auth
 bypass and serves the built frontend assets without a development HTTPS proxy.
 
-To reproduce the CI run locally:
+To test against the development setup instead, with local configuration, Docker
+and the frontend HTTPS proxy available, invoke Playwright directly without `CI`:
 
 ```shell
-mise exec -- npm --prefix frontend run build
-CI=true mise exec -- npm --prefix frontend run test:e2e
+mise exec -- npm --prefix frontend exec -- playwright test
 ```
 
 To use the Playwright UI, run:
@@ -201,14 +195,10 @@ To use the Playwright UI, run:
 mise exec -- npm --prefix frontend run test:e2e:ui
 ```
 
-Open `http://localhost:8080` in your host browser. The UI listens on
-`0.0.0.0:8080` inside the container, and the dev-container configuration forwards
-that port to localhost. Rebuild or reopen an existing dev container to apply the
-new port forwarding. Keep this development UI private; do not expose it publicly.
-
-For the isolated setup without local configuration or HTTPS proxies, build the
-frontend as above and run
-`CI=true mise exec -- npm --prefix frontend run test:e2e:ui`.
+The UI script uses the same asset build and isolated server as `test:e2e`.
+Open `http://localhost:9101` in your host browser. The UI listens on
+`0.0.0.0:9101` inside the container; forward that port to localhost when using a
+dev container. Keep this development UI private; do not expose it publicly.
 
 The Google auth dependency must be available to a clean runner. The current
 `46.1.1-SNAPSHOT` is locally published; CI requires a published version containing

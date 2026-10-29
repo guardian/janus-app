@@ -6,8 +6,8 @@
   "scripts": {
     "start": "parcel --port 1234 --no-hmr",
     "build": "parcel build --dist-dir ../public/frontend",
-    "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui --ui-host=0.0.0.0 --ui-port=9101",
+    "test:e2e": "npm run build && CI=true playwright test",
+    "test:e2e:ui": "npm run test:e2e -- --ui --ui-host=0.0.0.0 --ui-port=9101",
     "lint": "eslint --max-warnings=0",
     "lint:fix": "eslint --fix",
     "format": "prettier --write \"**/*.js\"",
