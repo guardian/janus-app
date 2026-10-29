@@ -263,9 +263,10 @@ class PasskeyController(
   ): Try[Unit] =
     PasskeyDB.loadCredentials(user).flatMap { credentialsResponse =>
       val passkeys = PasskeyDB.extractMetadata(credentialsResponse)
-      if passkeys.exists(_.name.equalsIgnoreCase(passkeyName)) then Failure(
-        JanusException.duplicatePasskeyNameFieldInRequest(user, passkeyName)
-      )
+      if passkeys.exists(_.name.equalsIgnoreCase(passkeyName)) then
+        Failure(
+          JanusException.duplicatePasskeyNameFieldInRequest(user, passkeyName)
+        )
       else Success(())
     }
 
