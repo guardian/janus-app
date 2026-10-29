@@ -24,7 +24,7 @@ lazy val commonSettings = Seq(
     "-release:11"
   ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 13)) => Seq("-Xfatal-warnings")
-    case Some((3, _))  => Seq("-Werror")
+    case Some((3, _))  => Seq("-Werror", "-no-indent")
     case _             => Seq.empty
   }),
   scalafmtOnCompile := true,
