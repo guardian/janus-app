@@ -54,3 +54,7 @@ sleep 2
 
 # Create tables - will fail if they exist, but can be run manually with "destroy" or "recreate"
 sbt "setup / run create"
+
+# Prepare for Playwright E2E testing
+npm --prefix frontend install
+npm --prefix frontend exec -- playwright install --with-deps chromium
