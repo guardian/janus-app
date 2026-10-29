@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("shows accounts without signing in to Google", async ({ page }) => {
+test("shows the accounts page", async ({ page }) => {
   const [stylesheet, script] = await Promise.all([
     page.waitForResponse(/\/[^/]*main\.css$/),
     page.waitForResponse(/\/[^/]*janus\.js$/),
