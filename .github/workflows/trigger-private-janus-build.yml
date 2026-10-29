@@ -68,7 +68,7 @@ jobs:
           only-summary: 'false'
           fail-on-error: 'true'
 
-  browser-tests:
+  e2e-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
@@ -79,10 +79,15 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Install Java, sbt and Node
-        uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3
+      - name: Install Scala
+        uses: guardian/setup-scala@c9f10cca1674ecb2ae7ee739786ef9f0cdb9d07c # v2.0.0
+
+      - name: Install Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          install_args: java sbt node
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
 
       - name: Install Node dependencies
         run: npm ci
@@ -99,7 +104,7 @@ jobs:
       - name: Compile browser test server
         run: sbt Test/compile
 
-      - name: Run browser smoke test
+      - name: Run tests
         run: npm run test:e2e
         working-directory: frontend
 
@@ -116,7 +121,7 @@ jobs:
   #   - The Scala build and browser tests are successful
   #   - We're on the 'main' branch
   trigger-workflow:
-    needs: [build, browser-tests]
+    needs: [build, e2e-tests]
     if: ${{ github.ref == 'refs/heads/main' }}
 
     runs-on: ubuntu-latest

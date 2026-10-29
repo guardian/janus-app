@@ -165,8 +165,8 @@ Run the Playwright E2E tests from the repository root:
 mise exec -- npm --prefix frontend run test:e2e
 ```
 
-The npm script builds the frontend assets and sets `CI=true` for Playwright,
-selecting the isolated `BrowserTestServer` on port 9102. No local application
+The npm script builds the frontend assets and runs Playwright using the isolated
+`BrowserTestServer` on port 9102, both locally and in CI. No local application
 configuration, Docker or development HTTPS proxy is needed. The browser defaults
 to `http://localhost:9102`, and the server readiness check uses
 `http://localhost:9102/healthcheck`. The E2E tests bypass Google auth.
@@ -180,16 +180,9 @@ the test classpath, and the fixtures in `test/resources/browser*.conf`. It runs
 the real application in Play's test mode with an in-memory
 signing key and synthetic Google credentials. Test mode serves the built frontend assets without a development HTTPS proxy.
 
-To test against the development setup instead, with local configuration, Docker
-and the frontend HTTPS proxy available, invoke Playwright directly without `CI`:
-
-```shell
-mise exec -- npm --prefix frontend exec -- playwright test
-```
-
-This alternative starts its own development server on port 9100, so stop any
-existing Janus development server first. Use the npm scripts above to keep the
-test app isolated on port 9102.
+The `CI` environment variable does not change the test application or port.
+It only enables the configuration's `forbidOnly` safeguard, which rejects
+accidentally committed focused tests (`test.only`) in CI.
 
 To use the Playwright UI, run:
 
