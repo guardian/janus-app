@@ -21,12 +21,9 @@ lazy val commonSettings = Seq(
   scalaVersion := "3.3.8",
   scalacOptions ++= Seq(
     "-feature",
-    "-release:11"
-  ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, 13)) => Seq("-Xfatal-warnings")
-    case Some((3, _))  => Seq("-Werror")
-    case _             => Seq.empty
-  }),
+    "-release:11",
+    "-Werror"
+  ),
   scalafmtOnCompile := true,
   Test / testOptions ++= Seq(
     Tests.Argument(TestFrameworks.ScalaTest, "-o"),
