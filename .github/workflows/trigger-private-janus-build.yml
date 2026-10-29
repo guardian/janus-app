@@ -68,11 +68,55 @@ jobs:
           only-summary: 'false'
           fail-on-error: 'true'
 
+  browser-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      CI: "true"
+      AWS_EC2_METADATA_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Java, sbt and Node
+        uses: jdx/mise-action@5228313ee0372e111a38da051671ca30fc5a96db # v3
+        with:
+          install_args: java sbt node
+
+      - name: Install Node dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Build frontend app
+        run: npm run build
+        working-directory: frontend
+
+      - name: Compile browser test server
+        run: sbt Test/compile
+
+      - name: Run browser smoke test
+        run: npm run test:e2e
+        working-directory: frontend
+
+      - name: Upload browser failure traces
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: playwright-results
+          path: frontend/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
   # Trigger a workflow in the guardian/janus repository, if and only if:
-  #   - The Scala build is successful
+  #   - The Scala build and browser tests are successful
   #   - We're on the 'main' branch
   trigger-workflow:
-    needs: build
+    needs: [build, browser-tests]
     if: ${{ github.ref == 'refs/heads/main' }}
 
     runs-on: ubuntu-latest

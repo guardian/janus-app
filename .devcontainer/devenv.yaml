@@ -22,6 +22,7 @@ modules:
 forwardPorts:
   - 9100 # Play app (actual actions)
   - 1234 # Frontend app (assets for web)
+  - 8080 # Playwright browser test UI
 
 # The following mount is no longer used, in favour of the setup script, which will fetch appropriate config for you.
 # It is also problematic because the .gu location needs to be writable for the docker DynamoDB.

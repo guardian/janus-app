@@ -6,6 +6,8 @@ public/frontend/
 frontend/.parcel-cache
 frontend/dist
 frontend/node_modules/
+frontend/test-results/
+frontend/playwright-report/
 
 # Dependency directory
 # https://docs.npmjs.com/misc/faq#should-i-check-my-node-modules-folder-into-git

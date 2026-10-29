@@ -126,6 +126,9 @@ lazy val root: Project = (project in file("."))
     // local development
     playDefaultPort := 9100,
     Test / fork := false,
+    Test / unmanagedClasspath += Attributed.blank((Assets / packageBin).value),
+    Test / run / fork := true,
+    Test / run / javaOptions := Seq("-Dconfig.resource=browser.conf"),
 
     // Settings for sbt release, which gets run from the root in the reusable workflow,
     // the configTools module (below) is the one that will be published.
