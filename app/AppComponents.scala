@@ -63,7 +63,11 @@ class AppComponents(context: ApplicationLoader.Context)
 
   val host = Config.host(configuration)
   val googleAuthConfig =
-    Config.googleSettings(configuration, secretStateSupplier)
+    Config.googleSettings(
+      configuration,
+      secretStateSupplier,
+      context.environment.mode
+    )
   val googleGroupChecker = Config.googleGroupChecker(configuration)
   val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
   given dynamodDB: DynamoDbClient =

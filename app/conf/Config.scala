@@ -3,16 +3,18 @@ package conf
 import com.google.auth.oauth2.ServiceAccountCredentials
 import com.gu.googleauth.{
   AntiForgeryChecker,
+  DevAuthBypass,
   GoogleAuthConfig,
-  GoogleGroupChecker
+  GoogleGroupChecker,
+  UserIdentity
 }
 import com.gu.janus.JanusConfig
-import com.gu.janus.model._
+import com.gu.janus.model.*
 import com.gu.play.secretrotation.SnapshotProvider
-import models._
+import models.*
 import models.AccountConfigStatus.*
 import models.PasskeyMode
-import play.api.{Configuration, Logging}
+import play.api.{Configuration, Logging, Mode}
 
 import java.io.{File, FileInputStream}
 import java.time.LocalDate
@@ -82,19 +84,27 @@ object Config extends Logging {
 
   def googleSettings(
       config: Configuration,
-      secretStateSupplier: SnapshotProvider
+      secretStateSupplier: SnapshotProvider,
+      mode: Mode
   ): GoogleAuthConfig = {
     val clientId = requiredString(config, "auth.google.clientId")
     val clientSecret = requiredString(config, "auth.google.clientSecret")
     val domain = requiredString(config, "auth.domain")
     val redirectUrl = s"${requiredString(config, "host")}/oauthCallback"
+    val devAuthBypassEnabled =
+      config.getOptional[String]("auth.google.disabled").contains("true")
 
     GoogleAuthConfig(
       clientId = clientId,
       clientSecret = clientSecret,
       redirectUrl = redirectUrl,
       domains = List(domain),
-      antiForgeryChecker = AntiForgeryChecker(secretStateSupplier)
+      antiForgeryChecker = AntiForgeryChecker(secretStateSupplier),
+      devBypass = DevAuthBypass.forMode(
+        mode,
+        devAuthBypassEnabled,
+        identity = DevAuthBypass.defaultIdentity
+      )
     )
   }
 
