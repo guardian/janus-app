@@ -90,7 +90,7 @@ class Janus(
           configuration
         ) != PasskeyMode.Required
       } yield {
-        if (mfaInUse || passkeyNotRequired)
+        if (mfaInUse || passkeyNotRequired) {
           val mfaRequiredDateMaybe = Config.mfaRequiredDataMaybe(configuration)
           val mfaComing = !mfaInUse && mfaRequiredDateMaybe
             .exists(d => LocalDate.now().isBefore(d))
@@ -117,7 +117,7 @@ class Janus(
                 mfaDisplayDate
               )
           )
-        else SeeOther(controllers.routes.Janus.userAccount.url)
+        } else SeeOther(controllers.routes.Janus.userAccount.url)
       }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
     }
 
