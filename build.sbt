@@ -21,12 +21,10 @@ lazy val commonSettings = Seq(
   scalaVersion := "3.3.8",
   scalacOptions ++= Seq(
     "-feature",
-    "-release:11"
-  ) ++ (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, 13)) => Seq("-Xfatal-warnings")
-    case Some((3, _))  => Seq("-Werror")
-    case _             => Seq.empty
-  }),
+    "-release:11",
+    "-Werror",
+    "-no-indent"
+  ),
   scalafmtOnCompile := true,
   Test / testOptions ++= Seq(
     Tests.Argument(TestFrameworks.ScalaTest, "-o"),
@@ -100,9 +98,10 @@ lazy val root: Project = (project in file("."))
     libraryDependencies ++= commonDependencies ++ Seq(
       ws,
       filters,
-      "com.gu.play-googleauth" %% "play-v30" % "42.2.0",
-      "com.gu.play-secret-rotation" %% "play-v30" % "19.3.0",
-      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "19.3.0",
+//      "com.gu.play-googleauth" %% "play-v30" % "42.2.0",
+      "com.gu.play-googleauth" %% "play-v30" % "46.1.1-SNAPSHOT",
+      "com.gu.play-secret-rotation" %% "play-v30" % "21.1.0",
+      "com.gu.play-secret-rotation" %% "aws-parameterstore-sdk-v2" % "21.1.0",
       "software.amazon.awssdk" % "arns" % awsSdkVersion,
       "software.amazon.awssdk" % "iam" % awsSdkVersion,
       "software.amazon.awssdk" % "sts" % awsSdkVersion,
@@ -125,6 +124,9 @@ lazy val root: Project = (project in file("."))
     // local development
     playDefaultPort := 9100,
     Test / fork := false,
+    Test / unmanagedClasspath += Attributed.blank((Assets / packageBin).value),
+    Test / run / fork := true,
+    Test / run / javaOptions := Seq("-Dconfig.resource=browser.conf"),
 
     // Settings for sbt release, which gets run from the root in the reusable workflow,
     // the configTools module (below) is the one that will be published.

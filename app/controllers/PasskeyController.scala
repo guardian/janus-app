@@ -155,8 +155,9 @@ class PasskeyController(
       for {
         loadCredentialsResponse <- PasskeyDB.loadCredentials(request.user)
         existingPasskeys <-
-          if !loadCredentialsResponse.items.isEmpty then
-            Success(PasskeyDB.extractMetadata(loadCredentialsResponse))
+          if !loadCredentialsResponse.items.isEmpty then Success(
+            PasskeyDB.extractMetadata(loadCredentialsResponse)
+          )
           else Failure(JanusException.noPasskeysRegistered(request.user))
         options <- Passkey.authenticationOptions(
           appHost = host,
@@ -262,10 +263,9 @@ class PasskeyController(
   ): Try[Unit] =
     PasskeyDB.loadCredentials(user).flatMap { credentialsResponse =>
       val passkeys = PasskeyDB.extractMetadata(credentialsResponse)
-      if passkeys.exists(_.name.equalsIgnoreCase(passkeyName)) then
-        Failure(
-          JanusException.duplicatePasskeyNameFieldInRequest(user, passkeyName)
-        )
+      if passkeys.exists(_.name.equalsIgnoreCase(passkeyName)) then Failure(
+        JanusException.duplicatePasskeyNameFieldInRequest(user, passkeyName)
+      )
       else Success(())
     }
 
@@ -273,7 +273,7 @@ class PasskeyController(
       user: UserIdentity
   ): Try[Unit] = {
     if hasAccess(user, janusData.access) ||
-      hasAccess(user, janusData.superuser)
+    hasAccess(user, janusData.superuser)
     then Success(())
     else Failure(JanusException.noAccessFailure(user))
   }

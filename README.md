@@ -51,6 +51,9 @@ access to AWS resources.
 
 Janus is a Scala application built on the Play Framework with a Node frontend build.
 
+Scala code uses braces rather than significant indentation. Both the compiler
+(`-no-indent`) and Scalafmt enforce this in the main build and the example project.
+
 Wherever you run Janus, you need to provide three configuration files:
 
 * A "janus data" configuration file that controls AWS Access
@@ -154,6 +157,41 @@ To get the audit endpoints to work and test audit logging locally, follow the in
 To test passkey authentication, follow the instructions in this 
 [README](local-dev/README.md).
 
+#### End-to-end tests
+
+Run the Playwright E2E tests from the repository root:
+
+```shell
+mise exec -- npm --prefix frontend run test:e2e
+```
+
+The npm script builds the frontend assets and runs Playwright using the isolated
+`BrowserTestServer` on port 9102, both locally and in CI. No local application
+configuration, Docker or development HTTPS proxy is needed. The browser defaults
+to `http://localhost:9102`, and the server readiness check uses
+`http://localhost:9102/healthcheck`. The E2E tests bypass Google auth.
+
+The isolated test app can run alongside the Janus development app on port 9100
+and the Playwright UI on port 9101. Playwright deliberately does not reuse an
+existing server on its test port, and stops its server when the tests finish.
+
+Local npm runs and the separate `browser-tests` CI job use `BrowserTestServer`, available only on
+the test classpath, and the fixtures in `test/resources/browser*.conf`. It runs
+the real application in Play's test mode with an in-memory
+signing key and synthetic Google credentials. Test mode serves the built frontend assets without a development HTTPS proxy.
+
+The `CI` environment variable does not change the test application or port.
+It only enables the configuration's `forbidOnly` safeguard, which rejects
+accidentally committed focused tests (`test.only`) in CI.
+
+To use the Playwright UI, run:
+
+```shell
+mise exec -- npm --prefix frontend run test:e2e:ui
+```
+
+The UI script uses the same asset build and isolated server as `test:e2e`.
+Open `http://localhost:9101` in your host browser.
 
 ## Configuration
 
