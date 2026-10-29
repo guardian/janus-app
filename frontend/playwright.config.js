@@ -1,7 +1,10 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "@playwright/test";
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:9100";
+const serverURL = process.env.CI
+  ? "http://localhost:9102"
+  : "http://localhost:9100";
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? serverURL;
 
 // eslint-disable-next-line import/no-default-export -- Playwright requires a default export.
 export default defineConfig({
@@ -19,7 +22,7 @@ export default defineConfig({
     cwd: fileURLToPath(new URL("..", import.meta.url)),
     env: { GOOGLE_AUTH_DISABLED: "true" },
     stdout: "pipe",
-    url: "http://localhost:9100/healthcheck",
+    url: `${serverURL}/healthcheck`,
     reuseExistingServer: false,
     gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
     timeout: 300_000,

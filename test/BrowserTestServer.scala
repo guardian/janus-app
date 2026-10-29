@@ -21,7 +21,7 @@ object BrowserTestServer {
   def main(args: Array[String]): Unit = {
     val server = PekkoHttpServer.fromApplication(
       application(),
-      ServerConfig(port = Some(9100), address = "127.0.0.1", mode = Mode.Test)
+      ServerConfig(port = Some(9102), address = "127.0.0.1", mode = Mode.Test)
     )
     val _ = sys.addShutdownHook(server.stop())
   }

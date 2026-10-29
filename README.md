@@ -157,33 +157,28 @@ To get the audit endpoints to work and test audit logging locally, follow the in
 To test passkey authentication, follow the instructions in this 
 [README](local-dev/README.md).
 
-#### Browser smoke test
+#### End-to-end tests
 
-Run the Playwright smoke test from the repository root:
+Run the Playwright E2E tests from the repository root:
 
 ```shell
-mise exec -- npm --prefix frontend install
-mise exec -- npm --prefix frontend exec -- playwright install --with-deps chromium
 mise exec -- npm --prefix frontend run test:e2e
 ```
 
 The npm script builds the frontend assets and sets `CI=true` for Playwright,
-selecting the isolated `BrowserTestServer` on port 9100. No local application
+selecting the isolated `BrowserTestServer` on port 9102. No local application
 configuration, Docker or development HTTPS proxy is needed. The browser defaults
-to `http://localhost:9100`, and the server readiness check uses
-`http://localhost:9100/healthcheck`. The test checks that the authenticated accounts
-page loads without signing in to Google, including its stylesheet and JavaScript.
+to `http://localhost:9102`, and the server readiness check uses
+`http://localhost:9102/healthcheck`. The E2E tests bypass Google auth.
 
-Stop any existing Janus development server first. Playwright deliberately does
-not reuse an existing server, which might have the bypass disabled, and stops its
-server when the tests finish.
+The isolated test app can run alongside the Janus development app on port 9100
+and the Playwright UI on port 9101. Playwright deliberately does not reuse an
+existing server on its test port, and stops its server when the tests finish.
 
 Local npm runs and the separate `browser-tests` CI job use `BrowserTestServer`, available only on
 the test classpath, and the fixtures in `test/resources/browser*.conf`. It runs
-the real application in Play's test mode with empty account data, an in-memory
-signing key and synthetic Google credentials. This smoke test needs neither
-local configuration nor live AWS/Google access. Test mode supports the auth
-bypass and serves the built frontend assets without a development HTTPS proxy.
+the real application in Play's test mode with an in-memory
+signing key and synthetic Google credentials. Test mode serves the built frontend assets without a development HTTPS proxy.
 
 To test against the development setup instead, with local configuration, Docker
 and the frontend HTTPS proxy available, invoke Playwright directly without `CI`:
@@ -192,6 +187,10 @@ and the frontend HTTPS proxy available, invoke Playwright directly without `CI`:
 mise exec -- npm --prefix frontend exec -- playwright test
 ```
 
+This alternative starts its own development server on port 9100, so stop any
+existing Janus development server first. Use the npm scripts above to keep the
+test app isolated on port 9102.
+
 To use the Playwright UI, run:
 
 ```shell
@@ -199,14 +198,7 @@ mise exec -- npm --prefix frontend run test:e2e:ui
 ```
 
 The UI script uses the same asset build and isolated server as `test:e2e`.
-Open `http://localhost:9101` in your host browser. The UI listens on
-`0.0.0.0:9101` inside the container; forward that port to localhost when using a
-dev container. Keep this development UI private; do not expose it publicly.
-
-The Google auth dependency must be available to a clean runner. The current
-`46.1.1-SNAPSHOT` is locally published; CI requires a published version containing
-`DevAuthBypass` before these jobs can succeed.
-
+Open `http://localhost:9101` in your host browser.
 
 ## Configuration
 
