@@ -87,6 +87,14 @@ line that invalidates the template
 
 ### Locally
 
+> [!TIP]
+> We recommend (and expect!) the following steps be ran in a .devcontainer.
+
+ 1. This project uses a `.tool-versions` file to manage software dependencies, use `mise i` (or your software version manager of choice) to install them.
+ 2. Fetch "Run Janus locally" credentials from Janus
+ 3. Run `./scripts/setup.sh` to download required configs from S3 and setup the local DynamoDB.
+ 4. Run `./scripts/start.sh` to start Janus 
+
 #### Janus AWS Profile
 
 Janus requires an AWS profile called `janus` to exist in your local AWS
@@ -95,46 +103,8 @@ overwritten when you obtain credentials using Janus.
 
 The `setup.sh` script will automatically configure this profile for you.
 
-#### Install Java
 
-You will need the Java JDK installed to run the Scala application
-[check the JDK versions recommended for
-Scala](https://www.scala-lang.org/download/).
-
-#### Install sbt
-
-Use Scala's build tool
-([sbt](https://www.scala-sbt.org/download.html)) to build and run
-Janus.
-
-#### Install Node
-
-The version is specified in `.nvmrc`. Dependencies will be installed as part of the sbt run command. 
-
-When developing locally, you can also run `npm --prefix frontend i` from the project root to install dependencies.
-
-#### Obtain configuration
-
-The configuration section below explains the requirements in more
-detail
-
-**Note:** Janus uses Google Authentication locally, you will need to
-do some setup in Google as well.
-
-#### Point your hostname at localhost:9100
-
-This will likely involve DNS or a hosts entry as well as a webserver
-(or container configuration) that forwards requests to port 9000.
-
-#### Start docker
-
-Janus uses docker to provide a local version of DynamoDB.
-
-#### Run Janus
-
-Use sbt to run Janus in development mode. 
-
-    sbt -Dconfig.file=<PATH>/janus.local.conf run
+#### Build hooks
 
 The dev server uses [PlayRunHooks](https://www.playframework.com/documentation/3.0.x/sbtCookbook#Hooking-into-Plays-dev-mode) to start and stop dependent services.
 These hooks are [configured in `build.sbt`](https://github.com/guardian/janus-app/blob/6ce4579bc49e15753bc8f4f3a61c91f90e785940/build.sbt#L80-L83), which makes sure that these dependencies are started and stopped automatically when Play's dev server starts and stops.
@@ -143,17 +113,6 @@ The Node bundle is built and started by the [`RunClientHook`](https://github.com
 The frontend dev-server will automatically recompile and reload when changes are made.
 
 The application's database is started by the [DockerComposeHook](https://github.com/guardian/janus-app/blob/6ce4579bc49e15753bc8f4f3a61c91f90e785940/project/DockerComposeHook.scala).
-
-#### Local audit log support
-
-To get the audit endpoints to work and test audit logging locally, follow the instructions in this 
-[README](local-dev/README.md).
-
-#### Local Passkeys support
-
-To test passkey authentication, follow the instructions in this 
-[README](local-dev/README.md).
-
 
 ## Configuration
 
