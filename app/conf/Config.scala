@@ -185,4 +185,8 @@ object Config extends Logging {
       extends Throwable(
         s"$message at $location"
       )
+
+  val isLocal: Boolean = sys.env.get("IS_LOCAL").exists(_.toBoolean)
+  logger.info((s"Config.isLocal = $isLocal"))
+
 }
