@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 
 # Create DynamoDB tables if they do not exist in the local DynamoDB instance
