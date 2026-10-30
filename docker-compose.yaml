@@ -1,0 +1,67 @@
+services:
+  dynamodb:
+    image: amazon/dynamodb-local
+    command: "-jar DynamoDBLocal.jar -sharedDb"
+    ports:
+      - "9000:9000"
+
+  s3-sync:
+    image: public.ecr.aws/aws-cli/aws-cli:latest
+    entrypoint: ["/bin/sh", "-c"]
+    environment:
+      AWS_DEFAULT_REGION: eu-west-1
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?Export AWS_ACCESS_KEY_ID before starting Compose}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?Export AWS_SECRET_ACCESS_KEY before starting Compose}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+    command:
+      - |
+        set -eu
+        for f in janus.conf janus-service-account-cert.json janusData.conf; do
+          aws s3 cp "s3://security-dist/security/DEV/janus/$$f" "/etc/gu/s3-sync/$$f"
+        done
+        
+        sed -i 's|$${user.home}\"/.gu/janus-app|\"/etc/gu/s3-sync|g' /etc/gu/s3-sync/janus.conf
+    volumes:
+      - s3-sync:/etc/gu/s3-sync
+
+  dynamodb-seed:
+    image: public.ecr.aws/aws-cli/aws-cli:latest
+    depends_on:
+      dynamodb:
+        condition: service_started
+    volumes:
+      - ./scripts/dynamodb_create_tables.sh:/scripts/dynamodb_create_tables.sh
+    entrypoint: ["/scripts/dynamodb_create_tables.sh"]
+    network_mode: service:dynamodb
+
+  janus-frontend:
+    image: node:24-bookworm-slim
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend-node-modules:/app/node_modules
+    ports:
+      - "1234:1234"
+    command: sh -c "npm ci && exec npm start -- --host 0.0.0.0"
+
+  janus:
+    image: janus:DEV
+    pull_policy: never
+    depends_on:
+      s3-sync:
+        condition: service_completed_successfully
+      dynamodb-seed:
+        condition: service_completed_successfully
+    environment:
+      AWS_DEFAULT_REGION: eu-west-1
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?Export AWS_ACCESS_KEY_ID before starting Compose}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?Export AWS_SECRET_ACCESS_KEY before starting Compose}
+      AWS_SESSION_TOKEN: ${AWS_SESSION_TOKEN:-}
+      IS_LOCAL: true
+    volumes:
+      - s3-sync:/etc/gu/s3-sync:ro
+    network_mode: service:dynamodb
+
+volumes:
+  s3-sync:
+  frontend-node-modules:

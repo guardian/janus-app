@@ -1,5 +1,6 @@
 @import com.gu.googleauth.UserIdentity
 @import com.gu.janus.model.JanusData
+@import conf.Config
 @import logic.UserAccess.{hasAccess, isSupportUser, username}
 @import logic.Customisation.displayColour
 @import play.api.Mode
@@ -18,7 +19,7 @@
         <meta name="csrf-token" content="@helper.CSRF.getToken.value">
         <title>@title - Janus</title>
 
-         @if(mode == Mode.Dev) {
+         @if(mode == Mode.Dev || Config.isLocal) {
             <link href="https://janus-frontend.local.dev-gutools.co.uk/main.css" type="text/css" rel="stylesheet" media="screen,projection"/>
         } else {
             <link href="@assetsFinder.path("frontend/main.css")" type="text/css" rel="stylesheet" media="screen,projection"/>
@@ -86,14 +87,14 @@
             </div>
         </footer>
 
-        @if(mode == Mode.Dev) {
+        @if(mode == Mode.Dev || Config.isLocal) {
             <script src="https://janus-frontend.local.dev-gutools.co.uk/janus.js" @{CSPNonce.attr}></script>
         } else {
             <script src="@assetsFinder.path("frontend/janus.js")" @{CSPNonce.attr}></script>
         }
 
         @if(displayMode == Festive) {
-            @if(mode == Mode.Dev) {
+            @if(mode == Mode.Dev || Config.isLocal) {
                 <script src="https://janus-frontend.local.dev-gutools.co.uk/snow.js" @{CSPNonce.attr}></script>
             } else {
                 <script src="@assetsFinder.path("frontend/snow.js")" @{CSPNonce.attr}></script>
