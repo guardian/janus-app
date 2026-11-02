@@ -1,26 +1,28 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "@playwright/test";
 
-const serverURL = "http://localhost:9102";
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? serverURL;
+const isCI = Boolean(process.env.CI);
+const baseURL = "http://localhost:9102";
 
 // eslint-disable-next-line import/no-default-export -- Playwright requires a default export.
 export default defineConfig({
   testDir: "./e2e",
-  forbidOnly: !!process.env.CI,
+  fullyParallel: true,
+  forbidOnly: isCI,
+  retries: isCI ? 2 : 0,
+  reporter: isCI ? [["github"], ["html", { open: "never" }]] : [["list"], ["html", { open: "never" }]],
   use: {
     baseURL,
-    browserName: "chromium",
-    trace: "retain-on-failure",
+    trace: "on",
+    screenshot: "only-on-failure",
   },
   webServer: {
     command: 'sbt "Test / runMain E2ETestServer"',
     cwd: fileURLToPath(new URL("..", import.meta.url)),
     env: { GOOGLE_AUTH_DISABLED: "true" },
     stdout: "pipe",
-    url: `${serverURL}/healthcheck`,
+    url: `${baseURL}/healthcheck`,
     reuseExistingServer: false,
-    gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
-    timeout: 300_000,
+    timeout: 180_000,
   },
 });
