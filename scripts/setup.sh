@@ -2,6 +2,9 @@
 
 set -e
 
+SCRIPT_DIR=$(dirname -- "$(readlink -f -- "$BASH_SOURCE")")
+
+
 # Create a placeholder directory for janus-app config in ~/.gu
 mkdir -p ~/.gu/janus-app/data
 sudo chown -R $(whoami):staff ~/.gu/janus-app/data
@@ -48,9 +51,7 @@ aws --profile security --region eu-west-1 ssm get-parameter \
   --output text \
   | aws configure import --csv file:///dev/stdin
 
-echo "Setup is complete"
 docker compose -f local-dev/docker-compose.yml up -d
 sleep 2
 
-# Create tables - will fail if they exist, but can be run manually with "destroy" or "recreate"
-sbt "setup / run create"
+echo "Setup is complete"
