@@ -12,6 +12,7 @@ import org.scalatest.matchers.should.Matchers
 import play.api.Configuration
 import play.api.libs.json.Json
 
+import java.time.Instant
 import scala.util.Success
 
 class ConfigTest extends AnyFreeSpec with Matchers {
@@ -26,7 +27,15 @@ class ConfigTest extends AnyFreeSpec with Matchers {
     janusData.access.userAccess.keySet shouldEqual Set(username)
     janusData.access.defaultPermissions shouldBe empty
     janusData.superuser.userAccess shouldBe empty
-    janusData.support.supportAccess shouldBe empty
+    janusData.support.supportAccess shouldEqual permissions
+    janusData.support.rota shouldEqual Map(
+      Instant.parse("2026-11-02T00:00:00Z") -> (username, "")
+    )
+    logic.UserAccess.userSupportAccess(
+      DevAuthBypass.defaultIdentity,
+      Instant.now(),
+      janusData.support
+    ) shouldEqual Some(permissions)
     permissions should have size 1
     val permission = permissions.head
     permission.account shouldEqual account
