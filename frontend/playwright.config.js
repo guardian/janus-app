@@ -14,7 +14,7 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: 'sbt "Test / runMain BrowserTestServer"',
+    command: 'sbt "Test / runMain E2eTestServer"',
     cwd: fileURLToPath(new URL("..", import.meta.url)),
     env: { GOOGLE_AUTH_DISABLED: "true" },
     stdout: "pipe",

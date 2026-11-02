@@ -8,12 +8,12 @@ import com.gu.googleauth.{
   GoogleGroupChecker
 }
 import com.gu.janus.JanusConfig
-import com.gu.janus.model._
+import com.gu.janus.model.*
 import com.gu.play.secretrotation.SnapshotProvider
-import models._
+import models.*
 import models.AccountConfigStatus.*
 import models.PasskeyMode
-import play.api.{Configuration, Logging}
+import play.api.{Configuration, Logging, Mode}
 
 import java.io.{File, FileInputStream}
 import java.time.LocalDate

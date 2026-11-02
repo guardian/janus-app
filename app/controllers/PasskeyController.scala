@@ -274,7 +274,7 @@ class PasskeyController(
   ): Try[Unit] = {
     if (
       hasAccess(user, janusData.access) ||
-    hasAccess(user, janusData.superuser)
+      hasAccess(user, janusData.superuser)
     )
       Success(())
     else Failure(JanusException.noAccessFailure(user))

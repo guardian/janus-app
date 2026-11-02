@@ -2,26 +2,21 @@ import com.google.auth.oauth2.ServiceAccountCredentials
 import com.gu.googleauth.GoogleGroupChecker
 import com.gu.play.secretrotation.{DualSecretTransition, SnapshotProvider}
 import com.typesafe.config.ConfigFactory
-import play.api.{
-  Application,
-  ApplicationLoader,
-  Configuration,
-  Environment,
-  Mode
-}
 import play.api.inject.DefaultApplicationLifecycle
+import play.api.*
 import play.core.server.{PekkoHttpServer, ServerConfig}
 
 import java.io.File
 import java.security.KeyPairGenerator
 import java.util.UUID
 
-/** Test-classpath-only server for the accounts browser smoke test. */
-object BrowserTestServer {
+/** Test-classpath-only server for E2E test. */
+object E2ETestServer {
   def main(args: Array[String]): Unit = {
     val server = PekkoHttpServer.fromApplication(
       application(),
-      ServerConfig(port = Some(9102), address = "127.0.0.1", mode = Mode.Test)
+//      ServerConfig(port = Some(9102), address = "127.0.0.1", mode = Mode.Test)
+      ServerConfig(port = Some(9102), mode = Mode.Test)
     )
     val _ = sys.addShutdownHook(server.stop())
   }
@@ -53,7 +48,6 @@ object BrowserTestServer {
         new GoogleGroupChecker("browser-test@example.invalid", credentials)
       }
     }
-
     components.application
   }
 }
