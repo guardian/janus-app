@@ -68,7 +68,9 @@ class AppComponents(context: ApplicationLoader.Context)
     Config.googleSettings(configuration, secretStateSupplier, mode)
   lazy val googleGroupChecker = Config.googleGroupChecker(configuration)
   val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
-  given dynamodDB: DynamoDbClient =
+  given dynamodDB: DynamoDbClient = createDynamoDbClient()
+
+  protected def createDynamoDbClient(): DynamoDbClient =
     if (context.environment.mode == play.api.Mode.Prod)
       DynamoDbClient.builder().region(EU_WEST_1).build()
     else Clients.localDb

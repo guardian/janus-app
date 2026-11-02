@@ -1,0 +1,48 @@
+services:
+  dynamodb:
+    image: amazon/dynamodb-local@sha256:6ada631ec7aa5fc83446855eb17233e3dad184fec47477e8140c6c569cfe0c86
+    ports:
+      - "127.0.0.1:18000:8000"
+    command: "-jar DynamoDBLocal.jar -inMemory -sharedDb -disableTelemetry"
+
+  dynamodb-seed:
+    image: public.ecr.aws/aws-cli/aws-cli@sha256:d557b3524475d70dd3104cf44d96568ee3188897b73a6ece2b37aa50e1af362f
+    environment:
+      AWS_ENDPOINT_URL: http://dynamodb:8000
+      AWS_DEFAULT_REGION: eu-west-1
+      AWS_ACCESS_KEY_ID: fakeMyKeyId
+      AWS_SECRET_ACCESS_KEY: fakeSecretAccessKey
+      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_MAX_ATTEMPTS: "1"
+      AWS_PAGER: ""
+    volumes:
+      - ../scripts/dynamodb_create_tables.sh:/scripts/dynamodb_create_tables.sh:ro
+    entrypoint: ["/usr/bin/timeout", "120s", "/bin/bash", "-euc"]
+    command:
+      - |
+        for attempt in {1..30}; do
+          if aws dynamodb list-tables --cli-connect-timeout 2 --cli-read-timeout 2 >/dev/null; then
+            break
+          fi
+          if [ "$$attempt" -eq 30 ]; then
+            echo "E2E DynamoDB did not become ready" >&2
+            exit 1
+          fi
+          sleep 1
+        done
+        echo "Creating isolated E2E tables"
+        bash /scripts/dynamodb_create_tables.sh >/dev/null
+        for table in AuditTrail Passkeys PasskeyChallenges; do
+          aws dynamodb wait table-exists --table-name "$$table"
+        done
+        for attempt in {1..30}; do
+          status=$$(aws dynamodb describe-table --table-name AuditTrail \
+            --query 'Table.GlobalSecondaryIndexes[?IndexName==`AuditTrailByUser`].IndexStatus | [0]' \
+            --output text)
+          if [ "$$status" = ACTIVE ]; then
+            exit 0
+          fi
+          sleep 1
+        done
+        echo "E2E audit user index did not become ACTIVE" >&2
+        exit 1

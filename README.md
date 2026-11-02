@@ -126,16 +126,16 @@ mise exec -- npm --prefix frontend run test:e2e
 ```
 
 The npm script builds the frontend assets and runs Playwright using the isolated
-`E2ETestServer` on port 9102, both locally and in CI. No local application
-configuration, Docker or development HTTPS proxy is needed. The browser defaults
-to `http://localhost:9102`, and the server readiness check uses
+`E2ETestServer` on port 9102, both locally and in CI. Docker with Compose must be
+available. No local application configuration or development HTTPS proxy is
+needed. The browser defaults to `http://localhost:9102`, and the server readiness check uses
 `http://localhost:9102/healthcheck`. The E2E tests bypass Google auth.
 
 The isolated test app can run alongside the Janus development app on port 9100
 and the Playwright UI on port 9101. Playwright deliberately does not reuse an
 existing server on its test port, and stops its server when the tests finish.
 
-Local npm runs and the separate `browser-tests` CI job use `E2ETestServer`, available only on
+Local npm runs and the separate `e2e-tests` CI job use `E2ETestServer`, available only on
 the test classpath, and the fixtures in `test/resources/e2e*.conf`. It runs
 the real application in Play's test mode with an in-memory
 signing key and synthetic Google credentials. Test mode serves the built frontend assets without a development HTTPS proxy.
@@ -146,6 +146,28 @@ disabled only in `e2e.conf`. The fixture is for UI tests, not real AWS federatio
 `dev-user` is also in the current support slot with the same deny-all permission.
 The slot starts on 2 November 2026 and has no successor, so support access does
 not expire.
+
+Playwright starts `scripts/run-e2e-server.sh`, which provisions an isolated,
+in-memory DynamoDB Local container on `127.0.0.1:18000`, creates the tables using
+`scripts/dynamodb_create_tables.sh`, then starts the test server. It does not use
+or reset the development database on port 8000. Reserve ports 9102 and 18000 for
+the E2E run; an existing server or database on those ports is not reused.
+The same launcher is used locally and in CI, and direct `sbt "Test / runMain E2ETestServer"`
+is not a complete startup command without its database.
+
+Audit tests use real controllers and database queries. The server seeds synthetic
+Console and Credentials entries in the week beginning 11 May 2020; the week
+beginning 4 May 2020 is empty. Account navigation, exact rendered rows, empty
+history and username drill-down are covered. This tests audit reads, not audit
+creation through real AWS federation. No real AWS credentials are needed.
+
+Each run owns a unique Compose project named `janus-e2e-<pid>-<random>`, printed at startup.
+Normal exit, startup failure and Ctrl-C remove its containers and network.
+UI mode retains the database for reruns within the same UI session; reconnecting
+or restarting the server creates fresh fixtures. If the process is forcibly
+killed, recover by running
+`docker compose --project-name <printed-project-name> --file test/docker-compose.e2e.yml down`.
+Use only the project name from that run, not the development Compose project.
 
 The `CI` environment variable does not change the test application or port.
 It only enables the configuration's `forbidOnly` safeguard, which rejects

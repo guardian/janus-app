@@ -14,13 +14,13 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: 'sbt "Test / runMain E2ETestServer"',
+    command: "bash scripts/run-e2e-server.sh",
     cwd: fileURLToPath(new URL("..", import.meta.url)),
     env: { GOOGLE_AUTH_DISABLED: "true" },
     stdout: "pipe",
     url: `${serverURL}/healthcheck`,
     reuseExistingServer: false,
-    gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
+    gracefulShutdown: { signal: "SIGTERM", timeout: 30_000 },
     timeout: 300_000,
   },
 });
