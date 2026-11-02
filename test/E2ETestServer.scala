@@ -26,7 +26,7 @@ object E2ETestServer {
       Environment(new File("."), getClass.getClassLoader, Mode.Test)
     val context = ApplicationLoader.Context(
       environment,
-      Configuration(ConfigFactory.load("browser")),
+      Configuration(ConfigFactory.load("e2e")),
       new DefaultApplicationLifecycle(),
       None
     )
