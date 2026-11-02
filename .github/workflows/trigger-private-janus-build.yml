@@ -98,6 +98,7 @@ jobs:
         run: |
           version=$(node -p "require('@playwright/test/package.json').version")
           echo "version=$version" >> "$GITHUB_OUTPUT"
+        working-directory: frontend
 
       - name: Cache Playwright browser
         uses: actions/cache@v6
