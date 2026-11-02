@@ -272,9 +272,11 @@ class PasskeyController(
   private def verifyHasAccess(
       user: UserIdentity
   ): Try[Unit] = {
-    if hasAccess(user, janusData.access) ||
-    hasAccess(user, janusData.superuser)
-    then Success(())
+    if (
+      hasAccess(user, janusData.access) ||
+      hasAccess(user, janusData.superuser)
+    )
+      Success(())
     else Failure(JanusException.noAccessFailure(user))
   }
 
