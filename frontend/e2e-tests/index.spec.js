@@ -1,4 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.js";
+
+test.use({ janusData: "index-permission" });
 
 test("shows the test-only AWS account permission", async ({ page }) => {
   const [stylesheet, script] = await Promise.all([

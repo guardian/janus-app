@@ -113,6 +113,8 @@ lazy val root: Project = (project in file("."))
     // local development
     playDefaultPort := 9100,
     Test / fork := false,
+    // Avoid stale context classloaders on Scala's global pool across test runs.
+    Test / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.Flat,
     Test / unmanagedClasspath += Attributed.blank((Assets / packageBin).value),
     Test / run / fork := true,
     Test / run / javaOptions := Seq("-Dconfig.resource=e2e.conf"),

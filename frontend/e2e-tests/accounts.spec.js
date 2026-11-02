@@ -1,4 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.js";
+
+test.use({ janusData: "accounts-list" });
 
 test("shows the accounts page", async ({ page }) => {
   const [stylesheet, script] = await Promise.all([
@@ -19,9 +21,9 @@ test("shows the accounts page", async ({ page }) => {
   ).toBeVisible();
   const testAccount = page
     .getByRole("row")
-    .filter({ hasText: "Test AWS Account" });
-  await expect(testAccount).toContainText("000000000000");
+    .filter({ hasText: "Mobile Apps AWS Account" });
+  await expect(testAccount).toContainText("000000000002");
   await expect(
     testAccount.getByRole("link", { name: "1", exact: true }),
-  ).toHaveAttribute("href", "/users/account/test-aws-account");
+  ).toHaveAttribute("href", "/users/account/test-aws-account-2");
 });

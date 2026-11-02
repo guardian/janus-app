@@ -79,7 +79,7 @@ class AppComponents(context: ApplicationLoader.Context)
       DynamoDbClient.builder().region(EU_WEST_1).build()
     else Clients.localDb
 
-  val janusData = Config.janusData(configuration)
+  lazy val janusData = Config.janusData(configuration)
 
   Config.validateAccountConfig(janusData, configuration) match {
     case FederationConfigError(causedBy) =>
