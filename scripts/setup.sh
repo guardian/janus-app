@@ -51,8 +51,7 @@ aws --profile security --region eu-west-1 ssm get-parameter \
   --output text \
   | aws configure import --csv file:///dev/stdin
 
-echo "Setup is complete"
 docker compose -f local-dev/docker-compose.yml up -d
 sleep 2
 
-"$SCRIPT_DIR/dynamodb_create_tables.sh"
+echo "Setup is complete"

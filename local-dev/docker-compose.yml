@@ -1,16 +1,25 @@
 services:
-  dynamo:
-    container_name: local-dynamodb
+  dynamodb:
     image: amazon/dynamodb-local
-    networks:
-      - local-dynamodb
     ports:
       - "8000:8000"
     volumes:
       - ${HOME}/.gu/janus-app/data:/home/dynamodblocal/data
     working_dir: /home/dynamodblocal
     command: "-jar DynamoDBLocal.jar -sharedDb -dbPath data"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://localhost:8000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-networks:
-  local-dynamodb:
-    name: local-dynamodb
+  dynamodb-seed:
+    image: public.ecr.aws/aws-cli/aws-cli:latest
+    depends_on:
+      dynamodb:
+        condition: service_started
+    environment:
+      AWS_ENDPOINT_URL: http://dynamodb:8000
+    volumes:
+      - ../scripts/dynamodb_create_tables.sh:/scripts/dynamodb_create_tables.sh
+    entrypoint: ["/scripts/dynamodb_create_tables.sh"]
