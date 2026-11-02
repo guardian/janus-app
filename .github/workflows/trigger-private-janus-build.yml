@@ -67,11 +67,64 @@ jobs:
           only-summary: 'false'
           fail-on-error: 'true'
 
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      CI: "true"
+      AWS_EC2_METADATA_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Scala
+        uses: guardian/setup-scala@c9f10cca1674ecb2ae7ee739786ef9f0cdb9d07c # v2.0.0
+
+      - name: Install Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.tool-versions'
+          cache: 'npm'
+          cache-dependency-path: 'frontend/package-lock.json'
+
+      - name: Install Node dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: |
+          version=$(node -p "require('@playwright/test/package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+        working-directory: frontend
+
+      - name: Cache Playwright browser
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps --only-shell chromium
+        working-directory: frontend
+
+      - name: Run tests
+        run: npm run test:e2e
+        working-directory: frontend
+
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+
   # Trigger a workflow in the guardian/janus repository, if and only if:
-  #   - The Scala build is successful
+  #   - The Scala build and E2E tests are successful
   #   - We're on the 'main' branch
   trigger-workflow:
-    needs: build
+    needs: [build, e2e-tests]
     if: ${{ github.ref == 'refs/heads/main' }}
 
     runs-on: ubuntu-latest
