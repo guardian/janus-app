@@ -131,8 +131,8 @@ configuration, Docker or development HTTPS proxy is needed. The browser defaults
 to `http://localhost:9102`, and the server readiness check uses
 `http://localhost:9102/healthcheck`. The E2E tests bypass Google auth.
 
-The isolated test app can run alongside the Janus development app on port 9100.
-Playwright deliberately does not reuse an
+The isolated test app can run alongside the Janus development app on port 9100
+and the Playwright UI on port 9101. Playwright deliberately does not reuse an
 existing server on its test port, and stops its server when the tests finish.
 
 The npm script uses `E2ETestServer`, available only on
@@ -151,6 +151,17 @@ The `CI` environment variable does not change the test application or port.
 It enables the configuration's `forbidOnly` safeguard, which rejects
 accidentally committed focused tests (`test.only`), enables two retries and
 selects GitHub and HTML reporters.
+
+To use the Playwright UI, run:
+
+```shell
+mise exec -- npm --prefix frontend run test:e2e:ui
+```
+
+The UI script uses the same asset build and isolated server as `test:e2e`.
+It prints `http://localhost:9101/` for opening in your host browser. Use this
+root URL rather than `/trace/uiMode.html` directly: the redirect supplies the
+WebSocket connection details needed to load the tests.
 
 ## Configuration
 
