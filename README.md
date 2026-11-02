@@ -51,6 +51,9 @@ access to AWS resources.
 
 Janus is a Scala application built on the Play Framework with a Node frontend build.
 
+Scala code uses braces rather than significant indentation. Both the compiler
+(`-no-indent`) and Scalafmt enforce this in the main build and the example project.
+
 Wherever you run Janus, you need to provide three configuration files:
 
 * A "janus data" configuration file that controls AWS Access
