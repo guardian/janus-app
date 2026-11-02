@@ -1,8 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("shows the index page for a user without permissions", async ({
-  page,
-}) => {
+test("shows the test-only AWS account permission", async ({ page }) => {
   const [stylesheet, script] = await Promise.all([
     page.waitForResponse(/\/[^/]*main\.css$/),
     page.waitForResponse(/\/[^/]*janus\.js$/),
@@ -12,19 +10,21 @@ test("shows the index page for a user without permissions", async ({
   expect(stylesheet.ok()).toBe(true);
   expect(script.ok()).toBe(true);
   await expect(page).toHaveURL("/");
-  await expect(page).toHaveTitle("Home - Janus");
+  await expect(page).toHaveTitle("Your permissions - Janus");
   await expect(
-    page.getByRole("heading", { name: "No permissions", exact: true }),
+    page.getByText("Test AWS Account", { exact: true }),
   ).toBeVisible();
-  await expect(
-    page.getByText(
-      "You do not have any permissions. If this doesn't seem right, you can check your permissions in Janus' configuration.",
-    ),
-  ).toBeVisible();
+  await expect(page.getByText("E2E test only - no AWS access")).toBeVisible();
+  const credentialsLink = page.getByRole("link", {
+    name: "vpn_key",
+    exact: true,
+  });
+  await expect(credentialsLink).toBeVisible();
+  await expect(credentialsLink).toHaveAttribute(
+    "href",
+    /\/credentials\?permissionId=test-aws-account-e2e-deny-all(?:&|$)/,
+  );
   await expect(
     page.getByRole("link", { name: "Dev User", exact: true }),
   ).toBeVisible();
-  const logoutLink = page.getByRole("link", { name: "Not you? Logout here." });
-  await expect(logoutLink).toBeVisible();
-  await expect(logoutLink).toHaveAttribute("href", "/logout");
 });

@@ -140,6 +140,10 @@ the test classpath, and the fixtures in `test/resources/e2e*.conf`. It runs
 the real application in Play's test mode with an in-memory
 signing key and synthetic Google credentials. Test mode serves the built frontend assets without a development HTTPS proxy.
 
+The bypass user has a test-only deny-all permission for a dummy `test-aws-account`
+account (`000000000000`), not the real AWS account. Passkey authentication is
+disabled only in `e2e.conf`. The fixture is for UI tests, not real AWS federation.
+
 The `CI` environment variable does not change the test application or port.
 It only enables the configuration's `forbidOnly` safeguard, which rejects
 accidentally committed focused tests (`test.only`) in CI.
@@ -151,7 +155,9 @@ mise exec -- npm --prefix frontend run test:e2e:ui
 ```
 
 The UI script uses the same asset build and isolated server as `test:e2e`.
-Open `http://localhost:9101` in your host browser.
+It prints `http://localhost:9101/` for opening in your host browser. Use this
+root URL rather than `/trace/uiMode.html` directly: the redirect supplies the
+WebSocket connection details needed to load the tests.
 
 ## Configuration
 

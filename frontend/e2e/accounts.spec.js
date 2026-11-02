@@ -17,4 +17,11 @@ test("shows the accounts page", async ({ page }) => {
   await expect(
     page.getByRole("link", { name: "Dev User", exact: true }),
   ).toBeVisible();
+  const testAccount = page
+    .getByRole("row")
+    .filter({ hasText: "Test AWS Account" });
+  await expect(testAccount).toContainText("000000000000");
+  await expect(
+    testAccount.getByRole("link", { name: "1", exact: true }),
+  ).toHaveAttribute("href", "/users/account/test-aws-account");
 });
