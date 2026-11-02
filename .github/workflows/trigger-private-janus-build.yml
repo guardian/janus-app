@@ -53,7 +53,6 @@ jobs:
           sbt
           compile
           Test/compile
-          setup/compile
           scalafmtCheckAll
           scalafmtSbtCheck
           test
