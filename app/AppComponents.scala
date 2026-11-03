@@ -57,7 +57,9 @@ class AppComponents(context: ApplicationLoader.Context)
         // Old secret values are still respected for an overlapDuration.
         overlapDuration = Duration.ofHours(2)
       ),
-      s"/$stage/security/janus/play.http.secret.key",
+
+      if (Config.isLocal) s"/DEV/security/janus/play.http.secret.key"
+      else s"/$stage/security/janus/play.http.secret.key",
       parameterstore.AwsSdkV2(Clients.ssm)
     )
 
@@ -67,7 +69,7 @@ class AppComponents(context: ApplicationLoader.Context)
   val googleGroupChecker = Config.googleGroupChecker(configuration)
   val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
   given dynamodDB: DynamoDbClient =
-    if (context.environment.mode == play.api.Mode.Prod)
+    if (mode == play.api.Mode.Prod && !Config.isLocal)
       DynamoDbClient.builder().region(EU_WEST_1).build()
     else Clients.localDb
 

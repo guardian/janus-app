@@ -185,4 +185,8 @@ object Config extends Logging {
       extends Throwable(
         s"$message at $location"
       )
+
+  // Overide PROD mode for local development in Docker Containers
+  val isLocal: Boolean = sys.env.get("IS_LOCAL").exists(_.toBoolean)
+
 }
