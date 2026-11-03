@@ -67,7 +67,8 @@ val pekkoSerializationJacksonOverrides = Seq(
  * 3. If no earlier version appears in the dependency list, the entry can be removed.
  */
 val safeTransitiveDependencies = Seq(
-  // add patched transitive dependencies here...
+  // CVE-2026-102554: uncontrolled memory allocation during deserialisation.
+  "com.google.guava" % "guava" % "33.7.2-jre"
 )
 
 lazy val root: Project = (project in file("."))
@@ -123,6 +124,9 @@ lazy val root: Project = (project in file("."))
     // local development
     playDefaultPort := 9100,
     Test / fork := false,
+    Test / unmanagedClasspath += Attributed.blank((Assets / packageBin).value),
+    Test / run / fork := true,
+    Test / run / javaOptions := Seq("-Dconfig.resource=e2e.conf"),
 
     // Settings for sbt release, which gets run from the root in the reusable workflow,
     // the configTools module (below) is the one that will be published.

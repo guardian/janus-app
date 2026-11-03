@@ -117,6 +117,38 @@ The frontend dev-server will automatically recompile and reload when changes are
 
 The application's database is started by the [DockerComposeHook](https://github.com/guardian/janus-app/blob/6ce4579bc49e15753bc8f4f3a61c91f90e785940/project/DockerComposeHook.scala).
 
+#### End-to-end tests
+
+Run the Playwright E2E tests from the repository root:
+
+```shell
+mise exec -- npm --prefix frontend run test:e2e
+```
+
+The npm script builds the frontend assets and runs Playwright using the isolated
+`E2ETestServer` on port 9102. No local application
+configuration, Docker or development HTTPS proxy is needed. The browser defaults
+to `http://localhost:9102`, and the server readiness check uses
+`http://localhost:9102/healthcheck`. The E2E tests bypass Google auth.
+
+The isolated test app can run alongside the Janus development app on port 9100.
+Playwright deliberately does not reuse an
+existing server on its test port, and stops its server when the tests finish.
+
+The npm script uses `E2ETestServer`, available only on
+the test classpath, and the fixtures in `test/resources/e2e*.conf`. It runs
+the real application in Play's test mode with an in-memory
+signing key and synthetic Google credentials. Test mode serves the built frontend assets without a development HTTPS proxy.
+
+The bypass user has a test-only deny-all permission for a dummy `test-aws-account`
+account (`000000000000`), not the real AWS account. Passkey authentication is
+disabled only in `e2e.conf`. The fixture is for UI tests, not real AWS federation.
+
+The `CI` environment variable does not change the test application or port.
+It enables the configuration's `forbidOnly` safeguard, which rejects
+accidentally committed focused tests (`test.only`), enables two retries and
+selects GitHub and HTML reporters.
+
 ## Configuration
 
 ### Janus' AWS config
