@@ -54,4 +54,8 @@ aws --profile security --region eu-west-1 ssm get-parameter \
 docker compose -f local-dev/docker-compose.yml up -d
 sleep 2
 
+# Prepare for Playwright E2E testing
+npm --prefix frontend install
+npm --prefix frontend exec -- playwright install --with-deps chromium
+
 echo "Setup is complete"
