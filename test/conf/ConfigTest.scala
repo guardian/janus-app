@@ -1,5 +1,6 @@
 package conf
 
+import com.gu.googleauth.DevAuthBypass
 import com.gu.janus.model.*
 import com.typesafe.config.ConfigFactory
 import conf.Config.JanusConfigurationException
@@ -9,10 +10,40 @@ import models.PasskeyMode
 import org.scalatest.freespec.AnyFreeSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.Configuration
+import play.api.libs.json.Json
 
 import scala.util.Success
 
 class ConfigTest extends AnyFreeSpec with Matchers {
+  "E2E fixture grants only deny-all access to the bypass user using a dummy account" in {
+    val config = Configuration(ConfigFactory.load("e2e"))
+    val janusData = Config.janusData(config)
+    val username = logic.UserAccess.username(DevAuthBypass.defaultIdentity)
+    val account = AwsAccount("Test AWS Account", "test-aws-account")
+    val permissions = janusData.access.userAccess(username).permissions
+
+    janusData.accounts shouldEqual Set(account)
+    janusData.access.userAccess.keySet shouldEqual Set(username)
+    janusData.access.defaultPermissions shouldBe empty
+    janusData.superuser.userAccess shouldBe empty
+    janusData.support.supportAccess shouldBe empty
+    permissions should have size 1
+    val permission = permissions.head
+    permission.account shouldEqual account
+    permission.label shouldEqual "e2e-deny-all"
+    permission.shortTerm shouldBe true
+    permission.managedPolicyArns shouldBe None
+    permission.policy.map(Json.parse) shouldEqual Some(
+      Json.parse(
+        """{"Version":"2012-10-17","Statement":[{"Effect":"Deny","Action":"*","Resource":"*"}]}"""
+      )
+    )
+    Config.roleArn(account.authConfigKey, config) shouldEqual
+      "arn:aws:iam::000000000000:role/e2e-deny-all"
+    Config.validateAccountConfig(janusData, config) shouldEqual ConfigSuccess
+    Config.passkeyMode(config) shouldEqual PasskeyMode.Disabled
+  }
+
   "roleArn" - {
     "is extracted from the application configuration for that account" in {
       val config = Configuration(
