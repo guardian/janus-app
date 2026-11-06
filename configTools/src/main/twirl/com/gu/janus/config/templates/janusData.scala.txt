@@ -1,0 +1,95 @@
+@import com.gu.janus.model.{JanusData, Permission, DeveloperPolicyGrant}
+
+@(janusData: JanusData, allPermissions: Set[Permission])
+
+janus {
+    @janusData.permissionsRepo.map { repoUrl =>
+        permissionsRepo = "@repoUrl"
+    }
+
+    accounts = [
+        @for(account <- janusData.accounts){
+            { name = "@account.name", key = "@account.authConfigKey" },
+        }
+    ]
+
+    support {
+        supportAccess = [
+            @for(permission <- janusData.support.supportAccess){
+                @permissionReference(permission),
+            }
+        ]
+
+        rota = [
+            @for((startTime, (user1, user2)) <- janusData.support.rota){
+                {
+                    startTime = "@startTime"
+                    supporting = [ "@user1", "@user2" ]
+                },
+            }
+        ]
+    }
+
+    access {
+        defaultPermissions = [
+            @for(permission <- janusData.access.defaultPermissions){
+                @permissionReference(permission),
+            }
+        ]
+
+        acl {
+            @for((user, aclEntry) <- janusData.access.userAccess){
+                "@user" = [
+                    @for(permission <- aclEntry.permissions) {
+                        @permissionReference(permission)
+                    }
+                    @for(grant <- aclEntry.policyGrants) {
+                        { grantName = """@grant.name""", grantId = "@grant.id", shortTerm = @grant.shortTerm }
+                    }
+                ]
+            },
+        }
+    }
+
+    superuser {
+        acl {
+            @for((user, aclEntry) <- janusData.superuser.userAccess){
+                "@user" = [
+                    @for(permission <- aclEntry.permissions) {
+                        @permissionReference(permission)
+                    }
+                    @for(grant <- aclEntry.policyGrants) {
+                        { grantName = """@grant.name""", grantId = "@grant.id", shortTerm = @grant.shortTerm }
+                    }
+                ]
+            }
+        }
+    }
+
+    permissions = [
+        @for(permission <- allPermissions){
+            {
+                account = "@permission.account.authConfigKey"
+                label = "@permission.label"
+                description = """@permission.description"""
+                shortTerm = @if(permission.shortTerm) {true} else {false}
+                @permission.policy match {
+                    case Some(policy) => {
+                policy = """@policy"""
+                    }
+                    case None => {}
+                }
+                @permission.managedPolicyArns match {
+                    case Some(managedPolicyArns) => {
+                managedPolicyArns = [
+                    @for(arn <- managedPolicyArns) {
+                    """@arn""",
+                    }
+                ]
+                    }
+                    case None => {}
+                }
+            },
+        }
+    ]
+}

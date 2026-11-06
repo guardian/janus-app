@@ -1,0 +1,36 @@
+@import com.gu.janus.model.JanusData
+@import models.AwsAccountAccess
+@import com.gu.googleauth.UserIdentity
+@import play.api.Mode
+@import java.time.Instant
+
+@(accountAccesses: List[AwsAccountAccess],
+  activeSupportUsers: Option[(Instant, (Option[String], Option[String]))],
+    nextSupportUsers: Option[(Instant, (Option[String], Option[String]))],
+  futureSupportDates: List[(Instant, String)], user: UserIdentity, janusData: JanusData
+)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@main("Support", Some(user), janusData) {
+    <div class="container">
+        <h1 class="header orange-text">Support</h1>
+
+        @fragments.supportUsers(user.username, activeSupportUsers, nextSupportUsers, futureSupportDates)
+
+        <div class="row">
+            <div class="col s12">
+                <div class="card-panel green darken-2">
+                    <span class="white-text">
+                        Being on the support rota gives you access to the following
+                        critical AWS accounts. Please use this with care and if you
+                        need to use this access try to let the team know what you
+                        are doing to their account.
+                        <br />
+                        Please note that Janus access is logged and visible to all users.
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        @fragments.awsAccounts(accountAccesses, allowFavs = false)
+    </div>
+}

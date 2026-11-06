@@ -1,0 +1,176 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+@import logic.UserAccess.username
+@import logic.ViewHelpers.BannerLevel
+@import models.PasskeyMode
+@import play.api.Mode
+@import java.time.Instant
+
+@(
+        user: UserIdentity,
+        janusData: JanusData,
+        passkeys: Seq[models.PasskeyMetadata],
+        dateFormat: Instant => String,
+        timeFormat: Instant => String,
+        passkeyMode: PasskeyMode,
+        passkeyManagerLink: String,
+        passkeyManagerLinkText: String
+)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@main("User account", Some(user), janusData) {
+
+    @if(passkeys.isEmpty) {
+        @fragments.bannerCta("No passkey registered", BannerLevel.Error) {
+            Janus now requires a passkey to access AWS resources.
+        } {
+            <a href="#registered-passkeys">Register passkey</a>
+        }
+    }
+
+    <div class="container" id="user-account-container">
+        <h1 class="header orange-text">Account</h1>
+
+        <p>You are logged in as <strong>@username(user)</strong>.</p>
+
+        <h3 class="header orange-text">Passkeys</h3>
+
+        <p>Passkeys are a secure way to authenticate sensitive actions. Janus uses them as an extra layer
+            of security before allowing you to access AWS&nbsp;credentials or the AWS&nbsp;console. You need
+            at least one passkey to access AWS, but we recommend registering two.</p>
+
+        <div class="passkey-advice-container">
+            <div class="passkey-advice-item">
+                <div class="passkey-advice-item__summary">
+                    A portable passkey gives you resilience and lets you sign in from other devices.
+                </div>
+                <div class="passkey-advice-item__body">
+                    <div class="passkey-advice-item__visual">
+                        <img class="passkey-advice-item__visual-image" src="@assetsFinder.path("images/titan-key.png")" alt="Titan security key" />
+                    </div>
+                    <p>Titan security keys are available from the IT service desk in any office.
+                        This is the preferred and best-supported option.</p>
+                    <p class="passkey-advice-item__notice grey-text text-darken-1">
+                        If you use a phone, the Microsoft Authenticator app will not work as it can only create
+                        passkeys for Microsoft accounts. Instead, use your phone's built-in passkey storage, such
+                        as Apple&nbsp;Passwords (iPhone) or Google&nbsp;Password&nbsp;Manager (Android).
+                    </p>
+                </div>
+            </div>
+
+            <div class="passkey-advice-item">
+                <div class="passkey-advice-item__summary">
+                    An on-device passkey is the fastest and simplest option for everyday use.
+                </div>
+                <div class="passkey-advice-item__body">
+                    <div class="passkey-advice-item__visual">
+                        <i class="material-icons passkey-advice-item__visual-icon" aria-hidden="true">fingerprint</i>
+                    </div>
+                    <p>On a Mac, register a passkey in the Chrome browser to use Touch&nbsp;ID.</p>
+                    <p class="passkey-advice-item__notice grey-text text-darken-1">
+                        On Windows, a fingerprint passkey may not be available, as
+                        Windows&nbsp;Hello is disabled by default. Use a portable passkey instead.
+                    </p>
+                    <p class="passkey-advice-item__notice grey-text text-darken-1">
+                        Firefox doesn't yet have its own passkey-management system, so you'll either need to use
+                        Google&nbsp;Chrome for Janus or stick to using a portable passkey.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <p>Please contact <a href="@passkeyManagerLink">@passkeyManagerLinkText</a> if you have any problems
+            registering or using passkeys.</p>
+
+        <div class="row">
+            <div class="col s12">
+                <h4 id="registered-passkeys" class="header orange-text">Registered passkeys</h4>
+            </div>
+            <div class="col s12">
+                <div class="card-panel">
+                    @if(passkeys.nonEmpty) {
+                        <table class="striped responsive-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Added</th>
+                                    <th>Last used</th>
+                                    <th>Delete</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for(passkey <- passkeys) {
+                                    <tr>
+                                        <td data-passkey-name="@{passkey.name}">@{passkey.name}</td>
+                                        <td>
+                                            @passkey.authenticator.flatMap(_.icon).map { icon =>
+                                                <img class="passkey-authenticator-icon" src="@icon" alt="@{passkey.authenticator.map(_.description).getOrElse("Unknown authenticator")} icon" />
+                                            }
+                                            @{passkey.authenticator.map(_.description).getOrElse("Unknown")}
+                                        </td>
+                                        <td>@{dateFormat(passkey.registrationTime)}</td>
+                                        <td>@{passkey.lastUsedTime.map(timeFormat).getOrElse("Never")}</td>
+                                        <td>
+                                            <button class="btn delete-passkey-btn" 
+                                                
+                                                    data-passkey-id="@{passkey.id}" 
+                                                    data-passkey-name="@{passkey.name}">
+                                                <i class="material-icons">delete</i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    } else {
+                        @passkeyMode match {
+                            case PasskeyMode.Required => {
+                                <div class="center-align">
+                                    <div class="alert-box">
+                                        <i class="material-icons medium red-text">error</i>
+                                        <h5>No Passkeys Registered</h5>
+                                        <p>Before you can access AWS credentials or console you must register at least one passkey.</p>
+                                    </div>
+                                </div>
+                            }
+                            case PasskeyMode.IfUserHasPasskey => {
+                                <p>You have no passkeys registered.</p>
+                                <p>Registering a passkey will enable passkey authentication for your account.</p>
+                            }
+                            case PasskeyMode.Disabled => {
+                                <p>You have no passkeys registered.</p>
+                            }
+                        }
+                    }
+                    <div class="section">
+                        <button id="register-passkey" class="btn">
+                            Register a new passkey
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="passkey-name-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal_label" inert>
+        <div class="modal-content">
+            <h4 class="orange-text" id="modal_label">Passkey name</h4>
+            <p><strong>Give this passkey a name to help you recognise it later.</strong></p><p>Use only letters, numbers, spaces, underscores and hyphens, max 50 characters.</p>
+            <div class="input-field">
+                <input type="text" id="passkey-name" class="validate" placeholder="e.g. Macbook Chrome, Phone" required>
+                <div id="passkey-name-error" class="error-message red-text hidden">Please enter a name for your passkey</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <a href="#!" id="cancel-button" class="modal-close waves-effect waves-light btn-flat">Cancel</a>
+            <a href="#!" id="submit-button" class="waves-effect waves-light btn orange">Save</a>
+        </div>
+    </div>
+    
+    <!-- Flash messages passed via data attributes to be handled by JavaScript -->
+    <div id="flash-message" 
+         class="hidden"
+         data-success="@request.flash.get("success").getOrElse("")"
+         data-info="@request.flash.get("info").getOrElse("")"
+         data-error="@request.flash.get("error").getOrElse("")">
+    </div>
+}

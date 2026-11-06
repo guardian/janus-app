@@ -1,0 +1,43 @@
+# This repo contains an Example app in its own standalone SBT project.
+# So this CI workflow runs whenever something changes in that project.
+name: CI for the Example app
+
+on:
+  # When a PR is merged
+  push:
+    branches:
+      - main
+    paths:
+      - example/**
+
+  # When a PR is raised (for example, dependency updates from Dependabot or Scala Steward)
+  pull_request:
+    paths:
+      - example/**
+
+  # When a workflow is manually triggered
+  workflow_dispatch:
+
+jobs:
+  # Compile and run tests
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        working-directory: ./example
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Scala
+        uses: guardian/setup-scala@v2
+      - run: >
+          sbt 
+          compile 
+          Test/compile 
+          scalafmtCheckAll 
+          scalafmtSbtCheck 
+          test

@@ -1,0 +1,74 @@
+@import com.gu.janus.model.{AwsAccount, JanusData}
+@import com.gu.googleauth.UserIdentity
+@import play.api.Mode
+@import scala.util.Try
+
+@import com.gu.janus.model.Permission
+@import scala.util.Failure
+@import scala.util.Success
+@import logic.ViewHelpers
+@import models.AccountInfo
+@(accountName: String, accountUsers: List[String], user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@main("Accounts", Some(user), janusData) {
+    <div class="container" xmlns="http://www.w3.org/1999/html">
+        <h1 class="header orange-text">Users for @{accountName}</h1>
+        <div class="users">
+
+            @if(accountUsers.isEmpty) {
+                <p>There are no Janus-managed users for this account.</p>
+            } else {
+                @* We generate 1, 2 and 3 col versions of this and show/hide responsively *@
+                <div class="hide-on-med-and-up">
+                    @* 1 column on small devices *@
+                    <div class="row">
+                        <div class="col s12">
+                            <ul class="collection">
+                            @for(user <- accountUsers) {
+                                <li class="collection-item">@user</li>
+                            }
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="show-on-medium hide-on-large-only hide-on-small-and-down">
+                    @* 2 columns on medium devices *@
+                    <div class="row">
+                        <ul class="collection col m6">
+                        @for(user <- ViewHelpers.getColumn(2, accountUsers, 0)) {
+                            <li class="collection-item">@user</li>
+                        }
+                        </ul>
+                        <ul class="collection col m6">
+                        @for(user <- ViewHelpers.getColumn(2, accountUsers, 1)) {
+                            <li class="collection-item">@user</li>
+                        }
+                        </ul>
+                    </div>
+                </div>
+                <div class="hide-on-med-and-down">
+                    @* 3 columns on large devices *@
+                    <div class="row">
+                        <ul class="collection col l4">
+                        @for(user <- ViewHelpers.getColumn(3, accountUsers, 0)) {
+                            <li class="collection-item">@user</li>
+                        }
+                        </ul>
+                        <ul class="collection col l4">
+                        @for(user <- ViewHelpers.getColumn(3, accountUsers, 1)) {
+                            <li class="collection-item">@user</li>
+                        }
+                        </ul>
+                        <ul class="collection col l4">
+                        @for(user <- ViewHelpers.getColumn(3, accountUsers, 2)) {
+                            <li class="collection-item">@user</li>
+                        }
+                        </ul>
+                    </div>
+                </div>
+            }
+
+        </div>
+
+    </div>
+}

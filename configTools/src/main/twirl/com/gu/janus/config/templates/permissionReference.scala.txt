@@ -1,0 +1,4 @@
+@import com.gu.janus.model.{JanusData, Permission}
+
+@(permission: Permission)
+{ account = "@permission.account.authConfigKey", label = "@permission.label" }

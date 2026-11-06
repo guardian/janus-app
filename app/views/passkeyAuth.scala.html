@@ -1,0 +1,24 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+@import play.api.Mode
+@import views.html.helper.CSPNonce
+
+@(user: UserIdentity, janusData: JanusData, passkeyAuthRequired: Boolean)(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@main("Passkey authentication", Some(user), janusData) {
+    <div class="container" data-passkeys-enabled="@passkeyAuthRequired">
+        @if(passkeyAuthRequired) {
+            <div class="passkey-prompt">
+                <i class="material-icons passkey-prompt__icon" aria-hidden="true">fingerprint</i>
+                <p class="passkey-prompt__text">Follow the prompts on your device to authenticate.</p>
+                <i class="material-icons passkey-prompt__spinner rotate-counterclockwise" aria-hidden="true">sync</i>
+            </div>
+        }
+    </div>
+
+    @if(mode == Mode.Dev) {
+        <script src="https://janus-frontend.local.dev-gutools.co.uk/passkeys-auth.js" @{CSPNonce.attr}></script>
+    } else {
+        <script src="@assetsFinder.path("frontend/passkeys-auth.js")" @{CSPNonce.attr}></script>
+    }
+}

@@ -1,0 +1,9 @@
+name: CORE4 label enforcement
+permissions:
+  contents: read
+on:
+  pull_request:
+    types: [opened, labeled, unlabeled, synchronize, reopened, edited, ready_for_review]    
+jobs:
+  require-label:
+    uses: guardian/.github/.github/workflows/require-label.yaml@a4c4fa87762d059e2cb64c0b7e0d04742df423b2 #  v3.1.3

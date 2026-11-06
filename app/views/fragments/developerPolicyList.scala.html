@@ -1,0 +1,38 @@
+@import logic.DeveloperPolicies.developerPolicyLink
+@import logic.ViewHelpers.UIImage.*
+
+@(policy: DeveloperPolicy, unlinkableExample: Boolean = false)(implicit assetsFinder: AssetsFinder)
+
+<li class="developer-policy-item">
+    <div class="developer-policy-item-janus">
+        <div class="developer-policy-item-key">
+            <i class="material-icons tiny" aria-hidden="true">handyman</i>
+            @policy.policyGrantId
+        </div>
+    </div>
+    <div class="developer-policy-item-aws expand">
+        <div class="developer-policy-description expand" aria-label="Description of role">
+            @policy.friendlyName
+        </div>
+        <div class="developer-policy-stage grey-text" aria-label="Deployed AWS account: @policy.account.name">
+            <div class="developer-policy-chips">
+                @developerPolicyInfoChip(MaterialIcon("layers"), policy.stage, "Stage")
+                @developerPolicyInfoChip(MaterialIcon("apps"), policy.stack, "Stack")
+                @developerPolicyInfoChip(AssetImage("images/GitHub_Invertocat_Black.png", "GitHub"), policy.sourceRepo, "GitHub repository")
+            </div>
+        </div>
+        <div class="developer-policy-item-policy">
+            <div class="developer-policy-name grey-text" aria-label="IAM name of the role in AWS">
+                @policy.policyName
+            </div>
+            <div class="developer-policy-item-cta">
+                <a class="copy-text--button__cta waves-effect waves-light btn @if(unlinkableExample){disabled}" href="@developerPolicyLink(policy)" target="_blank" rel="noopener noreferrer">
+                    View in AWS console
+                    <div class="copy-text__feedback">
+                        <i class="material-icons copy-text--default icon-small">open_in_new</i>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</li>

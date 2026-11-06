@@ -1,0 +1,45 @@
+{
+  "name": "janus-app",
+  "version": "1.0.0",
+  "description": "Use Google Authentication to provide audited temporary access to AWS resources",
+  "type": "module",
+  "scripts": {
+    "start": "parcel --port 1234 --no-hmr",
+    "build": "parcel build --dist-dir ../public/frontend",
+    "lint": "eslint --max-warnings=0",
+    "lint:fix": "eslint --fix",
+    "format": "prettier --write \"**/*.js\"",
+    "format:check": "prettier --check \"**/*.js\""
+  },
+  "source": [
+    "janus.js",
+    "snow.js",
+    "passkeys-auth.js",
+    "main.css"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guardian/janus-app.git"
+  },
+  "author": "Guardian",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/guardian/janus-app/issues"
+  },
+  "homepage": "https://github.com/guardian/janus-app#readme",
+  "dependencies": {
+    "@fontsource/roboto": "^5.1.1",
+    "dompurify": "3.4.17",
+    "material-icons": "^1.13.13",
+    "materialize-css": "^1.0.0",
+    "parcel": "2.16.4"
+  },
+  "optionalDependencies": {
+    "@parcel/rust-linux-arm64-gnu": "2.16.4"
+  },
+  "devDependencies": {
+    "@guardian/eslint-config": "^11.0.0",
+    "@guardian/prettier": "^8.0.1",
+    "eslint": "^9.25.1"
+  }
+}

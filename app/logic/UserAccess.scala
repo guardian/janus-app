@@ -1,0 +1,345 @@
+package logic
+
+import com.gu.googleauth.UserIdentity
+import com.gu.janus.model.*
+import com.gu.janus.model.PermissionType.{
+  AccountPermission,
+  DeveloperPolicyPermission
+}
+import logic.DeveloperPolicies.toPermission
+import logic.UserAccess.username
+import models.*
+import models.AccessSource.{Internal, Superuser, Support}
+
+import java.time.Instant
+
+object UserAccess {
+
+  /** Extract the username from the pan-domain user.
+    */
+  def username(user: UserIdentity): String =
+    user.email.split("@").head.toLowerCase
+
+  /** A user's access in the internal ACL. Note that default permissions are
+    * available for anyone mentioned in the ACL.
+    *
+    * If the user appears in the ACL, this will return an [[AccountAccess]] per
+    * [[AwsAccount]], preserving the distinction between static Janus
+    * permissions and dynamically-loaded developer policies. There will be a key
+    * for any AWS account to which the user has access.
+    */
+  def internalUserAccess(
+      user: UserIdentity,
+      janusData: JanusData,
+      developerPolicies: Set[DeveloperPolicy]
+  ): Option[Map[AwsAccount, AccountAccess]] = {
+    val access = totalUserAccess(
+      user,
+      internalAcl = Some(janusData.access),
+      superuserAcl = None,
+      supportData = None,
+      developerPolicies
+    )
+    Option.when(access.nonEmpty)(
+      access.view
+        .mapValues(sourced =>
+          AccountAccess(
+            permissions = sourced.internal.permissions,
+            developerPolicies = sourced.internal.developerPolicies
+          )
+        )
+        .toMap
+    )
+  }
+
+  /** A user's access in the superuser ACL.
+    *
+    * As above, if the user appears in the ACL, this will return an
+    * [[AccountAccess]] for all AWS accounts to which the user has access.
+    */
+  def superuserAccess(
+      user: UserIdentity,
+      janusData: JanusData,
+      developerPolicies: Set[DeveloperPolicy]
+  ): Option[Map[AwsAccount, AccountAccess]] = {
+    val access = totalUserAccess(
+      user,
+      internalAcl = None,
+      superuserAcl = Some(janusData.superuser),
+      supportData = None,
+      developerPolicies
+    )
+    Option.when(access.nonEmpty)(
+      access.view
+        .mapValues(sourced =>
+          AccountAccess(
+            permissions = sourced.superuser.permissions,
+            developerPolicies = sourced.superuser.developerPolicies
+          )
+        )
+        .toMap
+    )
+  }
+
+  /** Checks if the username is explicitly mentioned in the provided ACL.
+    */
+  def hasAccess(user: UserIdentity, acl: ACL): Boolean = {
+    acl.userAccess.contains(username(user))
+  }
+
+  /** Returns the set of developer policy grants explicitly assigned to the user
+    * in the ACL, if any.
+    */
+  def policyGrantsForUser(
+      user: UserIdentity,
+      acl: ACL
+  ): Set[DeveloperPolicyGrant] =
+    acl.userAccess
+      .get(username(user))
+      .map(_.policyGrants)
+      .getOrElse(Set.empty)
+
+  /** Check if the provided user has been granted the permission with the given
+    * ID and, if so, which ACL gave access.
+    *
+    * The source is useful because it allows us to include it in the audit log.
+    */
+  def checkUserPermissionWithSource(
+      user: UserIdentity,
+      permissionId: String,
+      date: Instant,
+      janusData: JanusData,
+      developerPolicies: Set[DeveloperPolicy]
+  ): Option[(Permission, AccessSource, PermissionType)] = {
+    def bySource(
+        access: SourcedAccountAccess
+    ): List[(AccountAccess, AccessSource)] = List(
+      access.internal -> Internal,
+      access.superuser -> Superuser,
+      access.support -> Support
+    )
+
+    totalUserAccess(
+      user,
+      Some(janusData.access),
+      Some(janusData.superuser),
+      Some((janusData.support, date)),
+      developerPolicies
+    ).valuesIterator
+      .flatMap { access =>
+        bySource(access).flatMap { (aa, src) =>
+          // We're only interested in the grants that have been given in the current source ACL
+          val policyGrants = src match {
+            case Internal =>
+              policyGrantsForUser(user, acl = janusData.access)
+            case Superuser =>
+              policyGrantsForUser(user, acl = janusData.superuser)
+            case Support => Set.empty
+          }
+          aa.permissions
+            .find(_.id == permissionId)
+            .map((_, src, AccountPermission))
+            .orElse(
+              aa.developerPolicies
+                .flatMap { policy =>
+                  policyGrants
+                    .find(_.id == policy.policyGrantId)
+                    .map(toPermission(policy, _))
+                }
+                .find(_.id == permissionId)
+                .map((_, src, DeveloperPolicyPermission))
+            )
+        }
+      }
+      .nextOption()
+  }
+
+  /** This is the central logic for the public-facing methods that need to
+    * determine what access a user has.
+    *
+    * The given ACLs are merged to give a single model of the user's total
+    * access. The result is that for all accounts the user has access to we have
+    * a rich model of the source of each permission and the type of permission
+    * granted to the user.
+    *
+    * The individual ACLs are all optional so that the total access given
+    * depends on the context of the call. In some cases we don't need to know
+    * about support access and in others we don't need to know about superuser
+    * access.
+    *
+    * @param user
+    *   User whose access we're determining
+    * @param internalAcl
+    *   If included, results will include access from this ACL
+    * @param superuserAcl
+    *   If included, results will include access from this superuser ACL
+    * @param supportData
+    *   If included, results will include support access. The second value of
+    *   this pair is the instant in the support rota where access is being
+    *   determined. So it will only include the user if they have a shift on the
+    *   support rota that's active at the given instant.
+    * @param developerPolicies
+    *   All the [[DeveloperPolicy]]s that Janus knows about. The user might have
+    *   a grant for some of these and their permissions will be included in the
+    *   method result.
+    */
+  private def totalUserAccess(
+      user: UserIdentity,
+      internalAcl: Option[ACL],
+      superuserAcl: Option[ACL],
+      supportData: Option[(SupportACL, Instant)],
+      developerPolicies: Set[DeveloperPolicy]
+  ): Map[AwsAccount, SourcedAccountAccess] = {
+    def userAccess(
+        user: UserIdentity,
+        acl: ACL,
+        developerPolicies: Set[DeveloperPolicy]
+    ): Option[Map[AwsAccount, AccountAccess]] =
+      acl.userAccess
+        .get(username(user))
+        .map { aclEntry =>
+          val permissions = aclEntry.permissions ++ acl.defaultPermissions
+          val grantedPolicyIds = aclEntry.policyGrants.map(_.id)
+          val matchedPolicies = developerPolicies.filter { policy =>
+            grantedPolicyIds.contains(policy.policyGrantId)
+          }
+
+          val permsByAccount =
+            permissions.groupBy(_.account).view.mapValues(_.toList).toMap
+
+          val policiesByAccount =
+            matchedPolicies.groupBy(_.account).view.mapValues(_.toList).toMap
+
+          val allAccounts = permsByAccount.keySet ++ policiesByAccount.keySet
+          allAccounts.map { account =>
+            account -> AccountAccess(
+              permissions = permsByAccount.getOrElse(account, Nil),
+              developerPolicies = policiesByAccount.getOrElse(account, Nil)
+            )
+          }.toMap
+        }
+
+    val internal =
+      internalAcl
+        .flatMap(acl => userAccess(user, acl, developerPolicies))
+        .getOrElse(Map.empty)
+
+    val superuser =
+      superuserAcl
+        .flatMap(acl => userAccess(user, acl, developerPolicies))
+        .getOrElse(Map.empty)
+
+    val support =
+      supportData
+        .map { (acl, when) =>
+          val perms =
+            userSupportAccess(user, when, acl).getOrElse(Set.empty)
+          perms
+            .groupBy(_.account)
+            .view
+            .mapValues(ps =>
+              AccountAccess(permissions = ps.toList, developerPolicies = Nil)
+            )
+            .toMap
+        }
+        .getOrElse(Map.empty)
+
+    val allAccounts = internal.keySet ++ superuser.keySet ++ support.keySet
+
+    allAccounts.map { account =>
+      account -> SourcedAccountAccess(
+        internal = internal.getOrElse(account, AccountAccess.empty),
+        superuser = superuser.getOrElse(account, AccountAccess.empty),
+        support = support.getOrElse(account, AccountAccess.empty)
+      )
+    }.toMap
+  }
+
+  def userSupportAccess(
+      user: UserIdentity,
+      date: Instant,
+      supportACL: SupportACL
+  ): Option[Set[Permission]] = {
+    if (isSupportUser(user, date, supportACL))
+      Some(supportACL.supportAccess)
+    else None
+  }
+
+  def isSupportUser(
+      user: UserIdentity,
+      date: Instant,
+      supportACL: SupportACL
+  ): Boolean = {
+    val usernameLowerCase = username(user)
+    activeSupportUsers(date, supportACL).exists {
+      case (_, (maybeUser1, maybeUser2)) =>
+        maybeUser1.contains(usernameLowerCase) || maybeUser2.contains(
+          usernameLowerCase
+        )
+    }
+  }
+
+  /** Returns the usernames of the support personnel at the given instant,
+    * converting empty (TBD) users to None.
+    */
+  def activeSupportUsers(
+      date: Instant,
+      supportACL: SupportACL
+  ): Option[(Instant, (Option[String], Option[String]))] = {
+    supportACL.rota.toList
+      .sortBy((startTime, _) => startTime)
+      // Last slot start-time before given instant
+      .findLast((startTime, _) => startTime.isBefore(date))
+      .map { case (startTime, (user1, user2)) =>
+        startTime -> (
+          if (user1.isEmpty) None else Some(user1),
+          if (user2.isEmpty) None else Some(user2)
+        )
+      }
+  }
+
+  def nextSupportUsers(
+      date: Instant,
+      supportACL: SupportACL
+  ): Option[(Instant, (Option[String], Option[String]))] = {
+    supportACL.rota.toList
+      .sortBy((startTime, _) => startTime)
+      // First slot start-time after or at given instant
+      .find((startTime, _) => startTime.isAfter(date))
+      .map { case (startTime, (user1, user2)) =>
+        startTime -> (
+          if (user1.isEmpty) None else Some(user1),
+          if (user2.isEmpty) None else Some(user2)
+        )
+      }
+  }
+
+  /** Returns the start and end times of future (after active and next) slots
+    * for a given user
+    * @return
+    *   Tuple of the start date and the other user on the rota
+    */
+  def futureRotaSlotsForUser(
+      date: Instant,
+      supportACL: SupportACL,
+      user: UserIdentity
+  ): List[(Instant, String)] = {
+    val nextSlotStartTime =
+      nextSupportUsers(date, supportACL).map((startTime, _) => startTime)
+    val usernameLowerCase = username(user)
+    nextSlotStartTime
+      .map { nextSlot =>
+        supportACL.rota.toList
+          .sortBy((startTime, _) => startTime)
+          // Collecting all slots after the 'next' slot for the given user
+          .collect {
+            case (startTime, (user1, user2))
+                if startTime.isAfter(
+                  nextSlot
+                ) && (user1 == usernameLowerCase || user2 == usernameLowerCase) =>
+              (startTime, if (user1 == usernameLowerCase) user2 else user1)
+          }
+      }
+      .getOrElse(Nil)
+  }
+}

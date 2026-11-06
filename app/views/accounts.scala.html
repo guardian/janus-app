@@ -1,0 +1,92 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+@import models.AccountInfo
+@import play.api.Mode
+
+@import scala.util.{Failure, Success}
+
+@(accountOwners: Set[AccountInfo], developerPolicyCachingServiceEnabled: Boolean, user: UserIdentity, janusData: JanusData)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@main("Accounts", Some(user), janusData) {
+    <div class="container">
+        <h1 class="header orange-text">Accounts</h1>
+        @janusData.permissionsRepo match {
+            case Some(permissionsRepo) => {
+                <p>
+                  Refer to <a href="@permissionsRepo">Janus' configuration</a> for full details on who has what access to each AWS account.
+              </p>
+            }
+            case None => {
+                <p>Refer to Janus' configuration for full details on who has what access to each AWS account.</p>
+            }
+        }
+        <table>
+            <tr>
+                <th>
+                    Account
+                </th>
+                <th>
+                    Account Number
+                </th>
+                <th class="right-align">
+                    Owners
+                </th>
+                <th class="right-align">
+                    Developer Policies
+                </th>
+                <th class="right-align">
+                    Audit Trail
+                </th>
+            </tr>
+
+            @for(AccountInfo(account, owners, accountNumberTry, developerPolicies, policiesError) <- accountOwners.toList.sortBy(_.account.name)) {
+                <tr id="@account.authConfigKey">
+                    <td>
+                        @account.name
+                    </td>
+
+                    <td>
+                    @accountNumberTry match {
+                        case Failure(_) => {
+                            -
+                        }
+                        case Success(accountNumber) => {
+                            @accountNumber
+                        }
+                    }
+                    </td>
+
+                    <td class="right-align">
+                        <a  href="/users/account/@account.authConfigKey">
+                        @owners.size
+                        </a>
+                    </td>
+
+                    <td class="right-align">
+                        <a href="/policies-status/account/@account.authConfigKey">
+                            @developerPolicies.size
+                            @{
+                                policiesError match {
+                                    case Some(policyErrorText) => {
+                                        <i class="error material-icons tiny minor-header-icon" title="@policyErrorText">error_outline</i>
+                                    }
+                                    case None if developerPolicyCachingServiceEnabled => {
+                                        <i class="success material-icons tiny minor-header-icon">check</i>
+                                    }
+                                    case None => {
+                                        <i class="grey-text material-icons tiny minor-header-icon">sync_problem</i>
+                                    }
+                                }
+                            }
+                        </a>
+                    </td>
+
+                    <td class="right-align">
+                        <a href="/audit/account/@account.authConfigKey"><i class="material-icons">assignment</i></a>
+                    </td>
+
+                </tr>
+            }
+        </table>
+    </div>
+}

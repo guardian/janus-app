@@ -1,0 +1,34 @@
+@import com.gu.janus.model.Permission
+@(permission: Permission)
+
+                        <div class="card-action card-action--permission">
+                            <div class="card-action-group__row row">
+                                <div class="card-action-group col m6 s12">
+                                    <a href="/console?permissionId=@permission.id"
+                                       class="waves-effect waves-light btn federation__link federation__link--cta federation__link--@if(permission.shortTerm) {short} else {standard} card-action-link--spaced"
+                                    >
+                                        <i class="material-icons">cloud</i>
+                                    </a>
+                                    <a href="/consoleUrl?permissionId=@permission.id"
+                                       class="right waves-effect waves-light btn-flat federation__link janus-btn--flat card-action-link--tight federation__link--@if(permission.shortTerm) {short} else {standard}"
+                                    >
+                                        <i class="material-icons black-text">link</i>
+                                    </a>
+                                </div>
+                                <div class="card-action-group card-action-group--divider col m6 s12">
+                                    <a href="/credentials?permissionId=@permission.id"
+                                       class="waves-effect waves-light btn federation__link federation__link--cta federation__link--credentials federation__link--@if(permission.shortTerm) {short} else {standard}"
+                                    >
+                                        <i class="material-icons">vpn_key</i>
+                                    </a>
+                                    @if(!permission.shortTerm) {
+                                        <div class="multi-select__container right">
+                                            <label class="multi-select__label">
+                                                <input class="multi-select__checkbox" type="checkbox" name="@permission.id" id="@permission.id" data-permission-id="@permission.id">
+                                                <span></span>
+                                            </label>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>

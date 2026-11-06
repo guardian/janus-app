@@ -1,0 +1,72 @@
+@import models.AwsAccountAccess
+@import logic.Customisation.displayColour
+@import models.DisplayMode
+@import models.DisplayMode.*
+
+@import logic.DeveloperPolicies
+@(accountAccesses: List[AwsAccountAccess], allowFavs: Boolean, displayMode: DisplayMode = Normal)(implicit assetsFinder: AssetsFinder)
+
+<div class="row">
+    @for((accountAccess, i) <- accountAccesses.zipWithIndex) {
+        @if((i % 2) == 0 && i > 0) {
+</div>
+<div class="row">
+        }
+
+        <div class="col s12 m6">
+            <div class="card card--aws-account @displayColour(displayMode) lighten-5" data-account-key="@accountAccess.awsAccount.authConfigKey">
+                <div class="card-content card-content--aws-account-header @displayColour(displayMode) darken-4 white-text">
+                    @if(allowFavs) {
+                        <button name="account" value="@accountAccess.awsAccount.authConfigKey" class="right card-content--aws-account-header__button--favourite" aria-label="@if(accountAccess.isFavourite) {Remove from favourites} else {Add to favourites}" aria-pressed="@accountAccess.isFavourite">
+                            @if(accountAccess.isFavourite) {
+                                <i class="small material-icons star" aria-hidden="true">star</i>
+                            } else {
+                                <i class="small material-icons star" aria-hidden="true">star_border</i>
+                            }
+                        </button>
+                    }
+                    <span class="card-title card-content--aws-account-header__title">@accountAccess.awsAccount.name</span>
+                </div>
+                <div class="aws-account-body">
+                @fragments.developerPolicyGrants(accountAccess, allowFavs = true, displayMode)
+                @for(permission <- accountAccess.standardPermissions) {
+                    <div class="card-content card-content--permission-heading">
+                        <p>
+                            @permission.description
+                        </p>
+                    </div>
+                    @fragments.permissionActions(permission)
+                }
+                @if(accountAccess.adminPermissions.nonEmpty) {
+                    <div class="card-content card-content--permission-group-header grey-text text-darken-2">
+                        <span class="developer-policy-grant-name admin-permissions-header">
+                            <i class="material-icons tiny" aria-hidden="true">admin_panel_settings</i>
+                            Admin permissions
+                        </span>
+                    </div>
+                    <div class="card-content card-content--admin-permissions-note grey-text text-darken-1">
+                        <p>
+                            Do not expose admin credentials to untrusted code or AI tools
+                        </p>
+                    </div>
+                    @for(permission <- accountAccess.adminPermissions) {
+                        <div class="card-content card-content--permission-heading">
+                            <p>
+                                @permission.description
+                                <i class="material-icons tooltipped" data-position="bottom" data-delay="50" data-tooltip="Admin permission - grants short-term access only">admin_panel_settings</i>
+                            </p>
+                        </div>
+                        @fragments.permissionActions(permission)
+                    }
+                }
+                </div>
+                <div class="card-action card-action--audit-log">
+                    <a class="grey-text text-darken-2" href="/audit/account/@accountAccess.awsAccount.authConfigKey">
+                        <i class="material-icons">assignment</i>
+                        View audit trail
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

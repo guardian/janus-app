@@ -1,0 +1,18 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+@import play.api.Mode
+@import java.time.Instant
+
+@(activeSupportUsers: Option[(Instant, (Option[String], Option[String]))],
+    nextSupportUsers: Option[(Instant, (Option[String], Option[String]))],
+  futureSupportDates: List[(Instant, String)], user: UserIdentity, janusData: JanusData
+
+    )(implicit req: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@main("Support", Some(user), janusData) {
+    <div class="container">
+        <h1 class="header orange-text">Support</h1>
+
+        @fragments.supportUsers(user.username, activeSupportUsers, nextSupportUsers, futureSupportDates)
+    </div>
+}

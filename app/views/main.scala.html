@@ -1,0 +1,104 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.JanusData
+@import logic.UserAccess.{hasAccess, isSupportUser, username}
+@import logic.Customisation.displayColour
+@import play.api.Mode
+@import java.time.Instant
+@import views.html.helper.CSPNonce
+@import models.DisplayMode
+@import models.DisplayMode.*
+
+@(title: String, userOpt: Option[UserIdentity], janusData: JanusData, displayMode: DisplayMode = Normal)(content: Html)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0, user-scalable=no"/>
+        <meta name="csrf-token" content="@helper.CSRF.getToken.value">
+        <title>@title - Janus</title>
+
+         @if(mode == Mode.Dev) {
+            <link href="https://janus-frontend.local.dev-gutools.co.uk/main.css" type="text/css" rel="stylesheet" media="screen,projection"/>
+        } else {
+            <link href="@assetsFinder.path("frontend/main.css")" type="text/css" rel="stylesheet" media="screen,projection"/>
+        }
+        <link rel="icon" href="@assetsFinder.path("images/favicon.ico")"/>
+    </head>
+    <body>
+        <header>
+            <nav class="@displayColour(displayMode) darken-4" role="navigation">
+                <div class="nav-wrapper container">
+                    <a id="logo-container" href="/" class="brand-logo">
+                        <img src="@assetsFinder.path("images/janus.png")" alt="Janus">
+                        Janus
+                    </a>
+
+                    @userOpt.map { user =>
+                        <ul class="right hide-on-med-and-down">
+                            <li><a href="/accounts">Accounts</a></li>
+                            <li><a href="/support">Support</a></li>
+                            @if(hasAccess(user, janusData.superuser)) { <li><a href="/superuser">Superuser</a></li> }
+                            <li><a href="/revoke">Revoke</a></li>
+                            <li><a href="/user-account">@user.firstName @user.lastName</a></li>
+                        </ul>
+
+                        <ul id="nav-mobile" class="sidenav">
+                            <li><a href="/">Home</a></li>
+                            <li><a href="/accounts">Accounts</a></li>
+                            @if(isSupportUser(user, Instant.now(), janusData.support)) { <li><a href="/support">Support</a></li> }
+                            @if(hasAccess(user, janusData.superuser)) { <li><a href="/superuser">Superuser</a></li> }
+                            <li><a href="/revoke">Revoke</a></li>
+                            <li><a href="/user-account">@user.firstName @user.lastName <i class="material-icons right">perm_identity</i></a></li>
+                        </ul>
+                    }
+
+                    <a href="#" data-target="nav-mobile" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+                </div>
+            </nav>
+        </header>
+
+        <main class="@{
+            if(displayMode == Spooky) "spooky"
+            else if(displayMode == Festive) "festive"
+            else ""
+        }">
+            @content
+        </main>
+
+        <footer class="page-footer grey darken-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col l9 s12">
+                        <h5 class="white-text">The Guardian</h5>
+                        <p class="grey-text text-lighten-4">Janus is a part of the Guardian's infrastructure management toolset.</p>
+                    </div>
+                    <div class="col l3 s12">
+                        <h5 class="white-text">Useful links</h5>
+                        <ul>
+                            @janusData.permissionsRepo.map { repoUrl =>
+                                <li><a class="white-text" href="@repoUrl">Janus' configuration</a></li>
+                            }
+                            <li><a class="white-text" href="https://github.com/guardian/janus-app">Janus on GitHub</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </footer>
+
+        @if(mode == Mode.Dev) {
+            <script src="https://janus-frontend.local.dev-gutools.co.uk/janus.js" @{CSPNonce.attr}></script>
+        } else {
+            <script src="@assetsFinder.path("frontend/janus.js")" @{CSPNonce.attr}></script>
+        }
+
+        @if(displayMode == Festive) {
+            @if(mode == Mode.Dev) {
+                <script src="https://janus-frontend.local.dev-gutools.co.uk/snow.js" @{CSPNonce.attr}></script>
+            } else {
+                <script src="@assetsFinder.path("frontend/snow.js")" @{CSPNonce.attr}></script>
+            }
+        }
+
+    </body>
+</html>
