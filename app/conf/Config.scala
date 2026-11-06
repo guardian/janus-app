@@ -13,7 +13,7 @@ import com.gu.play.secretrotation.SnapshotProvider
 import models.*
 import models.AccountConfigStatus.*
 import models.PasskeyMode
-import play.api.{Configuration, Logging, Mode}
+import play.api.{Configuration, Environment, Logging, Mode}
 
 import java.io.{File, FileInputStream}
 import java.time.LocalDate
@@ -84,14 +84,12 @@ object Config extends Logging {
   def googleSettings(
       config: Configuration,
       secretStateSupplier: SnapshotProvider,
-      mode: Mode
+      env: Environment
   ): GoogleAuthConfig = {
     val clientId = requiredString(config, "auth.google.clientId")
     val clientSecret = requiredString(config, "auth.google.clientSecret")
     val domain = requiredString(config, "auth.domain")
     val redirectUrl = s"${requiredString(config, "host")}/oauthCallback"
-    val devAuthBypassEnabled =
-      config.getOptional[String]("auth.google.disabled").contains("true")
 
     GoogleAuthConfig(
       clientId = clientId,
@@ -99,10 +97,10 @@ object Config extends Logging {
       redirectUrl = redirectUrl,
       domains = List(domain),
       antiForgeryChecker = AntiForgeryChecker(secretStateSupplier),
-      devBypass = DevAuthBypass.forMode(
-        mode,
-        devAuthBypassEnabled,
-        identity = DevAuthBypass.defaultIdentity
+      devBypass = DevAuthBypass.forEnvironment(
+        env,
+        enabled =
+          config.getOptional[String]("auth.google.disabled").contains("true")
       )
     )
   }
