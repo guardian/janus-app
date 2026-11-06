@@ -37,6 +37,7 @@ object Clients {
       .builder()
       .addCredentialsProvider(InstanceProfileCredentialsProvider.create())
       .addCredentialsProvider(ProfileCredentialsProvider.create(profileName))
+      .addCredentialsProvider(EnvironmentVariableCredentialsProvider.create())
       .build()
 
   private lazy val janusCredentialsProviderChain = makeCredentialsProviderChain(
