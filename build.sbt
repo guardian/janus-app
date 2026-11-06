@@ -60,17 +60,6 @@ val pekkoSerializationJacksonOverrides = Seq(
   "com.fasterxml.jackson.module" %% "jackson-module-scala"
 ).map(_ % jacksonVersion)
 
-/*
- * To test whether any of these entries are redundant:
- * 1. Comment it out
- * 2. Run `sbt Runtime/dependencyList`
- * 3. If no earlier version appears in the dependency list, the entry can be removed.
- */
-val safeTransitiveDependencies = Seq(
-  // CVE-2026-102554: uncontrolled memory allocation during deserialisation.
-  "com.google.guava" % "guava" % "33.7.2-jre"
-)
-
 lazy val root: Project = (project in file("."))
   .enablePlugins(PlayScala, JDebPackaging, SystemdPlugin, AshScriptPlugin)
   .dependsOn(configTools % "compile->compile;test->test")
@@ -111,7 +100,7 @@ lazy val root: Project = (project in file("."))
       "com.webauthn4j" % "webauthn4j-core" % "0.31.10.RELEASE",
       "co.fs2" %% "fs2-core" % "3.13.0",
       "org.typelevel" %% "log4cats-slf4j" % "2.8.0"
-    ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides ++ safeTransitiveDependencies,
+    ) ++ jacksonDatabindOverrides ++ jacksonOverrides ++ pekkoSerializationJacksonOverrides,
     dependencyOverrides += "org.scala-lang.modules" %% "scala-java8-compat" % "1.0.2", // Avoid binary incompatibility error.
     excludeDependencies ++= Seq(
       // See https://github.com/guardian/janus-app/security/dependabot/19
