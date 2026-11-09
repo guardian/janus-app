@@ -143,6 +143,9 @@ signing key and synthetic Google credentials. Test mode serves the built fronten
 The bypass user has a test-only deny-all permission for a dummy `test-aws-account`
 account (`000000000000`), not the real AWS account. Passkey authentication is
 disabled only in `e2e.conf`. The fixture is for UI tests, not real AWS federation.
+`dev-user` is also in the current support slot with the same deny-all permission.
+The slot starts on 2 November 2026 and has no successor, so support access does
+not expire.
 
 The `CI` environment variable does not change the test application or port.
 It enables the configuration's `forbidOnly` safeguard, which rejects
