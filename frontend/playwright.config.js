@@ -1,14 +1,18 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "@playwright/test";
 
+const isCI = Boolean(process.env.CI);
 const baseURL = "http://localhost:9102";
 
 // eslint-disable-next-line import/no-default-export -- Playwright requires a default export.
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
-  retries: 0,
-  reporter: [["list"], ["html", { open: "never" }]],
+  forbidOnly: isCI,
+  retries: isCI ? 2 : 0,
+  reporter: isCI
+    ? [["github"], ["html", { open: "never" }]]
+    : [["list"], ["html", { open: "never" }]],
   use: {
     baseURL,
     trace: "on",
