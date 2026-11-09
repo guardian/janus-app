@@ -48,8 +48,10 @@ class AppComponents(context: ApplicationLoader.Context)
     case _         => "DEV"
   }
 
+  val secretStateSupplier: SnapshotProvider = createSecretStateSupplier()
+
   // Reads Play secret from SSM
-  val secretStateSupplier: SnapshotProvider =
+  protected def createSecretStateSupplier(): SnapshotProvider =
     new parameterstore.SecretSupplier(
       TransitionTiming(
         // When a new secret value is read it isn't used immediately, to keep all EC2 instances in sync.  The new value is used after the usageDelay has passed.
@@ -65,8 +67,12 @@ class AppComponents(context: ApplicationLoader.Context)
 
   val host = Config.host(configuration)
   val googleAuthConfig =
-    Config.googleSettings(configuration, secretStateSupplier)
-  val googleGroupChecker = Config.googleGroupChecker(configuration)
+    Config.googleSettings(
+      configuration,
+      secretStateSupplier,
+      context.environment
+    )
+  lazy val googleGroupChecker = Config.googleGroupChecker(configuration)
   val requiredGoogleGroups = Set(Config.twoFAGroup(configuration))
   given dynamodDB: DynamoDbClient =
     if (mode == play.api.Mode.Prod && !Config.isLocal)

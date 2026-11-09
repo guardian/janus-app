@@ -6,6 +6,7 @@
   "scripts": {
     "start": "parcel --port 1234 --no-hmr",
     "build": "parcel build --dist-dir ../public/frontend",
+    "test:e2e": "npm run build && playwright test",
     "lint": "eslint --max-warnings=0",
     "lint:fix": "eslint --fix",
     "format": "prettier --write \"**/*.js\"",
@@ -40,6 +41,7 @@
   "devDependencies": {
     "@guardian/eslint-config": "^11.0.0",
     "@guardian/prettier": "^8.0.1",
+    "@playwright/test": "^1.64.1",
     "eslint": "^9.25.1"
   }
 }
