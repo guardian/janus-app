@@ -35,6 +35,7 @@ object Clients {
   ): AwsCredentialsProviderChain =
     AwsCredentialsProviderChain
       .builder()
+      .addCredentialsProvider(DefaultCredentialsProvider.builder().build())
       .addCredentialsProvider(InstanceProfileCredentialsProvider.create())
       .addCredentialsProvider(ProfileCredentialsProvider.create(profileName))
       .addCredentialsProvider(EnvironmentVariableCredentialsProvider.create())
