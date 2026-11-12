@@ -14,6 +14,7 @@ modules:
   - scala
   - node
   - github-copilot
+  - agentsy
 
 # Optional: Container image to use (defaults to latest ubuntu LTS)
 # image: "mcr.microsoft.com/devcontainers/base:ubuntu"
@@ -22,6 +23,8 @@ modules:
 forwardPorts:
   - 9100 # Play app (actual actions)
   - 1234 # Frontend app (assets for web)
+  - 9101 # Playwright browser test UI
+  - 9102 # Isolated browser test app
 
 # The following mount is no longer used, in favour of the setup script, which will fetch appropriate config for you.
 # It is also problematic because the .gu location needs to be writable for the docker DynamoDB.

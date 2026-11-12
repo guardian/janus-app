@@ -117,6 +117,51 @@ The frontend dev-server will automatically recompile and reload when changes are
 
 The application's database is started by the [DockerComposeHook](https://github.com/guardian/janus-app/blob/6ce4579bc49e15753bc8f4f3a61c91f90e785940/project/DockerComposeHook.scala).
 
+#### End-to-end tests
+
+Run the Playwright E2E tests from the repository root:
+
+```shell
+mise exec -- npm --prefix frontend run test:e2e
+```
+
+The npm script builds the frontend assets and runs Playwright using the isolated
+`E2ETestServer` on port 9102, both locally and in CI. No local application
+configuration, Docker or development HTTPS proxy is needed. The browser defaults
+to `http://localhost:9102`, and the server readiness check uses
+`http://localhost:9102/healthcheck`. The E2E tests bypass Google auth.
+
+The isolated test app can run alongside the Janus development app on port 9100
+and the Playwright UI on port 9101. Playwright deliberately does not reuse an
+existing server on its test port, and stops its server when the tests finish.
+
+Local npm runs and the separate `browser-tests` CI job use `E2ETestServer`, available only on
+the test classpath, and the fixtures in `test/resources/e2e*.conf`. It runs
+the real application in Play's test mode with an in-memory
+signing key and synthetic Google credentials. Test mode serves the built frontend assets without a development HTTPS proxy.
+
+The bypass user has a test-only deny-all permission for a dummy `test-aws-account`
+account (`000000000000`), not the real AWS account. Passkey authentication is
+disabled only in `e2e.conf`. The fixture is for UI tests, not real AWS federation.
+`dev-user` is also in the current support slot with the same deny-all permission.
+The slot starts on 2 November 2026 and has no successor, so support access does
+not expire.
+
+The `CI` environment variable does not change the test application or port.
+It only enables the configuration's `forbidOnly` safeguard, which rejects
+accidentally committed focused tests (`test.only`) in CI.
+
+To use the Playwright UI, run:
+
+```shell
+mise exec -- npm --prefix frontend run test:e2e:ui
+```
+
+The UI script uses the same asset build and isolated server as `test:e2e`.
+It prints `http://localhost:9101/` for opening in your host browser. Use this
+root URL rather than `/trace/uiMode.html` directly: the redirect supplies the
+WebSocket connection details needed to load the tests.
+
 ## Configuration
 
 ### Janus' AWS config
