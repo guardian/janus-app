@@ -5,7 +5,7 @@ const baseURL = "http://localhost:9102";
 
 // eslint-disable-next-line import/no-default-export -- Playwright requires a default export.
 export default defineConfig({
-  testDir: "./e2e",
+  testDir: "./e2e-tests",
   fullyParallel: true,
   retries: 0,
   reporter: [["list"], ["html", { open: "never" }]],
