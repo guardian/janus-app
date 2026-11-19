@@ -1,4 +1,6 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures.js";
+
+test.use({ janusData: "support-current" });
 
 test("shows dev-user in the current support slot with the test-only permission", async ({
   page,
@@ -15,7 +17,7 @@ test("shows dev-user in the current support slot with the test-only permission",
     currentSupport.getByText("dev-user", { exact: true }),
   ).toBeVisible();
   await expect(
-    page.getByText("Test AWS Account", { exact: true }),
+    page.getByText("Extremely Important AWS Account", { exact: true }),
   ).toBeVisible();
   await expect(page.getByText("E2E test only - no AWS access")).toBeVisible();
   const credentialsLink = page.getByRole("link", {
@@ -25,6 +27,6 @@ test("shows dev-user in the current support slot with the test-only permission",
   await expect(credentialsLink).toBeVisible();
   await expect(credentialsLink).toHaveAttribute(
     "href",
-    /\/credentials\?permissionId=test-aws-account-e2e-deny-all(?:&|$)/,
+    /\/credentials\?permissionId=test-aws-account-3-e2e-deny-all(?:&|$)/,
   );
 });
