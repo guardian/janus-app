@@ -125,7 +125,7 @@ Run the Playwright E2E tests from the repository root:
 mise exec -- npm --prefix frontend run test:e2e
 ```
 
-The npm script builds the frontend assets and runs Playwright using the isolated
+The Playwright configuration builds the frontend assets and starts the isolated
 `E2ETestServer` on port 9102. No local application
 configuration, Docker or development HTTPS proxy is needed. The browser defaults
 to `http://localhost:9102`, and the server readiness check uses
@@ -159,7 +159,7 @@ mise exec -- npm --prefix frontend run test:e2e:ui
 ```
 
 The UI script uses the same asset build and isolated server as `test:e2e`.
-It prints `http://localhost:9101/` for opening in your host browser. Use this
+The UI binds to `127.0.0.1` at `http://127.0.0.1:9101/`. Use this
 root URL rather than `/trace/uiMode.html` directly: the redirect supplies the
 WebSocket connection details needed to load the tests.
 
