@@ -15,7 +15,8 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   webServer: {
-    command: 'sbt "Test / runMain E2ETestServer"',
+    command:
+      'npm --prefix frontend run build && sbt "Test / runMain E2ETestServer"',
     cwd: fileURLToPath(new URL("..", import.meta.url)),
     env: { GOOGLE_AUTH_DISABLED: "true" },
     stdout: "pipe",
