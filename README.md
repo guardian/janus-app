@@ -138,16 +138,12 @@ existing server on its test port, and stops its server when the tests finish.
 The npm script uses `E2ETestServer`, available only on
 the test classpath, and the fixtures in `test/resources/e2e*.conf`. It runs
 the real application in Play's test mode with an in-memory
-signing key and synthetic Google credentials. Test mode serves the built frontend assets without a development HTTPS proxy.
+signing key and synthetic Google credentials.
+Test mode serves the built frontend assets without a development HTTPS proxy.
 
 The bypass user has a test-only deny-all permission for a dummy `test-aws-account`
 account (`000000000000`), not the real AWS account. Passkey authentication is
 disabled only in `e2e.conf`. The fixture is for UI tests, not real AWS federation.
-
-The `CI` environment variable does not change the test application or port.
-It enables the configuration's `forbidOnly` safeguard, which rejects
-accidentally committed focused tests (`test.only`), enables two retries and
-selects GitHub and HTML reporters.
 
 ## Configuration
 
