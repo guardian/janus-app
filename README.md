@@ -125,14 +125,14 @@ Run the Playwright E2E tests from the repository root:
 mise exec -- npm --prefix frontend run test:e2e
 ```
 
-The npm script builds the frontend assets and runs Playwright using the isolated
+The Playwright configuration builds the frontend assets and starts the isolated
 `E2ETestServer` on port 9102. No local application
 configuration, Docker or development HTTPS proxy is needed. The browser defaults
 to `http://localhost:9102`, and the server readiness check uses
 `http://localhost:9102/healthcheck`. The E2E tests bypass Google auth.
 
-The isolated test app can run alongside the Janus development app on port 9100.
-Playwright deliberately does not reuse an
+The isolated test app can run alongside the Janus development app on port 9100
+and the Playwright UI on port 9101. Playwright deliberately does not reuse an
 existing server on its test port, and stops its server when the tests finish.
 
 The npm script uses `E2ETestServer`, available only on
@@ -147,6 +147,17 @@ disabled only in `e2e.conf`. The fixture is for UI tests, not real AWS federatio
 `dev-user` is also in the current support slot with the same deny-all permission.
 The slot starts on 2 November 2026 and has no successor, so support access does
 not expire.
+
+To use the Playwright UI, run:
+
+```shell
+mise exec -- npm --prefix frontend run test:e2e:ui
+```
+
+The UI script uses the same asset build and isolated server as `test:e2e`.
+The UI binds to `127.0.0.1` at `http://127.0.0.1:9101/`. Use this
+root URL rather than `/trace/uiMode.html` directly: the redirect supplies the
+WebSocket connection details needed to load the tests.
 
 ## Configuration
 
