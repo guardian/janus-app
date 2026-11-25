@@ -1,0 +1,103 @@
+@import com.gu.googleauth.UserIdentity
+@import com.gu.janus.model.{JanusData, Permission}
+@import play.api.Mode
+
+@import java.net.URLEncoder
+@import java.nio.charset.StandardCharsets.UTF_8
+
+@(
+        permissionId: String,
+        destination: String,
+        destinationValid: Boolean,
+        permission: Option[Permission],
+        hasAccess: Boolean,
+        user: UserIdentity,
+        janusData: JanusData
+)(implicit request: RequestHeader, mode: Mode, assetsFinder: AssetsFinder)
+
+@* Build the link to the passkey-protected sign-in flow ourselves, since it has no reverse route
+   (the GET action it points to is the generic passkey auth page, shared with other actions). *@
+@continueUrl = @{
+    val encodedPermissionId = URLEncoder.encode(permissionId, UTF_8)
+    val encodedDestination = URLEncoder.encode(destination, UTF_8)
+    s"/consoleRedirect/continue?permissionId=$encodedPermissionId&destination=$encodedDestination"
+}
+
+@main("Confirm console redirect", Some(user), janusData) {
+    <div class="container">
+        <h1 class="header orange-text">Confirm console redirect</h1>
+        <p>
+            Someone has shared a link that will sign you in to AWS and take you straight to the page below.
+            Check the details before continuing - this stops you ending up somewhere unintended.
+        </p>
+
+        <div class="card-panel">
+            <h5>Destination</h5>
+            @if(destinationValid) {
+                <p class="copy-textarea">
+                    <a class="copy-text--button copy-text--button__small grey lighten-1" href="#"><i class="material-icons copy-text--default">content_copy</i> copy</a>
+                    <i class="material-icons copy-text--confirm">done</i>
+                    <i class="material-icons copy-text--warn">report_problem</i>
+                    <textarea class="textarea--code" readonly>@destination</textarea>
+                </p>
+            } else {
+                <p class="copy-textarea">
+                    <textarea class="textarea--code" readonly>@destination</textarea>
+                </p>
+                <p class="red-text">
+                    <i class="material-icons tiny" aria-hidden="true">warning</i>
+                    This doesn't look like a valid AWS console URL. For your safety it will not be used.
+                </p>
+            }
+
+            <h5>Permission</h5>
+            @permission match {
+                case Some(p) => {
+                    <p><strong>@p.account.name</strong> &ndash; @p.description</p>
+                    @if(hasAccess) {
+                        <p class="green-text text-darken-2">
+                            <i class="material-icons tiny" aria-hidden="true">check_circle</i>
+                            You have access to this permission.
+                        </p>
+                    } else {
+                        <p class="red-text">
+                            <i class="material-icons tiny" aria-hidden="true">warning</i>
+                            You don't currently have access to this permission, so signing in will be denied. You
+                            can still visit the destination directly if you already have a console session open.
+                        </p>
+                    }
+                }
+                case None => {
+                    <p class="red-text">
+                        <i class="material-icons tiny" aria-hidden="true">warning</i>
+                        Unknown permission (<code>@permissionId</code>). This link may be broken, or refer to a
+                        permission that no longer exists.
+                    </p>
+                }
+            }
+        </div>
+
+        <div class="row">
+            <div class="col s12 m6">
+                @if(destinationValid && hasAccess) {
+                    <a href="@continueUrl" class="btn waves-effect waves-light">
+                        <i class="material-icons left">login</i>
+                        Sign in and continue
+                    </a>
+                } else {
+                    <a class="btn disabled waves-effect waves-light" aria-disabled="true">
+                        <i class="material-icons left">login</i>
+                        Sign in and continue
+                    </a>
+                }
+            </div>
+            <div class="col s12 m6">
+                @if(destinationValid) {
+                    <a href="@destination" class="btn-flat waves-effect" rel="noopener noreferrer">
+                        I'm already signed in &ndash; take me straight there
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+}

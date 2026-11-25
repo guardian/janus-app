@@ -206,4 +206,46 @@ class FederationTest
       ) shouldEqual "role-name"
     }
   }
+
+  "isValidConsoleDestination" - {
+    "accepts the plain console host" in {
+      isValidConsoleDestination(
+        "https://console.aws.amazon.com/"
+      ) shouldEqual true
+    }
+
+    "accepts a regional console subdomain" in {
+      isValidConsoleDestination(
+        "https://eu-west-1.console.aws.amazon.com/s3/home"
+      ) shouldEqual true
+    }
+
+    "accepts a deep link with an account-specific subdomain" in {
+      isValidConsoleDestination(
+        "https://100378408918-ktgs3pv7.eu-west-1.console.aws.amazon.com/s3/buckets/aws-security-public?region=eu-west-1&tab=objects"
+      ) shouldEqual true
+    }
+
+    "rejects non-https schemes" in {
+      isValidConsoleDestination(
+        "http://console.aws.amazon.com/"
+      ) shouldEqual false
+    }
+
+    "rejects other domains" in {
+      isValidConsoleDestination(
+        "https://evil.example.com/"
+      ) shouldEqual false
+    }
+
+    "rejects a domain that merely has the console host as a prefix" in {
+      isValidConsoleDestination(
+        "https://console.aws.amazon.com.evil.com/"
+      ) shouldEqual false
+    }
+
+    "rejects malformed URIs" in {
+      isValidConsoleDestination("not a url") shouldEqual false
+    }
+  }
 }

@@ -230,6 +230,31 @@ class Janus(
     }
   }
 
+  /** Shows a page that lets a user build a `/consoleRedirect` URL for one of
+    * their permissions, to be shared in docs/runbooks (see
+    * [[consoleRedirect]]).
+    */
+  def consoleRedirectBuilder: Action[AnyContent] =
+    authAction { implicit request =>
+      (for {
+        accountsAccess <- internalUserAccess(
+          request.user,
+          janusData,
+          developerPolicyService.getDeveloperPolicies
+        )
+        userPolicyGrants = policyGrantsForUser(request.user, janusData.access)
+        uiAccountAccess = orderedAccountAccess(accountsAccess, userPolicyGrants)
+      } yield {
+        Ok(
+          views.html.consoleRedirectBuilder(
+            uiAccountAccess,
+            request.user,
+            janusData
+          )
+        )
+      }) getOrElse Ok(views.html.noPermissions(request.user, janusData))
+    }
+
   def consoleLogin(permissionId: String): Action[AnyContent] =
     passkeyAuthAction { implicit request =>
       (for {
@@ -279,6 +304,95 @@ class Janus(
           s"console url login to $permissionId denied for ${username(request.user)}"
         )
         Forbidden(views.html.permissionDenied(request.user, janusData))
+      }
+    }
+
+  /** Shows an interstitial confirmation page for a `/consoleRedirect` link
+    * (generated via [[consoleRedirectBuilder]]), before any sign-in happens.
+    *
+    * This lets the user see exactly where the link will send them and which
+    * permission it will use, so they can spot a suspicious/incorrect
+    * destination before following it, and check they actually have the
+    * permission being requested. From here they can either sign in to a new
+    * Janus session and be redirected, or - if they already have a console
+    * session open for the target account - skip straight to the destination
+    * without disturbing that session.
+    */
+  def consoleRedirectConfirm(
+      permissionId: String,
+      destination: String
+  ): Action[AnyContent] =
+    authAction { implicit request =>
+      val destinationValid = Federation.isValidConsoleDestination(destination)
+      val accessiblePermission = checkUserPermissionWithSource(
+        request.user,
+        permissionId,
+        Instant.now(),
+        janusData,
+        developerPolicyService.getDeveloperPolicies
+      ).map { case (permission, _, _) => permission }
+      // Permission may be known even if this user doesn't personally have
+      // access to it (so we can still show its description/account below).
+      // Developer-policy-derived permissions aren't included here, as they
+      // can only be looked up for a specific user.
+      val knownPermission =
+        accessiblePermission.orElse(
+          Permission.allPermissions(janusData).find(_.id == permissionId)
+        )
+      Ok(
+        views.html.consoleRedirectConfirm(
+          permissionId,
+          destination,
+          destinationValid,
+          knownPermission,
+          hasAccess = accessiblePermission.isDefined,
+          request.user,
+          janusData
+        )
+      )
+    }
+
+  /** Signs the user in to the AWS console for the given permission, then
+    * redirects them straight to the given `destination` (e.g. a deep link to a
+    * specific S3 bucket). This lets docs/runbooks link directly to an AWS
+    * console page without requiring the reader to separately sign in to
+    * Janus/AWS first.
+    */
+  def consoleRedirect(
+      permissionId: String,
+      destination: String
+  ): Action[AnyContent] =
+    passkeyAuthAction { implicit request =>
+      if (!Federation.isValidConsoleDestination(destination)) {
+        logger.warn(
+          s"console redirect to $permissionId denied for ${username(request.user)}: invalid destination '$destination'"
+        )
+        BadRequest(
+          views.html.error(
+            "Invalid redirect destination",
+            Some(request.user),
+            janusData
+          )
+        )
+      } else {
+        (for {
+          (credentials, _) <- assumeRole(
+            request.user,
+            permissionId,
+            JConsole,
+            Customisation.durationParams(request),
+            developerPolicyService.getDeveloperPolicies
+          )
+          loginUrl = Federation.generateLoginUrl(credentials, host, destination)
+        } yield {
+          SeeOther(loginUrl)
+            .withHeaders(CACHE_CONTROL -> "no-cache")
+        }) getOrElse {
+          logger.warn(
+            s"console redirect to $permissionId denied for ${username(request.user)}"
+          )
+          Forbidden(views.html.permissionDenied(request.user, janusData))
+        }
       }
     }
 

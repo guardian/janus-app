@@ -7,6 +7,8 @@ GET           /                                         controllers.Janus.index
 GET           /superuser                                controllers.Janus.superuser
 GET           /support                                  controllers.Janus.support
 GET           /user-account                             controllers.Janus.userAccount
+GET           /console-redirect-builder                 controllers.Janus.consoleRedirectBuilder
+GET           /consoleRedirect                          controllers.Janus.consoleRedirectConfirm(permissionId: String, destination: String)
 POST          /favourite                                controllers.Janus.favourite()
 
 # Passkey-protected routes
@@ -14,6 +16,8 @@ GET           /console                                  controllers.PasskeyContr
 POST          /console                                  controllers.Janus.consoleLogin(permissionId: String)
 GET           /consoleUrl                               controllers.PasskeyController.showAuthPage
 POST          /consoleUrl                               controllers.Janus.consoleUrl(permissionId: String)
+GET           /consoleRedirect/continue                 controllers.PasskeyController.showAuthPage
+POST          /consoleRedirect/continue                 controllers.Janus.consoleRedirect(permissionId: String, destination: String)
 GET           /credentials                              controllers.PasskeyController.showAuthPage
 POST          /credentials                              controllers.Janus.credentials(permissionId: String)
 GET           /multi-credentials                        controllers.PasskeyController.showAuthPage
